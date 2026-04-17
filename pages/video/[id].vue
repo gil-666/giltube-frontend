@@ -179,8 +179,8 @@
       </div>
     </div>
 
-    <!-- Right: Sidebar (full width on mobile as carousel, sidebar on lg) -->
-    <div class="w-full md:w-64 md:flex-shrink-0">
+    <!-- Right: Sidebar (full width on mobile as carousel, wider on tablet, sidebar on lg) -->
+    <div class="w-full md:w-full lg:w-64 lg:flex-shrink-0">
       <div class="md:sticky md:top-6">
         <!-- Related Videos -->
         <div class="px-4 md:px-0">
@@ -229,8 +229,29 @@
             </button>
           </div>
           
-          <!-- Desktop/Tablet: Vertical List (hidden on mobile) -->
-          <div class="hidden md:block space-y-3">
+          <!-- Tablet: 2x2 Grid (shown on md to lg) -->
+          <div class="hidden md:grid lg:hidden grid-cols-2 gap-2">
+            <NuxtLink
+              v-for="relatedVideo in relatedVideos"
+              :key="relatedVideo.id"
+              :to="`/video/${relatedVideo.id}`"
+              class="block hover:opacity-80 transition"
+            >
+              <div class="bg-zinc-800 rounded overflow-hidden w-full aspect-video mb-2">
+                <img
+                  class="w-full h-full object-cover"
+                  :src="baseUrl + relatedVideo.thumbnail_url"
+                  :alt="relatedVideo.title"
+                />
+              </div>
+              <p class="text-sm font-semibold line-clamp-2">{{ relatedVideo.title }}</p>
+              <p class="text-xs text-gray-400 mt-1">{{ relatedVideo.channel?.name }}</p>
+              <p class="text-xs text-gray-500">{{ relatedVideo.views }} views</p>
+            </NuxtLink>
+          </div>
+          
+          <!-- Desktop: Vertical List (shown on lg and above) -->
+          <div class="hidden lg:block space-y-3">
             <NuxtLink
               v-for="relatedVideo in relatedVideos"
               :key="relatedVideo.id"
