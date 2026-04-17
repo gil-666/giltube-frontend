@@ -328,7 +328,9 @@ import VideoPlayer from '~/app/components/videoplayer/VideoPlayer.vue'
 import { getVideo, incrementViews, getVideos, likeVideo, unlikeVideo, checkIfLiked } from '~/app/service/videos'
 import { getVideoComments, postComment as apiPostComment, deleteComment } from '~/app/service/comments'
 import { getTimeAgo } from '~/app/utils/time'
+import { useMetaTags } from '~/app/composables/useMetaTags'
 import { computed, ref, onMounted, onUnmounted, watch } from 'vue'
+import { useRequestHeaders } from '#app'
 
 const baseUrl = import.meta.env.VITE_API_BASE_URL
 const route = useRoute()
@@ -447,6 +449,20 @@ console.log('Loading video ID:', id)
 const { data: video } = await useAsyncData(`video-${id}`, () =>
   getVideo(id)
 )
+
+// Set meta tags for social sharing (SSR)
+if (video.value) {
+  const siteUrl = process.server 
+    ? (() => { const headers = useRequestHeaders(['host', 'x-forwarded-proto']); return `${headers['x-forwarded-proto'] || 'http'}://${headers.host || 'localhost:3000'}`; })()
+    : typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000'
+  
+  useMetaTags({
+    title: video.value.title,
+    description: video.value.description,
+    image: video.value.thumbnail_url ? `${siteUrl}${video.value.thumbnail_url}` : undefined,
+    url: `${siteUrl}/video/${id}`
+  })
+}
 
 // Update likes count when video data loads
 watch(() => video.value, (newVideo) => {

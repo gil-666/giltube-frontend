@@ -1,9 +1,14 @@
 import axios from 'axios'
 
-const apiBaseURL = import.meta.env.VITE_API_BASE_URL
-const fullBaseURL = `${apiBaseURL}/api/v1`
+// Determine the API base URL based on environment
+let fullBaseURL = '/api/v1'
 
-console.log('API Base URL:', fullBaseURL)
+// For SSR (server-side), use the direct backend URL
+if (process.server) {
+  fullBaseURL = 'http://localhost:8080/api/v1'
+}
+
+console.log('API Base URL:', fullBaseURL, 'Server?', process.server)
 
 const apiClient = axios.create({
   baseURL: fullBaseURL,
@@ -28,4 +33,5 @@ apiClient.interceptors.response.use(
 )
 
 export default apiClient
+export { fullBaseURL as apiBaseURL }
 export { apiBaseURL }

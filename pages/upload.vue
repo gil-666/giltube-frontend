@@ -215,6 +215,12 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { uploadVideo, fetchUserChannels } from '~/app/service/upload'
+import { useMetaTags } from '~/app/composables/useMetaTags'
+
+useMetaTags({
+  title: 'Upload Video - GilTube',
+  description: 'Upload and share your video'
+})
 
 const router = useRouter()
 const isReady = ref(false)

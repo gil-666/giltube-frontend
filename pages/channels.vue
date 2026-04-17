@@ -190,6 +190,12 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { fetchUserChannels, updateChannel, deleteChannel } from '~/app/service/upload'
+import { useMetaTags } from '~/app/composables/useMetaTags'
+
+useMetaTags({
+  title: 'My Channels - GilTube',
+  description: 'Manage your channels'
+})
 
 const router = useRouter()
 const isLoading = ref(false)

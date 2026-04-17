@@ -51,9 +51,16 @@
 import { ref, onMounted } from 'vue'
 import { getVideos } from '~/app/service/videos'
 import { getTimeAgo } from '~/app/utils/time'
+import { useMetaTags } from '~/app/composables/useMetaTags'
 
 const baseUrl = import.meta.env.VITE_API_BASE_URL
 const videos = ref([])
+
+// Set meta tags for home page
+useMetaTags({
+  title: 'GilTube - Video Sharing',
+  description: 'Watch and share videos with our community'
+})
 
 onMounted(async () => {
   videos.value = await getVideos()

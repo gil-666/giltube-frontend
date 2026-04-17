@@ -186,8 +186,16 @@
 <script setup>
 import { ref, onMounted, computed, onUnmounted } from 'vue'
 import { getMyVideos, deleteVideo, downloadVideo as downloadVideoService } from '~/app/service/videos'
+import { useMetaTags } from '~/app/composables/useMetaTags'
 
 const router = useRouter()
+
+// Set meta tags for dashboard page
+useMetaTags({
+  title: 'My Videos - GilTube',
+  description: 'Manage your uploaded videos'
+})
+
 const isLoading = ref(true)
 const isDeleting = ref(false)
 const downloadingVideoIds = ref(new Set())

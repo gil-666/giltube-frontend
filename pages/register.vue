@@ -116,9 +116,15 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { register } from '~/app/service/auth'
+import { useMetaTags } from '~/app/composables/useMetaTags'
 
 definePageMeta({
   layout: false
+})
+
+useMetaTags({
+  title: 'Sign Up - GilTube',
+  description: 'Create a new GilTube account'
 })
 
 const router = useRouter()

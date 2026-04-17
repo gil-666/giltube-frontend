@@ -89,9 +89,15 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { login } from '~/app/service/auth'
 import { fetchUserChannels } from '~/app/service/upload'
+import { useMetaTags } from '~/app/composables/useMetaTags'
 
 definePageMeta({
   layout: false
+})
+
+useMetaTags({
+  title: 'Sign In - GilTube',
+  description: 'Sign in to your GilTube account'
 })
 
 const router = useRouter()
