@@ -1,0 +1,11 @@
+import api from './client'
+
+export const getVideos = async () => {
+  const res = await api.get('/videos')
+  return res.data
+}
+
+export const getVideo = async (id: string) => {
+  const res = await api.get(`/videos/${id}`)
+  return res.data
+}
