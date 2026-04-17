@@ -82,9 +82,8 @@
           <h3 class="text-white font-semibold text-sm line-clamp-2 group-hover:text-yellow-400 transition-colors">
             {{ video.title }}
           </h3>
-          <p class="text-gray-400 text-xs mt-1">
-            {{ formatDate(video.created_at) }}
-          </p>
+          <p class="text-xs text-zinc-400">{{ video.channel.name }}</p>
+            <p class="text-xs text-zinc-400">{{ video.views }} views • {{ getTimeAgo(video.created_at) }}</p>
         </NuxtLink>
       </div>
     </div>
@@ -94,7 +93,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import { getChannelInfo, getChannelVideos } from '~/app/service/channels'
-
+import { getTimeAgo } from '~/app/utils/time'
 const baseUrl = import.meta.env.VITE_API_BASE_URL
 const route = useRoute()
 const channelId = route.params.id as string

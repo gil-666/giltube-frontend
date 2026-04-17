@@ -36,7 +36,7 @@
               </h3>
             </NuxtLink>
             <p class="text-xs text-zinc-400">{{ i.channel.name }}</p>
-            <p class="text-xs text-zinc-400">123K views • 2 days ago</p>
+            <p class="text-xs text-zinc-400">{{ i.views }} views • {{ getTimeAgo(i.created_at) }}</p>
           </div>
         </div>
 
@@ -50,6 +50,8 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { getVideos } from '~/app/service/videos'
+import { getTimeAgo } from '~/app/utils/time'
+
 const baseUrl = import.meta.env.VITE_API_BASE_URL
 const videos = ref([])
 

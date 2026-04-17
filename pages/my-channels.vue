@@ -59,9 +59,15 @@
 
         <!-- Actions -->
         <div class="flex gap-2 ml-4 flex-shrink-0">
+          <NuxtLink
+            :to="`/channel/${channel.id}`"
+            class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded transition"
+          >
+            View Page
+          </NuxtLink>
           <button
             @click="initEditChannel(channel)"
-            class="px-4 py-2 bg-red-600 hover:bg-red-700 rounded transition"
+            class="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 rounded transition"
           >
             Edit
           </button>

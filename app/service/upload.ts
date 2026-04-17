@@ -5,6 +5,7 @@ interface UploadVideoRequest {
   description: string
   channelId: string
   videoFile: File
+  onProgress?: (progress: number) => void
 }
 
 interface Channel {
@@ -58,7 +59,14 @@ export const uploadVideo = async (data: UploadVideoRequest) => {
   formData.append('video', data.videoFile)
 
   try {
-    const response = await api.post('/videos', formData)
+    const response = await api.post('/videos', formData, {
+      onUploadProgress: (progressEvent: any) => {
+        const percentCompleted = Math.round(
+          (progressEvent.loaded * 100) / progressEvent.total
+        )
+        data.onProgress?.(percentCompleted)
+      },
+    })
     return response.data
   } catch (error: any) {
     throw error.response?.data?.error || 'Upload failed'

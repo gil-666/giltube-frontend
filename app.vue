@@ -21,7 +21,7 @@
 
       <input
         type="text"
-        placeholder="Search"
+        placeholder="Search(NOSIRVE)"
         class="bg-zinc-900 px-4 py-2 rounded-full w-1/3 focus:outline-none text-white placeholder-gray-500"
       />
 
@@ -112,6 +112,15 @@
               <div class="px-4 py-2 text-xs text-gray-500 border-zinc-700 font-semibold">
               SETTINGS
             </div>
+              <!-- Go to Channel Page (only when signed into a channel) -->
+              <!-- <NuxtLink
+                v-if="activeAccount !== 'personal'"
+                :to="`/channel/${activeAccount}`"
+                class="block px-4 py-2 hover:bg-zinc-800 text-blue-400"
+                @click="dropdownOpen = false"
+              >
+                📺 View Channel Page
+              </NuxtLink> -->
               <NuxtLink
                 to="/my-channels"
                 class="block px-4 py-2 hover:bg-zinc-800 text-yellow-400"
@@ -160,14 +169,22 @@
             to="/"
             class="hover:bg-zinc-800 p-2 rounded cursor-pointer block"
           >Home</NuxtLink>
+          <!-- Dashboard (only when logged in) -->
           <NuxtLink
-            to="/channels"
-            class="hover:bg-zinc-800 p-2 rounded cursor-pointer block"
-          >Channels</NuxtLink>
+            v-if="isLoggedIn"
+            to="/dashboard"
+            class="hover:bg-zinc-800 p-2 rounded cursor-pointer block text-blue-400 font-semibold"
+          >Dashboard</NuxtLink>
           <NuxtLink
             to="/subscriptions"
             class="hover:bg-zinc-800 p-2 rounded cursor-pointer block"
           >Subscriptions</NuxtLink>
+          <!-- My Channel (only when signed into a channel) -->
+          <NuxtLink
+            v-if="activeAccount !== 'personal' && isLoggedIn"
+            :to="`/channel/${activeAccount}`"
+            class="hover:bg-zinc-800 p-2 rounded cursor-pointer block text-yellow-400 font-semibold"
+          >My Channel</NuxtLink>
         </nav>
       </aside>
 

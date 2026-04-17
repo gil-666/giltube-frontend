@@ -32,8 +32,8 @@
 
 <script setup lang="ts">
 import VideoPlayer from '~/app/components/videoplayer/VideoPlayer.vue'
-import { getVideo } from '~/app/service/videos'
-import { computed } from 'vue'
+import { getVideo, incrementViews } from '~/app/service/videos'
+import { computed, onMounted } from 'vue'
 
 const baseUrl = import.meta.env.VITE_API_BASE_URL
 const route = useRoute()
@@ -42,6 +42,15 @@ const id = route.params.id as string
 const { data: video } = await useAsyncData(`video-${id}`, () =>
   getVideo(id)
 )
+
+// Increment views when the video page loads
+onMounted(async () => {
+  try {
+    await incrementViews(id)
+  } catch (err) {
+    console.error('Failed to increment views:', err)
+  }
+})
 
 // HLS stream URL
 const videoSrc = computed(() =>
