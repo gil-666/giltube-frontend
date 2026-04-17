@@ -35,12 +35,14 @@
         <div class="flex items-start gap-4 flex-1">
           <!-- Avatar -->
           <div class="flex-shrink-0">
-            <img
-              v-if="channel.avatar_url && channel.avatar_url.trim()"
-              :src="channel.avatar_url"
-              :alt="channel.name"
-              class="w-20 h-20 rounded-full object-cover border-2 border-zinc-700"
-            />
+            <div v-if="channel.avatar_url && channel.avatar_url.trim() && !failedAvatars[channel.id]" class="w-20 h-20 rounded-full bg-zinc-700 flex items-center justify-center text-2xl font-bold border-2 border-zinc-700 overflow-hidden">
+              <img
+                :src="channel.avatar_url"
+                :alt="channel.name"
+                class="w-full h-full object-cover"
+                @error="failedAvatars[channel.id] = true"
+              />
+            </div>
             <div
               v-else
               class="w-20 h-20 rounded-full bg-zinc-700 flex items-center justify-center text-2xl font-bold border-2 border-zinc-700"
@@ -202,6 +204,7 @@ const isLoading = ref(false)
 const channels = ref([])
 const error = ref('')
 const userId = ref('')
+const failedAvatars = ref({}) // Track failed avatar loads
 
 // Edit state
 const editingId = ref(null)
@@ -229,6 +232,7 @@ const loadChannels = async () => {
   userId.value = storedUserId
   isLoading.value = true
   error.value = ''
+  failedAvatars.value = {} // Reset failed avatars
 
   try {
     channels.value = await fetchUserChannels(userId.value)
@@ -283,6 +287,7 @@ const saveEdit = async () => {
       channels.value[channelIndex].description = editForm.value.description
       // If avatar was uploaded, reload the channel data to get new avatar_url path
       if (editForm.value.avatar) {
+        failedAvatars.value[editingId.value] = false // Reset avatar load failure
         await loadChannels()
       }
     }
@@ -315,6 +320,7 @@ const confirmDelete = async () => {
 
     // Remove from local state
     channels.value = channels.value.filter(ch => ch.id !== deleteConfirmId.value)
+    delete failedAvatars.value[deleteConfirmId.value]
 
     // If this was the active channel, switch to personal
     const activeAccount = localStorage.getItem('active_account')

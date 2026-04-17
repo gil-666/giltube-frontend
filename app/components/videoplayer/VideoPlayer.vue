@@ -22,6 +22,10 @@ interface Props {
   status?: 'processing' | 'ready' | 'failed' | string
 }
 
+const emit = defineEmits<{
+  play: []
+}>()
+
 const props = withDefaults(defineProps<Props>(), {
   status: 'ready'
 })
@@ -281,6 +285,11 @@ onMounted(async () => {
       // Add quality button to control bar
       player.controlBar.addChild('QualityButton', {})
       
+      // Emit 'play' event when video starts playing
+      player.on('play', () => {
+        emit('play')
+      })
+      
       if (props.src && props.status === 'ready') {
         player.src({
           src: props.src,
@@ -421,11 +430,11 @@ watch(
 
 :deep(.vjs-quality-menu) {
   position: absolute;
-  bottom: 50px;
+  bottom: 35px;
   right: 0;
   background-color: #1a1a1a;
   border: 1px solid #333;
-  min-width: 120px;
+  min-width: 85px;
   z-index: 100;
   display: none;
   box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.5);
@@ -437,7 +446,7 @@ watch(
 
 :deep(.vjs-quality-menu-item) {
   color: white;
-  padding: 10px 12px;
+  padding: 8px 12px;
   border-bottom: 1px solid #333;
   cursor: pointer;
   user-select: none;
@@ -461,7 +470,7 @@ watch(
 :deep(.vjs-quality-menu-separator) {
   height: 1px;
   background-color: #333;
-  margin: 4px 0;
+  margin: 0px 0;
 }</style>
 
 

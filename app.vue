@@ -44,10 +44,11 @@
             <!-- Profile Picture Circle -->
             <div class="w-8 h-8 rounded-full bg-zinc-700 flex items-center justify-center text-xs text-gray-300 font-bold border border-zinc-600 overflow-hidden">
               <img
-                v-if="activeChannelAvatar && activeChannelAvatar.trim()"
+                v-if="activeChannelAvatar && !avatarLoadFailed"
                 :src="activeChannelAvatar"
                 :alt="displayName"
                 class="w-full h-full object-cover"
+                @error="avatarLoadFailed = true"
               />
               <span v-else>{{ displayName.charAt(0).toUpperCase() }}</span>
             </div>
@@ -95,12 +96,14 @@
               :class="['w-full text-left px-4 py-2 hover:bg-zinc-800 flex items-center gap-3', activeAccount === channel.id ? 'bg-zinc-800 text-blue-400' : 'text-gray-300']"
             >
               <!-- Channel Avatar -->
-              <img
-                v-if="channel.avatar_url && channel.avatar_url.trim()"
-                :src="channel.avatar_url"
-                :alt="channel.name"
-                class="w-6 h-6 rounded-full object-cover"
-              />
+              <div v-if="getChannelAvatarUrl(channel) && !failedChannelAvatars[channel.id]" class="w-6 h-6 rounded-full bg-zinc-700 flex items-center justify-center text-xs font-bold overflow-hidden">
+                <img
+                  :src="getChannelAvatarUrl(channel)"
+                  :alt="channel.name"
+                  class="w-full h-full object-cover"
+                  @error="failedChannelAvatars[channel.id] = true"
+                />
+              </div>
               <span v-else class="w-6 h-6 rounded-full bg-zinc-700 flex items-center justify-center text-xs font-bold">
                 {{ channel.name.charAt(0).toUpperCase() }}
               </span>
@@ -162,7 +165,7 @@
       <!-- Sidebar -->
       <aside 
         class="w-60 border-r border-zinc-800 transition-transform duration-200"
-        :class="{ 'hidden md:block': !isSidebarOpen }"
+        :class="{ 'hidden': !isSidebarOpen, 'md:block': true }"
       >
         <nav class="p-4 space-y-3">
           <NuxtLink
@@ -206,10 +209,12 @@ const router = useRouter()
 const isLoggedIn = ref(false)
 const username = ref('')
 const userId = ref('')
-const isSidebarOpen = ref(true)
+const isSidebarOpen = ref(false)
 const dropdownOpen = ref(false)
 const channels = ref([])
 const activeAccount = ref('personal')
+const avatarLoadFailed = ref(false)
+const failedChannelAvatars = ref({})
 
 // Computed property to show active account name
 const displayName = computed(() => {
@@ -221,8 +226,23 @@ const displayName = computed(() => {
 const activeChannelAvatar = computed(() => {
   if (activeAccount.value === 'personal') return ''
   const activeChannel = channels.value.find(ch => ch.id === activeAccount.value)
-  return activeChannel?.avatar_url && activeChannel.avatar_url.trim() ? activeChannel.avatar_url : ''
+  if (!activeChannel?.avatar_url || !activeChannel.avatar_url.trim()) return ''
+  // If it's a full URL, return as-is
+  if (activeChannel.avatar_url.startsWith('http')) return activeChannel.avatar_url
+  // Otherwise, construct the full URL
+  const baseUrl = import.meta.env.VITE_API_BASE_URL
+  return `${baseUrl}/avatars/${activeChannel.avatar_url}`
 })
+
+// Helper function to get channel avatar URL
+const getChannelAvatarUrl = (channel) => {
+  if (!channel?.avatar_url || !channel.avatar_url.trim()) return ''
+  // If it's a full URL, return as-is
+  if (channel.avatar_url.startsWith('http')) return channel.avatar_url
+  // Otherwise, construct the full URL
+  const baseUrl = import.meta.env.VITE_API_BASE_URL
+  return `${baseUrl}/avatars/${channel.avatar_url}`
+}
 
 onMounted(() => {
   checkAuthStatus()
@@ -240,6 +260,11 @@ watch(isLoggedIn, (newValue) => {
   }
 })
 
+// Reset avatar load failure when avatar changes
+watch(activeChannelAvatar, () => {
+  avatarLoadFailed.value = false
+})
+
 const checkAuthStatus = () => {
   const storedUserId = localStorage.getItem('user_id')
   const storedUsername = localStorage.getItem('username')
@@ -255,6 +280,9 @@ const checkAuthStatus = () => {
 
 const loadChannels = async () => {
   if (!userId.value) return
+  
+  // Reset failed avatars when loading channels
+  failedChannelAvatars.value = {}
   
   // Try to get channels from localStorage first
   const storedChannels = localStorage.getItem('user_channels')
@@ -280,6 +308,8 @@ const loadChannels = async () => {
 
 const switchAccount = (accountId, accountName) => {
   activeAccount.value = accountId
+  avatarLoadFailed.value = false
+  failedChannelAvatars.value = {}
   localStorage.setItem('active_account', accountId)
   localStorage.setItem('active_account_name', accountName)
   dropdownOpen.value = false

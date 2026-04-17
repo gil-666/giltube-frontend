@@ -116,3 +116,18 @@ export const incrementViews = async (id: string) => {
   const res = await api.post(`/videos/${id}/view`)
   return res.data
 }
+
+export const likeVideo = async (videoId: string, channelId: string) => {
+  const res = await api.post(`/videos/${videoId}/like?channel_id=${channelId}`)
+  return res.data
+}
+
+export const unlikeVideo = async (videoId: string, channelId: string) => {
+  const res = await api.delete(`/videos/${videoId}/like?channel_id=${channelId}`)
+  return res.data
+}
+
+export const checkIfLiked = async (videoId: string, channelId: string) => {
+  const res = await api.get(`/videos/${videoId}/liked?channel_id=${channelId}`)
+  return res.data
+}
