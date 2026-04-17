@@ -81,7 +81,7 @@
             </select>
           </div>
 
-          <div class="flex gap-3 mb-3">
+          <div class="flex gap-3 mb-4">
             <div class="w-9 h-9 bg-zinc-700 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 overflow-hidden">
               <img
                 v-if="getChannelAvatarUrl((activeAccount === userId || activeAccount === 'personal') ? personalAccountSelectedChannel : activeAccount)"
@@ -97,7 +97,7 @@
               placeholder="Add a comment..."
               maxlength="500"
               rows="3"
-              class="flex-1 bg-zinc-800 border border-zinc-700 rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-blue-500 resize-none"
+              class="flex-1 bg-zinc-800 border border-zinc-700 rounded px-3 py-1 text-white text-sm focus:outline-none focus:border-blue-500 resize-none"
             />
           </div>
           <div class="flex gap-2 justify-end">

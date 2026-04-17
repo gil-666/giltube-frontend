@@ -77,11 +77,11 @@
             </div>
 
             <!-- Status Badge -->
-            <div class="absolute top-2 right-2">
+            <div v-if="video.status !== 'ready'" class="absolute top-2 right-2">
               <span
                 :class="[
                   'px-2 py-1 rounded text-xs font-medium',
-                  video.status === 'published' || video.status === 'ready'
+                  video.status === 'published'
                     ? 'bg-green-900 text-green-200'
                     : video.status === 'processing'
                     ? 'bg-yellow-900 text-yellow-200'
