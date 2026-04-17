@@ -14,6 +14,12 @@
 
       <!-- Video Info -->
       <div v-if="video" class="mt-6">
+        <!-- Processing Message -->
+        <div v-if="video.status === 'processing'" class="bg-yellow-900 border border-yellow-700 text-yellow-200 px-4 py-3 rounded-lg mb-4">
+          <p class="font-semibold">Video Processing</p>
+          <p class="text-sm mt-1">This video is still being processed. It will be available to watch shortly.</p>
+        </div>
+
         <h1 class="text-2xl font-bold">{{ video.title }}</h1>
         <p class="text-gray-400 mt-2">{{ video.description }}</p>
         
@@ -362,6 +368,7 @@ watch([() => activeAccount.value, () => personalAccountSelectedChannel.value], (
   }
 })
 
+console.log('Loading video ID:', id)
 const { data: video } = await useAsyncData(`video-${id}`, () =>
   getVideo(id)
 )

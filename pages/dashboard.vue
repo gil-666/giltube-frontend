@@ -55,7 +55,7 @@
           class="bg-zinc-900 rounded-lg overflow-hidden hover:ring-2 hover:ring-blue-500 transition flex flex-col md:flex-row"
         >
           <!-- Video Thumbnail -->
-          <div class="relative bg-black w-full md:w-48 h-40 md:h-28 flex-shrink-0">
+          <div class="relative bg-black w-full md:w-48 h-40 md:h-28 flex-shrink-0 group cursor-pointer">
             <img
               v-if="getThumbnailUrl(video)"
               :src="getThumbnailUrl(video)"
@@ -66,6 +66,13 @@
             <div v-else class="w-full h-full flex items-center justify-center bg-zinc-800">
               <svg class="w-8 h-8 text-gray-600" fill="currentColor" viewBox="0 0 20 20">
                 <path d="M2 6a2 2 0 012-2h12a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zM14.553 7.106A1 1 0 0014 7H6a1 1 0 00-.553.106A1 1 0 004 8v4a1 1 0 001.447.894l4-2.667a1 1 0 000-1.788l-4-2.667z" />
+              </svg>
+            </div>
+
+            <!-- Play Button Overlay -->
+            <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center" @click="router.push(`/video/${video.id}`)">
+              <svg class="w-12 h-12 text-white" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
               </svg>
             </div>
 

@@ -2,7 +2,7 @@
   <div class="min-h-screen bg-zinc-950 text-white flex flex-col">
 
     <!-- Header -->
-    <header class="h-16 flex items-center justify-between px-4 border-b border-zinc-800">
+    <header class="h-16 flex items-center justify-between px-4 border-b border-zinc-800 fixed top-0 left-0 right-0 bg-zinc-950">
       <div class="flex items-center gap-3">
         <button
           @click="isSidebarOpen = !isSidebarOpen"
@@ -12,11 +12,14 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
           </svg>
         </button>
-        <img
-          @click="router.push('/')"
-          src="./assets/logowhsmall.png"
-          class="h-8 object-contain cursor-pointer md:h-14"
-        />
+        <div class="relative inline-flex">
+          <img
+            @click="router.push('/')"
+            src="./assets/logowhsmall.png"
+            class="h-8 object-contain cursor-pointer md:h-14"
+          />
+          <span class="absolute -top-1.5 -right-1 md:top-0 md:-right-2 bg-red-600 text-white text-[10px] md:text-xs font-bold px-0.5 md:px-1.5 py-0 rounded">BETA</span>
+        </div>
       </div>
 
       <input
@@ -67,95 +70,6 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="dropdownOpen ? 'M19 14l-7 7m0 0l-7-7m7 7V3' : 'M19 14l-7-7m0 0L5 14m7-7v11'" />
             </svg> -->
           </button>
-
-          <!-- Overlay for click outside -->
-          <div
-            v-if="dropdownOpen"
-            class="fixed inset-0 z-40"
-            @click="dropdownOpen = false"
-          />
-
-          <!-- Dropdown Menu -->
-          <div
-            v-if="dropdownOpen"
-            class="absolute right-0 mt-3 w-56 bg-zinc-900 border border-zinc-700 rounded shadow-lg z-50 max-h-96 overflow-y-auto"
-          >
-            <!-- Current Account -->
-            <div class="px-4 py-2 text-xs text-gray-500 border-b border-zinc-700 font-semibold">
-              CURRENT ACCOUNT
-            </div>
-            
-            <!-- Personal Account -->
-            <button
-              @click="switchAccount(userId, username)"
-              :class="['w-full text-left px-4 py-2 hover:bg-zinc-800', activeAccount === 'personal' ? 'bg-zinc-800 text-blue-400' : 'text-gray-300']"
-            >
-              👤 {{ username }} (Personal)
-            </button>
-
-            <!-- Channels Divider -->
-            <div v-if="channels.length > 0" class="px-4 py-2 text-xs text-gray-500 border-t border-zinc-700 font-semibold">
-              YOUR CHANNELS
-            </div>
-
-            <!-- User Channels -->
-            <button
-              v-for="channel in channels"
-              :key="channel.id"
-              @click="switchAccount(channel.id, channel.name)"
-              :class="['w-full text-left px-4 py-2 hover:bg-zinc-800 flex items-center gap-3', activeAccount === channel.id ? 'bg-zinc-800 text-blue-400' : 'text-gray-300']"
-            >
-              <!-- Channel Avatar -->
-              <div v-if="getChannelAvatarUrl(channel) && !failedChannelAvatars[channel.id]" class="w-6 h-6 rounded-full bg-zinc-700 flex items-center justify-center text-xs font-bold overflow-hidden">
-                <img
-                  :src="getChannelAvatarUrl(channel)"
-                  :alt="channel.name"
-                  class="w-full h-full object-cover"
-                  @error="failedChannelAvatars[channel.id] = true"
-                />
-              </div>
-              <span v-else class="w-6 h-6 rounded-full bg-zinc-700 flex items-center justify-center text-xs font-bold">
-                {{ channel.name.charAt(0).toUpperCase() }}
-              </span>
-              {{ channel.name }}
-            </button>
-
-            <!-- Actions -->
-            <div class="border-t border-zinc-700 mt-2 pt-2">
-              <div class="px-4 py-2 text-xs text-gray-500 border-zinc-700 font-semibold">
-              SETTINGS
-            </div>
-              <!-- Go to Channel Page (only when signed into a channel) -->
-              <!-- <NuxtLink
-                v-if="activeAccount !== 'personal'"
-                :to="`/channel/${activeAccount}`"
-                class="block px-4 py-2 hover:bg-zinc-800 text-blue-400"
-                @click="dropdownOpen = false"
-              >
-                📺 View Channel Page
-              </NuxtLink> -->
-              <NuxtLink
-                to="/my-channels"
-                class="block px-4 py-2 hover:bg-zinc-800 text-yellow-400"
-                @click="dropdownOpen = false"
-              >
-                Manage Channels
-              </NuxtLink>
-              <NuxtLink
-                to="/create-channel"
-                class="block px-4 py-2 hover:bg-zinc-800 text-green-400"
-                @click="dropdownOpen = false"
-              >
-                Create Channel
-              </NuxtLink>
-              <button
-                @click="handleLogout"
-                class="w-full text-left mt-2 px-4 py-2 hover:bg-zinc-800 text-red-400 rounded-b border-t border-zinc-700"
-              >
-                Logout
-              </button>
-            </div>
-          </div>
         </div>
 
         <!-- Login Link (when not logged in) -->
@@ -170,7 +84,7 @@
     </header>
 
     <!-- Mobile Expanded Search Bar -->
-    <div v-show="showSearchBar" class="md:hidden bg-zinc-900 border-b border-zinc-800">
+    <div v-show="showSearchBar" class="md:hidden bg-zinc-900 border-b border-zinc-800 fixed top-16 left-0 right-0" :style="{ zIndex: 100 }">
       <input
         type="text"
         placeholder="Search(NOSIRVE)"
@@ -179,13 +93,21 @@
       />
     </div>
 
+    <!-- Main Content Wrapper with padding for fixed header -->
+    <div class="pt-16 flex-1 overflow-auto">
     <!-- CONTENT AREA -->
-    <div class="flex flex-1 min-h-0">
+    <div class="flex flex-1 min-h-0 relative">
+      <!-- Mobile Overlay Backdrop -->
+      <div
+        v-if="isSidebarOpen"
+        class="fixed inset-0 bg-black bg-opacity-50 md:hidden"
+        @click="isSidebarOpen = false"
+      />
 
       <!-- Sidebar -->
       <aside 
-        class="w-60 border-r border-zinc-800 transition-transform duration-200"
-        :class="{ 'hidden': !isSidebarOpen, 'md:block': true }"
+        class="w-60 bg-zinc-950 border-r border-zinc-800 transition-transform duration-300 fixed left-0 top-16 bottom-0 md:static md:top-auto md:bottom-auto"
+        :class="{ '-translate-x-full': !isSidebarOpen, 'translate-x-0': isSidebarOpen, 'md:translate-x-0': true }"
       >
         <nav class="p-4 space-y-3">
           <NuxtLink
@@ -217,12 +139,104 @@
       </div>
 
     </div>
+    </div>
 
+  </div>
+  <!-- Profile Dropdown Portal (outside header for z-index independence) -->
+  <!-- Overlay for click outside -->
+  <div
+    v-if="dropdownOpen"
+    class="fixed inset-0 pointer-events-none"
+    :style="{ zIndex: 9998 }"
+    @click="dropdownOpen = false"
+  />
+
+  <!-- Dropdown Menu -->
+  <div
+    v-if="dropdownOpen"
+    class="fixed bg-zinc-900 border border-zinc-700 rounded shadow-lg max-h-96 overflow-y-auto pointer-events-auto"
+    :style="{ zIndex: 9999, top: '70px', right: '20px', width: '224px' }"
+  >
+    <!-- Current Account -->
+    <div class="px-4 py-2 text-xs text-gray-500 border-b border-zinc-700 font-semibold">
+      CURRENT ACCOUNT
+    </div>
+    
+    <!-- Personal Account -->
+    <button
+      @click="switchAccount(userId, username)"
+      :class="['w-full text-left px-4 py-2 hover:bg-zinc-800', activeAccount === 'personal' ? 'bg-zinc-800 text-blue-400' : 'text-gray-300']"
+    >
+      👤 {{ username }} (Personal)
+    </button>
+
+    <!-- Channels Divider -->
+    <div v-if="channels.length > 0" class="px-4 py-2 text-xs text-gray-500 border-t border-zinc-700 font-semibold">
+      YOUR CHANNELS
+    </div>
+
+    <!-- User Channels -->
+    <button
+      v-for="channel in channels"
+      :key="channel.id"
+      @click="switchAccount(channel.id, channel.name)"
+      :class="['w-full text-left px-4 py-2 hover:bg-zinc-800 flex items-center gap-3', activeAccount === channel.id ? 'bg-zinc-800 text-blue-400' : 'text-gray-300']"
+    >
+      <!-- Channel Avatar -->
+      <div v-if="getChannelAvatarUrl(channel) && !failedChannelAvatars[channel.id]" class="w-6 h-6 rounded-full bg-zinc-700 flex items-center justify-center text-xs font-bold overflow-hidden">
+        <img
+          :src="getChannelAvatarUrl(channel)"
+          :alt="channel.name"
+          class="w-full h-full object-cover"
+          @error="failedChannelAvatars[channel.id] = true"
+        />
+      </div>
+      <span v-else class="w-6 h-6 rounded-full bg-zinc-700 flex items-center justify-center text-xs font-bold">
+        {{ channel.name.charAt(0).toUpperCase() }}
+      </span>
+      {{ channel.name }}
+    </button>
+
+    <!-- Actions -->
+    <div class="border-t border-zinc-700 mt-2 pt-2">
+      <div class="px-4 py-2 text-xs text-gray-500 border-zinc-700 font-semibold">
+      SETTINGS
+    </div>
+      <!-- Go to Channel Page (only when signed into a channel) -->
+      <!-- <NuxtLink
+        v-if="activeAccount !== 'personal'"
+        :to="`/channel/${activeAccount}`"
+        class="block px-4 py-2 hover:bg-zinc-800 text-blue-400"
+        @click="dropdownOpen = false"
+      >
+        📺 View Channel Page
+      </NuxtLink> -->
+      <NuxtLink
+        to="/my-channels"
+        class="block px-4 py-2 hover:bg-zinc-800 text-yellow-400"
+        @click="dropdownOpen = false"
+      >
+        Manage Channels
+      </NuxtLink>
+      <NuxtLink
+        to="/create-channel"
+        class="block px-4 py-2 hover:bg-zinc-800 text-green-400"
+        @click="dropdownOpen = false"
+      >
+        Create Channel
+      </NuxtLink>
+      <button
+        @click="handleLogout"
+        class="w-full text-left mt-2 px-4 py-2 hover:bg-zinc-800 text-red-400 rounded-b border-t border-zinc-700"
+      >
+        Logout
+      </button>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, computed, watch } from 'vue'
+import { ref, onMounted, onUnmounted, computed, watch } from 'vue'
 import { fetchUserChannels } from '~/app/service/upload'
 
 const router = useRouter()
@@ -265,11 +279,26 @@ const getChannelAvatarUrl = (channel) => {
   return `${baseUrl}/avatars/${channel.avatar_url}`
 }
 
+// Close sidebar when window is resized to mobile size
+const handleSidebarResize = () => {
+  if (window.innerWidth >= 768) {
+    // md breakpoint - don't close on desktop
+    return
+  }
+  isSidebarOpen.value = false
+}
+
 onMounted(() => {
   checkAuthStatus()
   if (isLoggedIn.value) {
     loadChannels()
   }
+  
+  window.addEventListener('resize', handleSidebarResize)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', handleSidebarResize)
 })
 
 // Watch for login/logout changes
