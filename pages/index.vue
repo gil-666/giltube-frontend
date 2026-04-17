@@ -18,8 +18,17 @@
           </div>
         </NuxtLink>
         <div class="flex mt-3 gap-3">
-          <div class="w-9 h-9 bg-zinc-700 rounded-full"><img class="rounded-full" :src="i.channel.avatar_url"
-              :alt="i.channel.name" /></div>
+          <div class="w-9 h-9 bg-zinc-700 rounded-full flex items-center justify-center">
+            <img
+              v-if="i.channel?.avatar_url && typeof i.channel.avatar_url === 'string' && i.channel.avatar_url.trim()"
+              class="rounded-full w-9 h-9 object-cover"
+              :src="i.channel.avatar_url"
+              :alt="i.channel.name"
+            />
+            <span v-else class="text-xs font-bold text-white">
+              {{ i.channel?.name?.charAt(0).toUpperCase() ?? 'C' }}
+            </span>
+          </div>
           <div>
             <NuxtLink :to="`/video/${i.id}`">
               <h3 class="text-sm font-semibold line-clamp-2">
@@ -39,7 +48,7 @@
 
 </template>
 <script setup>
-
+import { ref, onMounted } from 'vue'
 import { getVideos } from '~/app/service/videos'
 const baseUrl = import.meta.env.VITE_API_BASE_URL
 const videos = ref([])

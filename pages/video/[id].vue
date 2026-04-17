@@ -11,10 +11,20 @@
     <div v-if="video" class="w-full max-w-5xl mt-6">
       <h1 class="text-2xl font-bold">{{ video.title }}</h1>
       <p class="text-gray-400 mt-2">{{ video.description }}</p>
-      <div class="flex items-center mt-4 gap-4 hover:bg-zinc-800 p-2 rounded-lg cursor-pointer">
-      <div class="w-9 h-9 bg-zinc-700 rounded-full"><img class="rounded-full" :src="video.channel.avatar_url" :alt="video.channel.name" /></div>
-      <p class="text-sm font-medium text-gray-100 mt-1">{{ video.channel.name }}</p>
-      </div>
+      <NuxtLink :to="`/channel/${video.channel?.id}`" class="flex items-center mt-4 gap-4 hover:bg-zinc-800 p-2 rounded-lg cursor-pointer">
+        <div class="w-9 h-9 bg-zinc-700 rounded-full flex items-center justify-center">
+          <img
+            v-if="video.channel?.avatar_url && typeof video.channel.avatar_url === 'string' && video.channel.avatar_url.trim()"
+            class="rounded-full w-9 h-9 object-cover"
+            :src="video.channel.avatar_url"
+            :alt="video.channel.name"
+          />
+          <span v-else class="text-xs font-bold text-white">
+            {{ video.channel?.name?.charAt(0).toUpperCase() ?? 'C' }}
+          </span>
+        </div>
+        <p class="text-sm font-medium text-gray-100 mt-1">{{ video.channel.name }}</p>
+      </NuxtLink>
     </div>
 
   </div>

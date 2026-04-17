@@ -114,7 +114,7 @@ const createQualityButton = (player: any) => {
         autoItem.classList.add('vjs-selected')
       }
 
-      autoItem.onclick = (e: any) => {
+      autoItem.addEventListener('click', (e: any) => {
         e.stopPropagation()
         // Enable all levels for auto selection
         for (let j = 0; j < this.qualityLevels.length; j++) {
@@ -122,7 +122,7 @@ const createQualityButton = (player: any) => {
         }
         this.updateMenuSelection()
         this.toggleMenu()
-      }
+      })
 
       this.menu.appendChild(autoItem)
 
@@ -167,7 +167,7 @@ const createQualityButton = (player: any) => {
           item.classList.add('vjs-selected')
         }
 
-        item.onclick = (e: any) => {
+        item.addEventListener('click', (e: any) => {
           e.stopPropagation()
           // Disable all except this one
           for (let j = 0; j < this.qualityLevels.length; j++) {
@@ -175,7 +175,7 @@ const createQualityButton = (player: any) => {
           }
           this.updateMenuSelection()
           this.toggleMenu()
-        }
+        })
 
         this.menu.appendChild(item)
       }
@@ -304,7 +304,6 @@ watch(
         src: newSrc,
         type: 'application/x-mpegURL'
       })
-      nextTick(() => setupQualityLevels())
     }
   }
 )
