@@ -179,31 +179,76 @@
       </div>
     </div>
 
-    <!-- Right: Sidebar (only show on lg screens) -->
-    <div v-if="showSidebar" class="lg:w-80 lg:flex-shrink-0">
-      <div class="lg:sticky lg:top-6">
+    <!-- Right: Sidebar (full width on mobile as carousel, sidebar on lg) -->
+    <div class="w-full md:w-64 md:flex-shrink-0">
+      <div class="md:sticky md:top-6">
         <!-- Related Videos -->
-        <div>
-          <h2 class="text-xl font-bold mb-6">Related Videos</h2>
-        <div class="space-y-4">
-          <NuxtLink
-            v-for="relatedVideo in relatedVideos"
-            :key="relatedVideo.id"
-            :to="`/video/${relatedVideo.id}`"
-            class="block hover:opacity-80 transition"
-          >
-            <div class="bg-zinc-800 rounded overflow-hidden aspect-video mb-2">
-              <img
-                class="w-full h-full object-cover"
-                :src="baseUrl + relatedVideo.thumbnail_url"
-                :alt="relatedVideo.title"
-              />
+        <div class="px-4 md:px-0">
+          <h2 class="text-lg font-bold mb-4">Related Videos</h2>
+          
+          <!-- Mobile: Horizontal Carousel (hidden on md and above) -->
+          <div class="md:hidden relative">
+            <!-- Left Arrow -->
+            <button
+              @click="scrollCarousel('left')"
+              class="absolute left-0 top-1/3 -translate-y-1/2 z-10 bg-black bg-opacity-70 hover:bg-opacity-100 rounded-full p-2 transition"
+            >
+              <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+            <div ref="carouselContainer" class="overflow-x-auto pb-2 px-8" style="scrollbar-width: none; -ms-overflow-style: none;">
+              <div class="flex gap-3 whitespace-nowrap" style="-webkit-overflow-scrolling: touch;">
+                <NuxtLink
+                  v-for="relatedVideo in relatedVideos"
+                  :key="relatedVideo.id"
+                  :to="`/video/${relatedVideo.id}`"
+                  class="inline-block hover:opacity-80 transition flex-shrink-0"
+                >
+                  <div class="bg-zinc-800 rounded overflow-hidden w-40 aspect-video mb-1.5">
+                    <img
+                      class="w-full h-full object-cover"
+                      :src="baseUrl + relatedVideo.thumbnail_url"
+                      :alt="relatedVideo.title"
+                    />
+                  </div>
+                  <p class="text-xs font-semibold line-clamp-2 w-40">{{ relatedVideo.title }}</p>
+                  <p class="text-xs text-gray-400 mt-0.5">{{ relatedVideo.channel?.name }}</p>
+                  <p class="text-xs text-gray-500">{{ relatedVideo.views }} views</p>
+                </NuxtLink>
+              </div>
             </div>
-            <p class="text-sm font-semibold line-clamp-2">{{ relatedVideo.title }}</p>
-            <p class="text-xs text-gray-400 mt-1">{{ relatedVideo.channel?.name }}</p>
-            <p class="text-xs text-gray-500">{{ relatedVideo.views }} views</p>
-          </NuxtLink>
-        </div>
+            <!-- Right Arrow -->
+            <button
+              @click="scrollCarousel('right')"
+              class="absolute right-0 top-1/3 -translate-y-1/2 z-10 bg-black bg-opacity-70 hover:bg-opacity-100 rounded-full p-2 transition"
+            >
+              <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+          </div>
+          
+          <!-- Desktop/Tablet: Vertical List (hidden on mobile) -->
+          <div class="hidden md:block space-y-3">
+            <NuxtLink
+              v-for="relatedVideo in relatedVideos"
+              :key="relatedVideo.id"
+              :to="`/video/${relatedVideo.id}`"
+              class="block hover:opacity-80 transition"
+            >
+              <div class="bg-zinc-800 rounded overflow-hidden aspect-video mb-1.5">
+                <img
+                  class="w-full h-full object-cover"
+                  :src="baseUrl + relatedVideo.thumbnail_url"
+                  :alt="relatedVideo.title"
+                />
+              </div>
+              <p class="text-xs font-semibold line-clamp-2">{{ relatedVideo.title }}</p>
+              <p class="text-xs text-gray-400 mt-0.5">{{ relatedVideo.channel?.name }}</p>
+              <p class="text-xs text-gray-500">{{ relatedVideo.views }} views</p>
+            </NuxtLink>
+          </div>
         </div>
       </div>
     </div>
@@ -297,6 +342,15 @@ const showSidebar = ref(true)
 
 // Related videos state
 const relatedVideos = ref([])
+const carouselContainer = ref<HTMLElement | null>(null)
+
+// Carousel scroll methods
+const scrollCarousel = (direction: 'left' | 'right') => {
+  if (!carouselContainer.value) return
+  const scrollAmount = 300
+  const newScroll = carouselContainer.value.scrollLeft + (direction === 'left' ? -scrollAmount : scrollAmount)
+  carouselContainer.value.scrollTo({ left: newScroll, behavior: 'smooth' })
+}
 
 // Helper function to load channels for current account
 const loadChannelsForAccount = () => {

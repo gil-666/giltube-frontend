@@ -2,7 +2,7 @@
   <div class="min-h-screen bg-zinc-950 text-white flex flex-col">
 
     <!-- Header -->
-    <header class="h-16 flex items-center justify-between px-4 border-b border-zinc-800 fixed top-0 left-0 right-0 bg-zinc-950">
+    <header class="h-16 flex items-center justify-between px-4 border-b border-zinc-800 fixed top-0 left-0 right-0 bg-zinc-950" :style="{ zIndex: 60 }">
       <div class="flex items-center gap-3">
         <button
           @click="isSidebarOpen = !isSidebarOpen"
@@ -84,7 +84,7 @@
     </header>
 
     <!-- Mobile Expanded Search Bar -->
-    <div v-show="showSearchBar" class="md:hidden bg-zinc-900 border-b border-zinc-800 fixed top-16 left-0 right-0" :style="{ zIndex: 100 }">
+    <div v-show="showSearchBar" class="md:hidden bg-zinc-900 border-b border-zinc-800 fixed top-16 left-0 right-0" :style="{ zIndex: 61 }">
       <input
         type="text"
         placeholder="Search(NOSIRVE)"
@@ -101,6 +101,7 @@
       <div
         v-if="isSidebarOpen"
         class="fixed inset-0 bg-black bg-opacity-50 md:hidden"
+        :style="{ zIndex: 40 }"
         @click="isSidebarOpen = false"
       />
 
@@ -108,6 +109,7 @@
       <aside 
         class="w-60 bg-zinc-950 border-r border-zinc-800 transition-transform duration-300 fixed left-0 top-16 bottom-0 md:static md:top-auto md:bottom-auto"
         :class="{ '-translate-x-full': !isSidebarOpen, 'translate-x-0': isSidebarOpen, 'md:translate-x-0': true }"
+        :style="{ zIndex: 50 }"
       >
         <nav class="p-4 space-y-3">
           <NuxtLink
