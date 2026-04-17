@@ -9,4 +9,9 @@ export default defineNuxtConfig({
   dir: {
     pages: 'pages'
   },
+
+  devServer: {
+    host: '0.0.0.0',
+    port: 3000,
+  }
 })

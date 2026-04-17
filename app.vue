@@ -22,10 +22,20 @@
       <input
         type="text"
         placeholder="Search(NOSIRVE)"
-        class="bg-zinc-900 px-4 py-2 rounded-full w-1/3 focus:outline-none text-white placeholder-gray-500"
+        class="hidden md:block bg-zinc-900 px-4 py-2 rounded-full w-1/3 focus:outline-none text-white placeholder-gray-500"
       />
 
       <div class="flex items-center gap-2">
+        <!-- Mobile Search Button -->
+        <button
+          @click="showSearchBar = !showSearchBar"
+          class="md:hidden p-2 hover:bg-zinc-800 rounded transition"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+        </button>
+
         <!-- Upload Button (when logged in) -->
         <NuxtLink
           v-if="isLoggedIn"
@@ -159,6 +169,16 @@
       </div>
     </header>
 
+    <!-- Mobile Expanded Search Bar -->
+    <div v-show="showSearchBar" class="md:hidden bg-zinc-900 border-b border-zinc-800">
+      <input
+        type="text"
+        placeholder="Search(NOSIRVE)"
+        autofocus
+        class="w-full px-4 py-3 bg-zinc-900 focus:outline-none text-white placeholder-gray-500"
+      />
+    </div>
+
     <!-- CONTENT AREA -->
     <div class="flex flex-1 min-h-0">
 
@@ -182,9 +202,9 @@
             to="/subscriptions"
             class="hover:bg-zinc-800 p-2 rounded cursor-pointer block"
           >Subscriptions</NuxtLink>
-          <!-- My Channel (only when signed into a channel) -->
+          <!-- My Channel (only when signed into a channel, not personal) -->
           <NuxtLink
-            v-if="activeAccount !== 'personal' && isLoggedIn"
+            v-if="activeAccount !== 'personal' && activeAccount !== userId && isLoggedIn"
             :to="`/channel/${activeAccount}`"
             class="hover:bg-zinc-800 p-2 rounded cursor-pointer block text-yellow-400 font-semibold"
           >My Channel</NuxtLink>
@@ -210,6 +230,7 @@ const isLoggedIn = ref(false)
 const username = ref('')
 const userId = ref('')
 const isSidebarOpen = ref(false)
+const showSearchBar = ref(false)
 const dropdownOpen = ref(false)
 const channels = ref([])
 const activeAccount = ref('personal')

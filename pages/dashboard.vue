@@ -12,12 +12,12 @@
           <h1 class="text-4xl font-bold mb-2">Your Videos</h1>
           <p class="text-gray-400">Manage and organize your video library</p>
         </div>
-        <NuxtLink
+        <!-- <NuxtLink
           to="/upload"
           class="px-6 py-3 bg-blue-600 hover:bg-blue-700 rounded font-bold transition"
         >
           Upload New Video
-        </NuxtLink>
+        </NuxtLink> -->
       </div>
     </div>
 
@@ -191,7 +191,7 @@ const userId = ref('')
 const channelId = ref('')
 let refreshInterval = null
 
-const apiBaseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'
+const apiBaseURL = import.meta.env.VITE_API_BASE_URL
 
 // Check if any videos are processing
 const hasProcessingVideos = computed(() => {

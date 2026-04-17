@@ -61,7 +61,7 @@
         <h2 class="text-xl font-bold mb-6">Comments</h2>
 
         <!-- Comment Form -->
-        <div v-if="isLoggedIn && ((activeAccount === userId || activeAccount === 'personal') || userChannels.length > 0)" class="mb-6 bg-zinc-900 p-4 rounded">
+        <div v-if="isLoggedIn && (userChannels.length > 0 || (activeAccount !== userId && activeAccount !== 'personal'))" class="mb-6 bg-zinc-900 p-4 rounded">
           <!-- Channel Selector (if on personal account and have channels) -->
           <div v-if="(activeAccount === userId || activeAccount === 'personal') && userChannels.length > 0" class="mb-3">
             <label class="text-xs text-gray-400 block mb-2">Comment as:</label>
@@ -121,9 +121,15 @@
         </div>
 
         <!-- Personal account - clickable area to show dialog (only if no channels) -->
-        <div v-else-if="activeAccount === userId && userChannels.length === 0" class="mb-6 bg-zinc-900 p-4 rounded text-center cursor-pointer hover:bg-zinc-800 transition" @click="showCreateChannelDialog = true">
-          <p class="text-gray-400 text-sm">Comments require a channel</p>
-          <p class="text-blue-400 hover:text-blue-300 mt-2 text-sm">Create one now</p>
+        <div v-else-if="(activeAccount === 'personal' || activeAccount === userId) && userChannels.length === 0" class="mb-6 bg-blue-900 border border-blue-700 p-4 rounded text-center">
+          <p class="text-blue-300 text-sm mb-3">To comment, you need to create a channel first</p>
+          <NuxtLink
+            to="/create-channel"
+            class="inline-block px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded transition text-sm font-semibold"
+            @click="showCreateChannelDialog = false"
+          >
+            Create Channel
+          </NuxtLink>
         </div>
 
         <!-- Comments List -->
@@ -147,7 +153,17 @@
               <div class="flex-1 min-w-0">
                 <div class="flex items-center justify-between gap-2">
                   <p class="font-semibold text-xs">{{ comment.channel.name }}</p>
-                  <p class="text-xs text-gray-500 flex-shrink-0">{{ getTimeAgo(comment.created_at) }}</p>
+                  <div class="flex items-center gap-2 flex-shrink-0">
+                    <p class="text-xs text-gray-500">{{ getTimeAgo(comment.created_at) }}</p>
+                    <button
+                      v-if="isCommentOwner(comment)"
+                      @click="deleteUserComment(comment.id)"
+                      class="text-gray-400 hover:text-red-500 transition text-xs p-1"
+                      title="Delete comment"
+                    >
+                      ✕
+                    </button>
+                  </div>
                 </div>
                 <p class="text-gray-300 mt-1 text-xs break-words">{{ comment.text }}</p>
               </div>
@@ -214,13 +230,31 @@
       </div>
     </div>
 
+    <!-- Error Dialog -->
+    <div v-if="showErrorDialog" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
+      <div class="bg-zinc-900 rounded-lg p-8 max-w-md w-full border border-zinc-700">
+        <h3 class="text-2xl font-bold mb-4">Error</h3>
+        
+        <p class="text-gray-300 mb-6">
+          {{ errorMessage }}
+        </p>
+
+        <button
+          @click="showErrorDialog = false"
+          class="w-full px-4 py-3 bg-blue-600 hover:bg-blue-700 rounded transition text-center font-semibold"
+        >
+          Close
+        </button>
+      </div>
+    </div>
+
   </div>
 </template>
 
 <script setup lang="ts">
 import VideoPlayer from '~/app/components/videoplayer/VideoPlayer.vue'
 import { getVideo, incrementViews, getVideos, likeVideo, unlikeVideo, checkIfLiked } from '~/app/service/videos'
-import { getVideoComments, postComment as apiPostComment } from '~/app/service/comments'
+import { getVideoComments, postComment as apiPostComment, deleteComment } from '~/app/service/comments'
 import { getTimeAgo } from '~/app/utils/time'
 import { computed, ref, onMounted, onUnmounted, watch } from 'vue'
 
@@ -244,6 +278,8 @@ const comments = ref([])
 const newCommentText = ref('')
 const isPostingComment = ref(false)
 const showCreateChannelDialog = ref(false)
+const showErrorDialog = ref(false)
+const errorMessage = ref('')
 
 // Likes state
 const likes = ref(0)
@@ -335,7 +371,7 @@ watch(() => video.value, (newVideo) => {
   if (newVideo && newVideo.likes !== undefined) {
     likes.value = newVideo.likes
   }
-}, { deep: true })
+}, { deep: true, immediate: true })
 
 // Check like status when account changes
 watch([() => activeAccount.value], async () => {
@@ -416,9 +452,6 @@ onMounted(async () => {
       if (likeChannelId) {
         const likeData = await checkIfLiked(id, likeChannelId)
         isLiked.value = likeData.liked
-        if (video.value) {
-          likes.value = video.value.likes || 0
-        }
       }
     } catch (err) {
       console.error('Failed to check like status:', err)
@@ -547,6 +580,37 @@ const postComment = async () => {
     console.error('Failed to post comment:', err)
   } finally {
     isPostingComment.value = false
+  }
+}
+
+// Check if logged-in user owns a comment
+const isCommentOwner = (comment) => {
+  if (!isLoggedIn.value) return false
+  
+  const isPersonalAccount = activeAccount.value === 'personal' || activeAccount.value === userId.value
+  const currentAccountId = isPersonalAccount ? userId.value : activeAccount.value
+  
+  return comment.channel.id === currentAccountId
+}
+
+// Delete a comment
+const deleteUserComment = async (commentId: string) => {
+  if (!isCommentOwner(comments.value.find(c => c.id === commentId))) {
+    return
+  }
+  
+  if (!confirm('Are you sure you want to delete this comment?')) {
+    return
+  }
+  
+  try {
+    await deleteComment(commentId)
+    // Remove from local state
+    comments.value = comments.value.filter(c => c.id !== commentId)
+  } catch (err) {
+    console.error('Failed to delete comment:', err)
+    errorMessage.value = 'Failed to delete comment'
+    showErrorDialog.value = true
   }
 }
 </script>
