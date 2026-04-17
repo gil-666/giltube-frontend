@@ -23,6 +23,8 @@
 <script setup lang="ts">
 import VideoPlayer from '~/app/components/videoplayer/VideoPlayer.vue'
 import { getVideo } from '~/app/service/videos'
+import { computed } from 'vue'
+
 const baseUrl = import.meta.env.VITE_API_BASE_URL
 const route = useRoute()
 const id = route.params.id as string
