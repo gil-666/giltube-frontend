@@ -37,7 +37,7 @@
           <div class="flex-shrink-0">
             <div v-if="channel.avatar_url && channel.avatar_url.trim() && !failedAvatars[channel.id]" class="w-20 h-20 rounded-full bg-zinc-700 flex items-center justify-center text-2xl font-bold border-2 border-zinc-700 overflow-hidden">
               <img
-                :src="channel.avatar_url"
+                :src="getAvatarUrl(channel.avatar_url)"
                 :alt="channel.name"
                 class="w-full h-full object-cover"
                 @error="failedAvatars[channel.id] = true"
@@ -242,6 +242,17 @@ const loadChannels = async () => {
   } finally {
     isLoading.value = false
   }
+}
+
+// Helper function to format avatar URL
+const getAvatarUrl = (avatarUrl: string) => {
+  if (!avatarUrl || !avatarUrl.trim()) return ''
+  // If it's a full URL, return as-is
+  if (avatarUrl.startsWith('http')) return avatarUrl
+  // If it already starts with /avatars/, return as-is (root-relative path)
+  if (avatarUrl.startsWith('/avatars/')) return avatarUrl
+  // Otherwise, prepend /avatars/ (don't use baseUrl - avatars are at root level)
+  return `/avatars/${avatarUrl}`
 }
 
 const initEditChannel = (channel: any) => {

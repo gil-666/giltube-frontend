@@ -34,7 +34,7 @@
             <img
               v-if="video.channel?.avatar_url && typeof video.channel.avatar_url === 'string' && video.channel.avatar_url.trim()"
               class="rounded-full w-9 h-9 object-cover"
-              :src="video.channel.avatar_url"
+              :src="getVideoChannelAvatarUrl(video.channel.avatar_url)"
               :alt="video.channel.name"
             />
             <span v-else class="text-xs font-bold text-white">
@@ -404,31 +404,29 @@ const loadChannelsForAccount = () => {
 // Helper function to sync active account from localStorage
 const syncActiveAccountFromStorage = async () => {
   const storedActiveAccount = localStorage.getItem('active_account') || 'personal'
+  const storedAccountName = localStorage.getItem('active_account_name')
   
   // Only process if account actually changed
   if (storedActiveAccount !== activeAccount.value) {
     console.log('Account changed from', activeAccount.value, 'to', storedActiveAccount)
     activeAccount.value = storedActiveAccount
-  }
-  
-  const storedAccountName = localStorage.getItem('active_account_name')
-  activeChannelName.value = storedAccountName || 'Channel'
-  
-  // Always load channels (they're needed for the dropdown on personal account)
-  loadChannelsForAccount()
-  
-  // Re-check like status after account sync
-  if (isLoggedIn.value) {
-    try {
-      const isPersonalAccount = activeAccount.value === 'personal' || activeAccount.value === userId.value
-      const likeChannelId = isPersonalAccount ? userId.value : activeAccount.value
-      if (likeChannelId) {
-        const likeData = await checkIfLiked(id, likeChannelId)
-        isLiked.value = likeData.liked
-        console.log('Re-checked like status after account sync:', { isPersonalAccount, likeChannelId, isLiked: isLiked.value })
+    activeChannelName.value = storedAccountName || 'Channel'
+    
+    // Load channels and re-check like status only when account changes
+    loadChannelsForAccount()
+    
+    if (isLoggedIn.value) {
+      try {
+        const isPersonalAccount = activeAccount.value === 'personal' || activeAccount.value === userId.value
+        const likeChannelId = isPersonalAccount ? userId.value : activeAccount.value
+        if (likeChannelId) {
+          const likeData = await checkIfLiked(id, likeChannelId)
+          isLiked.value = likeData.liked
+          console.log('Re-checked like status after account sync:', { isPersonalAccount, likeChannelId, isLiked: isLiked.value })
+        }
+      } catch (err) {
+        console.error('Failed to re-check like status:', err)
       }
-    } catch (err) {
-      console.error('Failed to re-check like status:', err)
     }
   }
 }
@@ -600,14 +598,24 @@ const getChannelAvatarUrl = (channelId: string): string => {
   const channel = userChannels.value.find(ch => ch.id === channelId)
   if (!channel?.avatar_url || !channel.avatar_url.trim()) return ''
   if (channel.avatar_url.startsWith('http')) return channel.avatar_url
-  return `${baseUrl}/avatars/${channel.avatar_url}`
+  if (channel.avatar_url.startsWith('/avatars/')) return channel.avatar_url
+  return `/avatars/${channel.avatar_url}`
 }
 
 // Get comment avatar URL
 const getCommentAvatarUrl = (avatarUrl: string): string => {
   if (!avatarUrl || !avatarUrl.trim()) return ''
   if (avatarUrl.startsWith('http')) return avatarUrl
-  return `${baseUrl}/avatars/${avatarUrl}`
+  if (avatarUrl.startsWith('/avatars/')) return avatarUrl
+  return `/avatars/${avatarUrl}`
+}
+
+// Get video channel avatar URL
+const getVideoChannelAvatarUrl = (avatarUrl: string): string => {
+  if (!avatarUrl || !avatarUrl.trim()) return ''
+  if (avatarUrl.startsWith('http')) return avatarUrl
+  if (avatarUrl.startsWith('/avatars/')) return avatarUrl
+  return `/avatars/${avatarUrl}`
 }
 
 // Clear when user logs out

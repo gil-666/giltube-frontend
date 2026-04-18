@@ -266,9 +266,10 @@ const activeChannelAvatar = computed(() => {
   if (!activeChannel?.avatar_url || !activeChannel.avatar_url.trim()) return ''
   // If it's a full URL, return as-is
   if (activeChannel.avatar_url.startsWith('http')) return activeChannel.avatar_url
-  // Otherwise, construct the full URL
-  const baseUrl = import.meta.env.VITE_API_BASE_URL
-  return `${baseUrl}/avatars/${activeChannel.avatar_url}`
+  // If it already starts with /avatars/, return as-is (root-relative path)
+  if (activeChannel.avatar_url.startsWith('/avatars/')) return activeChannel.avatar_url
+  // Otherwise, prepend /avatars/ (don't use baseUrl - avatars are at root level)
+  return `/avatars/${activeChannel.avatar_url}`
 })
 
 // Helper function to get channel avatar URL
@@ -276,9 +277,10 @@ const getChannelAvatarUrl = (channel) => {
   if (!channel?.avatar_url || !channel.avatar_url.trim()) return ''
   // If it's a full URL, return as-is
   if (channel.avatar_url.startsWith('http')) return channel.avatar_url
-  // Otherwise, construct the full URL
-  const baseUrl = import.meta.env.VITE_API_BASE_URL
-  return `${baseUrl}/avatars/${channel.avatar_url}`
+  // If it already starts with /avatars/, return as-is (root-relative path)
+  if (channel.avatar_url.startsWith('/avatars/')) return channel.avatar_url
+  // Otherwise, prepend /avatars/ (don't use baseUrl - avatars are at root level)
+  return `/avatars/${channel.avatar_url}`
 }
 
 // Close sidebar when window is resized to mobile size

@@ -12,7 +12,7 @@ console.log('API Base URL:', fullBaseURL, 'Server?', process.server)
 
 const apiClient = axios.create({
   baseURL: fullBaseURL,
-  timeout: 10000,
+  timeout: 60000, // 60 seconds default timeout (can be overridden per request)
 })
 
 // Request interceptor (optional)
