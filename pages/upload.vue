@@ -269,17 +269,20 @@ const loadChannels = async () => {
       return
     }
     
+    // Get active account or default to personal
     const activeAccount = localStorage.getItem('active_account')
+    
+    // If personal account, use first available channel
     if (!activeAccount || activeAccount === 'personal') {
-      await router.push('/create-channel')
-      return
-    }
-
-    const activeChannelId = channels.value.find(ch => ch.id === activeAccount)?.id
-    if (activeChannelId) {
-      form.value.channelId = activeChannelId
-    } else {
       form.value.channelId = channels.value[0].id
+    } else {
+      // If specific channel account, find and use it
+      const activeChannelId = channels.value.find(ch => ch.id === activeAccount)?.id
+      if (activeChannelId) {
+        form.value.channelId = activeChannelId
+      } else {
+        form.value.channelId = channels.value[0].id
+      }
     }
     
     isReady.value = true
@@ -385,7 +388,7 @@ const getChannelName = (channelId) => {
 }
 
 definePageMeta({
-  layout: false,
+  layout: 'blank',
 })
 </script>
 

@@ -17,9 +17,11 @@ const apiClient = axios.create({
 
 // Request interceptor (optional)
 apiClient.interceptors.request.use((config) => {
-  // Example: attach token later
-  // const token = useAuthStore().token
-  // if (token) config.headers.Authorization = `Bearer ${token}`
+  // Add X-User-ID header if available
+  const userId = typeof window !== 'undefined' ? localStorage.getItem('user_id') : null
+  if (userId) {
+    config.headers['X-User-ID'] = userId
+  }
   return config
 })
 
