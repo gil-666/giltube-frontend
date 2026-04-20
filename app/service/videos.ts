@@ -131,3 +131,8 @@ export const checkIfLiked = async (videoId: string, channelId: string) => {
   const res = await api.get(`/videos/${videoId}/liked?channel_id=${channelId}`)
   return res.data
 }
+
+export const getChannelAnalytics = async (channelId: string) => {
+  const res = await api.get(`/channels/${channelId}/analytics`)
+  return res.data
+}

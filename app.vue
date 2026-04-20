@@ -23,8 +23,10 @@
       </div>
 
       <input
+        v-model="searchQuery"
         type="text"
-        placeholder="Search(NOSIRVE)"
+        placeholder="Search videos and channels..."
+        @keydown.enter="$router.push(`/search?q=${encodeURIComponent(searchQuery)}`)"
         class="hidden md:block bg-zinc-900 px-4 py-2 rounded-full w-1/3 focus:outline-none text-white placeholder-gray-500"
       />
 
@@ -86,8 +88,10 @@
     <!-- Mobile Expanded Search Bar -->
     <div v-if="!shouldHideHeaderSidebar" v-show="showSearchBar" class="md:hidden bg-zinc-900 border-b border-zinc-800 fixed top-16 left-0 right-0" :style="{ zIndex: 61 }">
       <input
+        v-model="searchQuery"
         type="text"
-        placeholder="Search(NOSIRVE)"
+        placeholder="Search videos and channels..."
+        @keydown.enter="$router.push(`/search?q=${encodeURIComponent(searchQuery)}`); showSearchBar = false"
         autofocus
         class="w-full px-4 py-3 bg-zinc-900 focus:outline-none text-white placeholder-gray-500"
       />
@@ -107,7 +111,7 @@
 
       <!-- Sidebar -->
       <aside v-if="!shouldHideHeaderSidebar"
-        class="w-60 bg-zinc-950 border-r border-zinc-800 transition-transform duration-300 fixed left-0 top-16 bottom-0 md:static md:top-auto md:bottom-auto"
+        class="w-60 bg-zinc-950 border-r border-zinc-800 transition-transform duration-300 fixed left-0 top-16 bottom-0 md:static md:top-auto md:bottom-auto overflow-y-auto"
         :class="{ '-translate-x-full': !isSidebarOpen, 'translate-x-0': isSidebarOpen, 'md:translate-x-0': true }"
         :style="{ zIndex: 50 }"
       >
@@ -132,6 +136,29 @@
             :to="`/channel/${activeAccount}`"
             class="hover:bg-zinc-800 p-2 rounded cursor-pointer block text-yellow-400 font-semibold"
           >My Channel</NuxtLink>
+
+          <!-- Categories Divider -->
+          <div class="border-t border-zinc-700 pt-3 mt-3">
+            <p class="text-xs text-gray-500 font-semibold px-2 mb-2">CATEGORIES</p>
+            <div class="space-y-1">
+              <NuxtLink
+                to="/"
+                class="w-full text-left px-2 py-1.5 rounded text-sm transition hover:bg-zinc-800 text-gray-300 block"
+                :class="{ 'bg-blue-600 text-white': route.path === '/' && !route.params.slug }"
+              >
+                All Videos
+              </NuxtLink>
+              <NuxtLink
+                v-for="category in categoriesWithVideos"
+                :key="category.id"
+                :to="`/category/${category.slug}`"
+                class="w-full text-left px-2 py-1.5 rounded text-sm transition hover:bg-zinc-800 text-gray-300 block"
+                :class="{ 'bg-blue-600 text-white': route.params.slug === category.slug }"
+              >
+                {{ category.name }}
+              </NuxtLink>
+            </div>
+          </div>
         </nav>
       </aside>
 
@@ -248,6 +275,7 @@ const username = ref('')
 const userId = ref('')
 const isSidebarOpen = ref(false)
 const showSearchBar = ref(false)
+const searchQuery = ref('')
 const dropdownOpen = ref(false)
 const channels = ref([])
 const activeAccount = ref('personal')
@@ -264,6 +292,7 @@ const shouldHideHeaderSidebar = computed(() => {
 
 // Computed property to show active account name
 const displayName = computed(() => {
+  if (!process.client) return username.value || 'User'
   const activeAccountName = localStorage.getItem('active_account_name')
   return activeAccountName || username.value || 'User'
 })
@@ -292,8 +321,24 @@ const getChannelAvatarUrl = (channel) => {
   return `/avatars/${channel.avatar_url}`
 }
 
+// Computed property to get categories that have videos
+const categoriesWithVideos = computed(() => {
+  if (!process.client) return []
+  const categories = localStorage.getItem('categories')
+  if (!categories) return []
+  try {
+    const parsed = JSON.parse(categories)
+    // Filter to only categories that have videos
+    return parsed.filter(cat => (cat.video_count || 0) > 0)
+  } catch (e) {
+    console.error('Failed to parse categories:', e)
+    return []
+  }
+})
+
 // Close sidebar when window is resized to mobile size
 const handleSidebarResize = () => {
+  if (!process.client) return
   if (window.innerWidth >= 768) {
     // md breakpoint - don't close on desktop
     return
@@ -303,6 +348,7 @@ const handleSidebarResize = () => {
 
 onMounted(() => {
   checkAuthStatus()
+  loadCategories()
   if (isLoggedIn.value) {
     loadChannels()
   }
@@ -329,6 +375,7 @@ watch(activeChannelAvatar, () => {
 })
 
 const checkAuthStatus = () => {
+  if (!process.client) return
   const storedUserId = localStorage.getItem('user_id')
   const storedUsername = localStorage.getItem('username')
   
@@ -342,7 +389,7 @@ const checkAuthStatus = () => {
 }
 
 const loadChannels = async () => {
-  if (!userId.value) return
+  if (!process.client || !userId.value) return
   
   // Reset failed avatars when loading channels
   failedChannelAvatars.value = {}
@@ -369,7 +416,24 @@ const loadChannels = async () => {
   }
 }
 
+const loadCategories = async () => {
+  if (!process.client) return
+  
+  try {
+    // Fetch categories directly from API
+    const response = await fetch('/api/v1/categories')
+    if (response.ok) {
+      const categories = await response.json()
+      // Store in localStorage for access in composables and other pages
+      localStorage.setItem('categories', JSON.stringify(categories || []))
+    }
+  } catch (err) {
+    console.error('Failed to load categories:', err)
+  }
+}
+
 const switchAccount = (accountId, accountName) => {
+  if (!process.client) return
   activeAccount.value = accountId
   avatarLoadFailed.value = false
   failedChannelAvatars.value = {}
@@ -380,6 +444,7 @@ const switchAccount = (accountId, accountName) => {
 }
 
 const handleLogout = () => {
+  if (!process.client) return
   localStorage.removeItem('user_id')
   localStorage.removeItem('email')
   localStorage.removeItem('username')

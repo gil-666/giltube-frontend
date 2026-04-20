@@ -40,6 +40,37 @@
           />
         </div>
 
+        <!-- Explicit Content Warning -->
+        <div class="flex items-center gap-3 bg-zinc-800 border border-zinc-700 rounded p-4">
+          <input
+            v-model="form.explicit"
+            type="checkbox"
+            id="explicit-toggle"
+            class="w-4 h-4 rounded cursor-pointer accent-red-500"
+          />
+          <label for="explicit-toggle" class="flex-1 cursor-pointer">
+            <span class="text-sm font-medium">Explicit/18+ Content</span>
+            <p class="text-xs text-gray-400 mt-1">Mark this video as containing content for mature audiences</p>
+          </label>
+          <svg v-if="form.explicit" class="w-5 h-5 text-red-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+          </svg>
+        </div>
+
+        <!-- Category -->
+        <div>
+          <label class="block text-sm font-medium mb-2">Category</label>
+          <select
+            v-model="form.categoryId"
+            class="w-full bg-zinc-800 border border-zinc-700 rounded px-4 py-2 text-white focus:outline-none focus:border-blue-500"
+          >
+            <option value="">No category selected</option>
+            <option v-for="category in categories" :key="category.id" :value="category.id">
+              {{ category.name }}
+            </option>
+          </select>
+        </div>
+
         <!-- Thumbnail Section -->
         <div class="border-t border-zinc-700 pt-6">
           <h2 class="text-lg font-semibold mb-4">Thumbnail</h2>
@@ -149,7 +180,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { getVideo, updateVideo } from '~/app/service/videos'
 import { useMetaTags } from '~/app/composables/useMetaTags'
 
@@ -172,16 +203,36 @@ const fileInput = ref<HTMLInputElement>()
 const form = ref({
   title: '',
   description: '',
+  explicit: false,
+  categoryId: '',
 })
 
 const thumbnailPreview = ref('')
 const currentThumbnailUrl = ref('')
 const hasCustomThumbnail = ref(false)
 const thumbnailFile = ref<File | null>(null)
+const categories = ref([])
 const apiBaseURL = import.meta.env.VITE_API_BASE_URL
 
 onMounted(async () => {
+  await loadCategories()
   await loadVideo()
+})
+
+const loadCategories = async () => {
+  try {
+    const response = await fetch('/api/v1/categories/all')
+    if (response.ok) {
+      categories.value = await response.json()
+    }
+  } catch (err) {
+    console.error('Failed to load categories:', err)
+  }
+}
+
+// Watch for explicit changes
+watch(() => form.value.explicit, (newVal, oldVal) => {
+  console.log('Explicit value changed from', oldVal, 'to', newVal)
 })
 
 const loadVideo = async () => {
@@ -189,8 +240,20 @@ const loadVideo = async () => {
     isLoading.value = true
     const video = await getVideo(videoId.value)
     
+    console.log('Loaded video:', video)
+    console.log('Video explicit field:', video.explicit, 'type:', typeof video.explicit)
+    
     form.value.title = video.title || ''
     form.value.description = video.description || ''
+    // Ensure explicit is a boolean
+    form.value.explicit = video.explicit === true || video.explicit === 'true' || false
+    
+    // Set category if video has one
+    if (video.categories && video.categories.length > 0) {
+      form.value.categoryId = video.categories[0].id
+    }
+    
+    console.log('Form explicit after load:', form.value.explicit)
     
     // Set thumbnail URL
     if (video.thumbnail_url) {
@@ -278,6 +341,12 @@ const handleSave = async () => {
     const updateData: any = {
       title: form.value.title,
       description: form.value.description,
+      explicit: form.value.explicit,
+    }
+
+    // Add category if selected
+    if (form.value.categoryId) {
+      updateData.category_ids = form.value.categoryId
     }
 
     // If user wants to revert to auto thumbnail
@@ -290,6 +359,10 @@ const handleSave = async () => {
       const formData = new FormData()
       formData.append('title', form.value.title)
       formData.append('description', form.value.description)
+      formData.append('explicit', form.value.explicit.toString())
+      if (form.value.categoryId) {
+        formData.append('category_ids', form.value.categoryId)
+      }
       formData.append('thumbnail', thumbnailFile.value)
 
       const response = await fetch(`${apiBaseURL}/api/v1/videos/${videoId.value}`, {

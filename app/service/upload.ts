@@ -5,6 +5,9 @@ interface UploadVideoRequest {
   description: string
   channelId: string
   videoFile: File
+  explicit?: boolean
+  categoryId?: string
+  thumbnail?: File
   onProgress?: (progress: number) => void
 }
 
@@ -95,6 +98,15 @@ export const uploadVideo = async (data: UploadVideoRequest) => {
     finalizeFormData.append('channel_id', data.channelId)
     finalizeFormData.append('uploadSessionId', uploadSessionId)
     finalizeFormData.append('fileName', file.name)
+    if (data.explicit) {
+      finalizeFormData.append('explicit', 'true')
+    }
+    if (data.categoryId) {
+      finalizeFormData.append('category_ids', data.categoryId)
+    }
+    if (data.thumbnail) {
+      finalizeFormData.append('thumbnail', data.thumbnail)
+    }
 
     const response = await api.post('/videos/finalize-upload', finalizeFormData, {
       timeout: 0,

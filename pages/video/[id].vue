@@ -23,6 +23,32 @@
         <h1 class="text-2xl font-bold">{{ video.title }}</h1>
         <p class="text-gray-400 mt-2">{{ video.description }}</p>
         
+        <!-- Badges Container - Horizontally Scrollable -->
+        <div v-if="video.explicit || is4K || (video.categories && video.categories.length > 0)" class="mt-3 flex gap-2 overflow-x-auto pb-2">
+          <!-- Explicit Content Warning Badge -->
+          <div v-if="video.explicit" class="inline-flex flex-shrink-0 items-center gap-2 bg-red-900 text-red-200 px-3 py-1.5 rounded-full border border-red-700">
+            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+            </svg>
+            <span class="text-xs font-semibold whitespace-nowrap">18+ Explicit</span>
+          </div>
+
+          <!-- 4K Badge -->
+          <div v-if="is4K" class="inline-flex flex-shrink-0 items-center gap-2 bg-green-900 text-green-200 px-3 py-1.5 rounded-full border border-green-700">
+            <span class="text-xs font-semibold whitespace-nowrap">4K</span>
+          </div>
+
+          <!-- Category Badges -->
+          <NuxtLink
+            v-for="category in video.categories"
+            :key="category.id"
+            :to="`/category/${category.slug}`"
+            class="inline-flex flex-shrink-0 items-center px-3 py-1.5 bg-blue-900 hover:bg-blue-800 text-blue-200 rounded-full text-xs font-semibold transition border border-blue-700 whitespace-nowrap"
+          >
+            {{ category.name }}
+          </NuxtLink>
+        </div>
+        
         <!-- Views and Date -->
         <div class="flex gap-4 text-sm text-gray-400 mt-3">
           <span>{{ video.views }} views</span>
@@ -41,7 +67,10 @@
               {{ video.channel?.name?.charAt(0).toUpperCase() ?? 'C' }}
             </span>
           </div>
-          <p class="text-sm font-medium text-gray-100">{{ video.channel.name }}</p>
+          <div class="flex items-center gap-2">
+            <p class="text-sm font-medium text-gray-100">{{ video.channel.name }}</p>
+            <VerifiedBadge :verified="video.channel?.verified || false" size="md" />
+          </div>
         </NuxtLink>
 
         <!-- Action Buttons (Like, Share) -->
@@ -158,7 +187,10 @@
               </div>
               <div class="flex-1 min-w-0">
                 <div class="flex items-center justify-between gap-2">
-                  <p class="font-semibold text-xs">{{ comment.channel.name }}</p>
+                  <div class="flex items-center gap-1">
+                    <p class="font-semibold text-xs">{{ comment.channel.name }}</p>
+                    <VerifiedBadge :verified="comment.channel.verified" size="sm" />
+                  </div>
                   <div class="flex items-center gap-2 flex-shrink-0">
                     <p class="text-xs text-gray-500">{{ getTimeAgo(comment.created_at) }}</p>
                     <button
@@ -205,15 +237,19 @@
                   :to="`/video/${relatedVideo.id}`"
                   class="inline-block hover:opacity-80 transition flex-shrink-0"
                 >
-                  <div class="bg-zinc-800 rounded overflow-hidden w-40 aspect-video mb-1.5">
+                  <div class="bg-zinc-800 rounded overflow-hidden w-40 aspect-video mb-1.5 relative">
                     <img
                       class="w-full h-full object-cover"
                       :src="baseUrl + relatedVideo.thumbnail_url"
                       :alt="relatedVideo.title"
                     />
+                    <div v-if="relatedVideo.width >= 3840" class="absolute top-1 right-1 bg-green-900 text-green-200 px-1.5 py-0.5 rounded text-xs font-semibold border border-green-700">4K</div>
                   </div>
                   <p class="text-xs font-semibold line-clamp-2 w-40">{{ relatedVideo.title }}</p>
-                  <p class="text-xs text-gray-400 mt-0.5">{{ relatedVideo.channel?.name }}</p>
+                  <div class="flex items-center gap-1">
+                    <NuxtLink :to="`/channel/${relatedVideo.channel?.id}`" class="text-xs text-gray-400 hover:text-yellow-400 transition">{{ relatedVideo.channel?.name }}</NuxtLink>
+                    <VerifiedBadge :verified="relatedVideo.channel?.verified || false" size="sm" />
+                  </div>
                   <p class="text-xs text-gray-500">{{ relatedVideo.views }} views</p>
                 </NuxtLink>
               </div>
@@ -237,15 +273,19 @@
               :to="`/video/${relatedVideo.id}`"
               class="block hover:opacity-80 transition"
             >
-              <div class="bg-zinc-800 rounded overflow-hidden w-full aspect-video mb-2">
+              <div class="bg-zinc-800 rounded overflow-hidden w-full aspect-video mb-2 relative">
                 <img
                   class="w-full h-full object-cover"
                   :src="baseUrl + relatedVideo.thumbnail_url"
                   :alt="relatedVideo.title"
                 />
+                <div v-if="relatedVideo.width >= 3840" class="absolute top-1 right-1 bg-green-900 text-green-200 px-1.5 py-0.5 rounded text-xs font-semibold border border-green-700">4K</div>
               </div>
               <p class="text-sm font-semibold line-clamp-2">{{ relatedVideo.title }}</p>
-              <p class="text-xs text-gray-400 mt-1">{{ relatedVideo.channel?.name }}</p>
+              <div class="flex items-center gap-1">
+                <NuxtLink :to="`/channel/${relatedVideo.channel?.id}`" class="text-xs text-gray-400 hover:text-yellow-400 transition">{{ relatedVideo.channel?.name }}</NuxtLink>
+                <VerifiedBadge :verified="relatedVideo.channel?.verified || false" size="sm" />
+              </div>
               <p class="text-xs text-gray-500">{{ relatedVideo.views }} views</p>
             </NuxtLink>
           </div>
@@ -258,15 +298,19 @@
               :to="`/video/${relatedVideo.id}`"
               class="block hover:opacity-80 transition"
             >
-              <div class="bg-zinc-800 rounded overflow-hidden aspect-video mb-1.5">
+              <div class="bg-zinc-800 rounded overflow-hidden aspect-video mb-1.5 relative">
                 <img
                   class="w-full h-full object-cover"
                   :src="baseUrl + relatedVideo.thumbnail_url"
                   :alt="relatedVideo.title"
                 />
+                <div v-if="relatedVideo.width >= 3840" class="absolute top-1 right-1 bg-green-900 text-green-200 px-1.5 py-0.5 rounded text-xs font-semibold border border-green-700">4K</div>
               </div>
               <p class="text-xs font-semibold line-clamp-2">{{ relatedVideo.title }}</p>
-              <p class="text-xs text-gray-400 mt-0.5">{{ relatedVideo.channel?.name }}</p>
+              <div class="flex items-center gap-1">
+                <NuxtLink :to="`/channel/${relatedVideo.channel?.id}`" class="text-xs text-gray-400 hover:text-yellow-400 transition">{{ relatedVideo.channel?.name }}</NuxtLink>
+                <VerifiedBadge :verified="relatedVideo.channel?.verified || false" size="sm" />
+              </div>
               <p class="text-xs text-gray-500">{{ relatedVideo.views }} views</p>
             </NuxtLink>
           </div>
@@ -320,17 +364,69 @@
       </div>
     </div>
 
+    <!-- Explicit Content Warning Modal -->
+    <div v-if="showExplicitWarning" class="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50 p-4">
+      <div class="bg-zinc-900 rounded-lg p-8 max-w-md w-full border-2 border-red-700">
+        <!-- Warning Icon -->
+        <div class="flex justify-center mb-4">
+          <div class="bg-red-900 rounded-full p-4">
+            <svg class="w-12 h-12 text-red-400" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+            </svg>
+          </div>
+        </div>
+
+        <h2 class="text-2xl font-bold text-center mb-3 text-red-400">18+ Explicit Content</h2>
+        
+        <p class="text-gray-300 text-center mb-6">
+          This video contains mature content and is intended for viewers 18 years and older. Viewer discretion is advised.
+        </p>
+
+        <!-- Never Show Again Checkbox -->
+        <div class="flex items-center gap-3 bg-zinc-800 border border-zinc-700 rounded p-3 mb-6">
+          <input
+            v-model="neverShowExplicitWarningAgain"
+            type="checkbox"
+            id="never-show-explicit"
+            class="w-4 h-4 rounded cursor-pointer accent-red-500"
+          />
+          <label for="never-show-explicit" class="text-sm text-gray-300 cursor-pointer">
+            Don't show this warning again
+          </label>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="space-y-3">
+          <button
+            @click="continueToVideo"
+            class="w-full px-4 py-3 bg-red-600 hover:bg-red-700 rounded transition text-center font-semibold text-white"
+          >
+            I Understand, Continue
+          </button>
+          
+          <button
+            @click="goBackHome"
+            class="w-full px-4 py-3 bg-zinc-700 hover:bg-zinc-600 rounded transition text-center font-semibold text-white"
+          >
+            Go Back to Home
+          </button>
+        </div>
+      </div>
+    </div>
+
   </div>
 </template>
 
 <script setup lang="ts">
 import VideoPlayer from '~/app/components/videoplayer/VideoPlayer.vue'
+import VerifiedBadge from '~/app/components/VerifiedBadge.vue'
 import { getVideo, incrementViews, getVideos, likeVideo, unlikeVideo, checkIfLiked } from '~/app/service/videos'
 import { getVideoComments, postComment as apiPostComment, deleteComment } from '~/app/service/comments'
 import { getTimeAgo } from '~/app/utils/time'
 import { useMetaTags } from '~/app/composables/useMetaTags'
 import { computed, ref, onMounted, onUnmounted, watch } from 'vue'
-import { useRequestHeaders } from '#app'
+import { useRequestHeaders, navigateTo } from '#app'
+import { useRouter } from 'vue-router'
 
 const baseUrl = import.meta.env.VITE_API_BASE_URL
 const route = useRoute()
@@ -359,6 +455,10 @@ const errorMessage = ref('')
 const likes = ref(0)
 const isLiked = ref(false)
 const isToggglingLike = ref(false)
+
+// Explicit content warning state
+const showExplicitWarning = ref(false)
+const neverShowExplicitWarningAgain = ref(false)
 
 // Responsive state
 const showSidebar = ref(true)
@@ -509,6 +609,9 @@ const videoSrc = computed(() =>
     : ''
 )
 
+// Check if video is 4K
+const is4K = computed(() => video.value?.width >= 3840)
+
 // Update sidebar visibility based on screen size
 const updateSidebarVisibility = () => {
   showSidebar.value = typeof window !== 'undefined' && window.innerWidth >= 1024
@@ -518,6 +621,14 @@ onMounted(async () => {
   // Check screen size and update sidebar visibility
   updateSidebarVisibility()
   window.addEventListener('resize', updateSidebarVisibility)
+  
+  // Check if user has opted out of explicit warnings
+  const hideExplicitWarnings = localStorage.getItem('hide_explicit_warnings') === 'true'
+  
+  // Show explicit warning if video is explicit and user hasn't opted out
+  if (video.value?.explicit && !hideExplicitWarnings) {
+    showExplicitWarning.value = true
+  }
   
   // Check auth status and get user ID
   const storedUserId = localStorage.getItem('user_id')
@@ -718,6 +829,18 @@ const deleteUserComment = async (commentId: string) => {
     errorMessage.value = 'Failed to delete comment'
     showErrorDialog.value = true
   }
+}
+
+// Handle explicit warning
+const continueToVideo = () => {
+  if (neverShowExplicitWarningAgain.value) {
+    localStorage.setItem('hide_explicit_warnings', 'true')
+  }
+  showExplicitWarning.value = false
+}
+
+const goBackHome = async () => {
+  await navigateTo('/')
 }
 </script>
 

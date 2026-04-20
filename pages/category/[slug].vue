@@ -1,15 +1,10 @@
 <template>
-
-
-  <!-- Header -->
-
-
   <!-- Main Content -->
   <main class="flex-1">
     <!-- Main Video Grid -->
     <div class="p-6">
-      <!-- All Videos Title -->
-      <h1 class="text-2xl font-bold mb-6">All Videos</h1>
+      <!-- Category Title -->
+      <h1 class="text-2xl font-bold mb-6">{{ categoryName }}</h1>
 
       <!-- Video Grid -->
       <div class="grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
@@ -71,18 +66,20 @@
       </div>
     </div>
   </main>
-
 </template>
+
 <script setup>
 import { ref, onMounted, onUnmounted, nextTick } from 'vue'
-import { getVideos } from '~/app/service/videos'
 import { getTimeAgo } from '~/app/utils/time'
 import { useMetaTags } from '~/app/composables/useMetaTags'
 import VerifiedBadge from '~/app/components/VerifiedBadge.vue'
 
+const route = useRoute()
 const baseUrl = import.meta.env.VITE_API_BASE_URL
+
 const videos = ref([])
-const categories = ref([])
+const categoryName = ref('')
+const categoryDescription = ref('')
 
 // Pagination state
 const currentPage = ref(0)
@@ -92,11 +89,12 @@ const isLoading = ref(false)
 const sentinelElement = ref(null)
 let intersectionObserver = null
 
-// Set meta tags for home page
-useMetaTags({
-  title: 'GilTube - Video Sharing',
-  description: 'Watch and share videos with our community'
-})
+const updateMetaTags = () => {
+  useMetaTags({
+    title: `${categoryName.value} Videos - GilTube`,
+    description: categoryDescription.value || `Browse ${categoryName.value} videos on GilTube`
+  })
+}
 
 const loadMoreVideos = async () => {
   if (isLoading.value || !hasMore.value) return
@@ -104,7 +102,7 @@ const loadMoreVideos = async () => {
 
   try {
     const offset = currentPage.value * pageSize
-    const url = `/api/v1/videos?limit=${pageSize}&offset=${offset}`
+    const url = `/api/v1/categories/${route.params.slug}/videos?limit=${pageSize}&offset=${offset}`
 
     const response = await fetch(url)
     if (response.ok) {
@@ -118,7 +116,6 @@ const loadMoreVideos = async () => {
 
       // Append new videos instead of replacing
       videos.value = [...videos.value, ...newVideos]
-
       currentPage.value += 1
     }
   } catch (err) {
@@ -133,11 +130,6 @@ const resetPagination = () => {
   currentPage.value = 0
   hasMore.value = true
   isLoading.value = false
-}
-
-const loadVideos = async () => {
-  resetPagination()
-  await loadMoreVideos()
 }
 
 const setupIntersectionObserver = () => {
@@ -177,7 +169,30 @@ const setupIntersectionObserver = () => {
 }
 
 onMounted(async () => {
-  await loadVideos()
+  resetPagination()
+  
+  // Try to get category info from localStorage cache first
+  const storedCategories = localStorage.getItem('categories')
+  if (storedCategories) {
+    try {
+      const categories = JSON.parse(storedCategories)
+      const category = categories.find(c => c.slug === route.params.slug)
+      if (category) {
+        categoryName.value = category.name
+        categoryDescription.value = category.description
+      }
+    } catch (e) {
+      console.error('Failed to parse categories:', e)
+    }
+  }
+  
+  // If category info not found, use slug as title (will be updated when first video loads)
+  if (!categoryName.value) {
+    categoryName.value = route.params.slug
+  }
+  
+  updateMetaTags()
+  await loadMoreVideos()
   await nextTick()
   setupIntersectionObserver()
 })
@@ -187,5 +202,4 @@ onUnmounted(() => {
     intersectionObserver.disconnect()
   }
 })
-
 </script>

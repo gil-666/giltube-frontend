@@ -1,13 +1,15 @@
 <template>
-  <div class="fixed inset-0 bg-zinc-950 text-white p-6 flex items-center justify-center">
+  <div class="fixed inset-0 bg-zinc-950 text-white p-6 overflow-y-auto flex flex-col items-center justify-start">
     <!-- Loading State -->
-    <div v-if="!isReady" class="text-center">
-      <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-      <p>Checking your channels...</p>
+    <div v-if="!isReady" class="flex items-center justify-center min-h-screen">
+      <div class="text-center">
+        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+        <p>Checking your channels...</p>
+      </div>
     </div>
 
     <!-- Upload Stages -->
-    <div v-else class="max-w-2xl mx-auto w-full">
+    <div v-else class="max-w-2xl mx-auto w-full py-8">
       <!-- Stage 1: File Upload -->
       <div v-if="stage === 'select'">
         <h1 class="text-4xl font-bold mb-8">Upload Video</h1>
@@ -84,6 +86,72 @@
                 rows="4"
                 class="w-full bg-zinc-800 border border-zinc-700 rounded px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
               />
+            </div>
+
+            <!-- Categories -->
+            <div>
+              <label class="block text-sm font-medium mb-2">Category</label>
+              <select
+                v-model="form.categoryId"
+                class="w-full bg-zinc-800 border border-zinc-700 rounded px-4 py-2 text-white focus:outline-none focus:border-blue-500"
+              >
+                <option value="">Select a category (optional)</option>
+                <option v-for="category in categories" :key="category.id" :value="category.id">
+                  {{ category.name }}
+                </option>
+              </select>
+            </div>
+
+            <!-- Explicit Content Warning -->
+            <div class="flex items-center gap-3 bg-zinc-800 border border-zinc-700 rounded p-4">
+              <input
+                v-model="form.explicit"
+                type="checkbox"
+                id="explicit-toggle"
+                class="w-4 h-4 rounded cursor-pointer accent-red-500"
+              />
+              <label for="explicit-toggle" class="flex-1 cursor-pointer">
+                <span class="text-sm font-medium">Explicit/18+ Content</span>
+                <p class="text-xs text-gray-400 mt-1">Mark this video as containing content for mature audiences</p>
+              </label>
+              <svg v-if="form.explicit" class="w-5 h-5 text-red-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+              </svg>
+            </div>
+
+            <!-- Thumbnail Upload -->
+            <div>
+              <label class="block text-sm font-medium mb-4">Custom Thumbnail</label>
+              <div class="bg-zinc-800 border-2 border-dashed border-zinc-700 rounded-lg p-6 text-center hover:border-blue-500 transition cursor-pointer" @click="triggerThumbnailInput">
+                <svg class="w-12 h-12 mx-auto mb-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                <p class="text-sm text-gray-300">Click to select an image or drag and drop</p>
+                <p class="text-xs text-gray-500 mt-1">PNG or JPG, recommended size: 1280x720</p>
+                <input
+                  ref="thumbnailInput"
+                  type="file"
+                  accept="image/*"
+                  class="hidden"
+                  @change="onThumbnailSelected"
+                />
+              </div>
+              <p class="text-xs text-gray-400 mt-2">Max size: 5MB</p>
+            </div>
+
+            <!-- Thumbnail Preview -->
+            <div v-if="thumbnailPreview">
+              <label class="block text-sm font-medium mb-2">Thumbnail Preview</label>
+              <div class="relative bg-zinc-800 rounded overflow-hidden aspect-video max-w-xs border border-blue-500 border-2">
+                <img :src="thumbnailPreview" :alt="form.title" class="w-full h-full object-cover" />
+              </div>
+              <button
+                type="button"
+                @click="clearThumbnail"
+                class="mt-2 text-sm text-red-400 hover:text-red-300 transition"
+              >
+                Remove thumbnail
+              </button>
             </div>
 
             <!-- Error Message -->
@@ -212,7 +280,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { uploadVideo, fetchUserChannels } from '~/app/service/upload'
 import { useMetaTags } from '~/app/composables/useMetaTags'
@@ -226,13 +294,18 @@ const router = useRouter()
 const isReady = ref(false)
 const userId = ref('')
 const fileInput = ref(null)
+const thumbnailInput = ref(null)
 
 // Form state
 const form = ref({
   title: '',
   description: '',
   channelId: '',
+  explicit: false,
+  categoryId: '',
 })
+const thumbnailFile = ref<File | null>(null)
+const thumbnailPreview = ref('')
 const selectedFileName = ref('')
 const selectedFile = ref(null)
 const uploadProgress = ref(0)
@@ -243,10 +316,23 @@ const stage = ref('select') // 'select', 'details', 'uploading', 'complete'
 const isUploading = ref(false)
 const isPublishing = ref(false)
 const channels = ref([])
+const categories = ref([])
 
 onMounted(async () => {
   await checkAuthStatus()
+  await loadCategories()
 })
+
+const loadCategories = async () => {
+  try {
+    const response = await fetch('/api/v1/categories/all')
+    if (response.ok) {
+      categories.value = await response.json()
+    }
+  } catch (err) {
+    console.error('Failed to load categories:', err)
+  }
+}
 
 const checkAuthStatus = async () => {
   const storedUserId = localStorage.getItem('user_id')
@@ -296,6 +382,10 @@ const triggerFileInput = () => {
   fileInput.value?.click()
 }
 
+const triggerThumbnailInput = () => {
+  thumbnailInput.value?.click()
+}
+
 const handleFileSelect = (event) => {
   const file = event.target.files?.[0]
   if (!file) return
@@ -306,6 +396,42 @@ const handleFileSelect = (event) => {
   
   // Move to details stage to let user fill in info
   stage.value = 'details'
+}
+
+const onThumbnailSelected = (event: any) => {
+  const file = event.target.files?.[0]
+  if (!file) return
+
+  // Validate file size (5MB max)
+  if (file.size > 5 * 1024 * 1024) {
+    error.value = 'Thumbnail file must be smaller than 5MB'
+    return
+  }
+
+  // Validate file type
+  if (!file.type.startsWith('image/')) {
+    error.value = 'Please select a valid image file'
+    return
+  }
+
+  error.value = ''
+  thumbnailFile.value = file
+
+  // Create preview
+  const reader = new FileReader()
+  reader.onload = (e) => {
+    thumbnailPreview.value = e.target?.result as string
+  }
+  reader.readAsDataURL(file)
+}
+
+const clearThumbnail = () => {
+  thumbnailFile.value = null
+  thumbnailPreview.value = ''
+  // Reset file input
+  if (thumbnailInput.value) {
+    thumbnailInput.value.value = ''
+  }
 }
 
 const handleStartUpload = async () => {
@@ -334,15 +460,24 @@ const handleStartUpload = async () => {
 
   try {
     // Start upload
-    await uploadVideo({
+    const uploadData: any = {
       title: form.value.title,
       description: form.value.description,
       channelId: form.value.channelId,
       videoFile: selectedFile.value,
+      explicit: form.value.explicit,
+      categoryId: form.value.categoryId,
       onProgress: (progress) => {
         uploadProgress.value = progress
       },
-    })
+    }
+
+    // Add thumbnail if selected
+    if (thumbnailFile.value) {
+      uploadData.thumbnail = thumbnailFile.value
+    }
+
+    await uploadVideo(uploadData)
 
     // Move to complete stage
     stage.value = 'complete'
@@ -375,10 +510,14 @@ const startOver = () => {
   uploadProgress.value = 0
   selectedFile.value = null
   selectedFileName.value = ''
+  thumbnailFile.value = null
+  thumbnailPreview.value = ''
   form.value = {
     title: '',
     description: '',
     channelId: form.value.channelId,
+    explicit: false,
+    categoryId: '',
   }
   error.value = ''
 }

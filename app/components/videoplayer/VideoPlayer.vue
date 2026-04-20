@@ -1,13 +1,13 @@
 <template>
-  <div class="w-full max-w-4xl mx-auto">
-    <video
-      ref="videoElement"
-      class="video-js vjs-default-skin"
-      controls
-      preload="auto"
-      width="100%"
-      height="auto"
-    ></video>
+  <div class="w-full flex items-center justify-center">
+    <div class="video-player-container w-full bg-black rounded-lg overflow-hidden flex items-center justify-center">
+      <video
+        ref="videoElement"
+        class="video-js vjs-default-skin w-full h-full object-contain"
+        controls
+        preload="auto"
+      ></video>
+    </div>
   </div>
 </template>
 
@@ -260,10 +260,11 @@ onMounted(async () => {
 
     player = videojs(videoElement.value, {
       controls: true,
-      autoplay: false,
+      autoplay: true,
       preload: 'auto',
-      responsive: true,
-      fluid: true,
+      responsive: false,
+      fluid: false,
+      fill: false,
       html5: {
         hls: {
           overrideNative: true,
@@ -328,10 +329,28 @@ watch(
 </script>
 
 <style scoped>
+.video-player-container {
+  height: 250px;
+}
+
+@media (min-width: 768px) {
+  .video-player-container {
+    height: 500px;
+  }
+}
+
 :deep(.video-js) {
   width: 100%;
-  height: auto;
+  height: 100%;
   background-color: #000;
+}
+
+:deep(.vjs-tech) {
+  height: 100%;
+}
+
+:deep(.vjs-player) {
+  height: 100%;
 }
 
 :deep(.vjs-menu) {

@@ -5,6 +5,9 @@
       {{ downloadStatus }}
     </div>
 
+    <!-- Metrics -->
+    <ChannelMetrics v-if="channelId" :channel-id="channelId" />
+
     <!-- Header -->
     <div class="max-w-7xl mx-auto mb-8">
       <div class="flex items-center justify-between">
@@ -98,7 +101,10 @@
           <!-- Video Info -->
           <div class="flex-1 p-4 flex flex-col justify-between">
             <div>
-              <h3 class="font-bold text-lg mb-1 line-clamp-1">{{ video.title }}</h3>
+              <div class="flex items-center gap-2 mb-1">
+                <h3 class="font-bold text-lg line-clamp-1">{{ video.title }}</h3>
+                <span v-if="video.width >= 3840" class="p-0.5 bg-gray-900 text-gray-200 text-xs font-semibold flex-shrink-0 whitespace-nowrap border border-gray-500">4K</span>
+              </div>
               <p class="text-sm text-gray-400 mb-2 line-clamp-1">{{ video.description || 'No description' }}</p>
 
               <!-- Meta Info -->
@@ -110,6 +116,10 @@
                 <p v-if="video.views !== undefined">
                   <span class="text-gray-500">Views:</span>
                   {{ formatNumber(video.views) }}
+                </p>
+                <p v-if="video.likes !== undefined">
+                  <span class="text-gray-500">Likes:</span>
+                  {{ formatNumber(video.likes) }}
                 </p>
               </div>
             </div>
@@ -184,6 +194,7 @@
 </template>
 
 <script setup>
+import ChannelMetrics from '~/app/components/ChannelMetrics.vue'
 import { ref, onMounted, computed, onUnmounted } from 'vue'
 import { getMyVideos, deleteVideo, downloadVideo as downloadVideoService } from '~/app/service/videos'
 import { useMetaTags } from '~/app/composables/useMetaTags'
