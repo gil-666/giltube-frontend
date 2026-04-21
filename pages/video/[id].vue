@@ -51,7 +51,7 @@
         
         <!-- Views and Date -->
         <div class="flex gap-4 text-sm text-gray-400 mt-3">
-          <span>{{ video.views }} views</span>
+          <span>{{ formatViews(video.views) }} views</span>
           <span>{{ getTimeAgo(video.created_at) }}</span>
         </div>
 
@@ -250,7 +250,7 @@
                     <NuxtLink :to="`/channel/${relatedVideo.channel?.id}`" class="text-xs text-gray-400 hover:text-yellow-400 transition">{{ relatedVideo.channel?.name }}</NuxtLink>
                     <VerifiedBadge :verified="relatedVideo.channel?.verified || false" size="sm" />
                   </div>
-                  <p class="text-xs text-gray-500">{{ relatedVideo.views }} views</p>
+                  <p class="text-xs text-gray-500">{{ formatViews(relatedVideo.views) }} views</p>
                 </NuxtLink>
               </div>
             </div>
@@ -423,6 +423,7 @@ import VerifiedBadge from '~/app/components/VerifiedBadge.vue'
 import { getVideo, incrementViews, getVideos, likeVideo, unlikeVideo, checkIfLiked } from '~/app/service/videos'
 import { getVideoComments, postComment as apiPostComment, deleteComment } from '~/app/service/comments'
 import { getTimeAgo } from '~/app/utils/time'
+import { formatViews } from '~/app/utils/format'
 import { useMetaTags } from '~/app/composables/useMetaTags'
 import { computed, ref, onMounted, onUnmounted, watch } from 'vue'
 import { useRequestHeaders, navigateTo } from '#app'

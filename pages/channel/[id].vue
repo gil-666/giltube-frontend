@@ -84,7 +84,7 @@
             <p class="text-xs text-zinc-400 line-clamp-1">{{ video.channel.name }}</p>
             <VerifiedBadge v-if="video.channel?.verified" :verified="true" size="sm" />
           </div>
-          <p class="text-xs text-zinc-400 line-clamp-1">{{ video.views }} views • {{ getTimeAgo(video.created_at) }}</p>
+          <p class="text-xs text-zinc-400 line-clamp-1">{{ formatViews(video.views) }} views • {{ getTimeAgo(video.created_at) }}</p>
         </NuxtLink>
       </div>
     </div>
@@ -95,6 +95,7 @@
 import { ref, onMounted, computed, watch } from 'vue'
 import { getChannelInfo, getChannelVideos } from '~/app/service/channels'
 import { getTimeAgo } from '~/app/utils/time'
+import { formatViews } from '~/app/utils/format'
 import { useMetaTags } from '~/app/composables/useMetaTags'
 import ChannelMetricsCompact from '~/app/components/ChannelMetricsCompact.vue'
 import VerifiedBadge from '~/app/components/VerifiedBadge.vue'

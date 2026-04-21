@@ -45,7 +45,7 @@
                 {{ video.channel.name }}
                 <VerifiedBadge :verified="video.channel?.verified || false" size="sm" />
               </NuxtLink>
-              <p class="text-xs text-zinc-400">{{ video.views }} views • {{ getTimeAgo(video.created_at) }}</p>
+              <p class="text-xs text-zinc-400">{{ formatViews(video.views) }} views • {{ getTimeAgo(video.created_at) }}</p>
             </div>
           </div>
         </div>
@@ -71,6 +71,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted, nextTick } from 'vue'
 import { getTimeAgo } from '~/app/utils/time'
+import { formatViews } from '~/app/utils/format'
 import { useMetaTags } from '~/app/composables/useMetaTags'
 import VerifiedBadge from '~/app/components/VerifiedBadge.vue'
 
