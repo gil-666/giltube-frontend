@@ -434,17 +434,15 @@ const route = useRoute()
 const id = route.params.id as string
 const hasCountedView = ref(false)
 
-// Auth state
 const isLoggedIn = ref(false)
 const userId = ref('')
 const activeAccount = ref('personal')
 const activeChannelName = ref('')
 const userChannels = ref([])
-const personalAccountSelectedChannel = ref('') // For when on personal account, which channel to comment as
+const personalAccountSelectedChannel = ref('')
 const selectedChannelName = ref('')
 const failedCommentAvatars = ref({})
 
-// Comments state
 const comments = ref([])
 const newCommentText = ref('')
 const isPostingComment = ref(false)
@@ -452,23 +450,18 @@ const showCreateChannelDialog = ref(false)
 const showErrorDialog = ref(false)
 const errorMessage = ref('')
 
-// Likes state
 const likes = ref(0)
 const isLiked = ref(false)
 const isToggglingLike = ref(false)
 
-// Explicit content warning state
 const showExplicitWarning = ref(false)
 const neverShowExplicitWarningAgain = ref(false)
 
-// Responsive state
 const showSidebar = ref(true)
 
-// Related videos state
 const relatedVideos = ref([])
 const carouselContainer = ref<HTMLElement | null>(null)
 
-// Carousel scroll methods
 const scrollCarousel = (direction: 'left' | 'right') => {
   if (!carouselContainer.value) return
   const scrollAmount = 300
@@ -476,7 +469,6 @@ const scrollCarousel = (direction: 'left' | 'right') => {
   carouselContainer.value.scrollTo({ left: newScroll, behavior: 'smooth' })
 }
 
-// Helper function to load channels for current account
 const loadChannelsForAccount = () => {
   const storedChannels = localStorage.getItem('user_channels')
   if (storedChannels) {
@@ -484,11 +476,9 @@ const loadChannelsForAccount = () => {
       userChannels.value = JSON.parse(storedChannels)
       console.log('Loaded channels:', userChannels.value.map(c => c.id))
       
-      // Only set default channel if not already selected or if selected channel no longer exists
       if (!personalAccountSelectedChannel.value && userChannels.value.length > 0) {
         personalAccountSelectedChannel.value = userChannels.value[0].id
       } else if (personalAccountSelectedChannel.value && !userChannels.value.find(ch => ch.id === personalAccountSelectedChannel.value)) {
-        // Selected channel no longer exists, pick the first one
         personalAccountSelectedChannel.value = userChannels.value.length > 0 ? userChannels.value[0].id : ''
       }
     } catch (e) {
@@ -502,18 +492,15 @@ const loadChannelsForAccount = () => {
   }
 }
 
-// Helper function to sync active account from localStorage
 const syncActiveAccountFromStorage = async () => {
   const storedActiveAccount = localStorage.getItem('active_account') || 'personal'
   const storedAccountName = localStorage.getItem('active_account_name')
   
-  // Only process if account actually changed
   if (storedActiveAccount !== activeAccount.value) {
     console.log('Account changed from', activeAccount.value, 'to', storedActiveAccount)
     activeAccount.value = storedActiveAccount
     activeChannelName.value = storedAccountName || 'Channel'
     
-    // Load channels and re-check like status only when account changes
     loadChannelsForAccount()
     
     if (isLoggedIn.value) {
@@ -532,7 +519,6 @@ const syncActiveAccountFromStorage = async () => {
   }
 }
 
-// Update selectedChannelName whenever activeAccount or personalAccountSelectedChannel changes
 watch([() => activeAccount.value, () => personalAccountSelectedChannel.value], () => {
   const isPersonalAccount = activeAccount.value === 'personal' || activeAccount.value === userId.value
   const channelId = isPersonalAccount ? personalAccountSelectedChannel.value : activeAccount.value
@@ -549,7 +535,6 @@ const { data: video } = await useAsyncData(`video-${id}`, () =>
   getVideo(id)
 )
 
-// Set meta tags for social sharing (SSR)
 if (video.value) {
   const siteUrl = process.server 
     ? (() => { const headers = useRequestHeaders(['host', 'x-forwarded-proto']); return `${headers['x-forwarded-proto'] || 'http'}://${headers.host || 'localhost:3000'}`; })()
@@ -563,14 +548,12 @@ if (video.value) {
   })
 }
 
-// Update likes count when video data loads
 watch(() => video.value, (newVideo) => {
   if (newVideo && newVideo.likes !== undefined) {
     likes.value = newVideo.likes
   }
 }, { deep: true, immediate: true })
 
-// Check like status when account changes
 watch([() => activeAccount.value], async () => {
   if (!isLoggedIn.value) return
   
@@ -590,9 +573,7 @@ watch([() => activeAccount.value], async () => {
   }
 })
 
-// Increment views only when video actually plays
 const onVideoPlay = async () => {
-  // Only count once per page load
   if (hasCountedView.value) return
   hasCountedView.value = true
   
@@ -603,49 +584,39 @@ const onVideoPlay = async () => {
   }
 }
 
-// HLS stream URL
 const videoSrc = computed(() =>
   video.value
     ? `${baseUrl}/api/v1/videos/${id}/stream/master.m3u8`
     : ''
 )
 
-// Check if video is 4K
 const is4K = computed(() => video.value?.width >= 3840)
 
-// Update sidebar visibility based on screen size
 const updateSidebarVisibility = () => {
   showSidebar.value = typeof window !== 'undefined' && window.innerWidth >= 1024
 }
 
 onMounted(async () => {
-  // Check screen size and update sidebar visibility
   updateSidebarVisibility()
   window.addEventListener('resize', updateSidebarVisibility)
   
-  // Check if user has opted out of explicit warnings
   const hideExplicitWarnings = localStorage.getItem('hide_explicit_warnings') === 'true'
   
-  // Show explicit warning if video is explicit and user hasn't opted out
   if (video.value?.explicit && !hideExplicitWarnings) {
     showExplicitWarning.value = true
   }
   
-  // Check auth status and get user ID
   const storedUserId = localStorage.getItem('user_id')
   userId.value = storedUserId || ''
   isLoggedIn.value = !!storedUserId
   
-  // If logged in and no active account is set, mark as personal (user_id)
   if (isLoggedIn.value && !localStorage.getItem('active_account')) {
     localStorage.setItem('active_account', userId.value)
     localStorage.setItem('active_account_name', 'Personal')
   }
   
-  // Initial sync of active account
   syncActiveAccountFromStorage()
 
-  // Load comments
   try {
     comments.value = await getVideoComments(id)
   } catch (err) {
@@ -666,7 +637,6 @@ onMounted(async () => {
     }
   }
 
-  // Load related videos (all ready videos except current one)
   try {
     const allVideos = await getVideos()
     relatedVideos.value = allVideos.filter(v => v.id !== id).slice(0, 10)
@@ -674,24 +644,21 @@ onMounted(async () => {
     console.error('Failed to load related videos:', err)
   }
 
-  // Listen for storage changes (from other tabs)
   const handleStorageChange = (e) => {
     if (e.key === 'active_account' || e.key === 'active_account_name' || e.key === 'user_channels') {
       syncActiveAccountFromStorage()
     }
   }
   
-  // Listen for visibility changes to re-sync when tab becomes visible
   const handleVisibilityChange = () => {
     if (!document.hidden) {
       syncActiveAccountFromStorage()
     }
   }
   
-  // Periodic check for account changes (catches same-tab switches)
   const accountCheckInterval = setInterval(() => {
     syncActiveAccountFromStorage()
-  }, 300) // Check every 300ms for account changes
+  }, 300)
   
   window.addEventListener('storage', handleStorageChange)
   document.addEventListener('visibilitychange', handleVisibilityChange)

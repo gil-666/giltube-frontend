@@ -296,7 +296,6 @@ const userId = ref('')
 const fileInput = ref(null)
 const thumbnailInput = ref(null)
 
-// Form state
 const form = ref({
   title: '',
   description: '',
@@ -311,8 +310,7 @@ const selectedFile = ref(null)
 const uploadProgress = ref(0)
 const error = ref('')
 
-// Upload state
-const stage = ref('select') // 'select', 'details', 'uploading', 'complete'
+const stage = ref('select')
 const isUploading = ref(false)
 const isPublishing = ref(false)
 const channels = ref([])
@@ -355,14 +353,11 @@ const loadChannels = async () => {
       return
     }
     
-    // Get active account or default to personal
     const activeAccount = localStorage.getItem('active_account')
     
-    // If personal account, use first available channel
     if (!activeAccount || activeAccount === 'personal') {
       form.value.channelId = channels.value[0].id
     } else {
-      // If specific channel account, find and use it
       const activeChannelId = channels.value.find(ch => ch.id === activeAccount)?.id
       if (activeChannelId) {
         form.value.channelId = activeChannelId
@@ -393,8 +388,6 @@ const handleFileSelect = (event) => {
   selectedFile.value = file
   selectedFileName.value = file.name
   error.value = ''
-  
-  // Move to details stage to let user fill in info
   stage.value = 'details'
 }
 
@@ -402,13 +395,11 @@ const onThumbnailSelected = (event: any) => {
   const file = event.target.files?.[0]
   if (!file) return
 
-  // Validate file size (5MB max)
   if (file.size > 5 * 1024 * 1024) {
     error.value = 'Thumbnail file must be smaller than 5MB'
     return
   }
 
-  // Validate file type
   if (!file.type.startsWith('image/')) {
     error.value = 'Please select a valid image file'
     return
@@ -417,7 +408,6 @@ const onThumbnailSelected = (event: any) => {
   error.value = ''
   thumbnailFile.value = file
 
-  // Create preview
   const reader = new FileReader()
   reader.onload = (e) => {
     thumbnailPreview.value = e.target?.result as string
@@ -428,7 +418,6 @@ const onThumbnailSelected = (event: any) => {
 const clearThumbnail = () => {
   thumbnailFile.value = null
   thumbnailPreview.value = ''
-  // Reset file input
   if (thumbnailInput.value) {
     thumbnailInput.value.value = ''
   }
@@ -437,7 +426,6 @@ const clearThumbnail = () => {
 const handleStartUpload = async () => {
   error.value = ''
   
-  // Validate form
   if (!form.value.channelId) {
     error.value = 'Please select a channel'
     return
@@ -453,13 +441,11 @@ const handleStartUpload = async () => {
     return
   }
 
-  // Move to uploading stage and start upload
   stage.value = 'uploading'
   isUploading.value = true
   uploadProgress.value = 0
 
   try {
-    // Start upload
     const uploadData: any = {
       title: form.value.title,
       description: form.value.description,
@@ -472,14 +458,12 @@ const handleStartUpload = async () => {
       },
     }
 
-    // Add thumbnail if selected
     if (thumbnailFile.value) {
       uploadData.thumbnail = thumbnailFile.value
     }
 
     await uploadVideo(uploadData)
 
-    // Move to complete stage
     stage.value = 'complete'
   } catch (err) {
     error.value = typeof err === 'string' ? err : 'Upload failed. Please try again.'
@@ -495,8 +479,6 @@ const handlePublish = async () => {
   error.value = ''
 
   try {
-    // On backend, the video processing starts automatically when uploaded
-    // Redirect to dashboard to show all videos
     await router.push('/dashboard')
   } catch (err) {
     error.value = typeof err === 'string' ? err : 'Failed to navigate to dashboard.'

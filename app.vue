@@ -67,7 +67,7 @@
               />
               <span v-else>{{ displayName.charAt(0).toUpperCase() }}</span>
             </div>
-            <span class="text-sm text-gray-300">{{ displayName }}</span>
+            <span class="hidden md:inline text-sm text-gray-300">{{ displayName }}</span>
             <!-- <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="dropdownOpen ? 'M19 14l-7 7m0 0l-7-7m7 7V3' : 'M19 14l-7-7m0 0L5 14m7-7v11'" />
             </svg> -->
@@ -282,53 +282,40 @@ const activeAccount = ref('personal')
 const avatarLoadFailed = ref(false)
 const failedChannelAvatars = ref({})
 
-// Routes that should not show header/sidebar
 const hideHeaderSidebarRoutes = ['/login', '/register', '/upload', '/create-channel']
 
-// Computed property to check if header/sidebar should be hidden
 const shouldHideHeaderSidebar = computed(() => {
   return hideHeaderSidebarRoutes.some(route_path => route.path.startsWith(route_path))
 })
 
-// Computed property to show active account name
 const displayName = computed(() => {
   if (!process.client) return username.value || 'User'
   const activeAccountName = localStorage.getItem('active_account_name')
   return activeAccountName || username.value || 'User'
 })
 
-// Computed property to get active channel's avatar
 const activeChannelAvatar = computed(() => {
   if (activeAccount.value === 'personal') return ''
   const activeChannel = channels.value.find(ch => ch.id === activeAccount.value)
   if (!activeChannel?.avatar_url || !activeChannel.avatar_url.trim()) return ''
-  // If it's a full URL, return as-is
   if (activeChannel.avatar_url.startsWith('http')) return activeChannel.avatar_url
-  // If it already starts with /avatars/, return as-is (root-relative path)
   if (activeChannel.avatar_url.startsWith('/avatars/')) return activeChannel.avatar_url
-  // Otherwise, prepend /avatars/ (don't use baseUrl - avatars are at root level)
   return `/avatars/${activeChannel.avatar_url}`
 })
 
-// Helper function to get channel avatar URL
 const getChannelAvatarUrl = (channel) => {
   if (!channel?.avatar_url || !channel.avatar_url.trim()) return ''
-  // If it's a full URL, return as-is
   if (channel.avatar_url.startsWith('http')) return channel.avatar_url
-  // If it already starts with /avatars/, return as-is (root-relative path)
   if (channel.avatar_url.startsWith('/avatars/')) return channel.avatar_url
-  // Otherwise, prepend /avatars/ (don't use baseUrl - avatars are at root level)
   return `/avatars/${channel.avatar_url}`
 }
 
-// Computed property to get categories that have videos
 const categoriesWithVideos = computed(() => {
   if (!process.client) return []
   const categories = localStorage.getItem('categories')
   if (!categories) return []
   try {
     const parsed = JSON.parse(categories)
-    // Filter to only categories that have videos
     return parsed.filter(cat => (cat.video_count || 0) > 0)
   } catch (e) {
     console.error('Failed to parse categories:', e)
@@ -336,13 +323,9 @@ const categoriesWithVideos = computed(() => {
   }
 })
 
-// Close sidebar when window is resized to mobile size
 const handleSidebarResize = () => {
   if (!process.client) return
-  if (window.innerWidth >= 768) {
-    // md breakpoint - don't close on desktop
-    return
-  }
+  if (window.innerWidth >= 768) return
   isSidebarOpen.value = false
 }
 
@@ -360,7 +343,6 @@ onUnmounted(() => {
   window.removeEventListener('resize', handleSidebarResize)
 })
 
-// Watch for login/logout changes
 watch(isLoggedIn, (newValue) => {
   if (newValue) {
     loadChannels()
@@ -369,7 +351,6 @@ watch(isLoggedIn, (newValue) => {
   }
 })
 
-// Reset avatar load failure when avatar changes
 watch(activeChannelAvatar, () => {
   avatarLoadFailed.value = false
 })
@@ -382,19 +363,13 @@ const checkAuthStatus = () => {
   isLoggedIn.value = !!storedUserId
   username.value = storedUsername || 'User'
   userId.value = storedUserId || ''
-  
-  // Load active account
   const activeId = localStorage.getItem('active_account')
   activeAccount.value = activeId || 'personal'
 }
 
 const loadChannels = async () => {
   if (!process.client || !userId.value) return
-  
-  // Reset failed avatars when loading channels
   failedChannelAvatars.value = {}
-  
-  // Try to get channels from localStorage first
   const storedChannels = localStorage.getItem('user_channels')
   if (storedChannels) {
     try {
@@ -403,8 +378,6 @@ const loadChannels = async () => {
       console.error('Failed to parse channels:', e)
     }
   }
-  
-  // Fetch fresh channels from API
   try {
     await fetchUserChannels(userId.value)
     const updatedChannels = localStorage.getItem('user_channels')
@@ -420,11 +393,9 @@ const loadCategories = async () => {
   if (!process.client) return
   
   try {
-    // Fetch categories directly from API
     const response = await fetch('/api/v1/categories')
     if (response.ok) {
       const categories = await response.json()
-      // Store in localStorage for access in composables and other pages
       localStorage.setItem('categories', JSON.stringify(categories || []))
     }
   } catch (err) {
@@ -457,7 +428,6 @@ const handleLogout = () => {
   window.location.reload()
 }
 
-// Watch for route changes to update auth status
 router.afterEach(() => {
   checkAuthStatus()
 })
