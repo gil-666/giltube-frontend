@@ -340,6 +340,27 @@ const checkAuthStatus = async () => {
   }
 
   userId.value = storedUserId
+  
+  // Check user status - block banned users, warn suspended users
+  try {
+    const userRes = await fetch(`/api/v1/user/${storedUserId}`, {
+      headers: {
+        'X-User-ID': storedUserId
+      }
+    })
+    
+    if (userRes.ok) {
+      const user = await userRes.json()
+      if (user.status === 'banned') {
+        error.value = 'Your account is banned and you cannot upload videos.'
+        setTimeout(() => router.push('/'), 2000)
+        return
+      }
+    }
+  } catch (err) {
+    console.error('Failed to check user status:', err)
+  }
+  
   await loadChannels()
 }
 
@@ -348,7 +369,12 @@ const loadChannels = async () => {
   
   try {
     channels.value = await fetchUserChannels(userId.value)
+    
+    // Filter out banned channels
+    channels.value = channels.value.filter(ch => ch.status !== 'banned')
+    
     if (channels.value.length === 0) {
+      error.value = 'You have no active channels available for uploading.'
       await router.push('/create-channel')
       return
     }

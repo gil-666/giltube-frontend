@@ -162,16 +162,21 @@ const handleRegister = async () => {
 
     success.value = true
 
-    // Store user info
+    // Store user info & auto-login
     if (response.id && response.username) {
       localStorage.setItem('user_id', response.id)
       localStorage.setItem('email', response.email)
       localStorage.setItem('username', response.username)
+      
+      // Store auth token if provided
+      if (response.token) {
+        localStorage.setItem('auth_token', response.token)
+      }
 
-      // Redirect to login after a delay
+      // Redirect to home/dashboard immediately (auto-logged in)
       setTimeout(() => {
-        router.push('/login')
-      }, 1500)
+        router.push('/')
+      }, 800)
     } else {
       error.value = 'Registration failed: Invalid response'
     }

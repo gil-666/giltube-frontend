@@ -1,70 +1,112 @@
 <template>
   <div class="min-h-screen bg-zinc-950 text-white flex flex-col">
 
+    <!-- Offline Indicator -->
+    <div ref="offlineRef" v-if="offlineMode" class="w-full bg-yellow-600 text-white px-4 py-2 fixed text-center text-sm font-semibold"
+      :style="{ zIndex: 80 }">
+      You are offline - using cached content
+    </div>
+
+    <!-- Account Status Banner -->
+    <div ref="statusRef" v-if="userStatus === 'suspended'"
+      class="w-full bg-yellow-600 text-white px-4 py-3 fixed flex items-center justify-between" :style="{ zIndex: 70 }">
+      <span class="text-sm font-semibold">Your account is suspended. You can use the site but cannot upload
+        videos.</span>
+      <button @click="dismissAccountStatus"
+        class="px-3 py-1 bg-yellow-700 hover:bg-yellow-800 rounded text-sm transition">
+        I understand
+      </button>
+    </div>
+
+    <!-- Banned Account Banner -->
+    <div ref="statusRef" v-if="userStatus === 'banned'"
+      class="w-full bg-red-600 text-white px-4 py-3 fixed flex items-center justify-between" :style="{ zIndex: 70 }">
+      <span class="text-sm font-semibold">Your account has been banned. You cannot use this service.</span>
+      <button @click="handleBannedLogout" class="px-3 py-1 bg-red-700 hover:bg-red-800 rounded text-sm transition">
+        Sign Out
+      </button>
+    </div>
+
+    <!-- App Update Notification -->
+    <div ref="updateRef" v-if="showUpdatePrompt" class="w-full bg-blue-600 text-white px-4 py-3 fixed flex items-center justify-between"
+      :style="{ zIndex: 70 }">
+      <span class="text-sm font-semibold">A new version of Giltube is available</span>
+      <div class="flex gap-2">
+        <button @click="dismissUpdate" class="px-3 py-1 bg-blue-700 hover:bg-blue-800 rounded text-sm transition">
+          Later
+        </button>
+        <button @click="handleUpdateApp"
+          class="px-3 py-1 bg-white text-blue-600 hover:bg-gray-200 rounded text-sm font-semibold transition">
+          Update Now
+        </button>
+      </div>
+    </div>
+
     <!-- Header -->
-    <header v-if="!shouldHideHeaderSidebar" class="h-16 flex items-center justify-between px-4 border-b border-zinc-800 fixed top-0 left-0 right-0 bg-zinc-950" :style="{ zIndex: 60 }">
+    <header v-if="!shouldHideHeaderSidebar"
+      class="h-16 flex items-center justify-between px-4 border-b border-zinc-800 fixed left-0 right-0 bg-zinc-950"
+      :style="{ top: notificationBarHeight + 'px', zIndex: 60 }">
       <div class="flex items-center gap-3">
-        <button
-          @click="isSidebarOpen = !isSidebarOpen"
-          class="md:hidden p-2 hover:bg-zinc-800 rounded transition"
-        >
+        <button @click="isSidebarOpen = !isSidebarOpen" class="md:hidden p-2 hover:bg-zinc-800 rounded transition">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
           </svg>
         </button>
         <div class="relative inline-flex">
-          <img
-            @click="router.push('/')"
-            src="./assets/logowhsmall.png"
-            class="h-8 object-contain cursor-pointer md:h-14"
-          />
-          <span class="absolute -top-1.5 -right-1 md:top-0 md:-right-2 bg-red-600 text-white text-[10px] md:text-xs font-bold px-0.5 md:px-1.5 py-0 rounded">BETA</span>
+          <img @click="router.push('/')" src="./assets/logowhsmall.png"
+            class="h-8 object-contain cursor-pointer md:h-14" />
+          <span
+            class="absolute -top-1.5 -right-1 md:top-0 md:-right-2 bg-red-600 text-white text-[10px] md:text-xs font-bold px-0.5 md:px-1.5 py-0 rounded">BETA</span>
         </div>
       </div>
 
-      <input
-        v-model="searchQuery"
-        type="text"
-        placeholder="Search videos and channels..."
+      <input v-model="searchQuery" type="text" placeholder="Search videos and channels..."
         @keydown.enter="$router.push(`/search?q=${encodeURIComponent(searchQuery)}`)"
-        class="hidden md:block bg-zinc-900 px-4 py-2 rounded-full w-1/3 focus:outline-none text-white placeholder-gray-500"
-      />
+        class="hidden md:block bg-zinc-900 px-4 py-2 rounded-full w-1/3 focus:outline-none text-white placeholder-gray-500" />
 
       <div class="flex items-center gap-2">
         <!-- Mobile Search Button -->
-        <button
-          @click="showSearchBar = !showSearchBar"
-          class="md:hidden p-2 hover:bg-zinc-800 rounded transition"
-        >
+        <button @click="showSearchBar = !showSearchBar" class="md:hidden p-2 hover:bg-zinc-800 rounded transition">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>
         </button>
 
         <!-- Upload Button (when logged in) -->
-        <NuxtLink
-          v-if="isLoggedIn"
-          to="/upload"
-          class="px-2 py-1 bg-red-600 hover:bg-red-700 rounded-full transition text-md"
-        >
+        <NuxtLink v-if="isLoggedIn && userStatus === 'active'" to="/upload"
+          class="px-2 py-1 bg-red-600 hover:bg-red-700 rounded-full transition text-md">
           Upload
         </NuxtLink>
 
+        <!-- Upload Button Disabled (suspended/banned) -->
+        <button v-if="isLoggedIn && userStatus !== 'active'" disabled
+          :title="userStatus === 'suspended' ? 'Your account is suspended - you cannot upload' : 'Your account is banned - you cannot upload'"
+          class="px-2 py-1 bg-gray-700 cursor-not-allowed rounded-full transition text-md opacity-50">
+          Upload
+        </button>
+
+        <!-- Install App Button -->
+        <!-- <button
+          v-if="canInstall"
+          @click="promptInstall"
+          class="px-3 py-1.5 bg-green-600 hover:bg-green-700 rounded-full transition text-sm font-semibold flex items-center gap-2"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
+          </svg>
+          Install
+        </button> -->
+
         <!-- User Menu -->
         <div v-if="isLoggedIn" class="relative">
-          <button
-            @click="dropdownOpen = !dropdownOpen"
-            class="flex items-center gap-2 px-3 py-2 hover:bg-zinc-800 rounded transition"
-          >
+          <button @click="dropdownOpen = !dropdownOpen"
+            class="flex items-center gap-2 px-3 py-2 hover:bg-zinc-800 rounded transition">
             <!-- Profile Picture Circle -->
-            <div class="w-8 h-8 rounded-full bg-zinc-700 flex items-center justify-center text-xs text-gray-300 font-bold border border-zinc-600 overflow-hidden">
-              <img
-                v-if="activeChannelAvatar && !avatarLoadFailed"
-                :src="activeChannelAvatar"
-                :alt="displayName"
-                class="w-full h-full object-cover"
-                @error="avatarLoadFailed = true"
-              />
+            <div
+              class="w-8 h-8 rounded-full bg-zinc-700 flex items-center justify-center text-xs text-gray-300 font-bold border border-zinc-600 overflow-hidden">
+              <img v-if="activeChannelAvatar && !avatarLoadFailed" :src="activeChannelAvatar" :alt="displayName"
+                class="w-full h-full object-cover" @error="avatarLoadFailed = true" />
               <span v-else>{{ displayName.charAt(0).toUpperCase() }}</span>
             </div>
             <span class="hidden md:inline text-sm text-gray-300">{{ displayName }}</span>
@@ -75,127 +117,93 @@
         </div>
 
         <!-- Login Link (when not logged in) -->
-        <NuxtLink
-          v-else
-          to="/login"
-          class="px-4 py-2 bg-red-600 hover:bg-red-700 rounded transition"
-        >
+        <NuxtLink v-else to="/login" class="px-4 py-2 bg-red-600 hover:bg-red-700 rounded transition">
           Login
         </NuxtLink>
       </div>
     </header>
 
     <!-- Mobile Expanded Search Bar -->
-    <div v-if="!shouldHideHeaderSidebar" v-show="showSearchBar" class="md:hidden bg-zinc-900 border-b border-zinc-800 fixed top-16 left-0 right-0" :style="{ zIndex: 61 }">
-      <input
-        v-model="searchQuery"
-        type="text"
-        placeholder="Search videos and channels..."
-        @keydown.enter="$router.push(`/search?q=${encodeURIComponent(searchQuery)}`); showSearchBar = false"
-        autofocus
-        class="w-full px-4 py-3 bg-zinc-900 focus:outline-none text-white placeholder-gray-500"
-      />
+    <div v-if="!shouldHideHeaderSidebar" v-show="showSearchBar"
+      class="md:hidden bg-zinc-900 border-b border-zinc-800 fixed top-16 left-0 right-0" :style="{ zIndex: 61 }">
+      <input v-model="searchQuery" type="text" placeholder="Search videos and channels..."
+        @keydown.enter="$router.push(`/search?q=${encodeURIComponent(searchQuery)}`); showSearchBar = false" autofocus
+        class="w-full px-4 py-3 bg-zinc-900 focus:outline-none text-white placeholder-gray-500" />
     </div>
 
     <!-- Main Content Wrapper with padding for fixed header -->
-    <div :class="['flex-1 overflow-auto', shouldHideHeaderSidebar ? '' : 'pt-16']">
-    <!-- CONTENT AREA -->
-    <div class="flex flex-1 min-h-0 relative">
-      <!-- Mobile Overlay Backdrop -->
-      <div
-        v-if="isSidebarOpen"
-        class="fixed inset-0 bg-black bg-opacity-50 md:hidden"
-        :style="{ zIndex: 40 }"
-        @click="isSidebarOpen = false"
-      />
+    <div class="flex-1 overflow-auto"
+      :style="shouldHideHeaderSidebar ? {} : { paddingTop: (notificationBarHeight + 64) + 'px' }">
+      <!-- CONTENT AREA -->
+      <div class="flex flex-1 min-h-0 relative">
+        <!-- Mobile Overlay Backdrop -->
+        <div v-if="isSidebarOpen" class="fixed inset-0 bg-black bg-opacity-50 md:hidden" :style="{ zIndex: 40 }"
+          @click="isSidebarOpen = false" />
 
-      <!-- Sidebar -->
-      <aside v-if="!shouldHideHeaderSidebar"
-        class="w-60 bg-zinc-950 border-r border-zinc-800 transition-transform duration-300 fixed left-0 top-16 bottom-0 md:static md:top-auto md:bottom-auto overflow-y-auto"
-        :class="{ '-translate-x-full': !isSidebarOpen, 'translate-x-0': isSidebarOpen, 'md:translate-x-0': true }"
-        :style="{ zIndex: 50 }"
-      >
-        <nav class="p-4 space-y-3">
-          <NuxtLink
-            to="/"
-            class="hover:bg-zinc-800 p-2 rounded cursor-pointer block"
-          >Home</NuxtLink>
-          <!-- Dashboard (only when logged in) -->
-          <NuxtLink
-            v-if="isLoggedIn"
-            to="/dashboard"
-            class="hover:bg-zinc-800 p-2 rounded cursor-pointer block text-blue-400 font-semibold"
-          >Dashboard</NuxtLink>
-          <NuxtLink
-            to="/subscriptions"
-            class="hover:bg-zinc-800 p-2 rounded cursor-pointer block"
-          >Subscriptions</NuxtLink>
-          <!-- My Channel (only when signed into a channel, not personal) -->
-          <NuxtLink
-            v-if="activeAccount !== 'personal' && activeAccount !== userId && isLoggedIn"
-            :to="`/channel/${activeAccount}`"
-            class="hover:bg-zinc-800 p-2 rounded cursor-pointer block text-yellow-400 font-semibold"
-          >My Channel</NuxtLink>
+        <!-- Sidebar -->
+        <aside v-if="!shouldHideHeaderSidebar"
+          class="w-60 bg-zinc-950 border-r border-zinc-800 transition-transform duration-300 fixed left-0 bottom-0 md:static md:top-auto md:bottom-auto overflow-y-auto"
+          :class="{ '-translate-x-full': !isSidebarOpen, 'translate-x-0': isSidebarOpen, 'md:translate-x-0': true }"
+          :style="{ top: (notificationBarHeight + 64) + 'px', zIndex: 50 }">
+          <nav class="p-4 space-y-3">
+            <NuxtLink to="/" class="hover:bg-zinc-800 p-2 rounded cursor-pointer block">Home</NuxtLink>
+            <!-- Dashboard (only when logged in) -->
+            <NuxtLink v-if="isLoggedIn" to="/dashboard"
+              class="hover:bg-zinc-800 p-2 rounded cursor-pointer block text-blue-400 font-semibold">Dashboard
+            </NuxtLink>
+            <NuxtLink to="/subscriptions" class="hover:bg-zinc-800 p-2 rounded cursor-pointer block">Subscriptions
+            </NuxtLink>
+            <!-- My Channel (only when signed into a channel, not personal) -->
+            <NuxtLink v-if="activeAccount !== 'personal' && activeAccount !== userId && isLoggedIn"
+              :to="`/channel/${activeAccount}`"
+              class="hover:bg-zinc-800 p-2 rounded cursor-pointer block text-yellow-400 font-semibold">My Channel
+            </NuxtLink>
 
-          <!-- Categories Divider -->
-          <div class="border-t border-zinc-700 pt-3 mt-3">
-            <p class="text-xs text-gray-500 font-semibold px-2 mb-2">CATEGORIES</p>
-            <div class="space-y-1">
-              <NuxtLink
-                to="/"
-                class="w-full text-left px-2 py-1.5 rounded text-sm transition hover:bg-zinc-800 text-gray-300 block"
-                :class="{ 'bg-blue-600 text-white': route.path === '/' && !route.params.slug }"
-              >
-                All Videos
-              </NuxtLink>
-              <NuxtLink
-                v-for="category in categoriesWithVideos"
-                :key="category.id"
-                :to="`/category/${category.slug}`"
-                class="w-full text-left px-2 py-1.5 rounded text-sm transition hover:bg-zinc-800 text-gray-300 block"
-                :class="{ 'bg-blue-600 text-white': route.params.slug === category.slug }"
-              >
-                {{ category.name }}
-              </NuxtLink>
+            <!-- Categories Divider -->
+            <div class="border-t border-zinc-700 pt-3 mt-3">
+              <p class="text-xs text-gray-500 font-semibold px-2 mb-2">CATEGORIES</p>
+              <div class="space-y-1">
+                <NuxtLink to="/"
+                  class="w-full text-left px-2 py-1.5 rounded text-sm transition hover:bg-zinc-800 text-gray-300 block"
+                  :class="{ 'bg-blue-600 text-white': route.path === '/' && !route.params.slug }">
+                  All Videos
+                </NuxtLink>
+                <NuxtLink v-for="category in categoriesWithVideos" :key="category.id" :to="`/category/${category.slug}`"
+                  class="w-full text-left px-2 py-1.5 rounded text-sm transition hover:bg-zinc-800 text-gray-300 block"
+                  :class="{ 'bg-blue-600 text-white': route.params.slug === category.slug }">
+                  {{ category.name }}
+                </NuxtLink>
+              </div>
             </div>
-          </div>
-        </nav>
-      </aside>
+          </nav>
+        </aside>
 
-      <!-- Page content -->
-      <div class="flex-1 overflow-auto">
-        <NuxtPage />
+        <!-- Page content -->
+        <div class="flex-1 overflow-auto">
+          <NuxtPage />
+        </div>
+
       </div>
-
-    </div>
     </div>
 
   </div>
   <!-- Profile Dropdown Portal (outside header for z-index independence) -->
   <!-- Overlay for click outside -->
-  <div
-    v-if="dropdownOpen"
-    class="fixed inset-0 pointer-events-none"
-    :style="{ zIndex: 9998 }"
-    @click="dropdownOpen = false"
-  />
+  <div v-if="dropdownOpen" class="fixed inset-0 pointer-events-none" :style="{ zIndex: 9998 }"
+    @click="dropdownOpen = false" />
 
   <!-- Dropdown Menu -->
-  <div
-    v-if="dropdownOpen"
+  <div v-if="dropdownOpen"
     class="fixed bg-zinc-900 border border-zinc-700 rounded shadow-lg max-h-96 overflow-y-auto pointer-events-auto"
-    :style="{ zIndex: 9999, top: '70px', right: '20px', width: '224px' }"
-  >
+    :style="{ zIndex: 9999, top: '70px', right: '20px', width: '224px' }">
     <!-- Current Account -->
     <div class="px-4 py-2 text-xs text-gray-500 border-b border-zinc-700 font-semibold">
       CURRENT ACCOUNT
     </div>
-    
+
     <!-- Personal Account -->
-    <button
-      @click="switchAccount(userId, username)"
-      :class="['w-full text-left px-4 py-2 hover:bg-zinc-800', activeAccount === 'personal' ? 'bg-zinc-800 text-blue-400' : 'text-gray-300']"
-    >
+    <button @click="switchAccount(userId, username)"
+      :class="['w-full text-left px-4 py-2 hover:bg-zinc-800', activeAccount === 'personal' ? 'bg-zinc-800 text-blue-400' : 'text-gray-300']">
       👤 {{ username }} (Personal)
     </button>
 
@@ -205,59 +213,45 @@
     </div>
 
     <!-- User Channels -->
-    <button
-      v-for="channel in channels"
-      :key="channel.id"
-      @click="switchAccount(channel.id, channel.name)"
-      :class="['w-full text-left px-4 py-2 hover:bg-zinc-800 flex items-center gap-3', activeAccount === channel.id ? 'bg-zinc-800 text-blue-400' : 'text-gray-300']"
-    >
+    <button v-for="channel in channels" :key="channel.id" @click="switchAccount(channel.id, channel.name)"
+      :disabled="channel.status === 'banned'"
+      :title="channel.status === 'banned' ? 'This channel has been banned' : channel.status === 'suspended' ? 'This channel is suspended' : ''"
+      :class="['w-full text-left px-4 py-2 hover:bg-zinc-800 flex items-center gap-3 transition', activeAccount === channel.id ? 'bg-zinc-800 text-blue-400' : channel.status === 'banned' ? 'text-gray-600 cursor-not-allowed opacity-50' : 'text-gray-300']">
       <!-- Channel Avatar -->
-      <div v-if="getChannelAvatarUrl(channel) && !failedChannelAvatars[channel.id]" class="w-6 h-6 rounded-full bg-zinc-700 flex items-center justify-center text-xs font-bold overflow-hidden">
-        <img
-          :src="getChannelAvatarUrl(channel)"
-          :alt="channel.name"
-          class="w-full h-full object-cover"
-          @error="failedChannelAvatars[channel.id] = true"
-        />
+      <div v-if="getChannelAvatarUrl(channel) && !failedChannelAvatars[channel.id]"
+        class="w-6 h-6 rounded-full bg-zinc-700 flex items-center justify-center text-xs font-bold overflow-hidden">
+        <img :src="getChannelAvatarUrl(channel)" :alt="channel.name" class="w-full h-full object-cover"
+          @error="failedChannelAvatars[channel.id] = true" />
       </div>
       <span v-else class="w-6 h-6 rounded-full bg-zinc-700 flex items-center justify-center text-xs font-bold">
         {{ channel.name.charAt(0).toUpperCase() }}
       </span>
-      {{ channel.name }}
+      <span class="flex-1">{{ channel.name }}</span>
+      <span v-if="channel.status === 'suspended'"
+        class="text-xs bg-yellow-900 text-yellow-200 px-2 py-0.5 rounded">Suspended</span>
+      <span v-if="channel.status === 'banned'" class="text-xs bg-red-900 text-red-200 px-2 py-0.5 rounded">Banned</span>
     </button>
 
     <!-- Actions -->
     <div class="border-t border-zinc-700 mt-2 pt-2">
       <div class="px-4 py-2 text-xs text-gray-500 border-zinc-700 font-semibold">
-      SETTINGS
-    </div>
-      <!-- Go to Channel Page (only when signed into a channel) -->
-      <!-- <NuxtLink
-        v-if="activeAccount !== 'personal'"
-        :to="`/channel/${activeAccount}`"
-        class="block px-4 py-2 hover:bg-zinc-800 text-blue-400"
-        @click="dropdownOpen = false"
-      >
-        📺 View Channel Page
-      </NuxtLink> -->
-      <NuxtLink
-        to="/my-channels"
-        class="block px-4 py-2 hover:bg-zinc-800 text-yellow-400"
-        @click="dropdownOpen = false"
-      >
+        SETTINGS
+      </div>
+      <!-- Admin Panel -->
+      <NuxtLink v-if="userType === 'admin'" to="/admin"
+        class="block px-4 py-2 hover:bg-zinc-800 text-purple-400 font-semibold" @click="dropdownOpen = false">
+        🔧 Admin Panel
+      </NuxtLink>
+      <NuxtLink to="/my-channels" class="block px-4 py-2 hover:bg-zinc-800 text-yellow-400"
+        @click="dropdownOpen = false">
         Manage Channels
       </NuxtLink>
-      <NuxtLink
-        to="/create-channel"
-        class="block px-4 py-2 hover:bg-zinc-800 text-green-400"
-        @click="dropdownOpen = false"
-      >
+      <NuxtLink to="/create-channel" class="block px-4 py-2 hover:bg-zinc-800 text-green-400"
+        @click="dropdownOpen = false">
         Create Channel
       </NuxtLink>
-      <button
-        @click="handleLogout"
-        class="w-full text-left mt-2 px-4 py-2 hover:bg-zinc-800 text-red-400 rounded-b border-t border-zinc-700"
-      >
+      <button @click="handleLogout"
+        class="w-full text-left mt-2 px-4 py-2 hover:bg-zinc-800 text-red-400 rounded-b border-t border-zinc-700">
         Logout
       </button>
     </div>
@@ -273,6 +267,8 @@ const route = useRoute()
 const isLoggedIn = ref(false)
 const username = ref('')
 const userId = ref('')
+const userType = ref('user')
+const userStatus = ref('active')
 const isSidebarOpen = ref(false)
 const showSearchBar = ref(false)
 const searchQuery = ref('')
@@ -281,8 +277,27 @@ const channels = ref([])
 const activeAccount = ref('personal')
 const avatarLoadFailed = ref(false)
 const failedChannelAvatars = ref({})
+const showUpdatePrompt = ref(false)
+const needRefresh = ref(false)
+const offlineMode = ref(false)
+const offlineReady = ref(false)
+const swNeedRefresh = ref(false)
+const updateServiceWorker = ref(null)
+const deferredPrompt = ref(null)
+const statusRefreshInterval = ref(null)
+const offlineRef = ref(null)
+const statusRef = ref(null)
+const updateRef = ref(null)
 
 const hideHeaderSidebarRoutes = ['/login', '/register', '/upload', '/create-channel']
+
+const notificationBarHeight = computed(() => {
+  let height = 0
+  if (offlineRef.value) height += offlineRef.value.offsetHeight
+  if (statusRef.value) height += statusRef.value.offsetHeight
+  if (updateRef.value) height += updateRef.value.offsetHeight
+  return height
+})
 
 const shouldHideHeaderSidebar = computed(() => {
   return hideHeaderSidebarRoutes.some(route_path => route.path.startsWith(route_path))
@@ -329,25 +344,169 @@ const handleSidebarResize = () => {
   isSidebarOpen.value = false
 }
 
-onMounted(() => {
+onMounted(async () => {
   checkAuthStatus()
   loadCategories()
   if (isLoggedIn.value) {
     loadChannels()
   }
-  
+
+  // Refresh user status every 10 seconds to catch suspend/ban updates
+  if (isLoggedIn.value && userId.value) {
+    statusRefreshInterval.value = setInterval(() => {
+      fetchUserType()
+    }, 10000)
+  }
+
   window.addEventListener('resize', handleSidebarResize)
+
+  if (process.client) {
+    console.log('[PWA] Initializing PWA...')
+    console.log('[PWA] Navigator SW:', !!navigator.serviceWorker)
+    console.log('[PWA] Protocol:', window.location.protocol)
+    console.log('[PWA] Hostname:', window.location.hostname)
+
+    const { useRegisterSW } = await import('virtual:pwa-register/vue')
+    const { offlineReady: swOfflineReady, needRefresh: swNeedRefreshVal, updateServiceWorker: updateSW } = useRegisterSW()
+
+    offlineReady.value = swOfflineReady.value
+    swNeedRefresh.value = swNeedRefreshVal.value
+    updateServiceWorker.value = updateSW
+
+    console.log('[PWA] Service Worker registered')
+
+    watch(swNeedRefreshVal, (newVal) => {
+      if (newVal) {
+        needRefresh.value = true
+        showUpdatePrompt.value = true
+        console.log('[PWA] Update available')
+      }
+    })
+
+    watch(swOfflineReady, (newVal) => {
+      if (newVal) {
+        offlineMode.value = true
+        console.log('[PWA] App ready for offline use')
+      }
+    })
+
+    // Capture beforeinstallprompt and trigger manually on real devices
+    window.addEventListener('beforeinstallprompt', (e) => {
+      console.log('[PWA] ✅ beforeinstallprompt event fired!')
+      e.preventDefault()
+      deferredPrompt.value = e
+
+      // Auto-trigger on real mobile (after SW is ready)
+      navigator.serviceWorker.ready.then(() => {
+        console.log('[PWA] Service Worker ready - triggering install prompt')
+        if (deferredPrompt.value) {
+          deferredPrompt.value.prompt()
+          deferredPrompt.value.userChoice.then((choiceResult) => {
+            console.log('[PWA] User response:', choiceResult.outcome)
+            deferredPrompt.value = null
+          })
+        }
+      }).catch(err => {
+        console.error('[PWA] Error triggering prompt:', err)
+      })
+    })
+
+    window.addEventListener('appinstalled', () => {
+      console.log('[PWA] ✅ App installed successfully')
+      deferredPrompt.value = null
+    })
+
+    // Check manifest and service worker status
+    navigator.serviceWorker.ready.then(() => {
+      console.log('[PWA] ✅ Service Worker is ready')
+
+      // Check if SW is active
+      if (navigator.serviceWorker.controller) {
+        console.log('[PWA] ✅ Service Worker is controlling the page')
+      } else {
+        console.warn('[PWA] ⚠️ Service Worker NOT controlling page yet - may need reload')
+      }
+    }).catch(err => {
+      console.error('[PWA] ❌ Service Worker registration failed:', err)
+    })
+
+    // Verify manifest loads
+    fetch('/manifest.webmanifest')
+      .then(r => {
+        console.log('[PWA] Manifest fetch status:', r.status)
+        if (r.ok) return r.json()
+        throw new Error(`HTTP ${r.status}`)
+      })
+      .then(manifest => {
+        console.log('[PWA] ✅ Manifest loaded successfully')
+        console.log('[PWA] Manifest name:', manifest.name)
+        console.log('[PWA] Manifest icons:', manifest.icons?.length)
+        console.log('[PWA] Manifest display:', manifest.display)
+      })
+      .catch(err => {
+        console.error('[PWA] ❌ Manifest error:', err)
+      })
+
+    // Wait a bit then check if installability criteria are met
+    setTimeout(() => {
+      console.log('[PWA] Checking install criteria...')
+      if (navigator.serviceWorker.controller) {
+        console.log('[PWA] ✅ SW: Yes')
+      } else {
+        console.log('[PWA] ❌ SW: No')
+      }
+      if (window.location.protocol === 'https:') {
+        console.log('[PWA] ✅ HTTPS: Yes')
+      } else {
+        console.log('[PWA] ❌ HTTPS: No (got ' + window.location.protocol + ')')
+      }
+
+      // Fallback: If SW is ready but beforeinstallprompt hasn't fired, trigger manually
+      if (navigator.serviceWorker.controller && deferredPrompt.value) {
+        console.log('[PWA] Fallback: Manually triggering install prompt')
+        deferredPrompt.value.prompt()
+        deferredPrompt.value.userChoice.then((choiceResult) => {
+          console.log('[PWA] User response:', choiceResult.outcome)
+          deferredPrompt.value = null
+        })
+      }
+    }, 5000)
+  }
+
+  window.addEventListener('online', () => {
+    offlineMode.value = false
+    console.log('[PWA] Back online')
+  })
+
+  window.addEventListener('offline', () => {
+    offlineMode.value = true
+    console.log('[PWA] Went offline')
+  })
 })
 
 onUnmounted(() => {
   window.removeEventListener('resize', handleSidebarResize)
+  if (statusRefreshInterval.value) {
+    clearInterval(statusRefreshInterval.value)
+  }
 })
 
 watch(isLoggedIn, (newValue) => {
   if (newValue) {
     loadChannels()
+    // Start status refresh when user logs in
+    if (userId.value) {
+      statusRefreshInterval.value = setInterval(() => {
+        fetchUserType()
+      }, 10000)
+    }
   } else {
     channels.value = []
+    // Stop status refresh when user logs out
+    if (statusRefreshInterval.value) {
+      clearInterval(statusRefreshInterval.value)
+      statusRefreshInterval.value = null
+    }
   }
 })
 
@@ -359,12 +518,37 @@ const checkAuthStatus = () => {
   if (!process.client) return
   const storedUserId = localStorage.getItem('user_id')
   const storedUsername = localStorage.getItem('username')
-  
+
   isLoggedIn.value = !!storedUserId
   username.value = storedUsername || 'User'
   userId.value = storedUserId || ''
   const activeId = localStorage.getItem('active_account')
   activeAccount.value = activeId || 'personal'
+
+  // Fetch user type from backend if logged in
+  if (isLoggedIn.value && userId.value) {
+    fetchUserType()
+  }
+}
+
+const fetchUserType = async () => {
+  if (!userId.value) return
+  try {
+    const res = await fetch(`/api/v1/user/${userId.value}`, {
+      headers: {
+        'X-User-ID': userId.value
+      }
+    })
+    if (res.ok) {
+      const user = await res.json()
+      userType.value = user.user_type || 'user'
+      userStatus.value = user.status || 'active'
+    }
+  } catch (err) {
+    console.error('Failed to fetch user type:', err)
+    userType.value = 'user'
+    userStatus.value = 'active'
+  }
 }
 
 const loadChannels = async () => {
@@ -391,7 +575,7 @@ const loadChannels = async () => {
 
 const loadCategories = async () => {
   if (!process.client) return
-  
+
   try {
     const response = await fetch('/api/v1/categories')
     if (response.ok) {
@@ -403,8 +587,29 @@ const loadCategories = async () => {
   }
 }
 
+const handleUpdateApp = async () => {
+  showUpdatePrompt.value = false
+  if (updateServiceWorker.value) {
+    await updateServiceWorker.value()
+  }
+}
+
+const dismissUpdate = () => {
+  showUpdatePrompt.value = false
+}
+
 const switchAccount = (accountId, accountName) => {
   if (!process.client) return
+
+  // If switching to a channel (not personal), check if it's banned
+  if (accountId !== userId.value) {
+    const targetChannel = channels.value.find(ch => ch.id === accountId)
+    if (targetChannel && targetChannel.status === 'banned') {
+      alert('This channel has been banned and cannot be accessed.')
+      return
+    }
+  }
+
   activeAccount.value = accountId
   avatarLoadFailed.value = false
   failedChannelAvatars.value = {}
@@ -426,6 +631,15 @@ const handleLogout = () => {
   dropdownOpen.value = false
   router.push('/')
   window.location.reload()
+}
+
+const dismissAccountStatus = () => {
+  // Just dismiss the banner, user can continue using the site
+  // Status will persist and show again on page reload
+}
+
+const handleBannedLogout = () => {
+  handleLogout()
 }
 
 router.afterEach(() => {
