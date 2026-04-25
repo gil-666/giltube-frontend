@@ -42,6 +42,32 @@
       </div>
     </div>
 
+    <!-- Passkey Prompt Banner -->
+    <div
+      ref="passkeyRef"
+      v-if="showPasskeyPrompt && isLoggedIn && route.path !== '/account-settings'"
+      class="w-full bg-cyan-700 text-white px-4 py-3 fixed flex items-center justify-between"
+      :style="{ zIndex: 70 }"
+    >
+      <div class="flex items-center gap-3 text-sm font-semibold">
+        <span>Secure your account with a passkey for faster sign-in.</span>
+        <NuxtLink
+          to="/account-settings#passkeys"
+          class="underline underline-offset-2 hover:text-cyan-100"
+          @click="showPasskeyPrompt = false"
+        >
+          Add Passkey
+        </NuxtLink>
+      </div>
+      <button
+        @click="dismissPasskeyPrompt"
+        class="px-2 py-1 bg-cyan-800 hover:bg-cyan-900 rounded text-sm transition"
+        aria-label="Dismiss passkey banner"
+      >
+        X
+      </button>
+    </div>
+
     <!-- Header -->
     <header v-if="!shouldHideHeaderSidebar"
       class="h-16 flex items-center justify-between px-4 border-b border-zinc-800 fixed left-0 right-0 bg-zinc-950"
@@ -189,13 +215,13 @@
   </div>
   <!-- Profile Dropdown Portal (outside header for z-index independence) -->
   <!-- Overlay for click outside -->
-  <div v-if="dropdownOpen" class="fixed inset-0 pointer-events-none" :style="{ zIndex: 9998 }"
+  <div v-if="dropdownOpen" class="fixed inset-0 pointer-events-auto" :style="{ zIndex: 9998 }"
     @click="dropdownOpen = false" />
 
   <!-- Dropdown Menu -->
   <div v-if="dropdownOpen"
     class="fixed bg-zinc-900 border border-zinc-700 rounded shadow-lg max-h-96 overflow-y-auto pointer-events-auto"
-    :style="{ zIndex: 9999, top: '70px', right: '20px', width: '224px' }">
+    :style="{ zIndex: 9999, top: notificationBarHeight + 70 + 'px', right: '20px', width: '224px' }">
     <!-- Current Account -->
     <div class="px-4 py-2 text-xs text-gray-500 border-b border-zinc-700 font-semibold">
       CURRENT ACCOUNT
@@ -240,11 +266,15 @@
       <!-- Admin Panel -->
       <NuxtLink v-if="userType === 'admin'" to="/admin"
         class="block px-4 py-2 hover:bg-zinc-800 text-purple-400 font-semibold" @click="dropdownOpen = false">
-        🔧 Admin Panel
+        Admin Panel
       </NuxtLink>
       <NuxtLink to="/my-channels" class="block px-4 py-2 hover:bg-zinc-800 text-yellow-400"
         @click="dropdownOpen = false">
         Manage Channels
+      </NuxtLink>
+      <NuxtLink to="/account-settings" class="block px-4 py-2 hover:bg-zinc-800 text-cyan-400"
+        @click="dropdownOpen = false">
+        Account Settings
       </NuxtLink>
       <NuxtLink to="/create-channel" class="block px-4 py-2 hover:bg-zinc-800 text-green-400"
         @click="dropdownOpen = false">
@@ -288,6 +318,11 @@ const statusRefreshInterval = ref(null)
 const offlineRef = ref(null)
 const statusRef = ref(null)
 const updateRef = ref(null)
+const passkeyRef = ref(null)
+const categories = ref([])
+const showPasskeyPrompt = ref(false)
+
+const PASSKEY_PROMPT_DISMISS_KEY = 'passkey_prompt_dismissed_session'
 
 const hideHeaderSidebarRoutes = ['/login', '/register', '/upload', '/create-channel']
 
@@ -296,6 +331,7 @@ const notificationBarHeight = computed(() => {
   if (offlineRef.value) height += offlineRef.value.offsetHeight
   if (statusRef.value) height += statusRef.value.offsetHeight
   if (updateRef.value) height += updateRef.value.offsetHeight
+  if (passkeyRef.value) height += passkeyRef.value.offsetHeight
   return height
 })
 
@@ -326,17 +362,23 @@ const getChannelAvatarUrl = (channel) => {
 }
 
 const categoriesWithVideos = computed(() => {
-  if (!process.client) return []
-  const categories = localStorage.getItem('categories')
-  if (!categories) return []
+  return categories.value.filter(cat => (cat.video_count || 0) > 0)
+})
+
+const syncCategoriesFromStorage = () => {
+  if (!process.client) return
+  const stored = localStorage.getItem('categories')
+  if (!stored) {
+    categories.value = []
+    return
+  }
   try {
-    const parsed = JSON.parse(categories)
-    return parsed.filter(cat => (cat.video_count || 0) > 0)
+    categories.value = JSON.parse(stored)
   } catch (e) {
     console.error('Failed to parse categories:', e)
-    return []
+    categories.value = []
   }
-})
+}
 
 const handleSidebarResize = () => {
   if (!process.client) return
@@ -344,11 +386,22 @@ const handleSidebarResize = () => {
   isSidebarOpen.value = false
 }
 
+const handleOnline = () => {
+  offlineMode.value = false
+  console.log('[PWA] Back online')
+}
+
+const handleOffline = () => {
+  offlineMode.value = true
+  console.log('[PWA] Went offline')
+}
+
 onMounted(async () => {
   checkAuthStatus()
-  loadCategories()
+  await loadCategories()
   if (isLoggedIn.value) {
     loadChannels()
+    checkPasskeyPrompt()
   }
 
   // Refresh user status every 10 seconds to catch suspend/ban updates
@@ -359,6 +412,7 @@ onMounted(async () => {
   }
 
   window.addEventListener('resize', handleSidebarResize)
+  offlineMode.value = !navigator.onLine
 
   if (process.client) {
     console.log('[PWA] Initializing PWA...')
@@ -385,7 +439,7 @@ onMounted(async () => {
 
     watch(swOfflineReady, (newVal) => {
       if (newVal) {
-        offlineMode.value = true
+        offlineReady.value = true
         console.log('[PWA] App ready for offline use')
       }
     })
@@ -447,22 +501,14 @@ onMounted(async () => {
         console.error('[PWA]  Manifest error:', err)
       })
 
-    
-
-
-  window.addEventListener('online', () => {
-    offlineMode.value = false
-    console.log('[PWA] Back online')
-  })
-
-  window.addEventListener('offline', () => {
-    offlineMode.value = true
-    console.log('[PWA] Went offline')
-  })
+    window.addEventListener('online', handleOnline)
+    window.addEventListener('offline', handleOffline)
 }})
 
 onUnmounted(() => {
   window.removeEventListener('resize', handleSidebarResize)
+  window.removeEventListener('online', handleOnline)
+  window.removeEventListener('offline', handleOffline)
   if (statusRefreshInterval.value) {
     clearInterval(statusRefreshInterval.value)
   }
@@ -471,6 +517,7 @@ onUnmounted(() => {
 watch(isLoggedIn, (newValue) => {
   if (newValue) {
     loadChannels()
+    checkPasskeyPrompt()
     // Start status refresh when user logs in
     if (userId.value) {
       statusRefreshInterval.value = setInterval(() => {
@@ -479,6 +526,7 @@ watch(isLoggedIn, (newValue) => {
     }
   } else {
     channels.value = []
+    showPasskeyPrompt.value = false
     // Stop status refresh when user logs out
     if (statusRefreshInterval.value) {
       clearInterval(statusRefreshInterval.value)
@@ -553,14 +601,54 @@ const loadChannels = async () => {
 const loadCategories = async () => {
   if (!process.client) return
 
+  syncCategoriesFromStorage()
+
   try {
     const response = await fetch('/api/v1/categories')
     if (response.ok) {
       const categories = await response.json()
       localStorage.setItem('categories', JSON.stringify(categories || []))
+      syncCategoriesFromStorage()
     }
   } catch (err) {
     console.error('Failed to load categories:', err)
+  }
+}
+
+const dismissPasskeyPrompt = () => {
+  showPasskeyPrompt.value = false
+  if (!process.client) return
+  sessionStorage.setItem(PASSKEY_PROMPT_DISMISS_KEY, '1')
+}
+
+const checkPasskeyPrompt = async () => {
+  if (!process.client || !isLoggedIn.value || !userId.value) {
+    showPasskeyPrompt.value = false
+    return
+  }
+
+  if (sessionStorage.getItem(PASSKEY_PROMPT_DISMISS_KEY) === '1') {
+    showPasskeyPrompt.value = false
+    return
+  }
+
+  try {
+    const res = await fetch('/api/v1/passkeys', {
+      headers: {
+        'X-User-ID': userId.value
+      }
+    })
+
+    if (!res.ok) {
+      showPasskeyPrompt.value = false
+      return
+    }
+
+    const passkeys = await res.json()
+    showPasskeyPrompt.value = Array.isArray(passkeys) && passkeys.length === 0
+  } catch (err) {
+    console.error('Failed to check passkeys:', err)
+    showPasskeyPrompt.value = false
   }
 }
 
@@ -621,5 +709,8 @@ const handleBannedLogout = () => {
 
 router.afterEach(() => {
   checkAuthStatus()
+  if (isLoggedIn.value) {
+    checkPasskeyPrompt()
+  }
 })
 </script>

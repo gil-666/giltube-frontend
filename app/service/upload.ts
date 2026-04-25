@@ -102,7 +102,7 @@ export const uploadVideo = async (data: UploadVideoRequest) => {
       finalizeFormData.append('explicit', 'true')
     }
     if (data.categoryId) {
-      finalizeFormData.append('category_ids', data.categoryId)
+      finalizeFormData.append('category_ids[]', data.categoryId)
     }
     if (data.thumbnail) {
       finalizeFormData.append('thumbnail', data.thumbnail)

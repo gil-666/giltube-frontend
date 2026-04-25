@@ -1,5 +1,5 @@
 <template>
-  <div class="fixed inset-0 bg-zinc-950 text-white p-6 overflow-y-auto flex flex-col items-center justify-start">
+  <div class="fixed inset-0 bg-zinc-950 text-white p-6 overflow-y-auto flex flex-col items-center justify-start" :style="{zIndex: 100}">
     <!-- Loading State -->
     <div v-if="!isReady" class="flex items-center justify-center min-h-screen">
       <div class="text-center">

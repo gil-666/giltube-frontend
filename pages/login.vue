@@ -69,6 +69,21 @@
         >
           {{ loading ? 'Signing in...' : 'Sign In' }}
         </button>
+
+        <div class="flex items-center gap-3 text-xs text-gray-500">
+          <div class="h-px flex-1 bg-zinc-700" />
+          <span>or</span>
+          <div class="h-px flex-1 bg-zinc-700" />
+        </div>
+
+        <button
+          type="button"
+          :disabled="loading || passkeyLoading"
+          @click="handlePasskeyLogin"
+          class="w-full bg-cyan-600 hover:bg-cyan-700 disabled:bg-gray-600 text-white font-semibold py-2 px-4 rounded-lg transition duration-200"
+        >
+          {{ passkeyLoading ? 'Waiting for passkey...' : 'Use Passkey' }}
+        </button>
       </form>
 
       <!-- Register Link -->
@@ -87,9 +102,10 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { login } from '~/app/service/auth'
+import { beginPasskeyLogin, finishPasskeyLogin, login } from '~/app/service/auth'
 import { fetchUserChannels } from '~/app/service/upload'
 import { useMetaTags } from '~/app/composables/useMetaTags'
+import { prepareCredentialRequestOptions, serializeAuthenticationCredential, supportsWebAuthn } from '~/app/service/webauthn'
 
 definePageMeta({
   layout: false
@@ -105,6 +121,22 @@ const email = ref('')
 const password = ref('')
 const error = ref('')
 const loading = ref(false)
+const passkeyLoading = ref(false)
+
+const persistLogin = async (response: any, fallbackEmail: string) => {
+  localStorage.setItem('user_id', response.user_id)
+  localStorage.setItem('email', response.email || fallbackEmail || '')
+  const username = response.username || ((response.email || fallbackEmail || '').split('@')[0] || '')
+  localStorage.setItem('username', username)
+
+  try {
+    await fetchUserChannels(response.user_id)
+  } catch (err) {
+    console.error('Failed to fetch channels:', err)
+  }
+
+  router.push('/')
+}
 
 const handleLogin = async () => {
   error.value = ''
@@ -116,22 +148,8 @@ const handleLogin = async () => {
       password: password.value
     })
 
-    // Store user_id in localStorage
     if (response.user_id) {
-      localStorage.setItem('user_id', response.user_id)
-      localStorage.setItem('email', email.value || '')
-      const username = (email.value || '').split('@')[0] || ''
-      localStorage.setItem('username', username)
-
-      // Fetch channels immediately
-      try {
-        await fetchUserChannels(response.user_id)
-      } catch (err) {
-        console.error('Failed to fetch channels:', err)
-      }
-
-      // Redirect to home page
-      router.push('/')
+      await persistLogin(response, email.value)
     } else {
       error.value = 'Login failed: No user ID returned'
     }
@@ -139,6 +157,44 @@ const handleLogin = async () => {
     error.value = err.response?.data?.error || 'Failed to sign in. Please try again.'
   } finally {
     loading.value = false
+  }
+}
+
+const handlePasskeyLogin = async () => {
+  error.value = ''
+
+  if (!supportsWebAuthn()) {
+    error.value = 'Passkeys are not supported in this browser.'
+    return
+  }
+
+  passkeyLoading.value = true
+  try {
+    const begin = await beginPasskeyLogin()
+    const publicKey = prepareCredentialRequestOptions(begin.options.publicKey)
+
+    const credential = await navigator.credentials.get({
+      publicKey,
+      mediation: 'optional'
+    })
+
+    if (!credential) {
+      throw new Error('No credential returned by authenticator')
+    }
+
+    const payload = serializeAuthenticationCredential(credential as PublicKeyCredential)
+    const response = await finishPasskeyLogin(begin.session_token, payload)
+
+    if (response.user_id) {
+      await persistLogin(response, response.email || email.value)
+      return
+    }
+
+    error.value = 'Passkey login failed: No user ID returned'
+  } catch (err: any) {
+    error.value = err?.response?.data?.error || err?.message || 'Passkey login failed'
+  } finally {
+    passkeyLoading.value = false
   }
 }
 </script>
