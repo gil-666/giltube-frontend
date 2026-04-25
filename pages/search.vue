@@ -78,7 +78,7 @@
                                     channel.name }}</p>
                                 <VerifiedBadge v-if="channel.verified" :verified="true" size="sm" class="flex-shrink-0" />
                             </div>
-                            <p class="text-sm text-gray-400 line-clamp-1">Channel</p>
+                            <p class="text-sm text-gray-400 line-clamp-1 truncate">{{ channel.description }}</p>
                         </div>
                     </NuxtLink>
                 </div>
@@ -117,6 +117,7 @@ interface SearchResult {
     id: string
     title: string
     name?: string
+    description?: string
     channel?: string
     channel_id?: string
     avatar?: string

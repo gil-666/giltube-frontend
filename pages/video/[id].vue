@@ -175,7 +175,7 @@
 
           <div v-for="comment in comments" :key="comment.id" class="bg-zinc-900 p-3 rounded text-sm">
             <div class="flex gap-2">
-              <div class="w-8 h-8 bg-zinc-700 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 overflow-hidden">
+              <div @click="navigateToChannel(comment.channel.id)" class="w-8 h-8 bg-zinc-700 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 overflow-hidden cursor-pointer">
                 <img
                   v-if="comment.channel.avatar_url && !failedCommentAvatars[comment.id]"
                   :src="getCommentAvatarUrl(comment.channel.avatar_url)"
@@ -187,7 +187,7 @@
               </div>
               <div class="flex-1 min-w-0">
                 <div class="flex items-center justify-between gap-2">
-                  <div class="flex items-center gap-1">
+                  <div @click="navigateToChannel(comment.channel.id)" class="flex items-center gap-1 cursor-pointer hover:text-yellow-400 transition">
                     <p class="font-semibold text-xs">{{ comment.channel.name }}</p>
                     <VerifiedBadge :verified="comment.channel.verified" size="sm" />
                   </div>
@@ -695,6 +695,10 @@ const getVideoChannelAvatarUrl = (avatarUrl: string): string => {
   if (avatarUrl.startsWith('http')) return avatarUrl
   if (avatarUrl.startsWith('/avatars/')) return avatarUrl
   return `/avatars/${avatarUrl}`
+}
+
+function navigateToChannel(channelId: string) {
+  navigateTo(`/channel/${channelId}`)
 }
 
 // Clear when user logs out

@@ -392,7 +392,7 @@ onMounted(async () => {
 
     // Capture beforeinstallprompt and trigger manually on real devices
     window.addEventListener('beforeinstallprompt', (e) => {
-      console.log('[PWA] ✅ beforeinstallprompt event fired!')
+      console.log('[PWA] beforeinstallprompt event fired!')
       e.preventDefault()
       deferredPrompt.value = e
 
@@ -412,22 +412,22 @@ onMounted(async () => {
     })
 
     window.addEventListener('appinstalled', () => {
-      console.log('[PWA] ✅ App installed successfully')
+      console.log('[PWA] App installed successfully')
       deferredPrompt.value = null
     })
 
     // Check manifest and service worker status
     navigator.serviceWorker.ready.then(() => {
-      console.log('[PWA] ✅ Service Worker is ready')
+      console.log('[PWA]  Service Worker is ready')
 
       // Check if SW is active
       if (navigator.serviceWorker.controller) {
-        console.log('[PWA] ✅ Service Worker is controlling the page')
+        console.log('[PWA]  Service Worker is controlling the page')
       } else {
-        console.warn('[PWA] ⚠️ Service Worker NOT controlling page yet - may need reload')
+        console.warn('[PWA]  Service Worker NOT controlling page yet - may need reload')
       }
     }).catch(err => {
-      console.error('[PWA] ❌ Service Worker registration failed:', err)
+      console.error('[PWA]  Service Worker registration failed:', err)
     })
 
     // Verify manifest loads
@@ -438,40 +438,17 @@ onMounted(async () => {
         throw new Error(`HTTP ${r.status}`)
       })
       .then(manifest => {
-        console.log('[PWA] ✅ Manifest loaded successfully')
+        console.log('[PWA] Manifest loaded successfully')
         console.log('[PWA] Manifest name:', manifest.name)
         console.log('[PWA] Manifest icons:', manifest.icons?.length)
         console.log('[PWA] Manifest display:', manifest.display)
       })
       .catch(err => {
-        console.error('[PWA] ❌ Manifest error:', err)
+        console.error('[PWA]  Manifest error:', err)
       })
 
-    // Wait a bit then check if installability criteria are met
-    setTimeout(() => {
-      console.log('[PWA] Checking install criteria...')
-      if (navigator.serviceWorker.controller) {
-        console.log('[PWA] ✅ SW: Yes')
-      } else {
-        console.log('[PWA] ❌ SW: No')
-      }
-      if (window.location.protocol === 'https:') {
-        console.log('[PWA] ✅ HTTPS: Yes')
-      } else {
-        console.log('[PWA] ❌ HTTPS: No (got ' + window.location.protocol + ')')
-      }
+    
 
-      // Fallback: If SW is ready but beforeinstallprompt hasn't fired, trigger manually
-      if (navigator.serviceWorker.controller && deferredPrompt.value) {
-        console.log('[PWA] Fallback: Manually triggering install prompt')
-        deferredPrompt.value.prompt()
-        deferredPrompt.value.userChoice.then((choiceResult) => {
-          console.log('[PWA] User response:', choiceResult.outcome)
-          deferredPrompt.value = null
-        })
-      }
-    }, 5000)
-  }
 
   window.addEventListener('online', () => {
     offlineMode.value = false
@@ -482,7 +459,7 @@ onMounted(async () => {
     offlineMode.value = true
     console.log('[PWA] Went offline')
   })
-})
+}})
 
 onUnmounted(() => {
   window.removeEventListener('resize', handleSidebarResize)
