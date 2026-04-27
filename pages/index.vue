@@ -199,7 +199,7 @@ const setupIntersectionObserver = () => {
 }
 
 onMounted(async () => {
-  await loadLiveChannels()
+  loadLiveChannels()
   await loadVideos()
   await nextTick()
   setupIntersectionObserver()

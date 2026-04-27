@@ -131,7 +131,7 @@
 
           <div
             v-if="notificationsDropdownOpen"
-            class="absolute right-0 mt-2 w-96 max-w-[90vw] bg-zinc-900 border border-zinc-700 rounded-lg shadow-xl overflow-hidden"
+            class="fixed top-14 right-2 left-2 sm:absolute sm:left-auto sm:right-0 sm:w-96 w-auto max-w-none bg-zinc-900 border border-zinc-700 rounded-lg shadow-xl overflow-hidden"
             :style="{ zIndex: 9999 }"
           >
             <div class="px-4 py-3 border-b border-zinc-700 flex items-center justify-between">

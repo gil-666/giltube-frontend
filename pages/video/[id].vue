@@ -180,13 +180,16 @@
             :is-logged-in="isLoggedIn"
             :failed-comment-avatars="failedCommentAvatars"
             :posting-reply-map="postingReplyForCommentId"
+            :toggling-comment-like-map="togglingCommentLikeMap"
             :comments-by-id="commentsById"
             :highlighted-comment-id="highlightedCommentId"
+            :target-comment-id="targetCommentId"
             :is-comment-owner="isCommentOwner"
             :get-comment-avatar-url="getCommentAvatarUrl"
             :get-time-ago="getTimeAgo"
             :on-post-reply="postReply"
             :on-delete-comment="deleteUserComment"
+            :on-toggle-comment-like="toggleCommentLike"
             :on-navigate-to-channel="navigateToChannel"
             :on-jump-to-comment="jumpToComment"
           />
@@ -405,7 +408,7 @@ import VideoPlayer from '~/app/components/videoplayer/VideoPlayer.vue'
 import VerifiedBadge from '~/app/components/VerifiedBadge.vue'
 import CommentNode from '~/app/components/comments/CommentNode.vue'
 import { getVideo, incrementViews, getVideos, likeVideo, unlikeVideo, checkIfLiked } from '~/app/service/videos'
-import { getVideoComments, postComment as apiPostComment, deleteComment } from '~/app/service/comments'
+import { getVideoComments, postComment as apiPostComment, deleteComment, likeComment, unlikeComment } from '~/app/service/comments'
 import { getTimeAgo } from '~/app/utils/time'
 import { formatViews } from '~/app/utils/format'
 import { useMetaTags } from '~/app/composables/useMetaTags'
@@ -431,6 +434,7 @@ const comments = ref([])
 const newCommentText = ref('')
 const isPostingComment = ref(false)
 const postingReplyForCommentId = ref<Record<string, boolean>>({})
+const togglingCommentLikeMap = ref<Record<string, boolean>>({})
 const showCreateChannelDialog = ref(false)
 const showErrorDialog = ref(false)
 const errorMessage = ref('')
@@ -442,6 +446,7 @@ const isToggglingLike = ref(false)
 const showExplicitWarning = ref(false)
 const neverShowExplicitWarningAgain = ref(false)
 const highlightedCommentId = ref('')
+const pendingJumpCommentID = ref('')
 
 const showSidebar = ref(true)
 
@@ -460,6 +465,14 @@ const commentsById = computed(() => {
 
   visit(comments.value || [])
   return map
+})
+
+const targetCommentId = computed(() => {
+  const raw = route.query.comment
+  if (Array.isArray(raw)) {
+    return (raw[0] || '').trim()
+  }
+  return typeof raw === 'string' ? raw.trim() : ''
 })
 
 const scrollCarousel = (direction: 'left' | 'right') => {
@@ -568,6 +581,9 @@ watch([() => activeAccount.value], async () => {
       isLiked.value = likeData.liked
       console.log('Like status updated:', isLiked.value)
     }
+
+    const commentActorId = getCurrentCommentActorID()
+    comments.value = await getVideoComments(id, commentActorId || undefined)
   } catch (err) {
     console.error('Failed to check like status:', err)
   }
@@ -618,7 +634,8 @@ onMounted(async () => {
   syncActiveAccountFromStorage()
 
   try {
-    comments.value = await getVideoComments(id)
+    const commentActorId = getCurrentCommentActorID()
+    comments.value = await getVideoComments(id, commentActorId || undefined)
   } catch (err) {
     console.error('Failed to load comments:', err)
   }
@@ -764,7 +781,7 @@ const postComment = async () => {
     newCommentText.value = ''
     
     // Reload comments
-    comments.value = await getVideoComments(id)
+    comments.value = await getVideoComments(id, commentChannelId)
   } catch (err) {
     console.error('Failed to post comment:', err)
   } finally {
@@ -783,7 +800,7 @@ const postReply = async (parentCommentId: string, text: string) => {
   postingReplyForCommentId.value[parentCommentId] = true
   try {
     await apiPostComment(id, commentChannelId, text, parentCommentId)
-    comments.value = await getVideoComments(id)
+    comments.value = await getVideoComments(id, commentChannelId)
   } catch (err) {
     console.error('Failed to post reply:', err)
   } finally {
@@ -830,7 +847,8 @@ const deleteUserComment = async (commentId: string) => {
   
   try {
     await deleteComment(commentId)
-    comments.value = await getVideoComments(id)
+    const commentActorId = getCurrentCommentActorID()
+    comments.value = await getVideoComments(id, commentActorId || undefined)
   } catch (err) {
     console.error('Failed to delete comment:', err)
     errorMessage.value = 'Failed to delete comment'
@@ -838,13 +856,47 @@ const deleteUserComment = async (commentId: string) => {
   }
 }
 
+const updateCommentLikeInTree = (items: any[], commentId: string, nextLiked: boolean, nextLikes: number): boolean => {
+  for (const item of items) {
+    if (item.id === commentId) {
+      item.liked_by_actor = nextLiked
+      item.likes_count = nextLikes
+      return true
+    }
+    if (Array.isArray(item.replies) && updateCommentLikeInTree(item.replies, commentId, nextLiked, nextLikes)) {
+      return true
+    }
+  }
+  return false
+}
+
+const toggleCommentLike = async (commentId: string, nextLiked: boolean) => {
+  const actorId = getCurrentCommentActorID()
+  if (!isLoggedIn.value || !actorId) return
+
+  togglingCommentLikeMap.value[commentId] = true
+  try {
+    const res = nextLiked ? await likeComment(commentId, actorId) : await unlikeComment(commentId, actorId)
+    const nextLikes = typeof res?.likes === 'number' ? res.likes : 0
+    updateCommentLikeInTree(comments.value, commentId, !!res?.liked, nextLikes)
+  } catch (err) {
+    console.error('Failed to toggle comment like:', err)
+  } finally {
+    togglingCommentLikeMap.value[commentId] = false
+  }
+}
+
 const jumpToComment = async (commentId: string) => {
   highlightedCommentId.value = commentId
 
-  await nextTick()
-  const el = document.getElementById(`comment-${commentId}`)
-  if (el) {
-    el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  for (let attempt = 0; attempt < 10; attempt++) {
+    await nextTick()
+    const el = document.getElementById(`comment-${commentId}`) as HTMLElement | null
+    if (el && (el.offsetParent !== null || el.getClientRects().length > 0)) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      break
+    }
+    await new Promise(resolve => setTimeout(resolve, 120))
   }
 
   window.setTimeout(() => {
@@ -853,6 +905,20 @@ const jumpToComment = async (commentId: string) => {
     }
   }, 1800)
 }
+
+watch(targetCommentId, async (newID) => {
+  pendingJumpCommentID.value = newID
+  if (newID) {
+    await jumpToComment(newID)
+  }
+}, { immediate: true })
+
+watch(() => commentsById.value[pendingJumpCommentID.value], async (found) => {
+  if (!pendingJumpCommentID.value || !found) return
+  const targetID = pendingJumpCommentID.value
+  pendingJumpCommentID.value = ''
+  await jumpToComment(targetID)
+}, { immediate: true })
 
 // Handle explicit warning
 const continueToVideo = () => {

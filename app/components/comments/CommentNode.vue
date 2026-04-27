@@ -43,7 +43,16 @@
 
                 <p class="text-gray-300 mt-1 text-xs break-words">{{ comment.text }}</p>
 
-                <div class="mt-2">
+                <div class="mt-2 flex items-center gap-3">
+                    <button
+                        v-if="isLoggedIn"
+                        @click="onToggleCommentLike(comment.id, !comment.liked_by_actor)"
+                        :disabled="!!togglingCommentLikeMap[comment.id]"
+                        class="text-xs transition disabled:opacity-50 disabled:cursor-not-allowed"
+                        :class="comment.liked_by_actor ? 'text-pink-400 hover:text-pink-300' : 'text-gray-400 hover:text-gray-200'"
+                    >
+                        {{ comment.liked_by_actor ? '♥' : '♡' }} {{ comment.likes_count || 0 }}
+                    </button>
                     <button v-if="isLoggedIn" @click="isReplying = !isReplying"
                         class="text-xs text-blue-400 hover:text-blue-300 transition">
                         {{ isReplying ? 'Cancel' : 'Reply' }}
@@ -96,11 +105,14 @@
                         :posting-reply-map="postingReplyMap"
                         :comments-by-id="commentsById"
                         :highlighted-comment-id="highlightedCommentId"
+                        :target-comment-id="targetCommentId"
                         :is-comment-owner="isCommentOwner"
                         :get-comment-avatar-url="getCommentAvatarUrl"
                         :get-time-ago="getTimeAgo"
                         :on-post-reply="onPostReply"
                         :on-delete-comment="onDeleteComment"
+                        :on-toggle-comment-like="onToggleCommentLike"
+                        :toggling-comment-like-map="togglingCommentLikeMap"
                         :on-navigate-to-channel="onNavigateToChannel"
                         :on-jump-to-comment="onJumpToComment"
                     />
@@ -120,6 +132,8 @@ type ThreadComment = {
     id: string
     text: string
     created_at: string
+    likes_count?: number
+    liked_by_actor?: boolean
     parent_comment_id?: string | null
     channel: {
         id: string
@@ -136,13 +150,16 @@ const props = defineProps<{
     isLoggedIn: boolean
     failedCommentAvatars: Record<string, boolean>
     postingReplyMap: Record<string, boolean>
+    togglingCommentLikeMap: Record<string, boolean>
     commentsById: Record<string, ThreadComment>
     highlightedCommentId: string
+    targetCommentId?: string
     isCommentOwner: (comment: ThreadComment) => boolean
     getCommentAvatarUrl: (avatarUrl: string) => string
     getTimeAgo: (value: string) => string
     onPostReply: (parentCommentId: string, text: string) => Promise<void>
     onDeleteComment: (commentId: string) => Promise<void>
+    onToggleCommentLike: (commentId: string, nextLiked: boolean) => Promise<void>
     onNavigateToChannel: (channelId: string) => void
     onJumpToComment: (commentId: string) => void
 }>()
@@ -159,6 +176,27 @@ const parentComment = computed(() => {
     if (!props.comment.parent_comment_id) return null
     return props.commentsById[props.comment.parent_comment_id] || null
 })
+
+const subtreeContainsTarget = (items: ThreadComment[], targetID: string): boolean => {
+    for (const item of items || []) {
+        if (item.id === targetID) return true
+        if (Array.isArray(item.replies) && subtreeContainsTarget(item.replies, targetID)) {
+            return true
+        }
+    }
+    return false
+}
+
+const hasTargetInDescendants = computed(() => {
+    if (!props.targetCommentId) return false
+    return subtreeContainsTarget(props.comment.replies || [], props.targetCommentId)
+})
+
+watch(hasTargetInDescendants, (shouldExpand) => {
+    if (shouldExpand) {
+        isRepliesExpanded.value = true
+    }
+}, { immediate: true })
 
 const markAvatarFailed = (commentID: string) => {
     props.failedCommentAvatars[commentID] = true

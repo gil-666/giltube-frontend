@@ -135,17 +135,23 @@ const liveStatus = ref<any>(null)
 onMounted(async () => {
   try {
     failedChannelAvatar.value = false
-    const data = await getChannelInfo(channelId)
-    channel.value = data.channel
-    ownerUsername.value = data.owner_username
-
-    liveStatus.value = await getChannelLiveStatus(channelId)
-
-    const videosData = await getChannelVideos(channelId)
+    const [channelData, videosData] = await Promise.all([
+      getChannelInfo(channelId),
+      getChannelVideos(channelId)
+    ])
+    channel.value = channelData.channel
+    ownerUsername.value = channelData.owner_username
     videos.value = videosData.map((video: any) => ({
       ...video,
       thumbnail_url: video.thumbnail_url ? `${baseUrl}${video.thumbnail_url}` : null
     }))
+
+    getChannelLiveStatus(channelId).then(res => {
+      liveStatus.value = res
+    }).catch(err => {
+      console.error('Live status failed:', err)
+    })
+
   } catch (err) {
     error.value = typeof err === 'string' ? err : 'Failed to load channel'
     console.error('Channel load error:', err)
@@ -153,6 +159,8 @@ onMounted(async () => {
     isLoading.value = false
   }
 })
+
+
 
 watch(channel, (newChannel) => {
   if (newChannel) {
