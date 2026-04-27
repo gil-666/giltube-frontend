@@ -29,7 +29,7 @@
       <div
         v-for="channel in channels"
         :key="channel.id"
-        class="bg-zinc-800 rounded p-6 flex items-center justify-between"
+        class="bg-zinc-800 rounded p-6 flex items-center justify-between md:flex-row flex-col"
       >
         <!-- Channel Avatar and Info -->
         <div class="flex items-start gap-4 flex-1">
@@ -60,7 +60,7 @@
         </div>
 
         <!-- Actions -->
-        <div class="flex gap-2 ml-4 flex-shrink-0">
+        <div class="flex gap-2 flex-shrink-0 mt-4 md:mt-0 ml-4">
           <NuxtLink
             :to="`/channel/${channel.id}`"
             class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded transition"

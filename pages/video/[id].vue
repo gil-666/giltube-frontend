@@ -168,45 +168,28 @@
         </div>
 
         <!-- Comments List -->
-        <div class="space-y-4">
+        <div class="w-full min-w-0 space-y-4">
           <div v-if="comments.length === 0" class="text-center text-gray-500 py-6 text-sm">
             No comments yet
           </div>
 
-          <div v-for="comment in comments" :key="comment.id" class="bg-zinc-900 p-3 rounded text-sm">
-            <div class="flex gap-2">
-              <div @click="navigateToChannel(comment.channel.id)" class="w-8 h-8 bg-zinc-700 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 overflow-hidden cursor-pointer">
-                <img
-                  v-if="comment.channel.avatar_url && !failedCommentAvatars[comment.id]"
-                  :src="getCommentAvatarUrl(comment.channel.avatar_url)"
-                  :alt="comment.channel.name"
-                  class="w-full h-full object-cover"
-                  @error="() => failedCommentAvatars[comment.id] = true"
-                />
-                <span v-else class="text-xs font-bold">{{ comment.channel.name.charAt(0).toUpperCase() }}</span>
-              </div>
-              <div class="flex-1 min-w-0">
-                <div class="flex items-center justify-between gap-2">
-                  <div @click="navigateToChannel(comment.channel.id)" class="flex items-center gap-1 cursor-pointer hover:text-yellow-400 transition">
-                    <p class="font-semibold text-xs">{{ comment.channel.name }}</p>
-                    <VerifiedBadge :verified="comment.channel.verified" size="sm" />
-                  </div>
-                  <div class="flex items-center gap-2 flex-shrink-0">
-                    <p class="text-xs text-gray-500">{{ getTimeAgo(comment.created_at) }}</p>
-                    <button
-                      v-if="isCommentOwner(comment)"
-                      @click="deleteUserComment(comment.id)"
-                      class="text-gray-400 hover:text-red-500 transition text-xs p-1"
-                      title="Delete comment"
-                    >
-                      ✕
-                    </button>
-                  </div>
-                </div>
-                <p class="text-gray-300 mt-1 text-xs break-words">{{ comment.text }}</p>
-              </div>
-            </div>
-          </div>
+          <CommentNode
+            v-for="comment in comments"
+            :key="comment.id"
+            :comment="comment"
+            :is-logged-in="isLoggedIn"
+            :failed-comment-avatars="failedCommentAvatars"
+            :posting-reply-map="postingReplyForCommentId"
+            :comments-by-id="commentsById"
+            :highlighted-comment-id="highlightedCommentId"
+            :is-comment-owner="isCommentOwner"
+            :get-comment-avatar-url="getCommentAvatarUrl"
+            :get-time-ago="getTimeAgo"
+            :on-post-reply="postReply"
+            :on-delete-comment="deleteUserComment"
+            :on-navigate-to-channel="navigateToChannel"
+            :on-jump-to-comment="jumpToComment"
+          />
         </div>
       </div>
     </div>
@@ -420,12 +403,13 @@
 <script setup lang="ts">
 import VideoPlayer from '~/app/components/videoplayer/VideoPlayer.vue'
 import VerifiedBadge from '~/app/components/VerifiedBadge.vue'
+import CommentNode from '~/app/components/comments/CommentNode.vue'
 import { getVideo, incrementViews, getVideos, likeVideo, unlikeVideo, checkIfLiked } from '~/app/service/videos'
 import { getVideoComments, postComment as apiPostComment, deleteComment } from '~/app/service/comments'
 import { getTimeAgo } from '~/app/utils/time'
 import { formatViews } from '~/app/utils/format'
 import { useMetaTags } from '~/app/composables/useMetaTags'
-import { computed, ref, onMounted, onUnmounted, watch } from 'vue'
+import { computed, nextTick, ref, onMounted, onUnmounted, watch } from 'vue'
 import { useRequestHeaders, navigateTo } from '#app'
 import { useRouter } from 'vue-router'
 
@@ -446,6 +430,7 @@ const failedCommentAvatars = ref({})
 const comments = ref([])
 const newCommentText = ref('')
 const isPostingComment = ref(false)
+const postingReplyForCommentId = ref<Record<string, boolean>>({})
 const showCreateChannelDialog = ref(false)
 const showErrorDialog = ref(false)
 const errorMessage = ref('')
@@ -456,11 +441,26 @@ const isToggglingLike = ref(false)
 
 const showExplicitWarning = ref(false)
 const neverShowExplicitWarningAgain = ref(false)
+const highlightedCommentId = ref('')
 
 const showSidebar = ref(true)
 
 const relatedVideos = ref([])
 const carouselContainer = ref<HTMLElement | null>(null)
+
+const commentsById = computed(() => {
+  const map: Record<string, any> = {}
+
+  const visit = (items: any[]) => {
+    for (const item of items || []) {
+      map[item.id] = item
+      if (item.replies?.length) visit(item.replies)
+    }
+  }
+
+  visit(comments.value || [])
+  return map
+})
 
 const scrollCarousel = (direction: 'left' | 'right') => {
   if (!carouselContainer.value) return
@@ -772,19 +772,55 @@ const postComment = async () => {
   }
 }
 
+const postReply = async (parentCommentId: string, text: string) => {
+  const isPersonalAccount = activeAccount.value === 'personal' || activeAccount.value === userId.value
+  const commentChannelId = isPersonalAccount ? personalAccountSelectedChannel.value : activeAccount.value
+
+  if (!isLoggedIn.value || !commentChannelId || !text) {
+    return
+  }
+
+  postingReplyForCommentId.value[parentCommentId] = true
+  try {
+    await apiPostComment(id, commentChannelId, text, parentCommentId)
+    comments.value = await getVideoComments(id)
+  } catch (err) {
+    console.error('Failed to post reply:', err)
+  } finally {
+    postingReplyForCommentId.value[parentCommentId] = false
+  }
+}
+
+const getCurrentCommentActorID = () => {
+  if (!isLoggedIn.value) return ''
+  const isPersonalAccount = activeAccount.value === 'personal' || activeAccount.value === userId.value
+  return isPersonalAccount ? personalAccountSelectedChannel.value : activeAccount.value
+}
+
 // Check if logged-in user owns a comment
 const isCommentOwner = (comment) => {
   if (!isLoggedIn.value) return false
-  
-  const isPersonalAccount = activeAccount.value === 'personal' || activeAccount.value === userId.value
-  const currentAccountId = isPersonalAccount ? userId.value : activeAccount.value
-  
+
+  const currentAccountId = getCurrentCommentActorID()
+
   return comment.channel.id === currentAccountId
 }
 
 // Delete a comment
 const deleteUserComment = async (commentId: string) => {
-  if (!isCommentOwner(comments.value.find(c => c.id === commentId))) {
+  const findInThread = (items, idToFind) => {
+    for (const item of items) {
+      if (item.id === idToFind) return item
+      if (item.replies?.length) {
+        const found = findInThread(item.replies, idToFind)
+        if (found) return found
+      }
+    }
+    return null
+  }
+
+  const targetComment = findInThread(comments.value, commentId)
+  if (!targetComment || !isCommentOwner(targetComment)) {
     return
   }
   
@@ -794,13 +830,28 @@ const deleteUserComment = async (commentId: string) => {
   
   try {
     await deleteComment(commentId)
-    // Remove from local state
-    comments.value = comments.value.filter(c => c.id !== commentId)
+    comments.value = await getVideoComments(id)
   } catch (err) {
     console.error('Failed to delete comment:', err)
     errorMessage.value = 'Failed to delete comment'
     showErrorDialog.value = true
   }
+}
+
+const jumpToComment = async (commentId: string) => {
+  highlightedCommentId.value = commentId
+
+  await nextTick()
+  const el = document.getElementById(`comment-${commentId}`)
+  if (el) {
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  }
+
+  window.setTimeout(() => {
+    if (highlightedCommentId.value === commentId) {
+      highlightedCommentId.value = ''
+    }
+  }, 1800)
 }
 
 // Handle explicit warning

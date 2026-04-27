@@ -6,8 +6,13 @@
         <div class="flex flex-col sm:flex-row sm:items-start gap-4 sm:gap-6">
           <!-- Channel Avatar -->
           <div class="flex-shrink-0">
-            <img v-if="channel.avatar_url && channel.avatar_url.trim()" :src="channel.avatar_url" :alt="channel.name"
-              class="w-24 sm:w-32 h-24 sm:h-32 rounded-full object-cover border-2 border-zinc-700" />
+            <img
+              v-if="channel.avatar_url && channel.avatar_url.trim() && !failedChannelAvatar"
+              :src="channel.avatar_url"
+              :alt="channel.name"
+              class="w-24 sm:w-32 h-24 sm:h-32 rounded-full object-cover border-2 border-zinc-700"
+              @error="failedChannelAvatar = true"
+            />
             <div v-else
               class="w-24 sm:w-32 h-24 sm:h-32 rounded-full bg-zinc-700 flex items-center justify-center text-3xl sm:text-5xl font-bold border-2 border-zinc-700">
               {{ channel.name.charAt(0).toUpperCase() }}
@@ -20,8 +25,23 @@
               <h1 class="text-2xl sm:text-4xl font-bold break-words">{{ channel.name }}</h1>
               <VerifiedBadge :verified="channel.verified" size="lg"
                 tooltip="This account is verified by Giltube. It belongs to the channel owner and is not a fan account or impersonator." />
+              <span
+                v-if="liveStatus?.is_live"
+                class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-red-900 text-red-200 border border-red-700"
+              >
+                <span class="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse" />
+                LIVE
+              </span>
             </div>
             <p class="text-gray-400 mt-2 text-sm sm:text-base break-words">{{ channel.description || 'No description provided' }}</p>
+
+            <NuxtLink
+              v-if="liveStatus?.is_live"
+              :to="`/live/${channelId}`"
+              class="inline-flex mt-3 px-3 py-1.5 rounded bg-red-600 hover:bg-red-700 transition text-sm font-semibold"
+            >
+              Watch Live
+            </NuxtLink>
 
             <!-- Channel Metrics -->
             <div class="mt-4">
@@ -94,6 +114,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed, watch } from 'vue'
 import { getChannelInfo, getChannelVideos } from '~/app/service/channels'
+import { getChannelLiveStatus } from '~/app/service/live'
 import { getTimeAgo } from '~/app/utils/time'
 import { formatViews } from '~/app/utils/format'
 import { useMetaTags } from '~/app/composables/useMetaTags'
@@ -108,12 +129,17 @@ const videos = ref([])
 const ownerUsername = ref('')
 const isLoading = ref(true)
 const error = ref('')
+const failedChannelAvatar = ref(false)
+const liveStatus = ref<any>(null)
 
 onMounted(async () => {
   try {
+    failedChannelAvatar.value = false
     const data = await getChannelInfo(channelId)
     channel.value = data.channel
     ownerUsername.value = data.owner_username
+
+    liveStatus.value = await getChannelLiveStatus(channelId)
 
     const videosData = await getChannelVideos(channelId)
     videos.value = videosData.map((video: any) => ({

@@ -112,6 +112,67 @@
           Upload
         </button>
 
+        <div v-if="isLoggedIn" class="relative" ref="notificationDropdownRef">
+          <button
+            @click="toggleNotificationsDropdown"
+            class="relative p-2 hover:bg-zinc-800 rounded transition"
+            aria-label="Notifications"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.4-1.4A2 2 0 0118 14.2V11a6 6 0 10-12 0v3.2c0 .53-.21 1.04-.59 1.42L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+            </svg>
+            <span
+              v-if="unreadNotificationCount > 0"
+              class="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-red-600 text-white text-[10px] leading-[18px] text-center font-bold"
+            >
+              {{ unreadNotificationCount > 99 ? '99+' : unreadNotificationCount }}
+            </span>
+          </button>
+
+          <div
+            v-if="notificationsDropdownOpen"
+            class="absolute right-0 mt-2 w-96 max-w-[90vw] bg-zinc-900 border border-zinc-700 rounded-lg shadow-xl overflow-hidden"
+            :style="{ zIndex: 9999 }"
+          >
+            <div class="px-4 py-3 border-b border-zinc-700 flex items-center justify-between">
+              <p class="text-sm font-semibold">Notifications</p>
+              <button
+                @click="markAllPreviewNotificationsRead"
+                class="text-xs text-blue-400 hover:text-blue-300 transition"
+              >
+                Mark all read
+              </button>
+            </div>
+
+            <div v-if="notificationPreviewLoading" class="px-4 py-8 text-center text-sm text-gray-400">
+              Loading...
+            </div>
+            <div v-else-if="notificationPreview.length === 0" class="px-4 py-8 text-center text-sm text-gray-500">
+              No notifications yet
+            </div>
+            <div v-else class="max-h-80 overflow-y-auto">
+              <NuxtLink
+                v-for="item in notificationPreview"
+                :key="item.id"
+                :to="item.url"
+                class="block px-4 py-3 border-b border-zinc-800 hover:bg-zinc-800 transition"
+                @click="handleNotificationClick(item.id)"
+              >
+                <p class="text-sm" :class="item.is_read ? 'text-gray-300' : 'text-white font-semibold'">
+                  {{ notificationSummary(item) }}
+                </p>
+                <p class="text-xs text-gray-500 mt-1">{{ formatNotificationTime(item.created_at) }}</p>
+              </NuxtLink>
+            </div>
+
+            <div class="px-4 py-3 bg-zinc-950 border-t border-zinc-700">
+              <NuxtLink to="/notifications" class="text-sm text-blue-400 hover:text-blue-300" @click="notificationsDropdownOpen = false">
+                View all notifications
+              </NuxtLink>
+            </div>
+          </div>
+        </div>
+
         <!-- Install App Button -->
         <!-- <button
           v-if="canInstall"
@@ -177,8 +238,14 @@
             <NuxtLink v-if="isLoggedIn" to="/dashboard"
               class="hover:bg-zinc-800 p-2 rounded cursor-pointer block text-blue-400 font-semibold">Dashboard
             </NuxtLink>
-            <NuxtLink to="/subscriptions" class="hover:bg-zinc-800 p-2 rounded cursor-pointer block">Subscriptions
+            <NuxtLink v-if="isLoggedIn" to="/notifications"
+              class="hover:bg-zinc-800 p-2 rounded cursor-pointer block text-indigo-300 font-semibold">Notifications
             </NuxtLink>
+            <NuxtLink v-if="isLoggedIn" to="/go-live"
+              class="hover:bg-zinc-800 p-2 rounded cursor-pointer block text-red-400 font-semibold">Go Live
+            </NuxtLink>
+            <!-- <NuxtLink to="/subscriptions" class="hover:bg-zinc-800 p-2 rounded cursor-pointer block">Subscriptions
+            </NuxtLink> -->
             <!-- My Channel (only when signed into a channel, not personal) -->
             <NuxtLink v-if="activeAccount !== 'personal' && activeAccount !== userId && isLoggedIn"
               :to="`/channel/${activeAccount}`"
@@ -291,6 +358,12 @@
 <script setup>
 import { ref, onMounted, onUnmounted, computed, watch } from 'vue'
 import { fetchUserChannels } from '~/app/service/upload'
+import {
+  listNotifications,
+  getUnreadNotificationCount,
+  markNotificationRead,
+  markAllNotificationsRead,
+} from '~/app/service/notifications'
 
 const router = useRouter()
 const route = useRoute()
@@ -321,6 +394,13 @@ const updateRef = ref(null)
 const passkeyRef = ref(null)
 const categories = ref([])
 const showPasskeyPrompt = ref(false)
+const unreadNotificationCount = ref(0)
+const notificationsDropdownOpen = ref(false)
+const notificationPreview = ref([])
+const notificationPreviewLoading = ref(false)
+const notificationDropdownRef = ref(null)
+const notificationsPollTimer = ref(null)
+const notificationsPollInterval = ref(15000)
 
 const PASSKEY_PROMPT_DISMISS_KEY = 'passkey_prompt_dismissed_session'
 
@@ -396,12 +476,119 @@ const handleOffline = () => {
   console.log('[PWA] Went offline')
 }
 
+const formatNotificationTime = (value) => {
+  try {
+    return new Date(value).toLocaleString()
+  } catch {
+    return value
+  }
+}
+
+const notificationSummary = (item) => {
+  if (!item?.actor_channel?.name) return 'New activity'
+  if (item.type === 'comment_video') return `${item.actor_channel.name} commented on your video`
+  if (item.type === 'reply_comment') return `${item.actor_channel.name} replied to your comment`
+  if (item.type === 'like_video') return `${item.actor_channel.name} liked your video`
+  if (item.type === 'like_comment') return `${item.actor_channel.name} liked your comment`
+  return `${item.actor_channel.name} sent you a notification`
+}
+
+const stopNotificationPolling = () => {
+  if (notificationsPollTimer.value) {
+    clearInterval(notificationsPollTimer.value)
+    notificationsPollTimer.value = null
+  }
+}
+
+const startNotificationPolling = () => {
+  stopNotificationPolling()
+  if (!isLoggedIn.value) return
+
+  notificationsPollTimer.value = setInterval(async () => {
+    await refreshNotificationCount()
+    if (notificationsDropdownOpen.value) {
+      await loadNotificationPreview()
+    }
+  }, notificationsPollInterval.value)
+}
+
+const refreshNotificationCount = async () => {
+  if (!isLoggedIn.value) {
+    unreadNotificationCount.value = 0
+    return
+  }
+
+  try {
+    const res = await getUnreadNotificationCount()
+    unreadNotificationCount.value = res.unread_count || 0
+  } catch (err) {
+    console.error('Failed to get unread notification count:', err)
+  }
+}
+
+const loadNotificationPreview = async () => {
+  if (!isLoggedIn.value) {
+    notificationPreview.value = []
+    return
+  }
+
+  notificationPreviewLoading.value = true
+  try {
+    const res = await listNotifications({ limit: 8, offset: 0 })
+    notificationPreview.value = res.items || []
+  } catch (err) {
+    console.error('Failed to load notifications preview:', err)
+  } finally {
+    notificationPreviewLoading.value = false
+  }
+}
+
+const toggleNotificationsDropdown = async () => {
+  notificationsDropdownOpen.value = !notificationsDropdownOpen.value
+  if (notificationsDropdownOpen.value) {
+    await Promise.all([refreshNotificationCount(), loadNotificationPreview()])
+  }
+}
+
+const handleNotificationClick = async (id) => {
+  notificationsDropdownOpen.value = false
+  try {
+    await markNotificationRead(id, true)
+  } catch (err) {
+    console.error('Failed to mark notification as read:', err)
+  }
+  await Promise.all([refreshNotificationCount(), loadNotificationPreview()])
+}
+
+const markAllPreviewNotificationsRead = async () => {
+  try {
+    await markAllNotificationsRead()
+  } catch (err) {
+    console.error('Failed to mark all notifications as read:', err)
+  }
+  await Promise.all([refreshNotificationCount(), loadNotificationPreview()])
+}
+
+const handleNotificationVisibilityChange = () => {
+  notificationsPollInterval.value = document.hidden ? 60000 : 15000
+  startNotificationPolling()
+}
+
+const handleNotificationClickOutside = (event) => {
+  if (!notificationsDropdownOpen.value || !notificationDropdownRef.value) return
+  if (!notificationDropdownRef.value.contains(event.target)) {
+    notificationsDropdownOpen.value = false
+  }
+}
+
 onMounted(async () => {
   checkAuthStatus()
   await loadCategories()
   if (isLoggedIn.value) {
     loadChannels()
     checkPasskeyPrompt()
+    await Promise.all([refreshNotificationCount(), loadNotificationPreview()])
+    startNotificationPolling()
   }
 
   // Refresh user status every 10 seconds to catch suspend/ban updates
@@ -412,6 +599,8 @@ onMounted(async () => {
   }
 
   window.addEventListener('resize', handleSidebarResize)
+  document.addEventListener('click', handleNotificationClickOutside)
+  document.addEventListener('visibilitychange', handleNotificationVisibilityChange)
   offlineMode.value = !navigator.onLine
 
   if (process.client) {
@@ -509,6 +698,9 @@ onUnmounted(() => {
   window.removeEventListener('resize', handleSidebarResize)
   window.removeEventListener('online', handleOnline)
   window.removeEventListener('offline', handleOffline)
+  document.removeEventListener('click', handleNotificationClickOutside)
+  document.removeEventListener('visibilitychange', handleNotificationVisibilityChange)
+  stopNotificationPolling()
   if (statusRefreshInterval.value) {
     clearInterval(statusRefreshInterval.value)
   }
@@ -518,6 +710,9 @@ watch(isLoggedIn, (newValue) => {
   if (newValue) {
     loadChannels()
     checkPasskeyPrompt()
+    refreshNotificationCount()
+    loadNotificationPreview()
+    startNotificationPolling()
     // Start status refresh when user logs in
     if (userId.value) {
       statusRefreshInterval.value = setInterval(() => {
@@ -527,6 +722,10 @@ watch(isLoggedIn, (newValue) => {
   } else {
     channels.value = []
     showPasskeyPrompt.value = false
+    notificationsDropdownOpen.value = false
+    notificationPreview.value = []
+    unreadNotificationCount.value = 0
+    stopNotificationPolling()
     // Stop status refresh when user logs out
     if (statusRefreshInterval.value) {
       clearInterval(statusRefreshInterval.value)

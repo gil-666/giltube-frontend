@@ -50,6 +50,14 @@
                 {{ video.channel.name }}
                 <VerifiedBadge :verified="video.channel?.verified || false" size="sm" />
               </NuxtLink>
+              <NuxtLink
+                v-if="isChannelLive(video.channel.id)"
+                :to="`/live/${video.channel.id}`"
+                class="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded bg-red-900 text-red-200 border border-red-700 mt-1"
+              >
+                <span class="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse" />
+                LIVE
+              </NuxtLink>
               <p class="text-xs text-zinc-400">{{ formatViews(video.views) }} views • {{ getTimeAgo(video.created_at) }}</p>
             </div>
           </div>
@@ -76,6 +84,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted, nextTick } from 'vue'
 import { getVideos } from '~/app/service/videos'
+import { listActiveLiveStreams } from '~/app/service/live'
 import { getTimeAgo } from '~/app/utils/time'
 import { formatViews } from '~/app/utils/format'
 import { useMetaTags } from '~/app/composables/useMetaTags'
@@ -91,7 +100,19 @@ const pageSize = 12
 const hasMore = ref(true)
 const isLoading = ref(false)
 const sentinelElement = ref(null)
+const liveChannelIds = ref(new Set())
 let intersectionObserver = null
+
+const isChannelLive = (channelId) => liveChannelIds.value.has(channelId)
+
+const loadLiveChannels = async () => {
+  try {
+    const active = await listActiveLiveStreams()
+    liveChannelIds.value = new Set((active || []).map((entry) => entry.channel_id))
+  } catch (err) {
+    console.error('Failed to load live channels:', err)
+  }
+}
 
 // Set meta tags for home page
 useMetaTags({
@@ -178,6 +199,7 @@ const setupIntersectionObserver = () => {
 }
 
 onMounted(async () => {
+  await loadLiveChannels()
   await loadVideos()
   await nextTick()
   setupIntersectionObserver()

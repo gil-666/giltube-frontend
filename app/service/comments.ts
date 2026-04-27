@@ -12,11 +12,14 @@ export const getVideoComments = async (videoId: string) => {
   }
 }
 
-export const postComment = async (videoId: string, channelId: string, text: string) => {
+export const postComment = async (videoId: string, channelId: string, text: string, parentCommentId?: string) => {
   try {
     const formData = new FormData()
     formData.append('channel_id', channelId)
     formData.append('text', text)
+    if (parentCommentId) {
+      formData.append('parent_comment_id', parentCommentId)
+    }
     
     const response = await axios.post(
       `${baseUrl}/api/v1/videos/${videoId}/comments`,
