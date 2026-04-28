@@ -19,6 +19,30 @@
                         <h1 class="text-2xl font-bold break-words">{{ liveTitle }}</h1>
                     </div>
 
+                    <div v-if="isLive" class="rounded-md border border-zinc-800 bg-zinc-900/70 p-3">
+                        <div class="flex items-center justify-between gap-3 flex-wrap">
+                            <p class="text-sm text-zinc-200 font-medium">
+                                Watching now: {{ viewers.length + anonymousCount }}
+                            </p>
+                            <p v-if="anonymousCount > 0" class="text-xs text-zinc-400">
+                                {{ anonymousCount }} anonymous user{{ anonymousCount === 1 ? '' : 's' }}
+                            </p>
+                        </div>
+
+                        <div v-if="viewers.length > 0" class="mt-3 flex flex-wrap gap-2">
+                            <div v-for="viewer in viewers" :key="viewer.id"
+                                class="inline-flex items-center gap-2 rounded-full border border-zinc-700 bg-zinc-800 px-2.5 py-1 text-xs text-zinc-100">
+                                <img v-if="viewer.avatarUrl" :src="viewer.avatarUrl" :alt="viewer.name || 'Viewer'"
+                                    class="h-5 w-5 rounded-full object-cover" />
+                                <div v-else
+                                    class="h-5 w-5 rounded-full bg-zinc-600 text-[10px] font-bold flex items-center justify-center">
+                                    {{ (viewer.name || '?').charAt(0).toUpperCase() }}
+                                </div>
+                                <span>{{ viewer.name || 'Viewer' }}</span>
+                            </div>
+                        </div>
+                    </div>
+
                     <p class="text-sm text-gray-400 break-words">{{ liveDescription }}</p>
 
                     <NuxtLink :to="`/channel/${channelId}`"
@@ -130,6 +154,7 @@ import { useMetaTags } from '~/app/composables/useMetaTags'
 type LocalChannel = {
     id: string
     name: string
+    avatar_url?: string
 }
 
 const route = useRoute()
@@ -152,6 +177,21 @@ const chatError = ref('')
 const channelAvatarFailed = ref(false)
 const chatListRef = ref<HTMLElement | null>(null)
 
+type PresenceViewer = {
+    id: string
+    name?: string
+    avatarUrl?: string
+    anonymous?: boolean
+}
+
+const viewers = ref<PresenceViewer[]>([])
+const anonymousCount = ref(0)
+const presenceViewerId = ref('')
+const anonymousViewerIds = new Set<string>()
+let presenceSSE: EventSource | null = null
+let presenceHeartbeatTimer: ReturnType<typeof setInterval> | null = null
+let presenceReconnectTimer: ReturnType<typeof setTimeout> | null = null
+
 let chatPollTimer: ReturnType<typeof setInterval> | null = null
 
 const isLive = computed(() => !!live.value?.is_live || live.value?.status === 'live')
@@ -161,6 +201,7 @@ const liveDescription = computed(() => live.value?.description || 'No descriptio
 const channelName = computed(() => live.value?.channel?.name || 'Channel')
 const channelAvatar = computed(() => live.value?.channel?.avatar_url || '')
 const channelVerified = computed(() => !!live.value?.channel?.verified)
+const liveVideoId = computed(() => live.value?.id || channelId.value || '')
 useMetaTags({
     title: liveTitle.value+' - GilTube',
     description: 'Watch live streams on GilTube.'
@@ -196,6 +237,193 @@ const syncLocalAuthState = () => {
             selectedChatChannelId.value = firstChannel.id
         }
     }
+}
+
+const makePresenceViewerId = () => {
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+        return crypto.randomUUID()
+    }
+    return `${Date.now().toString(36)}-${Math.floor(Math.random() * 100000)}`
+}
+
+const currentPresencePayload = () => {
+    const activeChannel = availableChannels.value.find(ch => ch.id === selectedChatChannelId.value)
+    const isAnonymous = !isLoggedIn.value || !activeChannel
+    return {
+        viewer_id: presenceViewerId.value,
+        name: activeChannel?.name || '',
+        avatar_url: activeChannel?.avatar_url || '',
+        anonymous: isAnonymous,
+    }
+}
+
+const clearPresenceState = () => {
+    viewers.value = []
+    anonymousCount.value = 0
+    anonymousViewerIds.clear()
+}
+
+const disconnectPresenceStream = () => {
+    if (presenceReconnectTimer) {
+        clearTimeout(presenceReconnectTimer)
+        presenceReconnectTimer = null
+    }
+    if (presenceSSE) {
+        try {
+            presenceSSE.close()
+        } catch {
+            // ignore
+        }
+        presenceSSE = null
+    }
+}
+
+const leavePresenceBestEffort = () => {
+    if (!liveVideoId.value || !presenceViewerId.value) return
+
+    const url = `/api/v1/live/${encodeURIComponent(liveVideoId.value)}/presence?viewer_id=${encodeURIComponent(presenceViewerId.value)}`
+
+    try {
+        void fetch(url, {
+            method: 'DELETE',
+            keepalive: true,
+        })
+    } catch {
+        // ignore
+    }
+}
+
+const joinPresence = async () => {
+    if (!isLive.value || !liveVideoId.value || !presenceViewerId.value) return
+
+    try {
+        const res = await fetch(`/api/v1/live/${encodeURIComponent(liveVideoId.value)}/presence`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(currentPresencePayload()),
+        })
+        if (!res.ok) {
+            console.warn('Presence join failed:', res.status)
+        }
+    } catch {
+        // ignore network errors
+    }
+}
+
+const leavePresence = async () => {
+    if (!liveVideoId.value || !presenceViewerId.value) return
+    try {
+        await fetch(`/api/v1/live/${encodeURIComponent(liveVideoId.value)}/presence?viewer_id=${encodeURIComponent(presenceViewerId.value)}`, {
+            method: 'DELETE',
+            keepalive: true,
+        })
+    } catch {
+        // ignore network errors
+    }
+}
+
+const startPresenceHeartbeat = () => {
+    if (presenceHeartbeatTimer) {
+        clearInterval(presenceHeartbeatTimer)
+        presenceHeartbeatTimer = null
+    }
+
+    joinPresence()
+    presenceHeartbeatTimer = setInterval(() => {
+        joinPresence()
+    }, 30000)
+}
+
+const stopPresenceHeartbeat = () => {
+    if (presenceHeartbeatTimer) {
+        clearInterval(presenceHeartbeatTimer)
+        presenceHeartbeatTimer = null
+    }
+}
+
+const normalizeViewer = (raw: any): PresenceViewer | null => {
+    if (!raw) return null
+    const id = raw.id || raw.ID || raw.viewer_id
+    if (!id) return null
+    return {
+        id,
+        name: raw.name || raw.Name || '',
+        avatarUrl: raw.avatar_url || raw.avatarUrl || raw.AvatarURL || '',
+        anonymous: !!(raw.anonymous || raw.Anonymous),
+    }
+}
+
+const connectPresenceStream = () => {
+    if (!isLive.value || !liveVideoId.value) return
+    disconnectPresenceStream()
+
+    presenceSSE = new EventSource(`/api/v1/live/${encodeURIComponent(liveVideoId.value)}/presence/stream`)
+    presenceSSE.onmessage = (evt) => {
+        try {
+            const data = JSON.parse(evt.data)
+            if (data.type === 'init') {
+                const rawViewers = Array.isArray(data.viewers) ? data.viewers : []
+                viewers.value = rawViewers.map((v: any) => normalizeViewer(v)).filter(Boolean) as PresenceViewer[]
+                anonymousCount.value = data.anonymous_count || data.anonymousCount || 0
+                anonymousViewerIds.clear()
+                return
+            }
+
+            const maybeViewer = normalizeViewer(data.viewer || data.Viewer)
+            if (!maybeViewer) return
+
+            if (data.type === 'join') {
+                if (maybeViewer.anonymous) {
+                    if (!anonymousViewerIds.has(maybeViewer.id)) {
+                        anonymousViewerIds.add(maybeViewer.id)
+                        anonymousCount.value += 1
+                    }
+                } else {
+                    viewers.value = [maybeViewer, ...viewers.value.filter(v => v.id !== maybeViewer.id)]
+                }
+                return
+            }
+
+            if (data.type === 'leave') {
+                const idx = viewers.value.findIndex(v => v.id === maybeViewer.id)
+                if (idx !== -1) {
+                    viewers.value.splice(idx, 1)
+                } else {
+                    if (anonymousViewerIds.has(maybeViewer.id)) {
+                        anonymousViewerIds.delete(maybeViewer.id)
+                        anonymousCount.value = Math.max(0, anonymousCount.value - 1)
+                    } else if (anonymousCount.value > 0) {
+                        anonymousCount.value = Math.max(0, anonymousCount.value - 1)
+                    }
+                }
+            }
+        } catch {
+            // ignore bad events
+        }
+    }
+
+    presenceSSE.onerror = () => {
+        disconnectPresenceStream()
+        if (!isLive.value || !liveVideoId.value) return
+        presenceReconnectTimer = setTimeout(() => {
+            connectPresenceStream()
+        }, 3000)
+    }
+}
+
+const startPresence = () => {
+    if (!presenceViewerId.value) {
+        presenceViewerId.value = makePresenceViewerId()
+    }
+    startPresenceHeartbeat()
+    connectPresenceStream()
+}
+
+const stopPresence = async () => {
+    stopPresenceHeartbeat()
+    disconnectPresenceStream()
+    await leavePresence()
+    clearPresenceState()
 }
 
 const loadLiveState = async () => {
@@ -270,6 +498,9 @@ const formatRelativeTime = (value: string) => {
 onMounted(async () => {
     syncLocalAuthState()
 
+    window.addEventListener('pagehide', leavePresenceBestEffort)
+    window.addEventListener('beforeunload', leavePresenceBestEffort)
+
     watch(
         channelId,
         async (newChannelId) => {
@@ -300,9 +531,35 @@ onMounted(async () => {
     )
 })
 
+watch(
+    [isLive, liveVideoId, selectedChatChannelId],
+    async ([liveNow, videoIdNow], oldValue) => {
+        const prevLive = oldValue?.[0]
+        const prevVideoId = oldValue?.[1]
+        if (!videoIdNow || !liveNow) {
+            if (prevLive || prevVideoId) {
+                await stopPresence()
+            }
+            return
+        }
+
+        if (!prevVideoId || prevVideoId !== videoIdNow || !prevLive) {
+            await stopPresence()
+            startPresence()
+            return
+        }
+
+        joinPresence()
+    },
+    { immediate: true }
+)
+
 onUnmounted(() => {
+    window.removeEventListener('pagehide', leavePresenceBestEffort)
+    window.removeEventListener('beforeunload', leavePresenceBestEffort)
     if (chatPollTimer) {
         clearInterval(chatPollTimer)
     }
+    stopPresence()
 })
 </script>

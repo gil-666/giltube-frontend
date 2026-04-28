@@ -52,27 +52,47 @@ const fetchFileWithRetry = async (url: string, maxRetries: number = 3): Promise<
   throw new Error('Failed to fetch file after retries')
 }
 
-export const downloadVideo = async (id: string, quality: string = '1080p', onStatusChange?: (status: string) => void) => {
+const resolveDownloadUrl = (fileUrl: string) => {
+  if (/^https?:\/\//i.test(fileUrl)) {
+    return fileUrl
+  }
+
+  if (typeof window !== 'undefined') {
+    return new URL(fileUrl, window.location.origin).toString()
+  }
+
+  return `${apiBaseURL}${fileUrl.startsWith('/') ? '' : '/'}${fileUrl}`
+}
+
+export const downloadVideo = async (
+  id: string,
+  arg2?: string | ((status: string) => void),
+  arg3?: string | ((status: string) => void),
+) => {
+  const quality = typeof arg2 === 'string' ? arg2 : typeof arg3 === 'string' ? arg3 : undefined
+  const onStatusChange =
+    typeof arg2 === 'function' ? arg2 : typeof arg3 === 'function' ? arg3 : undefined
+
   try {
     // First request to initiate download (returns 202 if queued, 200 if ready)
+    const params: Record<string, string> = {}
+    if (quality) {
+      params.quality = quality
+    }
+
     const res = await api.get(`/videos/${id}/download`, {
-      params: { quality },
+      params,
       validateStatus: () => true,
     })
 
     // If file is ready immediately (200), check status to get the file path
     if (res.status === 200) {
-      const statusRes = await api.get(`/videos/${id}/download-status`, {
-        params: { quality },
-      })
-      
-      if (statusRes.data.status === 'ready' && statusRes.data.file_url) {
-        // Fetch the file as blob using the dedicated endpoint with retries
-        const fullUrl = `${apiBaseURL}${statusRes.data.file_url}`
-        const blob = await fetchFileWithRetry(fullUrl)
-        return blob
-      }
+      const selectedQuality = res.headers?.['x-download-quality'] || quality || 'best'
+      const fullUrl = resolveDownloadUrl(`/api/v1/downloads/${id}/${selectedQuality}`)
+      return fetchFileWithRetry(fullUrl)
     }
+
+    const selectedQuality = res.data?.selected_quality || quality || 'best'
 
     // If processing (202), poll for status
     if (res.status === 202) {
@@ -83,15 +103,13 @@ export const downloadVideo = async (id: string, quality: string = '1080p', onSta
         await new Promise(resolve => setTimeout(resolve, 2000))
 
         const statusRes = await api.get(`/videos/${id}/download-status`, {
-          params: { quality },
+          params: { quality: selectedQuality },
         })
 
         // If file is ready
         if (statusRes.data.status === 'ready' && statusRes.data.file_url) {
           // Fetch the file as blob using the dedicated endpoint with retries
-          const fullUrl = `${apiBaseURL}${statusRes.data.file_url}`
-          const blob = await fetchFileWithRetry(fullUrl)
-          return blob
+          return fetchFileWithRetry(resolveDownloadUrl(statusRes.data.file_url))
         }
 
         // Still processing

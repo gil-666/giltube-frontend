@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-zinc-950 text-white flex flex-col">
+  <div class="min-h-screen bg-zinc-950 text-white flex flex-col overflow-x-hidden">
 
     <!-- Offline Indicator -->
     <div ref="offlineRef" v-if="offlineMode" class="w-full bg-yellow-600 text-white px-4 py-2 fixed text-center text-sm font-semibold"
@@ -70,7 +70,8 @@
 
     <!-- Header -->
     <header v-if="!shouldHideHeaderSidebar"
-      class="h-16 flex items-center justify-between px-4 border-b border-zinc-800 fixed left-0 right-0 bg-zinc-950"
+      class="h-16 flex items-center justify-between px-4 border-b fixed left-0 right-0 transition-all duration-300"
+      :class="headerScrolled ? 'bg-zinc-950/50 backdrop-blur-md border-zinc-700 shadow-[0_8px_24px_rgba(0,0,0,0.35)]' : 'bg-zinc-950 border-zinc-800'"
       :style="{ top: notificationBarHeight + 'px', zIndex: 60 }">
       <div class="flex items-center gap-3">
         <button @click="isSidebarOpen = !isSidebarOpen" class="md:hidden p-2 hover:bg-zinc-800 rounded transition">
@@ -81,8 +82,8 @@
         <div class="relative inline-flex">
           <img @click="router.push('/')" src="./assets/logowhsmall.png"
             class="h-8 object-contain cursor-pointer md:h-14" />
-          <span
-            class="absolute -top-1.5 -right-1 md:top-0 md:-right-2 bg-red-600 text-white text-[10px] md:text-xs font-bold px-0.5 md:px-1.5 py-0 rounded">BETA</span>
+          <!-- <span
+            class="absolute -top-1.5 -right-1 md:top-0 md:-right-2 bg-red-600 text-white text-[10px] md:text-xs font-bold px-0.5 md:px-1.5 py-0 rounded">BETA</span> -->
         </div>
       </div>
 
@@ -219,19 +220,26 @@
     </div>
 
     <!-- Main Content Wrapper with padding for fixed header -->
-    <div class="flex-1 overflow-auto"
+    <div ref="mainScrollRef" class="flex-1 min-w-0 overflow-auto overflow-x-hidden"
+      @scroll.passive="handleMainContentScroll"
       :style="shouldHideHeaderSidebar ? {} : { paddingTop: (notificationBarHeight + 64) + 'px' }">
       <!-- CONTENT AREA -->
-      <div class="flex flex-1 min-h-0 relative">
+      <div class="flex flex-1 min-h-0 min-w-0 relative">
         <!-- Mobile Overlay Backdrop -->
         <div v-if="isSidebarOpen" class="fixed inset-0 bg-black bg-opacity-50 md:hidden" :style="{ zIndex: 40 }"
           @click="isSidebarOpen = false" />
 
         <!-- Sidebar -->
         <aside v-if="!shouldHideHeaderSidebar"
-          class="w-60 bg-zinc-950 border-r border-zinc-800 transition-transform duration-300 fixed left-0 bottom-0 md:static md:top-auto md:bottom-auto overflow-y-auto"
-          :class="{ '-translate-x-full': !isSidebarOpen, 'translate-x-0': isSidebarOpen, 'md:translate-x-0': true }"
-          :style="{ top: (notificationBarHeight + 64) + 'px', zIndex: 50 }">
+          class="w-60 border-r transition-transform duration-300 fixed left-0 bottom-0 md:bottom-auto md:transform-none md:transition-none overflow-y-auto h-full"
+          :class="{
+            '-translate-x-full': !isSidebarOpen,
+            'translate-x-0': isSidebarOpen,
+            'md:translate-x-0': true,
+            'bg-zinc-950/50 backdrop-blur-md border-zinc-700 shadow-[0_8px_24px_rgba(0,0,0,0.35)]': headerScrolled,
+            'bg-zinc-950 border-zinc-800': !headerScrolled
+          }"
+          :style="{ top: (notificationBarHeight + 64) + 'px', maxHeight: `calc(100vh - ${notificationBarHeight + 64}px)`, zIndex: 50 }">
           <nav class="p-4 space-y-3">
             <NuxtLink to="/" class="hover:bg-zinc-800 p-2 rounded cursor-pointer block">Home</NuxtLink>
             <!-- Dashboard (only when logged in) -->
@@ -272,7 +280,7 @@
         </aside>
 
         <!-- Page content -->
-        <div class="flex-1 overflow-auto">
+        <div ref="contentScrollRef" class="flex-1 min-w-0" :class="!shouldHideHeaderSidebar ? 'md:ml-60' : ''">
           <NuxtPage />
         </div>
 
@@ -356,13 +364,15 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, computed, watch } from 'vue'
+import { ref, onMounted, onUnmounted, computed, watch, nextTick } from 'vue'
 import { fetchUserChannels } from '~/app/service/upload'
 import {
   listNotifications,
   getUnreadNotificationCount,
   markNotificationRead,
   markAllNotificationsRead,
+  getPushConfig,
+  subscribePush,
 } from '~/app/service/notifications'
 
 const router = useRouter()
@@ -401,6 +411,9 @@ const notificationPreviewLoading = ref(false)
 const notificationDropdownRef = ref(null)
 const notificationsPollTimer = ref(null)
 const notificationsPollInterval = ref(15000)
+const mainScrollRef = ref(null)
+const contentScrollRef = ref(null)
+const headerScrolled = ref(false)
 
 const PASSKEY_PROMPT_DISMISS_KEY = 'passkey_prompt_dismissed_session'
 
@@ -581,6 +594,70 @@ const handleNotificationClickOutside = (event) => {
   }
 }
 
+const getCurrentPushSubscription = async () => {
+  if (!process.client || !('serviceWorker' in navigator)) return null
+  try {
+    const registration = await navigator.serviceWorker.ready
+    return registration.pushManager.getSubscription()
+  } catch {
+    return null
+  }
+}
+
+const syncPushSubscriptionForCurrentUser = async () => {
+  if (!process.client || !isLoggedIn.value || !userId.value) return
+  try {
+    const cfg = await getPushConfig()
+    if (!cfg?.enabled || !cfg?.send_enabled) return
+
+    const existing = await getCurrentPushSubscription()
+    if (!existing) return
+
+    const json = existing.toJSON()
+    if (!json.endpoint || !json.keys?.p256dh || !json.keys?.auth) return
+
+    await subscribePush({
+      endpoint: json.endpoint,
+      keys: {
+        p256dh: json.keys.p256dh,
+        auth: json.keys.auth
+      }
+    })
+  } catch (err) {
+    console.error('Failed to sync push subscription for current user:', err)
+  }
+}
+
+const detachPushSubscriptionForUser = async (userID) => {
+  if (!process.client || !userID) return
+  try {
+    const existing = await getCurrentPushSubscription()
+    if (!existing) return
+
+    await fetch('/api/v1/notifications/push/unsubscribe', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-User-ID': userID
+      },
+      body: JSON.stringify({ endpoint: existing.endpoint })
+    })
+
+    await existing.unsubscribe()
+  } catch (err) {
+    console.error('Failed to detach push subscription for previous user:', err)
+  }
+}
+
+const handleMainContentScroll = (event) => {
+  const fromEvent = event?.target?.scrollTop || 0
+  const fromMain = mainScrollRef.value?.scrollTop || 0
+  const fromContent = contentScrollRef.value?.scrollTop || 0
+  const fromWindow = typeof window !== 'undefined' ? (window.scrollY || 0) : 0
+  const scrollTop = Math.max(fromEvent, fromMain, fromContent, fromWindow)
+  headerScrolled.value = scrollTop > 4
+}
+
 onMounted(async () => {
   checkAuthStatus()
   await loadCategories()
@@ -589,6 +666,7 @@ onMounted(async () => {
     checkPasskeyPrompt()
     await Promise.all([refreshNotificationCount(), loadNotificationPreview()])
     startNotificationPolling()
+    await syncPushSubscriptionForCurrentUser()
   }
 
   // Refresh user status every 10 seconds to catch suspend/ban updates
@@ -692,12 +770,15 @@ onMounted(async () => {
 
     window.addEventListener('online', handleOnline)
     window.addEventListener('offline', handleOffline)
+    window.addEventListener('scroll', handleMainContentScroll, { passive: true })
+    handleMainContentScroll()
 }})
 
 onUnmounted(() => {
   window.removeEventListener('resize', handleSidebarResize)
   window.removeEventListener('online', handleOnline)
   window.removeEventListener('offline', handleOffline)
+  window.removeEventListener('scroll', handleMainContentScroll)
   document.removeEventListener('click', handleNotificationClickOutside)
   document.removeEventListener('visibilitychange', handleNotificationVisibilityChange)
   stopNotificationPolling()
@@ -713,6 +794,7 @@ watch(isLoggedIn, (newValue) => {
     refreshNotificationCount()
     loadNotificationPreview()
     startNotificationPolling()
+    syncPushSubscriptionForCurrentUser()
     // Start status refresh when user logs in
     if (userId.value) {
       statusRefreshInterval.value = setInterval(() => {
@@ -736,6 +818,11 @@ watch(isLoggedIn, (newValue) => {
 
 watch(activeChannelAvatar, () => {
   avatarLoadFailed.value = false
+})
+
+watch(() => route.fullPath, async () => {
+  await nextTick()
+  handleMainContentScroll()
 })
 
 const checkAuthStatus = () => {
@@ -883,8 +970,10 @@ const switchAccount = (accountId, accountName) => {
   window.location.reload()
 }
 
-const handleLogout = () => {
+const handleLogout = async () => {
   if (!process.client) return
+  const previousUserID = userId.value
+  await detachPushSubscriptionForUser(previousUserID)
   localStorage.removeItem('user_id')
   localStorage.removeItem('email')
   localStorage.removeItem('username')

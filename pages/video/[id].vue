@@ -600,11 +600,18 @@ const onVideoPlay = async () => {
   }
 }
 
-const videoSrc = computed(() =>
-  video.value
-    ? `${baseUrl}/api/v1/videos/${id}/stream/master.m3u8`
-    : ''
-)
+const videoSrc = computed(() => {
+  const path = video.value?.hls_path
+  if (!path) {
+    return ''
+  }
+
+  if (/^https?:\/\//i.test(path)) {
+    return path
+  }
+
+  return `${baseUrl}${path.startsWith('/') ? '' : '/'}${path}`
+})
 
 const is4K = computed(() => video.value?.width >= 3840)
 
@@ -887,6 +894,7 @@ const toggleCommentLike = async (commentId: string, nextLiked: boolean) => {
 }
 
 const jumpToComment = async (commentId: string) => {
+  if (!process.client || !commentId) return
   highlightedCommentId.value = commentId
 
   for (let attempt = 0; attempt < 10; attempt++) {
@@ -908,12 +916,14 @@ const jumpToComment = async (commentId: string) => {
 
 watch(targetCommentId, async (newID) => {
   pendingJumpCommentID.value = newID
+  if (!process.client) return
   if (newID) {
     await jumpToComment(newID)
   }
 }, { immediate: true })
 
 watch(() => commentsById.value[pendingJumpCommentID.value], async (found) => {
+  if (!process.client) return
   if (!pendingJumpCommentID.value || !found) return
   const targetID = pendingJumpCommentID.value
   pendingJumpCommentID.value = ''

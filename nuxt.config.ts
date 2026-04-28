@@ -39,8 +39,14 @@ export default defineNuxtConfig({
   },
 
   pwa: {
-    strategies: 'generateSW',
+    injectRegister: false,
+    strategies: 'injectManifest',
+    srcDir: 'service-worker',
+    filename: 'sw.ts',
     registerType: 'autoUpdate',
+    devOptions: {
+      enabled: true
+    },
     manifest: {
       name: 'Giltube',
       short_name: 'Giltube',
@@ -100,55 +106,9 @@ export default defineNuxtConfig({
         }
       ]
     },
-    workbox: {
+    injectManifest: {
       globPatterns: [],
-      globIgnores: [
-        'node_modules/**/*',
-        '.nuxt/**/*',
-        '.output/**/*',
-        'dist/**/*',
-        '**/**/builds/**',
-        '**/stats.html'
-      ],
-      navigateFallback: '/',
-      navigateFallbackDenylist: [/^\/api\//],
-      runtimeCaching: [
-        {
-          urlPattern: /^https:\/\/.*\/api\/v1\//,
-          handler: 'NetworkFirst',
-          options: {
-            cacheName: 'api-cache',
-            networkTimeoutSeconds: 5,
-            expiration: {
-              maxEntries: 50,
-              maxAgeSeconds: 300
-            }
-          }
-        },
-        {
-          urlPattern: /\.m3u8$/,
-          handler: 'NetworkFirst',
-          options: {
-            cacheName: 'hls-cache',
-            networkTimeoutSeconds: 5,
-            expiration: {
-              maxEntries: 20,
-              maxAgeSeconds: 3600
-            }
-          }
-        },
-        {
-          urlPattern: /\.ts$/,
-          handler: 'CacheFirst',
-          options: {
-            cacheName: 'video-segments',
-            expiration: {
-              maxEntries: 100,
-              maxAgeSeconds: 86400
-            }
-          }
-        }
-      ]
+      rollupFormat: 'iife',
     }
   }
 })

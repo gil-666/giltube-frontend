@@ -32,7 +32,7 @@
             <button
               v-if="!isPushEnabled"
               @click="enablePush"
-              :disabled="pushBusy || !pushConfig.enabled"
+              :disabled="pushBusy || !pushConfig.enabled || !pushConfig.send_enabled"
               class="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-40 disabled:cursor-not-allowed rounded text-sm transition"
             >
               {{ pushBusy ? 'Working...' : 'Enable Push' }}
@@ -48,6 +48,7 @@
           </div>
         </div>
         <p v-if="!pushConfig.enabled" class="text-xs text-amber-300 mt-3">Push is disabled by server configuration.</p>
+        <p v-else-if="!pushConfig.send_enabled" class="text-xs text-amber-300 mt-3">Push delivery is paused on the server (`PUSH_SEND_ENABLED=false`).</p>
         <p v-if="pushMessage" class="text-xs text-gray-300 mt-3">{{ pushMessage }}</p>
       </div>
 
@@ -86,13 +87,27 @@
           @click="markRead(item)"
         >
           <div class="p-4 flex items-start justify-between gap-4">
-            <div>
-              <p class="text-sm" :class="item.is_read ? 'text-gray-300' : 'text-white font-semibold'">
-                {{ notificationSummary(item) }}
-              </p>
-              <p v-if="item.target_video?.title" class="text-xs text-gray-400 mt-1">Video: {{ item.target_video.title }}</p>
-              <p v-if="item.target_comment?.snippet" class="text-xs text-gray-500 mt-1">{{ item.target_comment.snippet }}</p>
-              <p class="text-xs text-gray-500 mt-2">{{ formatTime(item.created_at) }}</p>
+            <div class="flex items-start gap-3 min-w-0">
+              <img
+                v-if="item.actor_channel?.avatar_url"
+                :src="item.actor_channel.avatar_url"
+                :alt="item.actor_channel?.name || 'Channel avatar'"
+                class="w-10 h-10 rounded-full object-cover border border-zinc-700 shrink-0"
+              />
+              <div
+                v-else
+                class="w-10 h-10 rounded-full bg-zinc-700 text-gray-200 border border-zinc-600 shrink-0 flex items-center justify-center text-sm font-semibold"
+              >
+                {{ actorInitial(item) }}
+              </div>
+              <div class="min-w-0">
+                <p class="text-sm" :class="item.is_read ? 'text-gray-300' : 'text-white font-semibold'">
+                  {{ notificationSummary(item) }}
+                </p>
+                <p v-if="item.target_video?.title" class="text-xs text-gray-400 mt-1">Video: {{ item.target_video.title }}</p>
+                <p v-if="item.target_comment?.snippet" class="text-xs text-gray-500 mt-1">{{ item.target_comment.snippet }}</p>
+                <p class="text-xs text-gray-500 mt-2">{{ formatTime(item.created_at) }}</p>
+              </div>
             </div>
             <button
               @click.prevent="toggleRead(item)"
@@ -149,6 +164,12 @@ const notificationSummary = (item: NotificationItem) => {
   if (item.type === 'like_video') return `${item.actor_channel.name} liked your video`
   if (item.type === 'like_comment') return `${item.actor_channel.name} liked your comment`
   return `${item.actor_channel.name} sent you a notification`
+}
+
+const actorInitial = (item: NotificationItem) => {
+  const name = item?.actor_channel?.name?.trim()
+  if (!name) return '?'
+  return name.charAt(0).toUpperCase()
 }
 
 const formatTime = (value: string) => {
@@ -249,6 +270,10 @@ const enablePush = async () => {
   pushMessage.value = ''
   if (!pushConfig.value.enabled) {
     pushMessage.value = 'Push is disabled by server configuration.'
+    return
+  }
+  if (!pushConfig.value.send_enabled) {
+    pushMessage.value = 'Push delivery is paused on the server.'
     return
   }
   if (!('Notification' in window) || !('serviceWorker' in navigator)) {
