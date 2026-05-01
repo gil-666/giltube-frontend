@@ -16,33 +16,36 @@
       <div v-if="video" class="mt-6">
         <!-- Processing Message -->
         <div v-if="video.status === 'processing'" class="bg-yellow-900 border border-yellow-700 text-yellow-200 px-4 py-3 rounded-lg mb-4">
-          <p class="font-semibold">Video Processing</p>
-          <p class="text-sm mt-1">This video is still being processed. It will be available to watch shortly.</p>
+          <p class="font-semibold">{{ t('video.videoProcessing') }}</p>
+          <p class="text-sm mt-1">{{ t('video.processingMessage') }}</p>
         </div>
 
         <h1 class="text-2xl font-bold">{{ video.title }}</h1>
         <p class="text-gray-400 mt-2">{{ video.description }}</p>
         
         <!-- Badges Container - Horizontally Scrollable -->
-        <div v-if="video.explicit || is4K || (video.categories && video.categories.length > 0)" class="mt-3 flex gap-2 overflow-x-auto pb-2">
+        <div v-if="video.explicit || is4K || is8K || (video.categories && video.categories.length > 0)" class="mt-3 flex gap-2 overflow-x-auto pb-2">
           <!-- Explicit Content Warning Badge -->
           <div v-if="video.explicit" class="inline-flex flex-shrink-0 items-center gap-2 bg-red-900 text-red-200 px-3 py-1.5 rounded-full border border-red-700">
             <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
               <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
             </svg>
-            <span class="text-xs font-semibold whitespace-nowrap">18+ Explicit</span>
+            <span class="text-xs font-semibold whitespace-nowrap">{{ t('video.explicitBadge') }}</span>
           </div>
-
+          <!-- 8K Badge -->
+          <div v-if="is8K" class="inline-flex flex-shrink-0 items-center gap-2 bg-green-900 text-green-200 px-3 py-1.5 rounded-full border border-green-700">
+            <span class="text-xs font-semibold whitespace-nowrap">{{ t('video.eightKBadge') }}</span>
+          </div>
           <!-- 4K Badge -->
           <div v-if="is4K" class="inline-flex flex-shrink-0 items-center gap-2 bg-green-900 text-green-200 px-3 py-1.5 rounded-full border border-green-700">
-            <span class="text-xs font-semibold whitespace-nowrap">4K</span>
+            <span class="text-xs font-semibold whitespace-nowrap">{{ t('video.fourKBadge') }}</span>
           </div>
 
           <!-- Category Badges -->
           <NuxtLink
             v-for="category in video.categories"
             :key="category.id"
-            :to="`/category/${category.slug}`"
+            :to="localePath(`/category/${category.slug}`)"
             class="inline-flex flex-shrink-0 items-center px-3 py-1.5 bg-blue-900 hover:bg-blue-800 text-blue-200 rounded-full text-xs font-semibold transition border border-blue-700 whitespace-nowrap"
           >
             {{ category.name }}
@@ -55,7 +58,7 @@
           <span>{{ getTimeAgo(video.created_at) }}</span>
         </div>
 
-        <NuxtLink :to="`/channel/${video.channel?.id}`" class="flex items-center mt-4 gap-4 hover:bg-zinc-800 p-2 rounded-lg cursor-pointer">
+        <NuxtLink :to="localePath(`/channel/${video.channel?.id}`)" class="flex items-center mt-4 gap-4 hover:bg-zinc-800 p-2 rounded-lg cursor-pointer">
           <div class="w-9 h-9 bg-zinc-700 rounded-full flex items-center justify-center">
             <img
               v-if="video.channel?.avatar_url && typeof video.channel.avatar_url === 'string' && video.channel.avatar_url.trim()"
@@ -88,18 +91,31 @@
             <span>{{ isLiked ? '❤️' : '🤍' }}</span>
             <span>{{ likes }}</span>
           </button>
+
+          <button
+            @click="shareVideo"
+            class="flex items-center gap-2 px-4 py-2 rounded-lg transition text-sm font-medium bg-zinc-700 hover:bg-zinc-600"
+            title="Share"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 12v7a1 1 0 001 1h14a1 1 0 001-1v-7"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 6l-4-4-4 4"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 2v13"/>
+            </svg>
+            <span>{{ shareButtonText }}</span>
+          </button>
         </div>
       </div>
 
       <!-- Comments Section -->
       <div v-if="video" class="mt-8 border-t border-zinc-700 pt-6">
-        <h2 class="text-xl font-bold mb-6">Comments</h2>
+        <h2 class="text-xl font-bold mb-6">{{ t('video.comments') }}</h2>
 
         <!-- Comment Form -->
         <div v-if="isLoggedIn && (userChannels.length > 0 || (activeAccount !== userId && activeAccount !== 'personal'))" class="mb-6 bg-zinc-900 p-4 rounded">
           <!-- Channel Selector (if on personal account and have channels) -->
           <div v-if="(activeAccount === userId || activeAccount === 'personal') && userChannels.length > 0" class="mb-3">
-            <label class="text-xs text-gray-400 block mb-2">Comment as:</label>
+            <label class="text-xs text-gray-400 block mb-2">{{ t('video.commentAs') }}</label>
             <select
               v-model="personalAccountSelectedChannel"
               class="w-full bg-zinc-800 border border-zinc-700 rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-blue-500"
@@ -123,7 +139,7 @@
             </div>
             <textarea
               v-model="newCommentText"
-              placeholder="Add a comment..."
+              :placeholder="t('video.addComment')"
               maxlength="500"
               rows="3"
               class="flex-1 bg-zinc-800 border border-zinc-700 rounded px-3 py-1 text-white text-sm focus:outline-none focus:border-blue-500 resize-none"
@@ -134,14 +150,14 @@
               @click="newCommentText = ''"
               class="px-4 py-2 text-gray-400 hover:text-white transition text-sm"
             >
-              Cancel
+              {{ t('video.cancel') }}
             </button>
             <button
               @click="postComment"
               :disabled="!newCommentText.trim() || isPostingComment"
               class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded transition disabled:opacity-50 disabled:cursor-not-allowed text-sm"
             >
-              {{ isPostingComment ? 'Posting...' : 'Comment' }}
+              {{ isPostingComment ? t('video.posting') : t('video.comment') }}
             </button>
           </div>
           <p class="text-xs text-gray-500 mt-2">{{ newCommentText.length }}/500</p>
@@ -149,28 +165,28 @@
 
         <!-- Login prompt for non-logged-in users -->
         <div v-else-if="!isLoggedIn" class="mb-6 bg-zinc-900 p-4 rounded text-center">
-          <p class="text-gray-400 mb-3 text-sm">Sign in to comment</p>
-          <NuxtLink to="/login" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded transition text-sm">
-            Sign In
+          <p class="text-gray-400 mb-3 text-sm">{{ t('video.signInToComment') }}</p>
+          <NuxtLink :to="localePath('/login')" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded transition text-sm">
+            {{ t('app.login') }}
           </NuxtLink>
         </div>
 
         <!-- Personal account - clickable area to show dialog (only if no channels) -->
         <div v-else-if="(activeAccount === 'personal' || activeAccount === userId) && userChannels.length === 0" class="mb-6 bg-blue-900 border border-blue-700 p-4 rounded text-center">
-          <p class="text-blue-300 text-sm mb-3">To comment, you need to create a channel first</p>
+          <p class="text-blue-300 text-sm mb-3">{{ t('video.createChannelToComment') }}</p>
           <NuxtLink
-            to="/create-channel"
+            :to="localePath('/create-channel')"
             class="inline-block px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded transition text-sm font-semibold"
             @click="showCreateChannelDialog = false"
           >
-            Create Channel
+            {{ t('video.createChannel') }}
           </NuxtLink>
         </div>
 
         <!-- Comments List -->
         <div class="w-full min-w-0 space-y-4">
           <div v-if="comments.length === 0" class="text-center text-gray-500 py-6 text-sm">
-            No comments yet
+            {{ t('video.noComments') }}
           </div>
 
           <CommentNode
@@ -202,7 +218,7 @@
       <div class="md:sticky md:top-6">
         <!-- Related Videos -->
         <div class="px-4 md:px-0">
-          <h2 class="text-lg font-bold mb-4">Related Videos</h2>
+          <h2 class="text-lg font-bold mb-4">{{ t('video.relatedVideos') }}</h2>
           
           <!-- Mobile: Horizontal Carousel (hidden on md and above) -->
           <div class="md:hidden relative">
@@ -220,7 +236,7 @@
                 <NuxtLink
                   v-for="relatedVideo in relatedVideos"
                   :key="relatedVideo.id"
-                  :to="`/video/${relatedVideo.id}`"
+                  :to="localePath(`/video/${relatedVideo.id}`)"
                   class="inline-block hover:opacity-80 transition flex-shrink-0"
                 >
                   <div class="bg-zinc-800 rounded overflow-hidden w-40 aspect-video mb-1.5 relative">
@@ -229,11 +245,12 @@
                       :src="baseUrl + relatedVideo.thumbnail_url"
                       :alt="relatedVideo.title"
                     />
-                    <div v-if="relatedVideo.width >= 3840" class="absolute top-1 right-1 bg-green-900 text-green-200 px-1.5 py-0.5 rounded text-xs font-semibold border border-green-700">4K</div>
+                    <div v-if="relatedVideo.width == 7680" class="absolute top-1 right-1 bg-green-900 text-green-200 px-1.5 py-0.5 rounded text-xs font-semibold border border-green-700">{{ t('video.eightKBadge') }}</div>
+                    <div v-if="relatedVideo.width == 3840" class="absolute top-1 right-1 bg-green-900 text-green-200 px-1.5 py-0.5 rounded text-xs font-semibold border border-green-700">{{ t('video.fourKBadge') }}</div>
                   </div>
                   <p class="text-xs font-semibold line-clamp-2 w-40">{{ relatedVideo.title }}</p>
                   <div class="flex items-center gap-1">
-                    <NuxtLink :to="`/channel/${relatedVideo.channel?.id}`" class="text-xs text-gray-400 hover:text-yellow-400 transition">{{ relatedVideo.channel?.name }}</NuxtLink>
+                    <NuxtLink :to="localePath(`/channel/${relatedVideo.channel?.id}`)" class="text-xs text-gray-400 hover:text-yellow-400 transition">{{ relatedVideo.channel?.name }}</NuxtLink>
                     <VerifiedBadge :verified="relatedVideo.channel?.verified || false" size="sm" />
                   </div>
                   <p class="text-xs text-gray-500">{{ formatViews(relatedVideo.views) }} views</p>
@@ -256,7 +273,7 @@
             <NuxtLink
               v-for="relatedVideo in relatedVideos"
               :key="relatedVideo.id"
-              :to="`/video/${relatedVideo.id}`"
+              :to="localePath(`/video/${relatedVideo.id}`)"
               class="block hover:opacity-80 transition"
             >
               <div class="bg-zinc-800 rounded overflow-hidden w-full aspect-video mb-2 relative">
@@ -265,11 +282,12 @@
                   :src="baseUrl + relatedVideo.thumbnail_url"
                   :alt="relatedVideo.title"
                 />
-                <div v-if="relatedVideo.width >= 3840" class="absolute top-1 right-1 bg-green-900 text-green-200 px-1.5 py-0.5 rounded text-xs font-semibold border border-green-700">4K</div>
+                <div v-if="relatedVideo.width == 7680" class="absolute top-1 right-1 bg-green-900 text-green-200 px-1.5 py-0.5 rounded text-xs font-semibold border border-green-700">{{ t('video.eightKBadge') }}</div>
+                <div v-if="relatedVideo.width == 3840" class="absolute top-1 right-1 bg-green-900 text-green-200 px-1.5 py-0.5 rounded text-xs font-semibold border border-green-700">{{ t('video.fourKBadge') }}</div>
               </div>
               <p class="text-sm font-semibold line-clamp-2">{{ relatedVideo.title }}</p>
               <div class="flex items-center gap-1">
-                <NuxtLink :to="`/channel/${relatedVideo.channel?.id}`" class="text-xs text-gray-400 hover:text-yellow-400 transition">{{ relatedVideo.channel?.name }}</NuxtLink>
+                <NuxtLink :to="localePath(`/channel/${relatedVideo.channel?.id}`)" class="text-xs text-gray-400 hover:text-yellow-400 transition">{{ relatedVideo.channel?.name }}</NuxtLink>
                 <VerifiedBadge :verified="relatedVideo.channel?.verified || false" size="sm" />
               </div>
               <p class="text-xs text-gray-500">{{ relatedVideo.views }} views</p>
@@ -281,7 +299,7 @@
             <NuxtLink
               v-for="relatedVideo in relatedVideos"
               :key="relatedVideo.id"
-              :to="`/video/${relatedVideo.id}`"
+              :to="localePath(`/video/${relatedVideo.id}`)"
               class="block hover:opacity-80 transition"
             >
               <div class="bg-zinc-800 rounded overflow-hidden aspect-video mb-1.5 relative">
@@ -290,11 +308,12 @@
                   :src="baseUrl + relatedVideo.thumbnail_url"
                   :alt="relatedVideo.title"
                 />
-                <div v-if="relatedVideo.width >= 3840" class="absolute top-1 right-1 bg-green-900 text-green-200 px-1.5 py-0.5 rounded text-xs font-semibold border border-green-700">4K</div>
+                <div v-if="relatedVideo.width == 7680" class="absolute top-1 right-1 bg-green-900 text-green-200 px-1.5 py-0.5 rounded text-xs font-semibold border border-green-700">{{ t('video.eightKBadge') }}</div>
+                <div v-if="relatedVideo.width == 3840" class="absolute top-1 right-1 bg-green-900 text-green-200 px-1.5 py-0.5 rounded text-xs font-semibold border border-green-700">{{ t('video.fourKBadge') }}</div>
               </div>
               <p class="text-xs font-semibold line-clamp-2">{{ relatedVideo.title }}</p>
               <div class="flex items-center gap-1">
-                <NuxtLink :to="`/channel/${relatedVideo.channel?.id}`" class="text-xs text-gray-400 hover:text-yellow-400 transition">{{ relatedVideo.channel?.name }}</NuxtLink>
+                <NuxtLink :to="localePath(`/channel/${relatedVideo.channel?.id}`)" class="text-xs text-gray-400 hover:text-yellow-400 transition">{{ relatedVideo.channel?.name }}</NuxtLink>
                 <VerifiedBadge :verified="relatedVideo.channel?.verified || false" size="sm" />
               </div>
               <p class="text-xs text-gray-500">{{ relatedVideo.views }} views</p>
@@ -307,26 +326,26 @@
     <!-- Create Channel Dialog -->
     <div v-if="showCreateChannelDialog" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
       <div class="bg-zinc-900 rounded-lg p-8 max-w-md w-full border border-zinc-700">
-        <h3 class="text-2xl font-bold mb-4">Create a Channel to Comment</h3>
+        <h3 class="text-2xl font-bold mb-4">{{ t('video.createChannelComment') }}</h3>
         
         <p class="text-gray-300 mb-6">
-          To comment on videos, you need to create a channel. It only takes a moment and you'll be able to start engaging with the community right away.
+          {{ t('video.createChannelToComment') }}
         </p>
 
         <div class="space-y-3">
           <NuxtLink
-            to="/create-channel"
+            :to="localePath('/create-channel')"
             class="block w-full px-4 py-3 bg-blue-600 hover:bg-blue-700 rounded transition text-center font-semibold"
             @click="showCreateChannelDialog = false"
           >
-            Create Channel
+            {{ t('video.createChannel') }}
           </NuxtLink>
           
           <button
             @click="showCreateChannelDialog = false"
             class="w-full px-4 py-3 bg-zinc-800 hover:bg-zinc-700 rounded transition text-center"
           >
-            Later
+            {{ t('app.later') }}
           </button>
         </div>
       </div>
@@ -335,7 +354,7 @@
     <!-- Error Dialog -->
     <div v-if="showErrorDialog" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
       <div class="bg-zinc-900 rounded-lg p-8 max-w-md w-full border border-zinc-700">
-        <h3 class="text-2xl font-bold mb-4">Error</h3>
+        <h3 class="text-2xl font-bold mb-4">{{ t('video.error') }}</h3>
         
         <p class="text-gray-300 mb-6">
           {{ errorMessage }}
@@ -345,7 +364,7 @@
           @click="showErrorDialog = false"
           class="w-full px-4 py-3 bg-blue-600 hover:bg-blue-700 rounded transition text-center font-semibold"
         >
-          Close
+          {{ t('video.close') }}
         </button>
       </div>
     </div>
@@ -362,10 +381,10 @@
           </div>
         </div>
 
-        <h2 class="text-2xl font-bold text-center mb-3 text-red-400">18+ Explicit Content</h2>
+        <h2 class="text-2xl font-bold text-center mb-3 text-red-400">{{ t('video.eighteen') }}</h2>
         
         <p class="text-gray-300 text-center mb-6">
-          This video contains mature content and is intended for viewers 18 years and older. Viewer discretion is advised.
+          {{ t('video.matureContentWarning') }}
         </p>
 
         <!-- Never Show Again Checkbox -->
@@ -377,7 +396,7 @@
             class="w-4 h-4 rounded cursor-pointer accent-red-500"
           />
           <label for="never-show-explicit" class="text-sm text-gray-300 cursor-pointer">
-            Don't show this warning again
+            {{ t('video.dontShowWarning') }}
           </label>
         </div>
 
@@ -387,14 +406,14 @@
             @click="continueToVideo"
             class="w-full px-4 py-3 bg-red-600 hover:bg-red-700 rounded transition text-center font-semibold text-white"
           >
-            I Understand, Continue
+            {{ t('video.iUnderstand') }}
           </button>
           
           <button
             @click="goBackHome"
             class="w-full px-4 py-3 bg-zinc-700 hover:bg-zinc-600 rounded transition text-center font-semibold text-white"
           >
-            Go Back to Home
+            {{ t('video.goBackHome') }}
           </button>
         </div>
       </div>
@@ -415,10 +434,13 @@ import { useMetaTags } from '~/app/composables/useMetaTags'
 import { computed, nextTick, ref, onMounted, onUnmounted, watch } from 'vue'
 import { useRequestHeaders, navigateTo } from '#app'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 
 const baseUrl = import.meta.env.VITE_API_BASE_URL
 const route = useRoute()
 const id = route.params.id as string
+const localePath = useLocalePath()
+const { t } = useI18n()
 const hasCountedView = ref(false)
 
 const isLoggedIn = ref(false)
@@ -613,7 +635,8 @@ const videoSrc = computed(() => {
   return `${baseUrl}${path.startsWith('/') ? '' : '/'}${path}`
 })
 
-const is4K = computed(() => video.value?.width >= 3840)
+const is4K = computed(() => video.value?.width == 3840)
+const is8K = computed(() => video.value?.width == 7680)
 
 const updateSidebarVisibility = () => {
   showSidebar.value = typeof window !== 'undefined' && window.innerWidth >= 1024
@@ -770,6 +793,27 @@ const toggleLike = async () => {
     console.error('Failed to toggle like:', err)
   } finally {
     isToggglingLike.value = false
+  }
+}
+
+const shareCopied = ref(false)
+
+const shareButtonText = computed(() => shareCopied.value ? t('video.shareCopied') : t('video.share'))
+
+const shareVideo = async () => {
+  try {
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://giltube.gilservers.com'
+    const sharePath = localePath(`/video/${id}`)
+    const url = `${origin}${sharePath}`
+    if (process.client && navigator.share) {
+      await navigator.share({ title: video.value?.title || 'GilTube', url })
+    } else if (process.client && navigator.clipboard) {
+      await navigator.clipboard.writeText(url)
+      shareCopied.value = true
+      setTimeout(() => (shareCopied.value = false), 2000)
+    }
+  } catch (err) {
+    console.error('Share failed:', err)
   }
 }
 
@@ -939,7 +983,7 @@ const continueToVideo = () => {
 }
 
 const goBackHome = async () => {
-  await navigateTo('/')
+  await navigateTo(localePath('/'))
 }
 </script>
 

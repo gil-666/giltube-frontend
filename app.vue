@@ -4,40 +4,39 @@
     <!-- Offline Indicator -->
     <div ref="offlineRef" v-if="offlineMode" class="w-full bg-yellow-600 text-white px-4 py-2 fixed text-center text-sm font-semibold"
       :style="{ zIndex: 80 }">
-      You are offline - using cached content
+      {{ t('app.offline') }}
     </div>
 
     <!-- Account Status Banner -->
     <div ref="statusRef" v-if="userStatus === 'suspended'"
       class="w-full bg-yellow-600 text-white px-4 py-3 fixed flex items-center justify-between" :style="{ zIndex: 70 }">
-      <span class="text-sm font-semibold">Your account is suspended. You can use the site but cannot upload
-        videos.</span>
+      <span class="text-sm font-semibold">{{ t('app.suspended') }}</span>
       <button @click="dismissAccountStatus"
         class="px-3 py-1 bg-yellow-700 hover:bg-yellow-800 rounded text-sm transition">
-        I understand
+        {{ t('app.dismiss') }}
       </button>
     </div>
 
     <!-- Banned Account Banner -->
     <div ref="statusRef" v-if="userStatus === 'banned'"
       class="w-full bg-red-600 text-white px-4 py-3 fixed flex items-center justify-between" :style="{ zIndex: 70 }">
-      <span class="text-sm font-semibold">Your account has been banned. You cannot use this service.</span>
+      <span class="text-sm font-semibold">{{ t('app.banned') }}</span>
       <button @click="handleBannedLogout" class="px-3 py-1 bg-red-700 hover:bg-red-800 rounded text-sm transition">
-        Sign Out
+        {{ t('app.logout') }}
       </button>
     </div>
 
     <!-- App Update Notification -->
     <div ref="updateRef" v-if="showUpdatePrompt" class="w-full bg-blue-600 text-white px-4 py-3 fixed flex items-center justify-between"
       :style="{ zIndex: 70 }">
-      <span class="text-sm font-semibold">A new version of Giltube is available</span>
+      <span class="text-sm font-semibold">{{ t('app.updateAvailable') }}</span>
       <div class="flex gap-2">
         <button @click="dismissUpdate" class="px-3 py-1 bg-blue-700 hover:bg-blue-800 rounded text-sm transition">
-          Later
+          {{ t('app.later') }}
         </button>
         <button @click="handleUpdateApp"
           class="px-3 py-1 bg-white text-blue-600 hover:bg-gray-200 rounded text-sm font-semibold transition">
-          Update Now
+          {{ t('app.updateNow') }}
         </button>
       </div>
     </div>
@@ -50,13 +49,13 @@
       :style="{ zIndex: 70 }"
     >
       <div class="flex items-center gap-3 text-sm font-semibold">
-        <span>Secure your account with a passkey for faster sign-in.</span>
+        <span>{{ t('app.securePasskey') }}</span>
         <NuxtLink
           to="/account-settings#passkeys"
           class="underline underline-offset-2 hover:text-cyan-100"
           @click="showPasskeyPrompt = false"
         >
-          Add Passkey
+          {{ t('app.addPasskey') }}
         </NuxtLink>
       </div>
       <button
@@ -80,14 +79,20 @@
           </svg>
         </button>
         <div class="relative inline-flex">
-          <img @click="router.push('/')" src="./assets/logowhsmall.png"
-            class="h-8 object-contain cursor-pointer md:h-14" />
+          <button
+            type="button"
+            @click="handleLogoClick"
+            class="inline-flex cursor-pointer items-center justify-center"
+            :aria-label="t('app.home')"
+          >
+            <img src="./assets/logowhsmall.png" class="h-8 object-contain md:h-14" />
+          </button>
           <!-- <span
             class="absolute -top-1.5 -right-1 md:top-0 md:-right-2 bg-red-600 text-white text-[10px] md:text-xs font-bold px-0.5 md:px-1.5 py-0 rounded">BETA</span> -->
         </div>
       </div>
 
-      <input v-model="searchQuery" type="text" placeholder="Search videos and channels..."
+      <input v-model="searchQuery" type="text" :placeholder="t('app.searchPlaceholder')"
         @keydown.enter="$router.push(`/search?q=${encodeURIComponent(searchQuery)}`)"
         class="hidden md:block bg-zinc-900 px-4 py-2 rounded-full w-1/3 focus:outline-none text-white placeholder-gray-500" />
 
@@ -101,23 +106,23 @@
         </button>
 
         <!-- Upload Button (when logged in) -->
-        <NuxtLink v-if="isLoggedIn && userStatus === 'active'" to="/upload"
+        <NuxtLink v-if="isLoggedIn && userStatus === 'active'" :to="localePath('/upload')"
           class="px-2 py-1 bg-red-600 hover:bg-red-700 rounded-full transition text-md">
-          Upload
+          {{ t('app.upload') }}
         </NuxtLink>
 
         <!-- Upload Button Disabled (suspended/banned) -->
         <button v-if="isLoggedIn && userStatus !== 'active'" disabled
           :title="userStatus === 'suspended' ? 'Your account is suspended - you cannot upload' : 'Your account is banned - you cannot upload'"
           class="px-2 py-1 bg-gray-700 cursor-not-allowed rounded-full transition text-md opacity-50">
-          Upload
+          {{ t('app.upload') }}
         </button>
 
         <div v-if="isLoggedIn" class="relative" ref="notificationDropdownRef">
           <button
             @click="toggleNotificationsDropdown"
             class="relative p-2 hover:bg-zinc-800 rounded transition"
-            aria-label="Notifications"
+            :aria-label="t('app.notifications')"
           >
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.4-1.4A2 2 0 0118 14.2V11a6 6 0 10-12 0v3.2c0 .53-.21 1.04-.59 1.42L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
@@ -136,26 +141,26 @@
             :style="{ zIndex: 9999 }"
           >
             <div class="px-4 py-3 border-b border-zinc-700 flex items-center justify-between">
-              <p class="text-sm font-semibold">Notifications</p>
+              <p class="text-sm font-semibold">{{ t('app.notifications') }}</p>
               <button
                 @click="markAllPreviewNotificationsRead"
                 class="text-xs text-blue-400 hover:text-blue-300 transition"
               >
-                Mark all read
+                {{ t('app.markAllRead') }}
               </button>
             </div>
 
             <div v-if="notificationPreviewLoading" class="px-4 py-8 text-center text-sm text-gray-400">
-              Loading...
+              {{ t('app.loading') }}
             </div>
             <div v-else-if="notificationPreview.length === 0" class="px-4 py-8 text-center text-sm text-gray-500">
-              No notifications yet
+              {{ t('app.noNotifications') }}
             </div>
             <div v-else class="max-h-80 overflow-y-auto">
               <NuxtLink
                 v-for="item in notificationPreview"
                 :key="item.id"
-                :to="item.url"
+                :to="localizedNotificationUrl(item.url)"
                 class="block px-4 py-3 border-b border-zinc-800 hover:bg-zinc-800 transition"
                 @click="handleNotificationClick(item.id)"
               >
@@ -167,8 +172,8 @@
             </div>
 
             <div class="px-4 py-3 bg-zinc-950 border-t border-zinc-700">
-              <NuxtLink to="/notifications" class="text-sm text-blue-400 hover:text-blue-300" @click="notificationsDropdownOpen = false">
-                View all notifications
+              <NuxtLink :to="localePath('/notifications')" class="text-sm text-blue-400 hover:text-blue-300" @click="notificationsDropdownOpen = false">
+                {{ t('app.viewAllNotifications') }}
               </NuxtLink>
             </div>
           </div>
@@ -205,8 +210,8 @@
         </div>
 
         <!-- Login Link (when not logged in) -->
-        <NuxtLink v-else to="/login" class="px-4 py-2 bg-red-600 hover:bg-red-700 rounded transition">
-          Login
+        <NuxtLink v-else :to="localePath('/login')" class="px-4 py-2 bg-red-600 hover:bg-red-700 rounded transition">
+          {{ t('app.login') }}
         </NuxtLink>
       </div>
     </header>
@@ -214,7 +219,7 @@
     <!-- Mobile Expanded Search Bar -->
     <div v-if="!shouldHideHeaderSidebar" v-show="showSearchBar"
       class="md:hidden bg-zinc-900 border-b border-zinc-800 fixed top-16 left-0 right-0" :style="{ zIndex: 61 }">
-      <input v-model="searchQuery" type="text" placeholder="Search videos and channels..."
+      <input v-model="searchQuery" type="text" :placeholder="t('app.searchPlaceholder')"
         @keydown.enter="$router.push(`/search?q=${encodeURIComponent(searchQuery)}`); showSearchBar = false" autofocus
         class="w-full px-4 py-3 bg-zinc-900 focus:outline-none text-white placeholder-gray-500" />
     </div>
@@ -241,40 +246,55 @@
           }"
           :style="{ top: (notificationBarHeight + 64) + 'px', maxHeight: `calc(100vh - ${notificationBarHeight + 64}px)`, zIndex: 50 }">
           <nav class="p-4 space-y-3">
-            <NuxtLink to="/" class="hover:bg-zinc-800 p-2 rounded cursor-pointer block">Home</NuxtLink>
+            <NuxtLink :to="localePath('/')" class="hover:bg-zinc-800 p-2 rounded cursor-pointer block">{{ t('app.home') }}</NuxtLink>
             <!-- Dashboard (only when logged in) -->
-            <NuxtLink v-if="isLoggedIn" to="/dashboard"
-              class="hover:bg-zinc-800 p-2 rounded cursor-pointer block text-blue-400 font-semibold">Dashboard
+            <NuxtLink v-if="isLoggedIn" :to="localePath('/dashboard')"
+              class="hover:bg-zinc-800 p-2 rounded cursor-pointer block text-blue-400 font-semibold">{{ t('app.dashboard') }}
             </NuxtLink>
-            <NuxtLink v-if="isLoggedIn" to="/notifications"
-              class="hover:bg-zinc-800 p-2 rounded cursor-pointer block text-indigo-300 font-semibold">Notifications
+            <NuxtLink v-if="isLoggedIn" :to="localePath('/notifications')"
+              class="hover:bg-zinc-800 p-2 rounded cursor-pointer block text-indigo-300 font-semibold">{{ t('app.notifications') }}
             </NuxtLink>
-            <NuxtLink v-if="isLoggedIn" to="/go-live"
-              class="hover:bg-zinc-800 p-2 rounded cursor-pointer block text-red-400 font-semibold">Go Live
+            <NuxtLink v-if="isLoggedIn" :to="localePath('/go-live')"
+              class="hover:bg-zinc-800 p-2 rounded cursor-pointer block text-red-400 font-semibold">{{ t('app.goLive') }}
             </NuxtLink>
             <!-- <NuxtLink to="/subscriptions" class="hover:bg-zinc-800 p-2 rounded cursor-pointer block">Subscriptions
             </NuxtLink> -->
             <!-- My Channel (only when signed into a channel, not personal) -->
             <NuxtLink v-if="activeAccount !== 'personal' && activeAccount !== userId && isLoggedIn"
-              :to="`/channel/${activeAccount}`"
-              class="hover:bg-zinc-800 p-2 rounded cursor-pointer block text-yellow-400 font-semibold">My Channel
+              :to="localePath(`/channel/${activeAccount}`)"
+              class="hover:bg-zinc-800 p-2 rounded cursor-pointer block text-yellow-400 font-semibold">{{ t('app.myChannel') }}
             </NuxtLink>
 
             <!-- Categories Divider -->
             <div class="border-t border-zinc-700 pt-3 mt-3">
-              <p class="text-xs text-gray-500 font-semibold px-2 mb-2">CATEGORIES</p>
+              <p class="text-xs text-gray-500 font-semibold px-2 mb-2">{{ t('app.categories') }}</p>
               <div class="space-y-1">
-                <NuxtLink to="/"
+                <NuxtLink :to="localePath('/')"
                   class="w-full text-left px-2 py-1.5 rounded text-sm transition hover:bg-zinc-800 text-gray-300 block"
                   :class="{ 'bg-blue-600 text-white': route.path === '/' && !route.params.slug }">
-                  All Videos
+                  {{ t('app.allVideos') }}
                 </NuxtLink>
-                <NuxtLink v-for="category in categoriesWithVideos" :key="category.id" :to="`/category/${category.slug}`"
+                <NuxtLink v-for="category in categoriesWithVideos" :key="category.id" :to="localePath(`/category/${category.slug}`)"
                   class="w-full text-left px-2 py-1.5 rounded text-sm transition hover:bg-zinc-800 text-gray-300 block"
                   :class="{ 'bg-blue-600 text-white': route.params.slug === category.slug }">
                   {{ category.name }}
                 </NuxtLink>
               </div>
+            </div>
+
+            <!-- Language Selector at Bottom -->
+            <div class="border-t border-zinc-700 pt-3 mt-3">
+              <p class="text-xs text-gray-500 font-semibold px-2 mb-2">{{ t('app.language') }}</p>
+              <select
+                :value="locale"
+                @change="onLocaleChange"
+                class="w-full bg-zinc-900 border border-zinc-700 rounded px-2 py-2 text-sm text-white focus:outline-none focus:border-blue-500"
+                :aria-label="t('app.language')"
+              >
+                <option v-for="item in locales" :key="item.code" :value="item.code">
+                  {{ item.code === 'en' ? '🇺🇸 English (US)' : '🇲🇽 Español (México)' }}
+                </option>
+              </select>
             </div>
           </nav>
         </aside>
@@ -288,6 +308,9 @@
     </div>
 
   </div>
+
+  <!-- Locale Picker Modal (shown only on first visit) -->
+  <LocalePickerModal />
   <!-- Profile Dropdown Portal (outside header for z-index independence) -->
   <!-- Overlay for click outside -->
   <div v-if="dropdownOpen" class="fixed inset-0 pointer-events-auto" :style="{ zIndex: 9998 }"
@@ -299,18 +322,18 @@
     :style="{ zIndex: 9999, top: notificationBarHeight + 70 + 'px', right: '20px', width: '224px' }">
     <!-- Current Account -->
     <div class="px-4 py-2 text-xs text-gray-500 border-b border-zinc-700 font-semibold">
-      CURRENT ACCOUNT
+      {{ t('app.currentAccount') }}
     </div>
 
     <!-- Personal Account -->
     <button @click="switchAccount(userId, username)"
       :class="['w-full text-left px-4 py-2 hover:bg-zinc-800', activeAccount === 'personal' ? 'bg-zinc-800 text-blue-400' : 'text-gray-300']">
-      👤 {{ username }} (Personal)
+      👤 {{ username }} {{ t('app.personal') }}
     </button>
 
     <!-- Channels Divider -->
     <div v-if="channels.length > 0" class="px-4 py-2 text-xs text-gray-500 border-t border-zinc-700 font-semibold">
-      YOUR CHANNELS
+      {{ t('app.yourChannels') }}
     </div>
 
     <!-- User Channels -->
@@ -335,29 +358,29 @@
 
     <!-- Actions -->
     <div class="border-t border-zinc-700 mt-2 pt-2">
-      <div class="px-4 py-2 text-xs text-gray-500 border-zinc-700 font-semibold">
-        SETTINGS
+        <div class="px-4 py-2 text-xs text-gray-500 border-zinc-700 font-semibold">
+        {{ t('app.settings') }}
       </div>
       <!-- Admin Panel -->
       <NuxtLink v-if="userType === 'admin'" to="/admin"
         class="block px-4 py-2 hover:bg-zinc-800 text-purple-400 font-semibold" @click="dropdownOpen = false">
-        Admin Panel
+        {{ t('app.adminPanel') }}
       </NuxtLink>
-      <NuxtLink to="/my-channels" class="block px-4 py-2 hover:bg-zinc-800 text-yellow-400"
+        <NuxtLink :to="localePath('/my-channels')" class="block px-4 py-2 hover:bg-zinc-800 text-yellow-400"
         @click="dropdownOpen = false">
-        Manage Channels
+        {{ t('app.manageChannels') }}
       </NuxtLink>
-      <NuxtLink to="/account-settings" class="block px-4 py-2 hover:bg-zinc-800 text-cyan-400"
+      <NuxtLink :to="localePath('/account-settings')" class="block px-4 py-2 hover:bg-zinc-800 text-cyan-400"
         @click="dropdownOpen = false">
-        Account Settings
+        {{ t('app.accountSettings') }}
       </NuxtLink>
-      <NuxtLink to="/create-channel" class="block px-4 py-2 hover:bg-zinc-800 text-green-400"
+      <NuxtLink :to="localePath('/create-channel')" class="block px-4 py-2 hover:bg-zinc-800 text-green-400"
         @click="dropdownOpen = false">
-        Create Channel
+        {{ t('app.createChannel') }}
       </NuxtLink>
       <button @click="handleLogout"
         class="w-full text-left mt-2 px-4 py-2 hover:bg-zinc-800 text-red-400 rounded-b border-t border-zinc-700">
-        Logout
+        {{ t('app.logout') }}
       </button>
     </div>
   </div>
@@ -377,6 +400,8 @@ import {
 
 const router = useRouter()
 const route = useRoute()
+const { t, locale, locales, setLocale } = useI18n()
+const localePath = useLocalePath()
 const isLoggedIn = ref(false)
 const username = ref('')
 const userId = ref('')
@@ -416,8 +441,30 @@ const contentScrollRef = ref(null)
 const headerScrolled = ref(false)
 
 const PASSKEY_PROMPT_DISMISS_KEY = 'passkey_prompt_dismissed_session'
+const AUTH_STATE_CHANGED_EVENT = 'giltube-auth-changed'
+
+const emitAuthStateChanged = () => {
+  if (!process.client) return
+  window.dispatchEvent(new CustomEvent(AUTH_STATE_CHANGED_EVENT, {
+    detail: {
+      isLoggedIn: isLoggedIn.value,
+      userId: userId.value,
+    },
+  }))
+}
+
+const onLocaleChange = (event) => {
+  const target = event?.target
+  if (!target?.value) return
+  setLocale(target.value)
+}
 
 const hideHeaderSidebarRoutes = ['/login', '/register', '/upload', '/create-channel']
+
+const normalizedRoutePath = computed(() => {
+  const path = route.path || '/'
+  return path.replace(/^\/[a-z]{2}(?=\/|$)/, '') || '/'
+})
 
 const notificationBarHeight = computed(() => {
   let height = 0
@@ -429,7 +476,7 @@ const notificationBarHeight = computed(() => {
 })
 
 const shouldHideHeaderSidebar = computed(() => {
-  return hideHeaderSidebarRoutes.some(route_path => route.path.startsWith(route_path))
+  return hideHeaderSidebarRoutes.some(route_path => normalizedRoutePath.value.startsWith(route_path))
 })
 
 const displayName = computed(() => {
@@ -497,13 +544,20 @@ const formatNotificationTime = (value) => {
   }
 }
 
+const localizedNotificationUrl = (rawUrl) => {
+  if (!rawUrl) return localePath('/notifications')
+  if (/^https?:\/\//i.test(rawUrl)) return rawUrl
+  return localePath(rawUrl.startsWith('/') ? rawUrl : `/${rawUrl}`)
+}
+
 const notificationSummary = (item) => {
-  if (!item?.actor_channel?.name) return 'New activity'
-  if (item.type === 'comment_video') return `${item.actor_channel.name} commented on your video`
-  if (item.type === 'reply_comment') return `${item.actor_channel.name} replied to your comment`
-  if (item.type === 'like_video') return `${item.actor_channel.name} liked your video`
-  if (item.type === 'like_comment') return `${item.actor_channel.name} liked your comment`
-  return `${item.actor_channel.name} sent you a notification`
+  if (!item?.actor_channel?.name) return t('app.newActivity')
+  if (item.type === 'comment_video') return t('notifications.commentedOnVideo', { name: item.actor_channel.name })
+  if (item.type === 'reply_comment') return t('notifications.repliedToComment', { name: item.actor_channel.name })
+  if (item.type === 'like_video') return t('notifications.likedYourVideo', { name: item.actor_channel.name })
+  if (item.type === 'like_comment') return t('notifications.likedYourComment', { name: item.actor_channel.name })
+  if (item.type === 'live_started') return t('notifications.startedLive', { name: item.actor_channel.name })
+  return t('notifications.sentNotification', { name: item.actor_channel.name })
 }
 
 const stopNotificationPolling = () => {
@@ -656,6 +710,21 @@ const handleMainContentScroll = (event) => {
   const fromWindow = typeof window !== 'undefined' ? (window.scrollY || 0) : 0
   const scrollTop = Math.max(fromEvent, fromMain, fromContent, fromWindow)
   headerScrolled.value = scrollTop > 4
+}
+
+const scrollToTop = async () => {
+  await nextTick()
+  if (mainScrollRef.value) mainScrollRef.value.scrollTop = 0
+  if (contentScrollRef.value) contentScrollRef.value.scrollTop = 0
+  if (process.client) window.scrollTo({ top: 0, behavior: 'smooth' })
+  handleMainContentScroll()
+}
+
+const handleLogoClick = async () => {
+  if (route.path !== localePath('/')) {
+    await router.push(localePath('/'))
+  }
+  await scrollToTop()
 }
 
 onMounted(async () => {
@@ -814,6 +883,8 @@ watch(isLoggedIn, (newValue) => {
       statusRefreshInterval.value = null
     }
   }
+
+  emitAuthStateChanged()
 })
 
 watch(activeChannelAvatar, () => {
@@ -840,6 +911,8 @@ const checkAuthStatus = () => {
   if (isLoggedIn.value && userId.value) {
     fetchUserType()
   }
+
+  emitAuthStateChanged()
 }
 
 const fetchUserType = async () => {

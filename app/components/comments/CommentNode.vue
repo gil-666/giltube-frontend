@@ -28,7 +28,7 @@
                         <p class="text-xs text-gray-500">{{ getTimeAgo(comment.created_at) }}</p>
                         <button v-if="isCommentOwner(comment)" @click="onDeleteComment(comment.id)"
                             class="text-gray-400 hover:text-red-500 transition text-xs p-1"
-                            :title="comment.parent_comment_id ? 'Delete reply' : 'Delete comment'">
+                            :title="comment.parent_comment_id ? t('commentNode.deleteReply') : t('commentNode.deleteComment')">
                             X
                         </button>
                     </div>
@@ -41,7 +41,7 @@
                     </button>
                 </div>
 
-                <p class="text-gray-300 mt-1 text-xs break-words">{{ comment.text }}</p>
+                <p class="comment-text text-gray-300 mt-1 text-xs break-words" v-html="renderCommentText(comment.text)"></p>
 
                 <div class="mt-2 flex items-center gap-3">
                     <button
@@ -55,21 +55,21 @@
                     </button>
                     <button v-if="isLoggedIn" @click="isReplying = !isReplying"
                         class="text-xs text-blue-400 hover:text-blue-300 transition">
-                        {{ isReplying ? 'Cancel' : 'Reply' }}
+                        {{ isReplying ? t('video.cancel') : t('commentNode.reply') }}
                     </button>
                 </div>
 
                 <div v-if="isReplying" class="mt-2 bg-zinc-800 rounded p-2">
-                    <textarea v-model="replyText" placeholder="Write a reply..." maxlength="500" rows="2"
+                    <textarea v-model="replyText" :placeholder="t('commentNode.writeReply')" maxlength="500" rows="2"
                         class="w-full bg-zinc-700 border border-zinc-600 rounded px-2 py-1 text-white text-xs focus:outline-none focus:border-blue-500 resize-none" />
                     <div class="flex justify-end gap-2 mt-2">
                         <button @click="cancelReply"
                             class="px-2 py-1 text-xs text-gray-300 hover:text-white transition">
-                            Cancel
+                            {{ t('video.cancel') }}
                         </button>
                         <button @click="submitReply" :disabled="!replyText.trim() || postingReplyMap[comment.id]"
                             class="px-3 py-1 text-xs bg-blue-600 hover:bg-blue-700 rounded transition disabled:opacity-50 disabled:cursor-not-allowed">
-                            {{ postingReplyMap[comment.id] ? 'Posting...' : 'Reply' }}
+                            {{ postingReplyMap[comment.id] ? t('video.posting') : t('commentNode.reply') }}
                         </button>
                     </div>
                 </div>
@@ -82,7 +82,7 @@
                 @click="isRepliesExpanded = !isRepliesExpanded"
                 class="text-xs text-gray-400 hover:text-gray-200 transition flex items-center gap-1"
             >
-                <span>{{ isRepliesExpanded ? 'Hide' : 'Show' }} replies</span>
+                <span>{{ isRepliesExpanded ? t('commentNode.hideReplies') : t('commentNode.showReplies') }}</span>
                 <span class="text-gray-500">({{ repliesCount }})</span>
             </button>
 
@@ -125,8 +125,10 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import VerifiedBadge from '~/app/components/VerifiedBadge.vue'
+import { useI18n } from 'vue-i18n'
 
 defineOptions({ name: 'CommentNode' })
+const { t } = useI18n()
 
 type ThreadComment = {
     id: string
@@ -202,6 +204,31 @@ const markAvatarFailed = (commentID: string) => {
     props.failedCommentAvatars[commentID] = true
 }
 
+const escapeHTML = (value: string) =>
+    value
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;')
+
+const renderCommentText = (value: string) => {
+    const escaped = escapeHTML(value || '')
+    const withLinks = escaped.replace(
+        /\b((https?:\/\/|www\.)[^\s<]+)/gi,
+        (rawUrl) => {
+            const href = rawUrl.startsWith('http') ? rawUrl : `https://${rawUrl}`
+            // Render direct .gif links inline in comments
+            if (/\.gif(\?|$)/i.test(href)) {
+                return `<div class="comment-gif-wrap"><img src="${href}" loading="lazy" alt="gif" class="comment-gif" /></div>`
+            }
+            return `<a href="${href}" target="_blank" rel="noopener noreferrer nofollow" class="comment-link">${rawUrl}</a>`
+        }
+    )
+
+    return withLinks.replace(/\n/g, '<br>')
+}
+
 const cancelReply = () => {
     isReplying.value = false
     replyText.value = ''
@@ -240,6 +267,28 @@ const submitReply = async () => {
     opacity: 1;
     transform: translateY(0);
     max-height: 2000px;
+}
+
+.comment-text :deep(.comment-link) {
+    color: rgb(96 165 250);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    word-break: break-all;
+}
+
+.comment-text :deep(.comment-link:hover) {
+    color: rgb(147 197 253);
+}
+
+.comment-gif-wrap {
+    margin-top: 6px;
+}
+
+.comment-gif {
+    display: block;
+    max-width: min(100%, 320px);
+    max-height: 300px;
+    border-radius: 6px;
 }
 
 @keyframes comment-pulse {

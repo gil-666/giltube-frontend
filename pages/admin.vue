@@ -227,8 +227,10 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { useLocalePath } from '#i18n'
 
 const router = useRouter()
+const localePath = useLocalePath()
 const activeTab = ref('users')
 const searchQuery = ref('')
 const loading = ref(true)
@@ -255,7 +257,7 @@ const userId = typeof localStorage !== 'undefined' ? localStorage.getItem('user_
 onMounted(async () => {
   if (!userId) {
     error.value = 'Not authenticated'
-    setTimeout(() => router.push('/login'), 2000)
+    setTimeout(() => router.push(localePath('/login')), 2000)
     return
   }
 
@@ -271,7 +273,7 @@ onMounted(async () => {
     // If 401/403, user is not admin
     if (statsRes.status === 401 || statsRes.status === 403) {
       error.value = 'Access denied. Admin privileges required.'
-      setTimeout(() => router.push('/'), 2000)
+      setTimeout(() => router.push(localePath('/')), 2000)
       return
     }
     
@@ -281,7 +283,7 @@ onMounted(async () => {
   } catch (err) {
     console.error('Failed to verify admin status:', err)
     error.value = 'Failed to verify admin status'
-    setTimeout(() => router.push('/'), 2000)
+    setTimeout(() => router.push(localePath('/')), 2000)
     return
   }
 

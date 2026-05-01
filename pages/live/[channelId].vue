@@ -14,7 +14,7 @@
                             :class="isLive ? 'bg-red-900 text-red-200 border-red-700' : 'bg-zinc-800 text-zinc-300 border-zinc-700'">
                             <span class="w-2 h-2 rounded-full"
                                 :class="isLive ? 'bg-red-400 animate-pulse' : 'bg-zinc-500'" />
-                            {{ isLive ? 'LIVE' : 'OFFLINE' }}
+                            {{ isLive ? t('live.live') : t('live.offline') }}
                         </span>
                         <h1 class="text-2xl font-bold break-words">{{ liveTitle }}</h1>
                     </div>
@@ -22,60 +22,75 @@
                     <div v-if="isLive" class="rounded-md border border-zinc-800 bg-zinc-900/70 p-3">
                         <div class="flex items-center justify-between gap-3 flex-wrap">
                             <p class="text-sm text-zinc-200 font-medium">
-                                Watching now: {{ viewers.length + anonymousCount }}
+                                {{ t('live.watching') }} {{ viewers.length + anonymousCount }}
                             </p>
                             <p v-if="anonymousCount > 0" class="text-xs text-zinc-400">
-                                {{ anonymousCount }} anonymous user{{ anonymousCount === 1 ? '' : 's' }}
+                                {{ anonymousCount }} {{ anonymousCount === 1 ? t('live.anonymousUser') : t('live.anonymousUsers') }}
                             </p>
                         </div>
 
                         <div v-if="viewers.length > 0" class="mt-3 flex flex-wrap gap-2">
                             <div v-for="viewer in viewers" :key="viewer.id"
                                 class="inline-flex items-center gap-2 rounded-full border border-zinc-700 bg-zinc-800 px-2.5 py-1 text-xs text-zinc-100">
-                                <img v-if="viewer.avatarUrl" :src="viewer.avatarUrl" :alt="viewer.name || 'Viewer'"
+                                <img v-if="viewer.avatarUrl" :src="viewer.avatarUrl" :alt="viewer.name || t('live.viewerFallback')"
                                     class="h-5 w-5 rounded-full object-cover" />
                                 <div v-else
                                     class="h-5 w-5 rounded-full bg-zinc-600 text-[10px] font-bold flex items-center justify-center">
                                     {{ (viewer.name || '?').charAt(0).toUpperCase() }}
                                 </div>
-                                <span>{{ viewer.name || 'Viewer' }}</span>
+                                <span>{{ viewer.name || t('live.viewerFallback') }}</span>
                             </div>
                         </div>
                     </div>
 
                     <p class="text-sm text-gray-400 break-words">{{ liveDescription }}</p>
 
-                    <NuxtLink :to="`/channel/${channelId}`"
-                        class="inline-flex items-center gap-3 p-2 rounded hover:bg-zinc-900 transition">
-                        <div
-                            class="w-10 h-10 rounded-full bg-zinc-700 flex items-center justify-center overflow-hidden text-xs font-bold">
-                            <img v-if="channelAvatar && !channelAvatarFailed" :src="channelAvatar" :alt="channelName"
-                                class="w-full h-full object-cover" @error="channelAvatarFailed = true" />
-                            <span v-else>{{ channelName.charAt(0).toUpperCase() }}</span>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <p class="font-semibold">{{ channelName }}</p>
-                            <VerifiedBadge :verified="channelVerified" size="sm" />
-                        </div>
-                    </NuxtLink>
+                    <div class="flex items-center gap-3 flex-wrap">
+                        <NuxtLink :to="localePath(`/channel/${channelId}`)"
+                            class="inline-flex items-center gap-3 p-2 rounded hover:bg-zinc-900 transition">
+                            <div
+                                class="w-10 h-10 rounded-full bg-zinc-700 flex items-center justify-center overflow-hidden text-xs font-bold">
+                                <img v-if="channelAvatar && !channelAvatarFailed" :src="channelAvatar" :alt="channelName"
+                                    class="w-full h-full object-cover" @error="channelAvatarFailed = true" />
+                                <span v-else>{{ channelName.charAt(0).toUpperCase() }}</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <p class="font-semibold">{{ channelName }}</p>
+                                <VerifiedBadge :verified="channelVerified" size="sm" />
+                            </div>
+                        </NuxtLink>
+
+                        <button
+                            @click="shareStream"
+                            class="flex items-center gap-2 px-4 py-2 rounded-lg transition text-sm font-medium bg-zinc-700 hover:bg-zinc-600"
+                            title="Share"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 12v7a1 1 0 001 1h14a1 1 0 001-1v-7"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 6l-4-4-4 4"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 2v13"/>
+                            </svg>
+                            <span>{{ shareButtonText }}</span>
+                        </button>
+                    </div>
                 </div>
             </section>
 
             <aside class="bg-zinc-900 border border-zinc-800 rounded-lg flex flex-col min-h-[520px] max-h-[80vh]">
                 <div class="p-4 border-b border-zinc-800 flex items-center justify-between">
                     <div>
-                        <p class="font-semibold">Live Chat</p>
-                        <p class="text-xs text-gray-400">Comments are disabled on live pages.</p>
+                        <p class="font-semibold">{{ t('live.liveChat') }}</p>
+                        <p class="text-xs text-gray-400">{{ t('live.chatDisabled') }}</p>
                     </div>
                     <button @click="refreshChat"
                         class="px-2 py-1 text-xs bg-zinc-800 hover:bg-zinc-700 rounded transition">
-                        Refresh
+                        {{ t('live.refresh') }}
                     </button>
                 </div>
 
                 <div ref="chatListRef" class="flex-1 overflow-y-auto p-4 space-y-3">
                     <div v-if="chatMessages.length === 0" class="text-sm text-gray-400">
-                        No messages yet.
+                        {{ t('live.noMessages') }}
                     </div>
 
                     <div v-for="msg in chatMessages" :key="msg.id" class="flex gap-2 items-start">
@@ -98,7 +113,7 @@
 
                 <div class="p-3 border-t border-zinc-800 space-y-2">
                     <div v-if="isLoggedIn && availableChannels.length > 0" class="space-y-1">
-                        <label class="text-xs text-gray-400">Chat as</label>
+                        <label class="text-xs text-gray-400">{{ t('live.chatAs') }}</label>
                         <select v-model="selectedChatChannelId"
                             class="w-full bg-zinc-800 border border-zinc-700 rounded px-2 py-1.5 text-sm">
                             <option v-for="ch in availableChannels" :key="ch.id" :value="ch.id">{{ ch.name }}</option>
@@ -107,25 +122,25 @@
 
                     <div v-if="!isLive"
                         class="text-xs text-yellow-300 bg-yellow-900/30 border border-yellow-700 rounded p-2">
-                        Stream is offline. Chat posting is disabled until live.
+                        {{ t('live.streamOffline') }}
                     </div>
 
                     <div v-if="!isLoggedIn" class="text-xs text-gray-300 bg-zinc-800 rounded p-2">
-                        Sign in to join live chat.
+                        {{ t('live.signInChat') }}
                     </div>
 
                     <div v-else-if="availableChannels.length === 0"
                         class="text-xs text-gray-300 bg-zinc-800 rounded p-2">
-                        Create a channel to send chat messages.
+                        {{ t('live.createChannelChat') }}
                     </div>
 
                     <div class="flex gap-2">
-                        <input v-model="chatInput" type="text" maxlength="500" placeholder="Say something..."
+                        <input v-model="chatInput" type="text" maxlength="500" :placeholder="t('live.saySomething')"
                             @keydown.enter="sendChatMessage"
                             class="flex-1 bg-zinc-800 border border-zinc-700 rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-500" />
                         <button @click="sendChatMessage" :disabled="chatSending || !canSendChat"
                             class="px-3 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 rounded text-sm transition">
-                            {{ chatSending ? '...' : 'Send' }}
+                            {{ chatSending ? t('live.sending') : t('live.send') }}
                         </button>
                     </div>
 
@@ -148,7 +163,11 @@ import {
     type LiveStreamState
 } from '~/app/service/live'
 import { useMetaTags } from '~/app/composables/useMetaTags'
+import { useI18n } from 'vue-i18n'
+import { useLocalePath } from '#i18n'
 
+const { t } = useI18n()
+const localePath = useLocalePath()
 
 
 type LocalChannel = {
@@ -176,6 +195,9 @@ const chatSending = ref(false)
 const chatError = ref('')
 const channelAvatarFailed = ref(false)
 const chatListRef = ref<HTMLElement | null>(null)
+const shareCopied = ref(false)
+
+const shareButtonText = computed(() => shareCopied.value ? t('live.shareCopied') : t('live.share'))
 
 type PresenceViewer = {
     id: string
@@ -196,9 +218,9 @@ let chatPollTimer: ReturnType<typeof setInterval> | null = null
 
 const isLive = computed(() => !!live.value?.is_live || live.value?.status === 'live')
 const playbackUrl = computed(() => live.value?.playback_url || '')
-const liveTitle = computed(() => live.value?.title || 'Live Stream')
-const liveDescription = computed(() => live.value?.description || 'No description')
-const channelName = computed(() => live.value?.channel?.name || 'Channel')
+const liveTitle = computed(() => live.value?.title || t('goLive.defaultTitle'))
+const liveDescription = computed(() => live.value?.description || t('channelPage.noDescription'))
+const channelName = computed(() => live.value?.channel?.name || t('app.myChannel'))
 const channelAvatar = computed(() => live.value?.channel?.avatar_url || '')
 const channelVerified = computed(() => !!live.value?.channel?.verified)
 const liveVideoId = computed(() => live.value?.id || channelId.value || '')
@@ -475,7 +497,7 @@ const sendChatMessage = async () => {
         await refreshChat()
         await scrollChatToBottom()
     } catch (err: any) {
-        chatError.value = err?.response?.data?.error || 'Failed to send message'
+        chatError.value = err?.response?.data?.error || t('live.sendError')
     } finally {
         chatSending.value = false
     }
@@ -485,7 +507,7 @@ const formatRelativeTime = (value: string) => {
     const now = Date.now()
     const ts = new Date(value).getTime()
     const diffSec = Math.max(0, Math.floor((now - ts) / 1000))
-    if (diffSec < 10) return 'now'
+    if (diffSec < 10) return t('live.now')
     if (diffSec < 60) return `${diffSec}s`
     const mins = Math.floor(diffSec / 60)
     if (mins < 60) return `${mins}m`
@@ -493,6 +515,23 @@ const formatRelativeTime = (value: string) => {
     if (hours < 24) return `${hours}h`
     const days = Math.floor(hours / 24)
     return `${days}d`
+}
+
+const shareStream = async () => {
+    try {
+        const origin = typeof window !== 'undefined' ? window.location.origin : 'https://giltube.gilservers.com'
+        const sharePath = localePath(`/live/${channelId.value}`)
+        const url = `${origin}${sharePath}`
+        if (process.client && navigator.share) {
+            await navigator.share({ title: liveTitle.value || 'GilTube Live', url })
+        } else if (process.client && navigator.clipboard) {
+            await navigator.clipboard.writeText(url)
+            shareCopied.value = true
+            setTimeout(() => (shareCopied.value = false), 2000)
+        }
+    } catch (err) {
+        console.error('Share failed:', err)
+    }
 }
 
 onMounted(async () => {

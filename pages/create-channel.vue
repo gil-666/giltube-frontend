@@ -1,21 +1,21 @@
 <template>
   <div class="fixed inset-0 bg-zinc-950 text-white p-6">
     <div class="max-w-2xl mx-auto">
-      <h1 class="text-4xl font-bold mb-8">Create Your Channel</h1>
+      <h1 class="text-4xl font-bold mb-8">{{ t('createChannelPage.title') }}</h1>
 
       <div v-if="!isLoggedIn" class="bg-red-900 text-white p-4 rounded mb-6">
-        <p>You must be logged in to create a channel.</p>
-        <NuxtLink to="/login" class="text-blue-400 hover:underline">Go to login</NuxtLink>
+        <p>{{ t('createChannelPage.loginRequired') }}</p>
+        <NuxtLink :to="localePath('/login')" class="text-blue-400 hover:underline">{{ t('createChannelPage.goToLogin') }}</NuxtLink>
       </div>
 
       <form v-else @submit.prevent="handleCreateChannel" class="space-y-6">
         <!-- Channel Name -->
         <div>
-          <label class="block text-sm font-medium mb-2">Channel Name *</label>
+          <label class="block text-sm font-medium mb-2">{{ t('createChannelPage.channelName') }}</label>
           <input
             v-model="form.name"
             type="text"
-            placeholder="Enter your channel name"
+            :placeholder="t('createChannelPage.channelNamePlaceholder')"
             required
             class="w-full bg-zinc-900 border border-zinc-700 rounded px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
           />
@@ -23,10 +23,10 @@
 
         <!-- Description -->
         <div>
-          <label class="block text-sm font-medium mb-2">Description</label>
+          <label class="block text-sm font-medium mb-2">{{ t('createChannelPage.description') }}</label>
           <textarea
             v-model="form.description"
-            placeholder="Tell us about your channel"
+            :placeholder="t('createChannelPage.descriptionPlaceholder')"
             rows="5"
             class="w-full bg-zinc-900 border border-zinc-700 rounded px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
           />
@@ -34,14 +34,14 @@
 
         <!-- Avatar File Upload -->
         <div>
-          <label class="block text-sm font-medium mb-2">Channel Avatar (optional)</label>
+          <label class="block text-sm font-medium mb-2">{{ t('createChannelPage.avatar') }}</label>
           <input
             type="file"
             accept="image/*"
             @change="onAvatarSelected"
             class="w-full bg-zinc-900 border border-zinc-700 rounded px-4 py-2 text-white"
           />
-          <p class="text-xs text-gray-400 mt-1">Upload an image for your channel's profile picture</p>
+          <p class="text-xs text-gray-400 mt-1">{{ t('createChannelPage.avatarHelper') }}</p>
           <!-- Avatar Preview -->
           <div v-if="avatarPreview" class="mt-3 flex items-center gap-3">
             <img :src="avatarPreview" alt="Avatar preview" class="w-12 h-12 rounded-full object-cover border border-zinc-700" />
@@ -50,7 +50,7 @@
               @click="clearAvatar"
               class="text-sm text-red-400 hover:text-red-300"
             >
-              Remove
+              {{ t('createChannelPage.removeAvatar') }}
             </button>
           </div>
         </div>
@@ -72,13 +72,13 @@
             :disabled="isCreating"
             class="px-6 py-2 bg-red-600 hover:bg-red-700 rounded font-medium transition disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {{ isCreating ? 'Creating...' : 'Create Channel' }}
+            {{ isCreating ? t('createChannelPage.creating') : t('createChannelPage.submit') }}
           </button>
           <NuxtLink
-            to="/"
+            :to="localePath('/')"
             class="px-6 py-2 bg-zinc-700 hover:bg-zinc-600 rounded font-medium transition"
           >
-            Cancel
+            {{ t('createChannelPage.cancel') }}
           </NuxtLink>
         </div>
       </form>
@@ -89,7 +89,11 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { createChannel } from '~/app/service/upload'
+import { useI18n } from 'vue-i18n'
+import { useLocalePath } from '#i18n'
 
+const { t } = useI18n()
+const localePath = useLocalePath()
 const router = useRouter()
 const isLoggedIn = ref(false)
 const userId = ref('')
@@ -142,7 +146,7 @@ const handleCreateChannel = async () => {
   successMessage.value = ''
 
   if (!form.value.name.trim()) {
-    error.value = 'Channel name is required'
+    error.value = t('createChannelPage.nameRequired')
     return
   }
 
@@ -170,14 +174,14 @@ const handleCreateChannel = async () => {
     localStorage.setItem('active_account', newChannel.id)
     localStorage.setItem('active_account_name', newChannel.name)
 
-    successMessage.value = 'Channel created successfully! Redirecting to upload...'
+    successMessage.value = t('createChannelPage.success')
     
     // Redirect to upload after 1.5 seconds
     setTimeout(() => {
-      router.push('/upload')
+      router.push(localePath('/upload'))
     }, 1500)
   } catch (err) {
-    error.value = typeof err === 'string' ? err : 'Failed to create channel. Please try again.'
+    error.value = typeof err === 'string' ? err : t('createChannelPage.createError')
     console.error('Channel creation error:', err)
   } finally {
     isCreating.value = false

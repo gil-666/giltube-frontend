@@ -3,21 +3,21 @@
     <div class="max-w-4xl mx-auto">
       <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
         <div>
-          <h1 class="text-2xl font-bold">Notifications</h1>
-          <p class="text-sm text-gray-400 mt-1">Track comments, replies, and likes on your content.</p>
+          <h1 class="text-2xl font-bold">{{ t('notifications.title') }}</h1>
+          <p class="text-sm text-gray-400 mt-1">{{ t('notifications.subtitle') }}</p>
         </div>
         <div class="flex items-center gap-2">
           <button
             @click="refresh"
             class="px-3 py-2 bg-zinc-800 hover:bg-zinc-700 rounded text-sm transition"
           >
-            Refresh
+            {{ t('notifications.refresh') }}
           </button>
           <button
             @click="markAllRead"
             class="px-3 py-2 bg-blue-600 hover:bg-blue-700 rounded text-sm transition"
           >
-            Mark all read
+            {{ t('notifications.markAllRead') }}
           </button>
         </div>
       </div>
@@ -25,8 +25,8 @@
       <div class="bg-zinc-900 border border-zinc-800 rounded-lg p-4 mb-6">
         <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
           <div>
-            <p class="font-semibold text-sm">Browser push notifications</p>
-            <p class="text-xs text-gray-400 mt-1">Receive alerts in your browser when you are away from the tab.</p>
+            <p class="font-semibold text-sm">{{ t('notifications.pushTitle') }}</p>
+            <p class="text-xs text-gray-400 mt-1">{{ t('notifications.pushSubtitle') }}</p>
           </div>
           <div class="flex items-center gap-2">
             <button
@@ -35,7 +35,7 @@
               :disabled="pushBusy || !pushConfig.enabled || !pushConfig.send_enabled"
               class="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-40 disabled:cursor-not-allowed rounded text-sm transition"
             >
-              {{ pushBusy ? 'Working...' : 'Enable Push' }}
+              {{ pushBusy ? t('notifications.working') : t('notifications.enablePush') }}
             </button>
             <button
               v-else
@@ -43,12 +43,12 @@
               :disabled="pushBusy"
               class="px-3 py-2 bg-zinc-700 hover:bg-zinc-600 disabled:opacity-40 disabled:cursor-not-allowed rounded text-sm transition"
             >
-              {{ pushBusy ? 'Working...' : 'Disable Push' }}
+              {{ pushBusy ? t('notifications.working') : t('notifications.disablePush') }}
             </button>
           </div>
         </div>
-        <p v-if="!pushConfig.enabled" class="text-xs text-amber-300 mt-3">Push is disabled by server configuration.</p>
-        <p v-else-if="!pushConfig.send_enabled" class="text-xs text-amber-300 mt-3">Push delivery is paused on the server (`PUSH_SEND_ENABLED=false`).</p>
+        <p v-if="!pushConfig.enabled" class="text-xs text-amber-300 mt-3">{{ t('notifications.pushDisabledByConfig') }}</p>
+        <p v-else-if="!pushConfig.send_enabled" class="text-xs text-amber-300 mt-3">{{ t('notifications.pushPaused') }}</p>
         <p v-if="pushMessage" class="text-xs text-gray-300 mt-3">{{ pushMessage }}</p>
       </div>
 
@@ -60,7 +60,7 @@
             !unreadOnly ? 'bg-blue-600 text-white' : 'bg-zinc-800 hover:bg-zinc-700 text-gray-300'
           ]"
         >
-          All
+          {{ t('notifications.all') }}
         </button>
         <button
           @click="unreadOnly = true; reloadFromStart()"
@@ -69,19 +69,19 @@
             unreadOnly ? 'bg-blue-600 text-white' : 'bg-zinc-800 hover:bg-zinc-700 text-gray-300'
           ]"
         >
-          Unread only
+          {{ t('notifications.unreadOnly') }}
         </button>
       </div>
 
-      <div v-if="loading" class="py-12 text-center text-gray-400">Loading notifications...</div>
+      <div v-if="loading" class="py-12 text-center text-gray-400">{{ t('notifications.loading') }}</div>
       <div v-else-if="items.length === 0" class="py-12 text-center text-gray-500 border border-zinc-800 rounded-lg">
-        No notifications yet.
+        {{ t('notifications.empty') }}
       </div>
       <div v-else class="space-y-3">
         <NuxtLink
           v-for="item in items"
           :key="item.id"
-          :to="item.url"
+          :to="localizedItemUrl(item.url)"
           class="block border rounded-lg transition"
           :class="item.is_read ? 'bg-zinc-900 border-zinc-800 hover:border-zinc-700' : 'bg-zinc-900 border-blue-700 hover:border-blue-500'"
           @click="markRead(item)"
@@ -91,7 +91,7 @@
               <img
                 v-if="item.actor_channel?.avatar_url"
                 :src="item.actor_channel.avatar_url"
-                :alt="item.actor_channel?.name || 'Channel avatar'"
+                :alt="item.actor_channel?.name || t('notifications.channelAvatar')"
                 class="w-10 h-10 rounded-full object-cover border border-zinc-700 shrink-0"
               />
               <div
@@ -104,7 +104,7 @@
                 <p class="text-sm" :class="item.is_read ? 'text-gray-300' : 'text-white font-semibold'">
                   {{ notificationSummary(item) }}
                 </p>
-                <p v-if="item.target_video?.title" class="text-xs text-gray-400 mt-1">Video: {{ item.target_video.title }}</p>
+                <p v-if="item.target_video?.title" class="text-xs text-gray-400 mt-1">{{ t('notifications.videoLabel') }} {{ item.target_video.title }}</p>
                 <p v-if="item.target_comment?.snippet" class="text-xs text-gray-500 mt-1">{{ item.target_comment.snippet }}</p>
                 <p class="text-xs text-gray-500 mt-2">{{ formatTime(item.created_at) }}</p>
               </div>
@@ -113,7 +113,7 @@
               @click.prevent="toggleRead(item)"
               class="px-2 py-1 text-xs rounded border border-zinc-700 hover:bg-zinc-800"
             >
-              {{ item.is_read ? 'Mark unread' : 'Mark read' }}
+              {{ item.is_read ? t('notifications.markUnread') : t('notifications.markRead') }}
             </button>
           </div>
         </NuxtLink>
@@ -125,16 +125,17 @@
           @click="loadMore"
           class="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 rounded text-sm"
         >
-          Load more
+          {{ t('notifications.loadMore') }}
         </button>
-        <p v-if="loadingMore" class="text-sm text-gray-400">Loading more...</p>
+        <p v-if="loadingMore" class="text-sm text-gray-400">{{ t('notifications.loadingMore') }}</p>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { computed, ref, onMounted, onUnmounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import {
   listNotifications,
   markNotificationRead,
@@ -157,19 +158,30 @@ const pushBusy = ref(false)
 const isPushEnabled = ref(false)
 const pushMessage = ref('')
 const pushConfig = ref({ enabled: false, send_enabled: false, vapid_public_key: '' })
+const { t, locale } = useI18n()
+const localePrefix = computed(() => (locale.value && locale.value !== 'en' ? `/${locale.value}` : ''))
+const AUTH_STATE_CHANGED_EVENT = 'giltube-auth-changed'
 
 const notificationSummary = (item: NotificationItem) => {
-  if (item.type === 'comment_video') return `${item.actor_channel.name} commented on your video`
-  if (item.type === 'reply_comment') return `${item.actor_channel.name} replied to your comment`
-  if (item.type === 'like_video') return `${item.actor_channel.name} liked your video`
-  if (item.type === 'like_comment') return `${item.actor_channel.name} liked your comment`
-  return `${item.actor_channel.name} sent you a notification`
+  if (item.type === 'comment_video') return t('notifications.commentedOnVideo', { name: item.actor_channel.name })
+  if (item.type === 'reply_comment') return t('notifications.repliedToComment', { name: item.actor_channel.name })
+  if (item.type === 'like_video') return t('notifications.likedYourVideo', { name: item.actor_channel.name })
+  if (item.type === 'like_comment') return t('notifications.likedYourComment', { name: item.actor_channel.name })
+  if (item.type === 'live_started') return t('notifications.startedLive', { name: item.actor_channel.name })
+  return t('notifications.sentNotification', { name: item.actor_channel.name })
 }
 
 const actorInitial = (item: NotificationItem) => {
   const name = item?.actor_channel?.name?.trim()
   if (!name) return '?'
   return name.charAt(0).toUpperCase()
+}
+
+const localizedItemUrl = (value: string) => {
+  if (!value) return localePrefix.value || '/'
+  if (value.startsWith('http')) return value
+  if (value.startsWith('/')) return `${localePrefix.value}${value}` || value
+  return value
 }
 
 const formatTime = (value: string) => {
@@ -266,22 +278,26 @@ const refreshPushState = async () => {
   }
 }
 
+const handleAuthStateChanged = async () => {
+  await refreshPushState()
+}
+
 const enablePush = async () => {
   pushMessage.value = ''
   if (!pushConfig.value.enabled) {
-    pushMessage.value = 'Push is disabled by server configuration.'
+    pushMessage.value = t('notifications.pushDisabledByConfig')
     return
   }
   if (!pushConfig.value.send_enabled) {
-    pushMessage.value = 'Push delivery is paused on the server.'
+    pushMessage.value = t('notifications.pushPaused')
     return
   }
   if (!('Notification' in window) || !('serviceWorker' in navigator)) {
-    pushMessage.value = 'This browser does not support push notifications.'
+    pushMessage.value = t('notifications.pushUnsupported')
     return
   }
   if (!pushConfig.value.vapid_public_key) {
-    pushMessage.value = 'Push public key is not configured on the server.'
+    pushMessage.value = t('notifications.pushKeyMissing')
     return
   }
 
@@ -289,7 +305,7 @@ const enablePush = async () => {
   try {
     const permission = await Notification.requestPermission()
     if (permission !== 'granted') {
-      pushMessage.value = 'Notification permission was not granted.'
+      pushMessage.value = t('notifications.permissionDenied')
       return
     }
 
@@ -314,9 +330,9 @@ const enablePush = async () => {
     })
 
     isPushEnabled.value = true
-    pushMessage.value = 'Push notifications enabled.'
+    pushMessage.value = t('notifications.pushEnabled')
   } catch (err: any) {
-    pushMessage.value = err?.message || 'Failed to enable push notifications.'
+    pushMessage.value = err?.message || t('notifications.enableFailed')
   } finally {
     pushBusy.value = false
   }
@@ -332,9 +348,9 @@ const disablePush = async () => {
       await existing.unsubscribe()
     }
     isPushEnabled.value = false
-    pushMessage.value = 'Push notifications disabled.'
+    pushMessage.value = t('notifications.pushDisabled')
   } catch (err: any) {
-    pushMessage.value = err?.message || 'Failed to disable push notifications.'
+    pushMessage.value = err?.message || t('notifications.disableFailed')
   } finally {
     pushBusy.value = false
   }
@@ -347,5 +363,10 @@ const refresh = async () => {
 
 onMounted(async () => {
   await refresh()
+  window.addEventListener(AUTH_STATE_CHANGED_EVENT, handleAuthStateChanged)
+})
+
+onUnmounted(() => {
+  window.removeEventListener(AUTH_STATE_CHANGED_EVENT, handleAuthStateChanged)
 })
 </script>

@@ -4,7 +4,7 @@
       <!-- Logo/Header -->
       <div class="text-center mb-8">
         <h1 class="text-4xl font-bold text-red-500 mb-2">giltube</h1>
-        <p class="text-gray-400">Create your account</p>
+        <p class="text-gray-400">{{ t('register.title') }}</p>
       </div>
 
       <!-- Register Form -->
@@ -12,14 +12,14 @@
         <!-- Username Input -->
         <div>
           <label for="username" class="block text-sm font-medium text-gray-300 mb-2">
-            Username
+            {{ t('register.usernameLabel') }}
           </label>
           <input
             id="username"
             v-model="username"
             type="text"
             required
-            placeholder="your_username"
+            :placeholder="t('register.usernamePlaceholder')"
             autocomplete="username"
             style="color: white; background-color: rgb(39, 39, 42); border: 1px solid rgb(63, 63, 70); border-radius: 0.5rem; padding: 0.5rem 1rem; width: 100%;"
           />
@@ -28,14 +28,14 @@
         <!-- Email Input -->
         <div>
           <label for="email" class="block text-sm font-medium text-gray-300 mb-2">
-            Email Address
+            {{ t('register.emailLabel') }}
           </label>
           <input
             id="email"
             v-model="email"
             type="email"
             required
-            placeholder="you@example.com"
+            :placeholder="t('register.emailPlaceholder')"
             autocomplete="email"
             style="color: white; background-color: rgb(39, 39, 42); border: 1px solid rgb(63, 63, 70); border-radius: 0.5rem; padding: 0.5rem 1rem; width: 100%;"
           />
@@ -44,31 +44,31 @@
         <!-- Password Input -->
         <div>
           <label for="password" class="block text-sm font-medium text-gray-300 mb-2">
-            Password
+            {{ t('register.passwordLabel') }}
           </label>
           <input
             id="password"
             v-model="password"
             type="password"
             required
-            placeholder="••••••••"
+            :placeholder="t('register.passwordPlaceholder')"
             autocomplete="new-password"
             style="color: white; background-color: rgb(39, 39, 42); border: 1px solid rgb(63, 63, 70); border-radius: 0.5rem; padding: 0.5rem 1rem; width: 100%;"
           />
-          <p class="text-gray-500 text-xs mt-1">At least 8 characters recommended</p>
+          <p class="text-gray-500 text-xs mt-1">{{ t('register.passwordHint') }}</p>
         </div>
 
         <!-- Confirm Password Input -->
         <div>
           <label for="confirmPassword" class="block text-sm font-medium text-gray-300 mb-2">
-            Confirm Password
+            {{ t('register.confirmPasswordLabel') }}
           </label>
           <input
             id="confirmPassword"
             v-model="confirmPassword"
             type="password"
             required
-            placeholder="••••••••"
+            :placeholder="t('register.passwordPlaceholder')"
             autocomplete="new-password"
             style="color: white; background-color: rgb(39, 39, 42); border: 1px solid rgb(63, 63, 70); border-radius: 0.5rem; padding: 0.5rem 1rem; width: 100%;"
           />
@@ -81,12 +81,12 @@
 
         <!-- Success Message -->
         <div v-if="success" class="bg-green-900/50 border border-green-500 text-green-200 px-4 py-3 rounded-lg text-sm">
-          Account created successfully! Redirecting...
+          {{ t('register.successMessage') }}
         </div>
 
         <!-- Loading State -->
         <div v-if="loading" class="text-center text-gray-400 text-sm">
-          Creating account...
+          {{ t('register.creatingAccount') }}
         </div>
 
         <!-- Submit Button -->
@@ -95,16 +95,16 @@
           :disabled="loading"
           class="w-full bg-red-600 hover:bg-red-700 disabled:bg-gray-600 text-white font-semibold py-2 px-4 rounded-lg transition duration-200"
         >
-          {{ loading ? 'Creating account...' : 'Sign Up' }}
+          {{ loading ? t('register.creatingAccount') : t('register.signUp') }}
         </button>
       </form>
 
       <!-- Login Link -->
       <div class="mt-6 text-center">
         <p class="text-gray-400">
-          Already have an account?
-          <NuxtLink to="/login" class="text-red-500 hover:text-red-400 font-medium">
-            Sign in
+          {{ t('register.alreadyHaveAccount') }}
+          <NuxtLink :to="localePath('/login')" class="text-red-500 hover:text-red-400 font-medium">
+            {{ t('register.signIn') }}
           </NuxtLink>
         </p>
       </div>
@@ -115,8 +115,13 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
+import { useLocalePath } from '#i18n'
 import { register } from '~/app/service/auth'
 import { useMetaTags } from '~/app/composables/useMetaTags'
+
+const { t } = useI18n()
+const localePath = useLocalePath()
 
 definePageMeta({
   layout: false
@@ -142,12 +147,12 @@ const handleRegister = async () => {
 
   // Validation
   if (password.value !== confirmPassword.value) {
-    error.value = 'Passwords do not match'
+    error.value = t('register.passwordMismatch')
     return
   }
 
   if (password.value.length < 6) {
-    error.value = 'Password must be at least 6 characters'
+    error.value = t('register.passwordTooShort')
     return
   }
 
@@ -175,7 +180,7 @@ const handleRegister = async () => {
 
       // Redirect to home/dashboard immediately (auto-logged in)
       setTimeout(() => {
-        router.push('/')
+        router.push(localePath('/'))
       }, 800)
     } else {
       error.value = 'Registration failed: Invalid response'

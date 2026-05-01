@@ -22,6 +22,8 @@ export interface LiveStreamState {
   ingest_url_lan?: string
   stream_name?: string
   playback_url: string
+  thumbnail_url?: string
+  watching_now?: number
   playback_url_public?: string
   is_live?: boolean
   use_publisher_presence?: boolean

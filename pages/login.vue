@@ -3,18 +3,18 @@
     <div class="w-full max-w-md">
       <!-- Back Button -->
       <div class="mb-6">
-        <NuxtLink to="/" class="inline-flex items-center gap-2 text-gray-400 hover:text-white transition">
+        <NuxtLink :to="localePath('/')" class="inline-flex items-center gap-2 text-gray-400 hover:text-white transition">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
           </svg>
-          Back to Home
+          {{ t('login.backToHome') }}
         </NuxtLink>
       </div>
 
       <!-- Logo/Header -->
       <div class="text-center mb-8">
         <h1 class="text-4xl font-bold text-red-500 mb-2">giltube</h1>
-        <p class="text-gray-400">Sign in to your account</p>
+        <p class="text-gray-400">{{ t('login.title') }}</p>
       </div>
 
       <!-- Login Form -->
@@ -22,14 +22,14 @@
         <!-- Email Input -->
         <div>
           <label for="email" class="block text-sm font-medium text-gray-300 mb-2">
-            Email Address
+            {{ t('login.emailLabel') }}
           </label>
           <input
             id="email"
             v-model="email"
             type="email"
             required
-            placeholder="you@example.com"
+            :placeholder="t('login.emailPlaceholder')"
             autocomplete="email"
             style="color: white; background-color: rgb(39, 39, 42); border: 1px solid rgb(63, 63, 70); border-radius: 0.5rem; padding: 0.5rem 1rem; width: 100%;"
           />
@@ -38,14 +38,14 @@
         <!-- Password Input -->
         <div>
           <label for="password" class="block text-sm font-medium text-gray-300 mb-2">
-            Password
+            {{ t('login.passwordLabel') }}
           </label>
           <input
             id="password"
             v-model="password"
             type="password"
             required
-            placeholder="••••••••"
+            :placeholder="t('login.passwordPlaceholder')"
             autocomplete="current-password"
             style="color: white; background-color: rgb(39, 39, 42); border: 1px solid rgb(63, 63, 70); border-radius: 0.5rem; padding: 0.5rem 1rem; width: 100%;"
           />
@@ -58,7 +58,7 @@
 
         <!-- Loading State -->
         <div v-if="loading" class="text-center text-gray-400 text-sm">
-          Signing in...
+          {{ t('login.signingIn') }}
         </div>
 
         <!-- Submit Button -->
@@ -67,12 +67,12 @@
           :disabled="loading"
           class="w-full bg-red-600 hover:bg-red-700 disabled:bg-gray-600 text-white font-semibold py-2 px-4 rounded-lg transition duration-200"
         >
-          {{ loading ? 'Signing in...' : 'Sign In' }}
+          {{ loading ? t('login.signingIn') : t('login.signIn') }}
         </button>
 
         <div class="flex items-center gap-3 text-xs text-gray-500">
           <div class="h-px flex-1 bg-zinc-700" />
-          <span>or</span>
+          <span>{{ t('login.or') }}</span>
           <div class="h-px flex-1 bg-zinc-700" />
         </div>
 
@@ -82,16 +82,16 @@
           @click="handlePasskeyLogin"
           class="w-full bg-cyan-600 hover:bg-cyan-700 disabled:bg-gray-600 text-white font-semibold py-2 px-4 rounded-lg transition duration-200"
         >
-          {{ passkeyLoading ? 'Waiting for passkey...' : 'Use Passkey' }}
+          {{ passkeyLoading ? t('login.waitingForPasskey') : t('login.usePasskey') }}
         </button>
       </form>
 
       <!-- Register Link -->
       <div class="mt-6 text-center">
         <p class="text-gray-400">
-          Don't have an account?
-          <NuxtLink to="/register" class="text-red-500 hover:text-red-400 font-medium">
-            Sign up
+          {{ t('login.dontHaveAccount') }}
+          <NuxtLink :to="localePath('/register')" class="text-red-500 hover:text-red-400 font-medium">
+            {{ t('login.signUp') }}
           </NuxtLink>
         </p>
       </div>
@@ -102,10 +102,15 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
+import { useLocalePath } from '#i18n'
 import { beginPasskeyLogin, finishPasskeyLogin, login } from '~/app/service/auth'
 import { fetchUserChannels } from '~/app/service/upload'
 import { useMetaTags } from '~/app/composables/useMetaTags'
 import { prepareCredentialRequestOptions, serializeAuthenticationCredential, supportsWebAuthn } from '~/app/service/webauthn'
+
+const { t } = useI18n()
+const localePath = useLocalePath()
 
 definePageMeta({
   layout: false
@@ -135,7 +140,7 @@ const persistLogin = async (response: any, fallbackEmail: string) => {
     console.error('Failed to fetch channels:', err)
   }
 
-  router.push('/')
+  router.push(localePath('/'))
 }
 
 const handleLogin = async () => {

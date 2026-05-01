@@ -2,30 +2,30 @@
   <div class="min-h-screen bg-zinc-950 text-white p-6">
     <div class="max-w-3xl mx-auto space-y-6">
       <div>
-        <h1 class="text-4xl font-bold">Go Live (BETA, MAY HAVE BUGS)</h1>
-        <p class="text-gray-400 mt-2">Manage your stream key and mark your channel as live.</p>
+        <h1 class="text-4xl font-bold">{{ t('goLive.title') }}</h1>
+        <p class="text-gray-400 mt-2">{{ t('goLive.subtitle') }}</p>
       </div>
 
       <div v-if="!isLoggedIn" class="bg-zinc-900 border border-zinc-800 rounded-lg p-5">
-        <p class="text-gray-300">Please sign in first.</p>
-        <NuxtLink to="/login" class="inline-block mt-3 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded transition">
-          Sign in
+        <p class="text-gray-300">{{ t('goLive.loginRequired') }}</p>
+        <NuxtLink :to="localePath('/login')" class="inline-block mt-3 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded transition">
+          {{ t('goLive.signIn') }}
         </NuxtLink>
       </div>
 
       <div v-else class="bg-zinc-900 border border-zinc-800 rounded-lg p-5 space-y-4">
-        <label class="block text-sm text-gray-300">Channel</label>
+        <label class="block text-sm text-gray-300">{{ t('goLive.channel') }}</label>
         <select
           v-model="selectedChannelId"
           class="w-full rounded bg-zinc-800 border border-zinc-700 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500"
         >
-          <option disabled value="">Select channel</option>
+          <option disabled value="">{{ t('goLive.selectChannel') }}</option>
           <option v-for="ch in channels" :key="ch.id" :value="ch.id">{{ ch.name }}</option>
         </select>
 
         <div v-if="selectedChannelId" class="space-y-4">
           <div>
-            <label class="block text-sm text-gray-300 mb-2">Live Title</label>
+            <label class="block text-sm text-gray-300 mb-2">{{ t('goLive.liveTitle') }}</label>
             <input
               v-model="title"
               type="text"
@@ -35,7 +35,7 @@
           </div>
 
           <div>
-            <label class="block text-sm text-gray-300 mb-2">Description</label>
+            <label class="block text-sm text-gray-300 mb-2">{{ t('goLive.description') }}</label>
             <textarea
               v-model="description"
               rows="3"
@@ -46,24 +46,24 @@
 
           <div class="grid md:grid-cols-2 gap-3">
             <div class="bg-zinc-800 rounded p-3 border border-zinc-700">
-              <p class="text-xs text-gray-400 uppercase tracking-wide">Status</p>
+              <p class="text-xs text-gray-400 uppercase tracking-wide">{{ t('goLive.status') }}</p>
               <p class="mt-1 font-semibold" :class="live?.status === 'live' ? 'text-green-400' : 'text-gray-300'">
-                {{ live?.status === 'live' ? 'Live' : 'Offline' }}
+                {{ live?.status === 'live' ? t('goLive.live') : t('goLive.offline') }}
               </p>
             </div>
             <div class="bg-zinc-800 rounded p-3 border border-zinc-700">
-              <p class="text-xs text-gray-400 uppercase tracking-wide">Started</p>
-              <p class="mt-1 text-sm text-gray-200">{{ live?.started_at ? formatDate(live.started_at) : 'Not live' }}</p>
+              <p class="text-xs text-gray-400 uppercase tracking-wide">{{ t('goLive.started') }}</p>
+              <p class="mt-1 text-sm text-gray-200">{{ live?.started_at ? formatDate(live.started_at) : t('goLive.notLive') }}</p>
             </div>
           </div>
 
           <div class="bg-zinc-800 rounded p-3 border border-zinc-700 space-y-3">
             <div>
-              <p class="text-xs text-gray-400 uppercase tracking-wide">Public Ingest URL</p>
+              <p class="text-xs text-gray-400 uppercase tracking-wide">{{ t('goLive.publicIngestUrl') }}</p>
               <p class="text-sm break-all">{{ live?.ingest_url || '-' }}</p>
             </div>
             <div>
-              <p class="text-xs text-gray-400 uppercase tracking-wide">Stream Key</p>
+              <p class="text-xs text-gray-400 uppercase tracking-wide">{{ t('goLive.streamKey') }}</p>
               <div class="flex items-center gap-2 mt-1 flex-wrap">
                 <input
                   :type="showStreamKey ? 'text' : 'password'"
@@ -72,15 +72,15 @@
                   class="flex-1 rounded bg-zinc-900 border border-zinc-700 px-2 py-1 text-sm"
                 />
                 <button @click="showStreamKey = !showStreamKey" class="px-2 py-1 text-xs bg-zinc-700 hover:bg-zinc-600 rounded transition">
-                  {{ showStreamKey ? 'Hide' : 'Show' }}
+                  {{ showStreamKey ? t('goLive.hide') : t('goLive.show') }}
                 </button>
                 <button @click="copyValue(live?.stream_key || '')" class="px-2 py-1 text-xs bg-zinc-700 hover:bg-zinc-600 rounded transition">
-                  Copy
+                  {{ t('goLive.copy') }}
                 </button>
               </div>
             </div>
             <div>
-              <p class="text-xs text-gray-400 uppercase tracking-wide">Playback URL (for external players (VLC))</p>
+              <p class="text-xs text-gray-400 uppercase tracking-wide">{{ t('goLive.playbackUrl') }}</p>
               <div class="flex items-center gap-2 mt-1">
                 <input
                   type="text"
@@ -89,12 +89,12 @@
                   class="flex-1 rounded bg-zinc-900 border border-zinc-700 px-2 py-1 text-sm"
                 />
                 <button @click="copyValue(live?.playback_url || '')" class="px-2 py-1 text-xs bg-zinc-700 hover:bg-zinc-600 rounded transition">
-                  Copy
+                  {{ t('goLive.copy') }}
                 </button>
               </div>
             </div>
             <div v-if="live?.ingest_url_local" class="pt-2 border-t border-zinc-700">
-              <p class="text-xs text-gray-400 uppercase tracking-wide">Local Ingest URL (FORADMIN)</p>
+              <p class="text-xs text-gray-400 uppercase tracking-wide">{{ t('goLive.localIngestUrl') }}</p>
               <div class="flex items-center gap-2 mt-1">
                 <input
                   type="text"
@@ -103,12 +103,12 @@
                   class="flex-1 rounded bg-zinc-900 border border-zinc-700 px-2 py-1 text-sm"
                 />
                 <button @click="copyValue(live?.ingest_url_local || '')" class="px-2 py-1 text-xs bg-zinc-700 hover:bg-zinc-600 rounded transition">
-                  Copy
+                  {{ t('goLive.copy') }}
                 </button>
               </div>
             </div>
             <div v-if="live?.ingest_url_lan" class="pt-2 border-t border-zinc-700">
-              <p class="text-xs text-gray-400 uppercase tracking-wide">LAN Ingest URL</p>
+              <p class="text-xs text-gray-400 uppercase tracking-wide">{{ t('goLive.lanIngestUrl') }}</p>
               <div class="flex items-center gap-2 mt-1">
                 <input
                   type="text"
@@ -117,7 +117,7 @@
                   class="flex-1 rounded bg-zinc-900 border border-zinc-700 px-2 py-1 text-sm"
                 />
                 <button @click="copyValue(live?.ingest_url_lan || '')" class="px-2 py-1 text-xs bg-zinc-700 hover:bg-zinc-600 rounded transition">
-                  Copy
+                  {{ t('goLive.copy') }}
                 </button>
               </div>
             </div>
@@ -126,8 +126,8 @@
           <div class="bg-zinc-800 rounded p-3 border border-zinc-700 space-y-3">
             <div class="flex items-center justify-between gap-4">
               <div>
-                <p class="text-xs text-gray-400 uppercase tracking-wide">Real Publisher Presence</p>
-                <p class="text-sm text-gray-300">When enabled, live status comes from MediaMTX ingest presence.</p>
+                <p class="text-xs text-gray-400 uppercase tracking-wide">{{ t('goLive.publisherPresence') }}</p>
+                <p class="text-sm text-gray-300">{{ t('goLive.publisherPresenceHelper') }}</p>
               </div>
               <label class="inline-flex items-center gap-2">
                 <input
@@ -137,11 +137,11 @@
                   @change="updatePublisherPresence"
                   class="h-4 w-4 accent-red-600"
                 />
-                <span class="text-sm">Enabled</span>
+                <span class="text-sm">{{ t('goLive.enabled') }}</span>
               </label>
             </div>
             <p class="text-xs" :class="live?.publisher_detected_live ? 'text-green-400' : 'text-gray-400'">
-              Detected by publisher presence: {{ live?.publisher_detected_live ? 'Live' : 'Offline' }}
+              {{ t('goLive.detectedByPublisherPresence') }} {{ live?.publisher_detected_live ? t('goLive.live') : t('goLive.offline') }}
             </p>
           </div>
 
@@ -151,42 +151,42 @@
               :disabled="savingSettings || !selectedChannelId"
               class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded transition disabled:opacity-50"
             >
-              {{ savingSettings ? 'Saving...' : 'Save Settings' }}
+              {{ savingSettings ? t('goLive.saving') : t('goLive.saveSettings') }}
             </button>
             <button
               @click="startStream"
               :disabled="saving || !selectedChannelId"
               class="px-4 py-2 bg-green-600 hover:bg-green-700 rounded transition disabled:opacity-50"
             >
-              {{ saving && pendingAction === 'start' ? 'Starting...' : 'Go Live' }}
+              {{ saving && pendingAction === 'start' ? t('goLive.starting') : t('goLive.goLive') }}
             </button>
             <button
               @click="stopStream"
               :disabled="saving || !selectedChannelId"
               class="px-4 py-2 bg-zinc-700 hover:bg-zinc-600 rounded transition disabled:opacity-50"
             >
-              {{ saving && pendingAction === 'stop' ? 'Stopping...' : 'End Stream' }}
+              {{ saving && pendingAction === 'stop' ? t('goLive.stopping') : t('goLive.endStream') }}
             </button>
             <button
               @click="rotateKey"
               :disabled="saving || !selectedChannelId"
               class="px-4 py-2 bg-red-600 hover:bg-red-700 rounded transition disabled:opacity-50"
             >
-              {{ saving && pendingAction === 'rotate' ? 'Rotating...' : 'Rotate Stream Key' }}
+              {{ saving && pendingAction === 'rotate' ? t('goLive.rotating') : t('goLive.rotateStreamKey') }}
             </button>
             <NuxtLink
               v-if="selectedChannelId"
-              :to="`/live/${selectedChannelId}`"
+              :to="localePath(`/live/${selectedChannelId}`)"
               class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded transition"
             >
-              Open Live Watch Page
+              {{ t('goLive.openWatchPage') }}
             </NuxtLink>
             <button
               v-if="selectedChannelId"
               @click="openChatPopup"
               class="px-4 py-2 bg-zinc-700 hover:bg-zinc-600 rounded transition"
             >
-              Pop Out Live Chat
+              {{ t('goLive.popOutChat') }}
             </button>
             <NuxtLink
               v-if="selectedChannelId"
@@ -195,7 +195,7 @@
               rel="noopener"
               class="px-4 py-2 bg-zinc-700 hover:bg-zinc-600 rounded transition"
             >
-              Open Live Chat Tab
+              {{ t('goLive.openChatTab') }}
             </NuxtLink>
           </div>
         </div>
@@ -208,6 +208,8 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
+import { useLocalePath } from '#i18n'
 import {
   getMyLiveStream,
   rotateMyLiveStreamKey,
@@ -218,6 +220,9 @@ import {
   type LiveStreamState
 } from '~/app/service/live'
 import { useMetaTags } from '~/app/composables/useMetaTags'
+
+const { t } = useI18n()
+const localePath = useLocalePath()
 
 useMetaTags({
   title: 'Go Live - GilTube',
@@ -279,12 +284,12 @@ const loadLiveState = async () => {
 
   try {
     live.value = await getMyLiveStream(selectedChannelId.value)
-    title.value = live.value.title || 'Live Stream'
+    title.value = live.value.title || t('goLive.defaultTitle')
     description.value = live.value.description || ''
     publisherPresenceEnabled.value = !!live.value.use_publisher_presence
   } catch (err: any) {
     error.value = true
-    message.value = err?.response?.data?.error || 'Failed to load live stream settings'
+    message.value = err?.response?.data?.error || t('goLive.loadError')
   }
 }
 
@@ -298,7 +303,7 @@ const withAction = async (action: 'start' | 'stop' | 'rotate', fn: () => Promise
     await loadLiveState()
   } catch (err: any) {
     error.value = true
-    message.value = err?.response?.data?.error || 'Request failed'
+    message.value = err?.response?.data?.error || t('goLive.requestFailed')
   } finally {
     saving.value = false
     pendingAction.value = ''
@@ -308,21 +313,21 @@ const withAction = async (action: 'start' | 'stop' | 'rotate', fn: () => Promise
 const startStream = async () => {
   await withAction('start', async () => {
     await startMyLiveStream(selectedChannelId.value, title.value, description.value)
-    message.value = 'Stream is marked live.'
+    message.value = t('goLive.streamMarkedLive')
   })
 }
 
 const stopStream = async () => {
   await withAction('stop', async () => {
     await stopMyLiveStream(selectedChannelId.value)
-    message.value = 'Stream is marked offline.'
+    message.value = t('goLive.streamMarkedOffline')
   })
 }
 
 const rotateKey = async () => {
   await withAction('rotate', async () => {
     await rotateMyLiveStreamKey(selectedChannelId.value)
-    message.value = 'Stream key rotated successfully.'
+    message.value = t('goLive.streamKeyRotated')
   })
 }
 
@@ -334,10 +339,10 @@ const saveSettings = async () => {
   try {
     await saveMyLiveStreamSettings(selectedChannelId.value, title.value, description.value)
     await loadLiveState()
-    message.value = 'Live stream settings saved.'
+    message.value = t('goLive.settingsSaved')
   } catch (err: any) {
     error.value = true
-    message.value = err?.response?.data?.error || 'Failed to save live settings'
+    message.value = err?.response?.data?.error || t('goLive.saveError')
   } finally {
     savingSettings.value = false
   }
@@ -351,11 +356,11 @@ const updatePublisherPresence = async () => {
     await loadLiveState()
     error.value = false
     message.value = publisherPresenceEnabled.value
-      ? 'Publisher presence enabled. Live status now follows real ingest presence.'
-      : 'Publisher presence disabled. Manual live status controls are active.'
+      ? t('goLive.publisherPresenceEnabled')
+      : t('goLive.publisherPresenceDisabled')
   } catch (err: any) {
     error.value = true
-    message.value = err?.response?.data?.error || 'Failed to update publisher presence setting'
+    message.value = err?.response?.data?.error || t('goLive.publisherPresenceError')
   } finally {
     savingPublisherPresence.value = false
   }
@@ -366,10 +371,10 @@ const copyValue = async (value: string) => {
   try {
     await navigator.clipboard.writeText(value)
     error.value = false
-    message.value = 'Copied to clipboard.'
+    message.value = t('goLive.copied')
   } catch {
     error.value = true
-    message.value = 'Failed to copy to clipboard.'
+    message.value = t('goLive.copyError')
   }
 }
 

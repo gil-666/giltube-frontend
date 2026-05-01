@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <!-- Main Content -->
   <main class="flex-1">
     <!-- Main Video Grid -->
@@ -15,7 +15,7 @@
           :key="video.id"
           class=""
         >
-          <NuxtLink :to="`/video/${video.id}`">
+          <NuxtLink :to="localePath(`/video/${video.id}`)">
             <div class="bg-zinc-800 rounded-xl overflow-hidden aspect-video">
               <img class="w-full h-full object-cover" :src="baseUrl + video.thumbnail_url" :alt="video.title" />
             </div>
@@ -33,19 +33,20 @@
               </span>
             </div>
             <div>
-              <NuxtLink :to="`/video/${video.id}`">
+              <NuxtLink :to="localePath(`/video/${video.id}`)">
                 <div class="flex items-center gap-1">
                   <h3 class="text-sm font-semibold line-clamp-2">
                     {{ video.title }}
                   </h3>
-                  <span v-if="video.width >= 3840" class="p-0.5 bg-gray-900 text-gray-200 text-xs font-semibold flex-shrink-0 whitespace-nowrap border border-gray-500">4K</span>
+                  <span v-if="video.width == 7680" class="p-0.5 bg-gray-900 text-gray-200 text-xs font-semibold flex-shrink-0 whitespace-nowrap border border-gray-500">8K</span>
+                  <span v-if="video.width == 3840" class="p-0.5 bg-gray-900 text-gray-200 text-xs font-semibold flex-shrink-0 whitespace-nowrap border border-gray-500">4K</span>
                 </div>
               </NuxtLink>
-              <NuxtLink :to="`/channel/${video.channel.id}`" class="text-xs text-zinc-400 hover:text-yellow-400 transition flex items-center gap-1">
+              <NuxtLink :to="localePath(`/channel/${video.channel.id}`)" class="text-xs text-zinc-400 hover:text-yellow-400 transition flex items-center gap-1">
                 {{ video.channel.name }}
                 <VerifiedBadge :verified="video.channel?.verified || false" size="sm" />
               </NuxtLink>
-              <p class="text-xs text-zinc-400">{{ formatViews(video.views) }} views • {{ getTimeAgo(video.created_at) }}</p>
+              <p class="text-xs text-zinc-400">{{ t('channelPage.videoStats', { views: formatViews(video.views), time: getTimeAgo(video.created_at) }) }}</p>
             </div>
           </div>
         </div>
@@ -62,7 +63,7 @@
 
       <!-- End of content message -->
       <div v-if="!hasMore && videos.length > 0" class="text-center mt-8 text-zinc-400">
-        <p>No more videos to load</p>
+        <p>{{ t('categoryPage.noMoreVideos') }}</p>
       </div>
     </div>
   </main>
@@ -74,9 +75,13 @@ import { getTimeAgo } from '~/app/utils/time'
 import { formatViews } from '~/app/utils/format'
 import { useMetaTags } from '~/app/composables/useMetaTags'
 import VerifiedBadge from '~/app/components/VerifiedBadge.vue'
+import { useI18n } from 'vue-i18n'
+import { useLocalePath } from '#i18n'
 
 const route = useRoute()
 const baseUrl = import.meta.env.VITE_API_BASE_URL
+const { t } = useI18n()
+const localePath = useLocalePath()
 
 const videos = ref([])
 const categoryName = ref('')
@@ -92,8 +97,8 @@ let intersectionObserver = null
 
 const updateMetaTags = () => {
   useMetaTags({
-    title: `${categoryName.value} Videos - GilTube`,
-    description: categoryDescription.value || `Browse ${categoryName.value} videos on GilTube`
+    title: `${categoryName.value} ${t('categoryPage.metaTitleSuffix')}`,
+    description: categoryDescription.value || t('categoryPage.metaDescription', { name: categoryName.value })
   })
 }
 
@@ -204,3 +209,4 @@ onUnmounted(() => {
   }
 })
 </script>
+

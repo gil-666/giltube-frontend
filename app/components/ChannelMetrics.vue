@@ -2,14 +2,14 @@
   <div class="max-w-7xl mx-auto">
     <div v-if="!isLoading && analytics" class="bg-zinc-900 rounded-lg p-6 mb-8 border border-zinc-800">
       <!-- Header -->
-      <h2 class="text-2xl font-bold mb-6">Channel Metrics</h2>
+      <h2 class="text-2xl font-bold mb-6">{{ t('channelMetrics.title') }}</h2>
 
       <!-- Stats Grid -->
       <div class="grid grid-cols-2 gap-4 mb-6">
         <div class="bg-zinc-800 rounded-lg p-6">
           <div class="flex items-end justify-between">
             <div>
-              <p class="text-gray-400 text-sm mb-2">Total Views</p>
+              <p class="text-gray-400 text-sm mb-2">{{ t('channelMetrics.totalViews') }}</p>
               <p class="text-4xl font-bold">{{ formatNumber(analytics.total_views) }}</p>
             </div>
             <svg class="w-12 h-12 text-blue-500/30" fill="currentColor" viewBox="0 0 20 20">
@@ -22,7 +22,7 @@
         <div class="bg-zinc-800 rounded-lg p-6">
           <div class="flex items-end justify-between">
             <div>
-              <p class="text-gray-400 text-sm mb-2">Total Likes</p>
+              <p class="text-gray-400 text-sm mb-2">{{ t('channelMetrics.totalLikes') }}</p>
               <p class="text-4xl font-bold">{{ formatNumber(analytics.total_likes) }}</p>
             </div>
             <svg class="w-12 h-12 text-red-500/30" fill="currentColor" viewBox="0 0 20 20">
@@ -44,7 +44,7 @@
     <div v-else-if="isLoading" class="bg-zinc-900 rounded-lg p-6 mb-8 border border-zinc-800 text-center">
       <div class="inline-block">
         <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mb-2"></div>
-        <p class="text-gray-400 text-sm">Loading metrics...</p>
+        <p class="text-gray-400 text-sm">{{ t('channelMetrics.loading') }}</p>
       </div>
     </div>
 
@@ -59,6 +59,9 @@
 import { ref, onMounted, nextTick, watch } from 'vue'
 import { getChannelAnalytics } from '~/app/service/videos'
 import Chart from 'chart.js/auto'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 const props = defineProps<{
   channelId: string
@@ -80,10 +83,10 @@ const generateChartData = () => {
   if (!analytics.value) return null
 
   return {
-    labels: ['Views', 'Likes'],
+    labels: [t('channelMetrics.views'), t('channelMetrics.likes')],
     datasets: [
       {
-        label: 'Engagement',
+        label: t('channelMetrics.engagement'),
         data: [analytics.value.total_views, analytics.value.total_likes],
         backgroundColor: ['rgba(59, 130, 246, 0.8)', 'rgba(239, 68, 68, 0.8)'],
         borderColor: ['#3b82f6', '#ef4444'],
@@ -173,7 +176,7 @@ const loadAnalytics = async () => {
     isLoading.value = false
   } catch (err) {
     console.error('[Analytics] Error loading analytics:', err)
-    error.value = 'Failed to load analytics'
+    error.value = t('channelMetrics.loadError')
     isLoading.value = false
   }
 }

@@ -1,11 +1,17 @@
 import api, { apiBaseURL } from './client'
 
-export const getVideos = async (channelId?: string) => {
-  const params: any = {}
-  if (channelId) {
-    params.channelId = channelId
+export const getVideos = async (options: { channelId?: string; limit?: number; offset?: number } = {}) => {
+  const params: Record<string, string | number> = {}
+  if (options.channelId) {
+    params.channelId = options.channelId
   }
-  
+  if (typeof options.limit === 'number') {
+    params.limit = options.limit
+  }
+  if (typeof options.offset === 'number') {
+    params.offset = options.offset
+  }
+
   const res = await api.get('/videos', { params })
   return res.data
 }

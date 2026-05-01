@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="min-h-screen bg-zinc-950 text-white">
     <!-- Channel Header -->
     <div v-if="channel" class="bg-zinc-900 border-b border-zinc-800">
@@ -24,23 +24,23 @@
             <div class="flex items-center gap-2">
               <h1 class="text-2xl sm:text-4xl font-bold break-words">{{ channel.name }}</h1>
               <VerifiedBadge :verified="channel.verified" size="lg"
-                tooltip="This account is verified by Giltube. It belongs to the channel owner and is not a fan account or impersonator." />
+                tooltip="This account is verified by GilTube. It belongs to the channel owner and is not a fan account or impersonator." />
               <span
                 v-if="liveStatus?.is_live"
                 class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-red-900 text-red-200 border border-red-700"
               >
                 <span class="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse" />
-                LIVE
+                {{ t('live.live') }}
               </span>
             </div>
-            <p class="text-gray-400 mt-2 text-sm sm:text-base break-words">{{ channel.description || 'No description provided' }}</p>
+            <p class="text-gray-400 mt-2 text-sm sm:text-base break-words">{{ channel.description || t('channelPage.noDescription') }}</p>
 
             <NuxtLink
               v-if="liveStatus?.is_live"
-              :to="`/live/${channelId}`"
+              :to="localePath(`/live/${channelId}`)"
               class="inline-flex mt-3 px-3 py-1.5 rounded bg-red-600 hover:bg-red-700 transition text-sm font-semibold"
             >
-              Watch Live
+              {{ t('channelPage.watchLive') }}
             </NuxtLink>
 
             <!-- Channel Metrics -->
@@ -50,13 +50,13 @@
 
             <!-- More Details Section -->
             <div class="mt-4 sm:mt-6 bg-zinc-800 rounded-lg p-3 sm:p-4 space-y-2">
-              <h3 class="text-base sm:text-lg font-semibold text-gray-300 mb-3 sm:mb-4">Channel Details</h3>
+              <h3 class="text-base sm:text-lg font-semibold text-gray-300 mb-3 sm:mb-4">{{ t('channelPage.details') }}</h3>
               <div class="flex flex-col sm:flex-row sm:justify-between border-b border-zinc-700 pb-2">
-                <span class="text-gray-400 text-sm sm:text-base">Owner:</span>
+                <span class="text-gray-400 text-sm sm:text-base">{{ t('channelPage.owner') }}</span>
                 <span class="text-white font-medium text-sm sm:text-base break-words">{{ ownerUsername }}</span>
               </div>
               <div class="flex flex-col sm:flex-row sm:justify-between pt-2">
-                <span class="text-gray-400 text-sm sm:text-base">Created:</span>
+                <span class="text-gray-400 text-sm sm:text-base">{{ t('channelPage.created') }}</span>
                 <span class="text-white font-medium text-sm sm:text-base">{{ formatDate(channel.created_at) }}</span>
               </div>
             </div>
@@ -78,33 +78,35 @@
 
     <!-- Videos Section -->
     <div v-if="!isLoading && channel" class="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
-      <h2 class="text-xl sm:text-2xl font-bold mb-4 sm:mb-6">Videos</h2>
+      <h2 class="text-xl sm:text-2xl font-bold mb-4 sm:mb-6">{{ t('channelPage.videos') }}</h2>
 
       <div v-if="videos.length === 0" class="text-gray-400 text-center py-8">
-        No videos yet
+        {{ t('channelPage.noVideos') }}
       </div>
 
       <div v-else class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
-        <NuxtLink v-for="video in videos" :key="video.id" :to="`/video/${video.id}`"
+        <NuxtLink v-for="video in videos" :key="video.id" :to="localePath(`/video/${video.id}`)"
           class="group cursor-pointer min-w-0">
           <div class="relative bg-zinc-800 rounded-lg overflow-hidden mb-1 sm:mb-2 aspect-video">
             <img v-if="video.thumbnail_url" :src="video.thumbnail_url" :alt="video.title"
               class="w-full h-full object-cover group-hover:opacity-80 transition-opacity" />
             <div v-else class="w-full h-full bg-zinc-700 flex items-center justify-center">
-              <span class="text-zinc-500 text-xs">No thumbnail</span>
+              <span class="text-zinc-500 text-xs">{{ t('channelPage.noThumbnail') }}</span>
             </div>
           </div>
           <h3
             class="text-zinc-400 font-semibold text-xs sm:text-sm line-clamp-2 group-hover:text-yellow-400 transition-colors break-words">
             {{ video.title }}
           </h3>
-          <span v-if="video.width >= 3840"
+          <span v-if="video.width == 7680"
+            class="p-0.5 bg-gray-900 text-gray-200 text-xs font-semibold flex-shrink-0 whitespace-nowrap border border-gray-500">8K</span>
+          <span v-if="video.width == 3840"
             class="p-0.5 bg-gray-900 text-gray-200 text-xs font-semibold flex-shrink-0 whitespace-nowrap border border-gray-500">4K</span>
           <div class="flex items-center gap-2 mt-1 text-">
             <p class="text-xs text-zinc-400 line-clamp-1">{{ video.channel.name }}</p>
             <VerifiedBadge v-if="video.channel?.verified" :verified="true" size="sm" />
           </div>
-          <p class="text-xs text-zinc-400 line-clamp-1">{{ formatViews(video.views) }} views • {{ getTimeAgo(video.created_at) }}</p>
+          <p class="text-xs text-zinc-400 line-clamp-1">{{ t('channelPage.videoStats', { views: formatViews(video.views), time: getTimeAgo(video.created_at) }) }}</p>
         </NuxtLink>
       </div>
     </div>
@@ -120,7 +122,11 @@ import { formatViews } from '~/app/utils/format'
 import { useMetaTags } from '~/app/composables/useMetaTags'
 import ChannelMetricsCompact from '~/app/components/ChannelMetricsCompact.vue'
 import VerifiedBadge from '~/app/components/VerifiedBadge.vue'
+import { useI18n } from 'vue-i18n'
+import { useLocalePath } from '#i18n'
 const baseUrl = import.meta.env.VITE_API_BASE_URL
+const { t } = useI18n()
+const localePath = useLocalePath()
 const route = useRoute()
 const channelId = route.params.id as string
 
@@ -153,7 +159,7 @@ onMounted(async () => {
     })
 
   } catch (err) {
-    error.value = typeof err === 'string' ? err : 'Failed to load channel'
+    error.value = typeof err === 'string' ? err : t('channelPage.loadError')
     console.error('Channel load error:', err)
   } finally {
     isLoading.value = false
@@ -167,7 +173,7 @@ watch(channel, (newChannel) => {
     const siteUrl = import.meta.env.VITE_API_BASE_URL?.replace(/\/api$/, '') || 'http://localhost:3000'
     useMetaTags({
       title: `${newChannel.name} - GilTube`,
-      description: newChannel.description || `Watch videos from ${newChannel.name} on GilTube`,
+      description: newChannel.description || t('channelPage.metaDescription', { name: newChannel.name }),
       image: newChannel.avatar_url ? `${baseUrl}${newChannel.avatar_url}` : undefined,
       url: `${siteUrl}/channel/${channelId}`
     })
@@ -175,7 +181,7 @@ watch(channel, (newChannel) => {
 })
 
 const formatDate = (date) => {
-  if (!date) return 'Unknown'
+  if (!date) return '-'
   return new Date(date).toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'short',
@@ -185,3 +191,4 @@ const formatDate = (date) => {
 </script>
 
 <style scoped></style>
+

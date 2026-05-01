@@ -2,10 +2,10 @@
     <div class="min-h-screen bg-black text-white p-6">
         <!-- Search Header -->
         <div class="mb-8">
-            <h1 class="text-3xl font-bold mb-4">Search Results</h1>
+            <h1 class="text-3xl font-bold mb-4">{{ t('searchPage.title') }}</h1>
             <div class="flex items-center gap-2 text-gray-400">
-                <span>Showing results for: <span class="text-white font-semibold">{{ searchQuery }}</span></span>
-                <span v-if="totalResults > 0">({{ totalResults }} results)</span>
+                <span>{{ t('searchPage.showingResultsFor') }} <span class="text-white font-semibold">{{ searchQuery }}</span></span>
+                <span v-if="totalResults > 0">({{ t('searchPage.resultsCount', { count: totalResults }) }})</span>
             </div>
         </div>
 
@@ -16,7 +16,7 @@
 
         <!-- Error State -->
         <div v-else-if="error" class="bg-red-900 border border-red-700 text-red-200 px-4 py-3 rounded-lg">
-            <p class="font-semibold">Error loading results</p>
+            <p class="font-semibold">{{ t('searchPage.loadErrorTitle') }}</p>
             <p class="text-sm mt-1">{{ error }}</p>
         </div>
 
@@ -28,17 +28,17 @@
                         d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
             </div>
-            <p class="text-lg">No results found for "<span class="font-semibold">{{ searchQuery }}</span>"</p>
-            <p class="text-sm text-gray-500 mt-2">Try a different search term</p>
+            <p class="text-lg">{{ t('searchPage.noResults', { query: searchQuery }) }}</p>
+            <p class="text-sm text-gray-500 mt-2">{{ t('searchPage.tryDifferent') }}</p>
         </div>
 
         <!-- Results Grid/List -->
         <div v-else>
             <!-- Videos Section -->
             <div v-if="videos.length > 0" class="mb-12">
-                <h2 class="text-2xl font-bold mb-6">Videos</h2>
+                <h2 class="text-2xl font-bold mb-6">{{ t('searchPage.videos') }}</h2>
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    <NuxtLink v-for="video in videos" :key="`video-${video.id}`" :to="`/video/${video.id}`"
+                    <NuxtLink v-for="video in videos" :key="`video-${video.id}`" :to="localePath(`/video/${video.id}`)"
                         class="group cursor-pointer">
                         <div class="bg-zinc-800 rounded-lg overflow-hidden h-40 mb-3 relative">
                             <img class="w-full h-full object-cover group-hover:opacity-75 transition"
@@ -46,12 +46,12 @@
                         </div>
                         <p class="font-semibold line-clamp-2 group-hover:text-red-500 transition">{{ video.title }}</p>
                         <div class="flex items-center text-zinc-400 gap-1 mt-1">
-                            <NuxtLink :to="`/channel/${video.channel_id}`" class="text-sm text-gray-400 hover:text-yellow-400 transition">{{ video.channel }}</NuxtLink>
+                            <NuxtLink :to="localePath(`/channel/${video.channel_id}`)" class="text-sm text-gray-400 hover:text-yellow-400 transition">{{ video.channel }}</NuxtLink>
                             <VerifiedBadge v-if="video.verified" :verified="true" size="sm" />
                         </div>
 
                         <div class="flex items-center gap-2 text-xs text-gray-500 mt-1">
-                            <span>{{ formatViews(video.views) }} views</span>
+                            <span>{{ t('searchPage.views', { count: formatViews(video.views) }) }}</span>
                         </div>
                     </NuxtLink>
                 </div>
@@ -59,9 +59,9 @@
 
             <!-- Channels Section -->
             <div v-if="channels.length > 0">
-                <h2 class="text-2xl font-bold mb-6">Channels</h2>
+                <h2 class="text-2xl font-bold mb-6">{{ t('searchPage.channels') }}</h2>
                 <div class="space-y-4">
-                    <NuxtLink v-for="channel in channels" :key="`channel-${channel.id}`" :to="`/channel/${channel.id}`"
+                    <NuxtLink v-for="channel in channels" :key="`channel-${channel.id}`" :to="localePath(`/channel/${channel.id}`)"
                         class="flex items-center gap-4 p-4 bg-zinc-900 rounded-lg hover:bg-zinc-800 transition group">
                         <!-- Channel Avatar -->
                         <div
@@ -89,7 +89,7 @@
         <div v-if="results.length > 0 && totalPages > 1" class="flex justify-center items-center gap-2 mt-12">
             <button @click="previousPage" :disabled="currentPage === 1"
                 class="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 rounded disabled:opacity-50 disabled:cursor-not-allowed transition">
-                Previous
+                {{ t('searchPage.previous') }}
             </button>
 
             <div class="flex gap-1">
@@ -101,7 +101,7 @@
 
             <button @click="nextPage" :disabled="currentPage === totalPages"
                 class="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 rounded disabled:opacity-50 disabled:cursor-not-allowed transition">
-                Next
+                {{ t('searchPage.next') }}
             </button>
         </div>
     </div>
@@ -111,6 +111,8 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import VerifiedBadge from '~/app/components/VerifiedBadge.vue'
+import { useI18n } from 'vue-i18n'
+import { useLocalePath } from '#i18n'
 
 interface SearchResult {
     type: 'video' | 'channel'
@@ -128,7 +130,8 @@ interface SearchResult {
 
 const route = useRoute()
 const router = useRouter()
-const baseUrl = '/api/'
+const { t } = useI18n()
+const localePath = useLocalePath()
 
 const searchQuery = ref('')
 const results = ref<SearchResult[]>([])
@@ -184,14 +187,14 @@ const performSearch = async () => {
         )
 
         if (!response.ok) {
-            throw new Error('Search failed')
+            throw new Error(t('searchPage.searchFailed'))
         }
 
         const data = await response.json()
         results.value = data.results || []
         totalResults.value = data.total || 0
     } catch (err) {
-        error.value = err instanceof Error ? err.message : 'An error occurred'
+        error.value = err instanceof Error ? err.message : t('searchPage.genericError')
         results.value = []
     } finally {
         isLoading.value = false

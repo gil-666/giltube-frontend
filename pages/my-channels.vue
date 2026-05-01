@@ -1,11 +1,11 @@
 <template>
   <div class="p-6 max-w-4xl mx-auto">
-    <h1 class="text-4xl font-bold mb-8">Manage Your Channels</h1>
+    <h1 class="text-4xl font-bold mb-8">{{ t('channels.title') }}</h1>
 
     <!-- Loading State -->
     <div v-if="isLoading" class="text-center">
       <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-      <p>Loading your channels...</p>
+      <p>{{ t('channels.loading') }}</p>
     </div>
 
     <!-- Error Message -->
@@ -15,12 +15,12 @@
 
     <!-- No Channels -->
     <div v-if="!isLoading && channels.length === 0" class="bg-zinc-800 p-6 rounded text-center">
-      <p class="text-gray-300 mb-4">You don't have any channels yet.</p>
+      <p class="text-gray-300 mb-4">{{ t('channels.noChannels') }}</p>
       <NuxtLink
-        to="/create-channel"
+        :to="localePath('/create-channel')"
         class="px-4 py-2 bg-green-600 hover:bg-green-700 rounded transition"
       >
-        Create Your First Channel
+        {{ t('channels.createFirst') }}
       </NuxtLink>
     </div>
 
@@ -54,8 +54,8 @@
           <!-- Channel Details -->
           <div class="flex-1">
             <h2 class="text-2xl font-bold text-white">{{ channel.name }}</h2>
-            <p class="text-gray-400 mt-2">{{ channel.description || 'No description' }}</p>
-            <p class="text-xs text-gray-500 mt-2">Created: {{ formatDate(channel.created_at) }}</p>
+            <p class="text-gray-400 mt-2">{{ channel.description || t('channels.noDescription') }}</p>
+            <p class="text-xs text-gray-500 mt-2">{{ t('channels.created', { date: formatDate(channel.created_at) }) }}</p>
           </div>
         </div>
 
@@ -65,19 +65,19 @@
             :to="`/channel/${channel.id}`"
             class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded transition"
           >
-            View Page
+            {{ t('channels.viewPage') }}
           </NuxtLink>
           <button
             @click="initEditChannel(channel)"
             class="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 rounded transition"
           >
-            Edit
+            {{ t('channels.edit') }}
           </button>
           <button
             @click="deleteChannelConfirm(channel.id, channel.name)"
             class="px-4 py-2 bg-red-600 hover:bg-red-700 rounded transition"
           >
-            Delete
+            {{ t('channels.delete') }}
           </button>
         </div>
       </div>
@@ -90,12 +90,12 @@
       @click.self="editingId = null"
     >
       <div class="bg-zinc-900 rounded p-8 max-w-md w-full mx-4">
-        <h3 class="text-2xl font-bold mb-6">Edit Channel</h3>
+        <h3 class="text-2xl font-bold mb-6">{{ t('channels.editModal') }}</h3>
 
         <form @submit.prevent="saveEdit" class="space-y-4">
           <!-- Channel Name -->
           <div>
-            <label class="block text-sm font-medium mb-2">Channel Name *</label>
+            <label class="block text-sm font-medium mb-2">{{ t('channels.channelName') }}</label>
             <input
               v-model="editForm.name"
               type="text"
@@ -106,7 +106,7 @@
 
           <!-- Description -->
           <div>
-            <label class="block text-sm font-medium mb-2">Description</label>
+            <label class="block text-sm font-medium mb-2">{{ t('channels.description') }}</label>
             <textarea
               v-model="editForm.description"
               rows="4"
@@ -116,14 +116,14 @@
 
           <!-- Avatar URL -->
           <div>
-            <label class="block text-sm font-medium mb-2">Avatar File (optional)</label>
+            <label class="block text-sm font-medium mb-2">{{ t('channels.avatar') }}</label>
             <input
               type="file"
               accept="image/*"
               @change="onEditAvatarSelected"
               class="w-full bg-zinc-800 border border-zinc-700 rounded px-4 py-2 text-white"
             />
-            <p class="text-xs text-gray-400 mt-1">Upload a new avatar image or leave blank to keep current</p>
+            <p class="text-xs text-gray-400 mt-1">{{ t('channels.avatarHelper') }}</p>
             <!-- Avatar Preview -->
             <div v-if="editAvatarPreview" class="mt-3 flex items-center gap-3">
               <img :src="editAvatarPreview" alt="Avatar preview" class="w-12 h-12 rounded-full object-cover border border-zinc-700" />
@@ -132,7 +132,7 @@
                 @click="editAvatarPreview = ''; editForm.avatar = null"
                 class="text-sm text-red-400 hover:text-red-300"
               >
-                Remove
+                {{ t('channels.remove') }}
               </button>
             </div>
           </div>
@@ -149,14 +149,14 @@
               :disabled="isSaving"
               class="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded transition disabled:opacity-50"
             >
-              {{ isSaving ? 'Saving...' : 'Save' }}
+              {{ isSaving ? t('channels.saving') : t('channels.save') }}
             </button>
             <button
               type="button"
               @click="editingId = null"
               class="flex-1 px-4 py-2 bg-zinc-700 hover:bg-zinc-600 rounded transition"
             >
-              Cancel
+              {{ t('channels.cancel') }}
             </button>
           </div>
         </form>
@@ -170,9 +170,9 @@
       @click.self="deleteConfirmId = null"
     >
       <div class="bg-zinc-900 rounded p-8 max-w-md w-full mx-4">
-        <h3 class="text-2xl font-bold mb-4">Delete Channel?</h3>
+        <h3 class="text-2xl font-bold mb-4">{{ t('channels.deleteModal') }}</h3>
         <p class="text-gray-300 mb-6">
-          Are you sure you want to delete <strong>{{ deleteConfirmName }}</strong>? This action cannot be undone.
+          {{ t('channels.deleteConfirm', { name: deleteConfirmName }) }}
         </p>
 
         <div class="flex gap-3">
@@ -181,13 +181,13 @@
             :disabled="isDeleting"
             class="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 rounded transition disabled:opacity-50"
           >
-            {{ isDeleting ? 'Deleting...' : 'Delete' }}
+            {{ isDeleting ? t('channels.deleting') : t('channels.delete') }}
           </button>
           <button
             @click="deleteConfirmId = null"
             class="flex-1 px-4 py-2 bg-zinc-700 hover:bg-zinc-600 rounded transition"
           >
-            Cancel
+            {{ t('channels.cancel') }}
           </button>
         </div>
       </div>
@@ -198,7 +198,11 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { fetchUserChannels, updateChannel, deleteChannel } from '~/app/service/upload'
+import { useI18n } from 'vue-i18n'
+import { useLocalePath } from '#i18n'
 
+const { t } = useI18n()
+const localePath = useLocalePath()
 const router = useRouter()
 const isLoading = ref(false)
 const channels = ref([])
@@ -225,7 +229,7 @@ onMounted(async () => {
 const loadChannels = async () => {
   const storedUserId = localStorage.getItem('user_id')
   if (!storedUserId) {
-    await router.push('/login')
+    await router.push(localePath('/login'))
     return
   }
 
@@ -237,7 +241,7 @@ const loadChannels = async () => {
   try {
     channels.value = await fetchUserChannels(userId.value)
   } catch (err) {
-    error.value = typeof err === 'string' ? err : 'Failed to load channels'
+    error.value = typeof err === 'string' ? err : t('channels.loadError')
     console.error('Channel loading error:', err)
   } finally {
     isLoading.value = false
@@ -277,7 +281,7 @@ const onEditAvatarSelected = (event: any) => {
 
 const saveEdit = async () => {
   if (!editForm.value.name.trim()) {
-    editError.value = 'Channel name is required'
+    editError.value = t('channels.nameRequired')
     return
   }
 
@@ -311,7 +315,7 @@ const saveEdit = async () => {
 
     editingId.value = null
   } catch (err) {
-    editError.value = typeof err === 'string' ? err : 'Failed to update channel'
+    editError.value = typeof err === 'string' ? err : t('channels.updateError')
     console.error('Channel update error:', err)
   } finally {
     isSaving.value = false
@@ -343,7 +347,7 @@ const confirmDelete = async () => {
 
     deleteConfirmId.value = null
   } catch (err) {
-    error.value = typeof err === 'string' ? err : 'Failed to delete channel'
+    error.value = typeof err === 'string' ? err : t('channels.deleteError')
     console.error('Channel delete error:', err)
   } finally {
     isDeleting.value = false
@@ -351,7 +355,7 @@ const confirmDelete = async () => {
 }
 
 const formatDate = (date) => {
-  if (!date) return 'Unknown'
+  if (!date) return '-'
   return new Date(date).toLocaleDateString()
 }
 </script>

@@ -1,7 +1,7 @@
-export default defineNuxtConfig({
+const config = {
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
-  modules: ['@nuxtjs/tailwindcss', '@vite-pwa/nuxt'],
+  modules: ['@nuxtjs/tailwindcss', '@vite-pwa/nuxt', '@nuxtjs/i18n'],
   pages: true,
   srcDir: './',
 
@@ -13,16 +13,29 @@ export default defineNuxtConfig({
     host: '0.0.0.0',
     port: 3000,
   },
-
+  i18n: {
+    strategy: 'prefix_except_default',
+    lazy: true,
+    langDir: 'locales/',
+    locales: [
+      { code: 'en', language: 'en-US', file: 'en.json' },
+      { code: 'es', language: 'es-MX', file: 'es.json' }
+    ],
+    defaultLocale: 'en',
+    detectBrowserLanguage: {
+      useCookie: true,
+      cookieKey: 'gilTube_locale',
+      redirectOn: 'root'
+    }
+  },
   runtimeConfig: {
     public: {
-      siteUrl: process.env.NUXT_PUBLIC_SITE_URL || 'http://localhost:3000'
+      siteUrl: 'http://localhost:3000'
     }
   },
 
   app: {
     head: {
-      favicon: '/favicon.ico',
       link: [
         { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' },
         { rel: 'manifest', href: '/manifest.webmanifest' },
@@ -33,7 +46,7 @@ export default defineNuxtConfig({
         { name: 'mobile-web-app-capable', content: 'yes' },
         { name: 'apple-mobile-web-app-capable', content: 'yes' },
         { name: 'apple-mobile-web-app-status-bar-style', content: 'black-translucent' },
-        { name: 'apple-mobile-web-app-title', content: 'Giltube' }
+        { name: 'apple-mobile-web-app-title', content: 'GilTube' }
       ]
     }
   },
@@ -48,8 +61,8 @@ export default defineNuxtConfig({
       enabled: true
     },
     manifest: {
-      name: 'Giltube',
-      short_name: 'Giltube',
+      name: 'GilTube',
+      short_name: 'GilTube',
       description: 'Video streaming platform',
       theme_color: '#1f2937',
       background_color: '#ffffff',
@@ -111,4 +124,6 @@ export default defineNuxtConfig({
       rollupFormat: 'iife',
     }
   }
-})
+} as any
+
+export default defineNuxtConfig(config)

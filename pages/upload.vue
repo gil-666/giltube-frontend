@@ -4,7 +4,7 @@
     <div v-if="!isReady" class="flex items-center justify-center min-h-screen">
       <div class="text-center">
         <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-        <p>Checking your channels...</p>
+        <p>{{ t('upload.checkingChannels') }}</p>
       </div>
     </div>
 
@@ -12,13 +12,13 @@
     <div v-else class="max-w-2xl mx-auto w-full py-8">
       <!-- Stage 1: File Upload -->
       <div v-if="stage === 'select'">
-        <h1 class="text-4xl font-bold mb-8">Upload Video</h1>
+        <h1 class="text-4xl font-bold mb-8">{{ t('upload.title') }}</h1>
         <div class="bg-zinc-900 border-2 border-dashed border-zinc-700 rounded-lg p-12 text-center hover:border-blue-500 transition cursor-pointer" @click="triggerFileInput">
           <svg class="w-16 h-16 mx-auto mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
           </svg>
-          <p class="text-xl mb-2">Click to select a video file</p>
-          <p class="text-gray-400 text-sm">or drag and drop</p>
+          <p class="text-xl mb-2">{{ t('upload.clickToSelect') }}</p>
+          <p class="text-gray-400 text-sm">{{ t('upload.dragAndDrop') }}</p>
           <input
             ref="fileInput"
             type="file"
@@ -29,22 +29,22 @@
         </div>
         <div class="mt-4">
           <NuxtLink
-            to="/"
+            :to="localePath('/')"
             class="inline-block px-6 py-2 bg-zinc-700 hover:bg-zinc-600 rounded font-medium transition"
           >
-            Cancel
+            {{ t('upload.cancel') }}
           </NuxtLink>
         </div>
       </div>
 
       <!-- Stage 2: Fill in Details -->
       <div v-if="stage === 'details'">
-        <h1 class="text-4xl font-bold mb-8">Video Details</h1>
+        <h1 class="text-4xl font-bold mb-8">{{ t('upload.videoDetails') }}</h1>
         
         <div class="bg-zinc-900 rounded-lg p-8 space-y-6">
           <!-- Selected File -->
           <div class="bg-zinc-800 rounded p-4">
-            <p class="text-sm text-gray-400 mb-2">Selected File:</p>
+            <p class="text-sm text-gray-400 mb-2">{{ t('upload.selectedFile') }}</p>
             <p class="font-medium">{{ selectedFileName }}</p>
           </div>
 
@@ -52,13 +52,13 @@
           <form @submit.prevent="handleStartUpload" class="space-y-4">
             <!-- Channel -->
             <div>
-              <label class="block text-sm font-medium mb-2">Channel *</label>
+              <label class="block text-sm font-medium mb-2">{{ t('upload.channel') }}</label>
               <select
                 v-model="form.channelId"
                 required
                 class="w-full bg-zinc-800 border border-zinc-700 rounded px-4 py-2 text-white focus:outline-none focus:border-blue-500"
               >
-                <option value="">Select a channel</option>
+                <option value="">{{ t('upload.selectChannel') }}</option>
                 <option v-for="channel in channels" :key="channel.id" :value="channel.id">
                   {{ channel.name }}
                 </option>
@@ -67,11 +67,11 @@
 
             <!-- Title -->
             <div>
-              <label class="block text-sm font-medium mb-2">Title *</label>
+              <label class="block text-sm font-medium mb-2">{{ t('upload.videoTitle') }}</label>
               <input
                 v-model="form.title"
                 type="text"
-                placeholder="Enter video title"
+                :placeholder="t('upload.videoTitlePlaceholder')"
                 required
                 class="w-full bg-zinc-800 border border-zinc-700 rounded px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
               />
@@ -79,10 +79,10 @@
 
             <!-- Description -->
             <div>
-              <label class="block text-sm font-medium mb-2">Description</label>
+              <label class="block text-sm font-medium mb-2">{{ t('upload.description') }}</label>
               <textarea
                 v-model="form.description"
-                placeholder="Enter video description"
+                :placeholder="t('upload.descriptionPlaceholder')"
                 rows="4"
                 class="w-full bg-zinc-800 border border-zinc-700 rounded px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
               />
@@ -90,12 +90,12 @@
 
             <!-- Categories -->
             <div>
-              <label class="block text-sm font-medium mb-2">Category</label>
+              <label class="block text-sm font-medium mb-2">{{ t('upload.category') }}</label>
               <select
                 v-model="form.categoryId"
                 class="w-full bg-zinc-800 border border-zinc-700 rounded px-4 py-2 text-white focus:outline-none focus:border-blue-500"
               >
-                <option value="">Select a category (optional)</option>
+                <option value="">{{ t('upload.selectCategory') }}</option>
                 <option v-for="category in categories" :key="category.id" :value="category.id">
                   {{ category.name }}
                 </option>
@@ -111,8 +111,8 @@
                 class="w-4 h-4 rounded cursor-pointer accent-red-500"
               />
               <label for="explicit-toggle" class="flex-1 cursor-pointer">
-                <span class="text-sm font-medium">Explicit/18+ Content</span>
-                <p class="text-xs text-gray-400 mt-1">Mark this video as containing content for mature audiences</p>
+                <span class="text-sm font-medium">{{ t('upload.explicit') }}</span>
+                <p class="text-xs text-gray-400 mt-1">{{ t('upload.explicitHelper') }}</p>
               </label>
               <svg v-if="form.explicit" class="w-5 h-5 text-red-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
@@ -121,13 +121,13 @@
 
             <!-- Thumbnail Upload -->
             <div>
-              <label class="block text-sm font-medium mb-4">Custom Thumbnail</label>
+              <label class="block text-sm font-medium mb-4">{{ t('upload.customThumbnail') }}</label>
               <div class="bg-zinc-800 border-2 border-dashed border-zinc-700 rounded-lg p-6 text-center hover:border-blue-500 transition cursor-pointer" @click="triggerThumbnailInput">
                 <svg class="w-12 h-12 mx-auto mb-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
-                <p class="text-sm text-gray-300">Click to select an image or drag and drop</p>
-                <p class="text-xs text-gray-500 mt-1">PNG or JPG, recommended size: 1280x720</p>
+                <p class="text-sm text-gray-300">{{ t('upload.thumbnailClick') }}</p>
+                <p class="text-xs text-gray-500 mt-1">{{ t('upload.thumbnailFormat') }}</p>
                 <input
                   ref="thumbnailInput"
                   type="file"
@@ -136,12 +136,12 @@
                   @change="onThumbnailSelected"
                 />
               </div>
-              <p class="text-xs text-gray-400 mt-2">Max size: 5MB</p>
+              <p class="text-xs text-gray-400 mt-2">{{ t('upload.maxSize') }}</p>
             </div>
 
             <!-- Thumbnail Preview -->
             <div v-if="thumbnailPreview">
-              <label class="block text-sm font-medium mb-2">Thumbnail Preview</label>
+              <label class="block text-sm font-medium mb-2">{{ t('upload.thumbnailPreview') }}</label>
               <div class="relative bg-zinc-800 rounded overflow-hidden aspect-video max-w-xs border border-blue-500 border-2">
                 <img :src="thumbnailPreview" :alt="form.title" class="w-full h-full object-cover" />
               </div>
@@ -150,7 +150,7 @@
                 @click="clearThumbnail"
                 class="mt-2 text-sm text-red-400 hover:text-red-300 transition"
               >
-                Remove thumbnail
+                {{ t('upload.removeThumbnail') }}
               </button>
             </div>
 
@@ -166,7 +166,7 @@
                 :disabled="isUploading"
                 class="flex-1 px-6 py-3 bg-red-600 hover:bg-red-700 rounded font-bold text-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Start Upload
+                {{ t('upload.startUpload') }}
               </button>
               <button
                 type="button"
@@ -174,7 +174,7 @@
                 :disabled="isUploading"
                 class="px-6 py-3 bg-zinc-700 hover:bg-zinc-600 rounded font-medium transition disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Change File
+                {{ t('upload.changeFile') }}
               </button>
             </div>
           </form>
@@ -183,14 +183,14 @@
 
       <!-- Stage 3: Uploading Progress -->
       <div v-if="stage === 'uploading'">
-        <h1 class="text-4xl font-bold mb-8">Uploading...</h1>
+        <h1 class="text-4xl font-bold mb-8">{{ t('upload.uploading') }}</h1>
         
         <div class="bg-zinc-900 rounded-lg p-8 space-y-6">
           <!-- Upload Progress -->
           <div>
             <div class="flex justify-between items-center mb-2">
-              <p class="font-medium">File: {{ selectedFileName }}</p>
-              <p class="text-blue-400 font-bold">{{ uploadProgress }}%</p>
+              <p class="font-medium">{{ t('upload.selectedFile') }} {{ selectedFileName }}</p>
+              <p class="text-blue-400 font-bold">{{ t('upload.uploadProgress', { percent: uploadProgress }) }}</p>
             </div>
             <div class="w-full bg-zinc-800 rounded-full h-3 overflow-hidden">
               <div
@@ -202,14 +202,14 @@
 
           <!-- Info -->
           <div class="bg-blue-900/30 border border-blue-700 rounded p-4">
-            <p class="text-sm text-blue-200">Please don't close this page while your video is uploading.</p>
+            <p class="text-sm text-blue-200">{{ t('upload.dontCloseWarning') }}</p>
           </div>
         </div>
       </div>
 
       <!-- Stage 4: Upload Complete -->
       <div v-if="stage === 'complete'">
-        <h1 class="text-4xl font-bold mb-8">Ready to Publish</h1>
+        <h1 class="text-4xl font-bold mb-8">{{ t('upload.readyToPublish') }}</h1>
         
         <div class="bg-zinc-900 rounded-lg p-8 space-y-6">
           <!-- Success Icon -->
@@ -219,22 +219,22 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
               </svg>
             </div>
-            <p class="text-2xl font-bold mb-2">Upload Complete!</p>
-            <p class="text-gray-400">Your video has been uploaded successfully.</p>
+            <p class="text-2xl font-bold mb-2">{{ t('upload.uploadComplete') }}</p>
+            <p class="text-gray-400">{{ t('upload.uploadSuccess') }}</p>
           </div>
 
           <!-- Video Summary -->
           <div class="bg-zinc-800 rounded p-6 space-y-3">
             <div>
-              <p class="text-gray-400 text-sm">Channel</p>
+              <p class="text-gray-400 text-sm">{{ t('upload.channel') }}</p>
               <p class="text-lg font-medium">{{ getChannelName(form.channelId) }}</p>
             </div>
             <div>
-              <p class="text-gray-400 text-sm">Title</p>
+              <p class="text-gray-400 text-sm">{{ t('upload.videoTitle') }}</p>
               <p class="text-lg font-medium">{{ form.title }}</p>
             </div>
             <div v-if="form.description">
-              <p class="text-gray-400 text-sm">Description</p>
+              <p class="text-gray-400 text-sm">{{ t('upload.description') }}</p>
               <p class="text-sm">{{ form.description }}</p>
             </div>
           </div>
@@ -242,7 +242,7 @@
           <!-- Info -->
           <div class="bg-blue-900/30 border border-blue-700 rounded p-4">
             <p class="text-sm text-blue-200">
-              Click "Publish" to start processing your video. This may take a few minutes depending on the file size.
+              {{ t('upload.publishMessage') }}
             </p>
           </div>
 
@@ -258,20 +258,20 @@
               :disabled="isPublishing"
               class="flex-1 px-6 py-3 bg-green-600 hover:bg-green-700 rounded font-bold text-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {{ isPublishing ? 'Publishing...' : 'Publish Video' }}
+              {{ isPublishing ? t('upload.publishing') : t('upload.publish') }}
             </button>
             <button
               @click="startOver"
               :disabled="isPublishing"
               class="px-6 py-3 bg-zinc-700 hover:bg-zinc-600 rounded font-medium transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Upload Another
+              {{ t('upload.uploadAnother') }}
             </button>
             <NuxtLink
-              to="/"
+              :to="localePath('/')"
               class="px-6 py-3 bg-zinc-700 hover:bg-zinc-600 rounded font-medium transition text-center"
             >
-              Go Home
+              {{ t('upload.goHome') }}
             </NuxtLink>
           </div>
         </div>
@@ -284,6 +284,11 @@
 import { ref, onMounted } from 'vue'
 import { uploadVideo, fetchUserChannels } from '~/app/service/upload'
 import { useMetaTags } from '~/app/composables/useMetaTags'
+import { useI18n } from 'vue-i18n'
+import { useLocalePath } from '#i18n'
+
+const { t } = useI18n()
+const localePath = useLocalePath()
 
 useMetaTags({
   title: 'Upload Video - GilTube',
@@ -335,7 +340,7 @@ const loadCategories = async () => {
 const checkAuthStatus = async () => {
   const storedUserId = localStorage.getItem('user_id')
   if (!storedUserId) {
-    await router.push('/login')
+    await router.push(localePath('/login'))
     return
   }
 
@@ -352,8 +357,8 @@ const checkAuthStatus = async () => {
     if (userRes.ok) {
       const user = await userRes.json()
       if (user.status === 'banned') {
-        error.value = 'Your account is banned and you cannot upload videos.'
-        setTimeout(() => router.push('/'), 2000)
+        error.value = t('upload.bannedError')
+        setTimeout(() => router.push(localePath('/')), 2000)
         return
       }
     }
@@ -374,8 +379,8 @@ const loadChannels = async () => {
     channels.value = channels.value.filter(ch => ch.status !== 'banned')
     
     if (channels.value.length === 0) {
-      error.value = 'You have no active channels available for uploading.'
-      await router.push('/create-channel')
+      error.value = t('upload.noChannelsError')
+      await router.push(localePath('/create-channel'))
       return
     }
     
@@ -394,7 +399,7 @@ const loadChannels = async () => {
     
     isReady.value = true
   } catch (err) {
-    error.value = 'Failed to load channels'
+    error.value = t('upload.channelsLoadError')
     console.error('Channel loading error:', err)
   }
 }
@@ -422,12 +427,12 @@ const onThumbnailSelected = (event: any) => {
   if (!file) return
 
   if (file.size > 5 * 1024 * 1024) {
-    error.value = 'Thumbnail file must be smaller than 5MB'
+    error.value = t('upload.thumbnailSizeError')
     return
   }
 
   if (!file.type.startsWith('image/')) {
-    error.value = 'Please select a valid image file'
+    error.value = t('upload.thumbnailTypeError')
     return
   }
 
@@ -453,17 +458,17 @@ const handleStartUpload = async () => {
   error.value = ''
   
   if (!form.value.channelId) {
-    error.value = 'Please select a channel'
+    error.value = t('upload.selectChannelError')
     return
   }
 
   if (!form.value.title.trim()) {
-    error.value = 'Please enter a title'
+    error.value = t('upload.titleRequiredError')
     return
   }
 
   if (!selectedFile.value) {
-    error.value = 'No file selected'
+    error.value = t('upload.fileRequiredError')
     return
   }
 
@@ -492,7 +497,7 @@ const handleStartUpload = async () => {
 
     stage.value = 'complete'
   } catch (err) {
-    error.value = typeof err === 'string' ? err : 'Upload failed. Please try again.'
+    error.value = typeof err === 'string' ? err : t('upload.uploadError')
     console.error('Upload error:', err)
     stage.value = 'details'
   } finally {
@@ -505,9 +510,9 @@ const handlePublish = async () => {
   error.value = ''
 
   try {
-    await router.push('/dashboard')
+    await router.push(localePath('/dashboard'))
   } catch (err) {
-    error.value = typeof err === 'string' ? err : 'Failed to navigate to dashboard.'
+    error.value = typeof err === 'string' ? err : t('upload.publishError')
   } finally {
     isPublishing.value = false
   }
@@ -531,7 +536,7 @@ const startOver = () => {
 }
 
 const getChannelName = (channelId) => {
-  return channels.value.find(ch => ch.id === channelId)?.name || 'Unknown'
+  return channels.value.find(ch => ch.id === channelId)?.name || '-'
 }
 
 definePageMeta({

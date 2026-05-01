@@ -20,13 +20,16 @@
 
   <!-- Loading State -->
   <div v-else-if="isLoading" class="text-xs text-gray-400">
-    Loading...
+    {{ t('channelMetrics.compactLoading') }}
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { getChannelAnalytics } from '~/app/service/videos'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 const props = defineProps<{
   channelId: string

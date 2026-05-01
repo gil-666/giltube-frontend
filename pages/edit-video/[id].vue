@@ -168,7 +168,7 @@
             {{ isSaving ? 'Saving...' : 'Save Changes' }}
           </button>
           <NuxtLink
-            to="/dashboard"
+            :to="localePath('/dashboard')"
             class="flex-1 px-6 py-2 bg-zinc-700 hover:bg-zinc-600 rounded font-medium transition text-center"
           >
             Cancel
@@ -183,9 +183,11 @@
 import { ref, onMounted, watch } from 'vue'
 import { getVideo, updateVideo } from '~/app/service/videos'
 import { useMetaTags } from '~/app/composables/useMetaTags'
+import { useLocalePath } from '#i18n'
 
 const router = useRouter()
 const route = useRoute()
+const localePath = useLocalePath()
 
 // Set meta tags
 useMetaTags({
@@ -385,7 +387,7 @@ const handleSave = async () => {
     
     // Redirect to dashboard after 1.5 seconds
     setTimeout(() => {
-      router.push('/dashboard')
+      router.push(localePath('/dashboard'))
     }, 1500)
   } catch (err) {
     error.value = typeof err === 'string' ? err : 'Failed to save changes. Please try again.'

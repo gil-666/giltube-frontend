@@ -12,11 +12,11 @@
     <div class="max-w-7xl mx-auto mb-8">
       <div class="flex items-center justify-between">
         <div>
-          <h1 class="text-4xl font-bold mb-2">Your Videos</h1>
-          <p class="text-gray-400">Manage and organize your video library</p>
+          <h1 class="text-4xl font-bold mb-2">{{ t('dashboard.title') }}</h1>
+          <p class="text-gray-400">{{ t('dashboard.subtitle') }}</p>
         </div>
         <!-- <NuxtLink
-          to="/upload"
+          :to="localePath('/upload')"
           class="px-6 py-3 bg-blue-600 hover:bg-blue-700 rounded font-bold transition"
         >
           Upload New Video
@@ -28,7 +28,7 @@
     <div v-if="isLoading" class="max-w-7xl mx-auto text-center py-12">
       <div class="inline-block">
         <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mb-4"></div>
-        <p>Loading your videos...</p>
+        <p>{{ t('dashboard.loading') }}</p>
       </div>
     </div>
 
@@ -38,13 +38,13 @@
         <svg class="w-16 h-16 mx-auto mb-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
-        <h2 class="text-2xl font-bold mb-2">No videos yet</h2>
-        <p class="text-gray-400 mb-6">Start by uploading your first video</p>
+        <h2 class="text-2xl font-bold mb-2">{{ t('dashboard.noVideos') }}</h2>
+        <p class="text-gray-400 mb-6">{{ t('dashboard.startUploading') }}</p>
         <NuxtLink
-          to="/upload"
+          :to="localePath('/upload')"
           class="inline-block px-6 py-3 bg-blue-600 hover:bg-blue-700 rounded font-bold transition"
         >
-          Upload Video
+          {{ t('dashboard.uploadVideo') }}
         </NuxtLink>
       </div>
     </div>
@@ -73,7 +73,7 @@
             </div>
 
             <!-- Play Button Overlay -->
-            <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center" @click="router.push(`/video/${video.id}`)">
+            <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center" @click="router.push(localePath(`/video/${video.id}`))">
               <svg class="w-12 h-12 text-white" fill="currentColor" viewBox="0 0 20 20">
                 <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
               </svg>
@@ -103,22 +103,23 @@
             <div>
               <div class="flex items-center gap-2 mb-1">
                 <h3 class="font-bold text-lg line-clamp-1">{{ video.title }}</h3>
-                <span v-if="video.width >= 3840" class="p-0.5 bg-gray-900 text-gray-200 text-xs font-semibold flex-shrink-0 whitespace-nowrap border border-gray-500">4K</span>
+                <span v-if="video.width == 7680" class="p-0.5 bg-gray-900 text-gray-200 text-xs font-semibold flex-shrink-0 whitespace-nowrap border border-gray-500">8K</span>
+                <span v-if="video.width == 3840" class="p-0.5 bg-gray-900 text-gray-200 text-xs font-semibold flex-shrink-0 whitespace-nowrap border border-gray-500">4K</span>
               </div>
-              <p class="text-sm text-gray-400 mb-2 line-clamp-1">{{ video.description || 'No description' }}</p>
+              <p class="text-sm text-gray-400 mb-2 line-clamp-1">{{ video.description || t('channels.noDescription') }}</p>
 
               <!-- Meta Info -->
               <div class="flex flex-col md:flex-row md:flex-wrap gap-2 md:gap-4 text-xs text-gray-400">
                 <p>
-                  <span class="text-gray-500">Uploaded:</span>
+                  <span class="text-gray-500">{{ t('dashboard.uploaded') }}</span>
                   {{ formatDate(video.created_at) }}
                 </p>
                 <p v-if="video.views !== undefined">
-                  <span class="text-gray-500">Views:</span>
+                  <span class="text-gray-500">{{ t('dashboard.views') }}</span>
                   {{ formatNumber(video.views) }}
                 </p>
                 <p v-if="video.likes !== undefined">
-                  <span class="text-gray-500">Likes:</span>
+                  <span class="text-gray-500">{{ t('dashboard.likes') }}</span>
                   {{ formatNumber(video.likes) }}
                 </p>
               </div>
@@ -127,8 +128,8 @@
             <!-- Progress Bar for Processing Videos -->
             <div v-if="video.status === 'processing'" class="mt-2">
               <div class="flex items-center justify-between mb-1">
-                <span class="text-xs text-gray-400">Processing</span>
-                <span class="text-xs text-gray-400 font-medium">{{ video.progress || 0 }}%</span>
+                <span class="text-xs text-gray-400">{{ t('dashboard.processing') }}</span>
+                <span class="text-xs text-gray-400 font-medium">{{ t('upload.uploadProgress', { percent: video.progress || 0 }) }}</span>
               </div>
               <div class="w-full bg-zinc-700 rounded-full h-1 overflow-hidden">
                 <div
@@ -145,21 +146,21 @@
               @click="editVideo(video.id)"
               class="flex-1 md:flex-none px-3 py-1 bg-blue-600 hover:bg-blue-700 rounded text-xs font-medium transition whitespace-nowrap"
             >
-              Edit
+              {{ t('dashboard.edit') }}
             </button>
             <button
               @click="downloadVideo(video)"
               :disabled="video.status !== 'published' && video.status !== 'ready' || downloadingVideoIds.has(video.id)"
               class="flex-1 md:flex-none px-3 py-1 bg-green-600 hover:bg-green-700 rounded text-xs font-medium transition disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
-              :title="video.status !== 'published' && video.status !== 'ready' ? 'Only published videos can be downloaded' : 'Download highest quality version'"
+              :title="video.status !== 'published' && video.status !== 'ready' ? t('dashboard.downloadUnavailable') : t('dashboard.downloadHint')"
             >
-              {{ downloadingVideoIds.has(video.id) ? 'Downloading...' : 'Download' }}
+              {{ downloadingVideoIds.has(video.id) ? t('dashboard.downloading') : t('dashboard.download') }}
             </button>
             <button
               @click="confirmDelete(video)"
               class="flex-1 md:flex-none px-3 py-1 bg-red-600 hover:bg-red-700 rounded text-xs font-medium transition whitespace-nowrap"
             >
-              Delete
+              {{ t('dashboard.delete') }}
             </button>
           </div>
         </div>
@@ -169,23 +170,23 @@
     <!-- Delete Confirmation Modal -->
     <div v-if="deleteConfirm" class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
       <div class="bg-zinc-900 rounded-lg p-8 max-w-md w-full">
-        <h2 class="text-2xl font-bold mb-4">Delete Video?</h2>
+        <h2 class="text-2xl font-bold mb-4">{{ t('dashboard.deleteModal') }}</h2>
         <p class="text-gray-400 mb-6">
-          Are you sure you want to delete "<strong>{{ deleteConfirm.title }}</strong>"? This action cannot be undone.
+          {{ t('dashboard.deleteConfirm', { title: deleteConfirm.title }) }}
         </p>
         <div class="flex gap-4">
           <button
             @click="deleteConfirm = null"
             class="flex-1 px-4 py-2 bg-zinc-700 hover:bg-zinc-600 rounded font-medium transition"
           >
-            Cancel
+            {{ t('video.cancel') }}
           </button>
           <button
             @click="handleDelete(deleteConfirm.id)"
             :disabled="isDeleting"
             class="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 rounded font-medium transition disabled:opacity-50"
           >
-            {{ isDeleting ? 'Deleting...' : 'Delete' }}
+            {{ isDeleting ? t('dashboard.deleting') : t('dashboard.delete') }}
           </button>
         </div>
       </div>
@@ -198,8 +199,12 @@ import ChannelMetrics from '~/app/components/ChannelMetrics.vue'
 import { ref, onMounted, computed, onUnmounted } from 'vue'
 import { getMyVideos, deleteVideo, downloadVideo as downloadVideoService } from '~/app/service/videos'
 import { useMetaTags } from '~/app/composables/useMetaTags'
+import { useI18n } from 'vue-i18n'
+import { useLocalePath } from '#i18n'
 
 const router = useRouter()
+const { t } = useI18n()
+const localePath = useLocalePath()
 
 // Set meta tags for dashboard page
 useMetaTags({
@@ -259,7 +264,7 @@ const handleImageError = (event) => {
 const checkAuth = async () => {
   const storedUserId = localStorage.getItem('user_id')
   if (!storedUserId) {
-    await router.push('/login')
+    await router.push(localePath('/login'))
   }
   userId.value = storedUserId
 }
@@ -295,17 +300,17 @@ const loadVideos = async (silent = false) => {
 
 const formatStatus = (status) => {
   const map = {
-    published: 'Published',
-    ready: 'Ready',
-    processing: 'Processing',
-    failed: 'Failed',
-    pending: 'Pending',
+    published: t('dashboard.published'),
+    ready: t('dashboard.ready'),
+    processing: t('dashboard.processing'),
+    failed: t('dashboard.failed'),
+    pending: t('dashboard.pending'),
   }
   return map[status] || status
 }
 
 const formatDate = (dateString) => {
-  if (!dateString) return 'Unknown'
+  if (!dateString) return '-'
   const date = new Date(dateString)
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })
 }
@@ -318,7 +323,7 @@ const formatNumber = (num) => {
 
 const editVideo = (videoId) => {
   // TODO: Implement edit functionality
-  router.push(`/edit-video/${videoId}`)
+  router.push(localePath(`/edit-video/${videoId}`))
 }
 
 const confirmDelete = (video) => {
@@ -333,7 +338,7 @@ const handleDelete = async (videoId) => {
     deleteConfirm.value = null
   } catch (err) {
     console.error('Failed to delete video:', err)
-    alert('Failed to delete video')
+    alert(t('dashboard.deleteError'))
   } finally {
     isDeleting.value = false
   }
@@ -342,7 +347,7 @@ const handleDelete = async (videoId) => {
 const downloadVideo = async (video) => {
   try {
     downloadingVideoIds.value.add(video.id)
-    downloadStatus.value = 'Preparing download...'
+    downloadStatus.value = t('dashboard.preparingDownload')
     
     const blob = await downloadVideoService(video.id, '1080p', (status) => {
       downloadStatus.value = status
@@ -358,7 +363,7 @@ const downloadVideo = async (video) => {
     downloadStatus.value = ''
   } catch (err) {
     console.error('Failed to download video:', err)
-    alert(err.message || 'Failed to download video. Please try again.')
+    alert(err.message || t('dashboard.downloadError'))
     downloadStatus.value = ''
   } finally {
     downloadingVideoIds.value.delete(video.id)

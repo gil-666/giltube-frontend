@@ -113,13 +113,13 @@ self.addEventListener('push', (event: PushEvent) => {
     try {
       payload = event.data.json()
     } catch {
-      payload = { title: 'Giltube', body: event.data.text() }
+      payload = { title: 'GilTube', body: event.data.text() }
     }
   } else {
-    payload = { title: 'Giltube', body: 'You have a new notification.', url: '/notifications' }
+    payload = { title: 'GilTube', body: 'You have a new notification.', url: '/notifications' }
   }
 
-  const title = payload.title || 'Giltube Notification'
+  const title = payload.title || 'GilTube Notification'
   const icon = payload.icon || '/icon-192.png'
   console.log('[SW Push] icon=%s image=%s url=%s', icon, payload.image || '', payload.url || '')
   const options: NotificationOptions = {

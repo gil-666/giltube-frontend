@@ -2,28 +2,28 @@
   <div class="min-h-screen bg-zinc-950 text-white p-6">
     <div class="max-w-3xl mx-auto space-y-8">
       <div>
-        <h1 class="text-4xl font-bold mb-2">Account Settings</h1>
-        <p class="text-gray-400">Update your email and password, or permanently delete your account.</p>
+        <h1 class="text-4xl font-bold mb-2">{{ t('accountSettings.title') }}</h1>
+        <p class="text-gray-400">{{ t('accountSettings.subtitle') }}</p>
       </div>
 
       <div v-if="isLoading" class="bg-zinc-900 rounded-lg p-6 text-gray-300">
-        Loading account details...
+        {{ t('accountSettings.loading') }}
       </div>
 
       <div v-else class="bg-zinc-900 rounded-lg p-6 border border-zinc-800">
-        <h2 class="text-xl font-semibold mb-4">Profile</h2>
+        <h2 class="text-xl font-semibold mb-4">{{ t('accountSettings.profile') }}</h2>
         <div class="space-y-2 text-sm">
-          <p><span class="text-gray-500">Username:</span> {{ profile.username }}</p>
-          <p><span class="text-gray-500">Current Email:</span> {{ profile.email }}</p>
-          <p><span class="text-gray-500">Status:</span> {{ profile.status }}</p>
+          <p><span class="text-gray-500">{{ t('accountSettings.username') }}</span> {{ profile.username }}</p>
+          <p><span class="text-gray-500">{{ t('accountSettings.currentEmail') }}</span> {{ profile.email }}</p>
+          <p><span class="text-gray-500">{{ t('accountSettings.status') }}</span> {{ profile.status }}</p>
         </div>
       </div>
 
       <form @submit.prevent="submitEmailChange" class="bg-zinc-900 rounded-lg p-6 border border-zinc-800 space-y-4">
-        <h2 class="text-xl font-semibold">Change Email</h2>
+        <h2 class="text-xl font-semibold">{{ t('accountSettings.changeEmail') }}</h2>
 
         <div>
-          <label class="block text-sm text-gray-300 mb-2" for="newEmail">New Email</label>
+          <label class="block text-sm text-gray-300 mb-2" for="newEmail">{{ t('accountSettings.newEmail') }}</label>
           <input
             id="newEmail"
             v-model="newEmail"
@@ -35,7 +35,7 @@
         </div>
 
         <div>
-          <label class="block text-sm text-gray-300 mb-2" for="emailPassword">Current Password</label>
+          <label class="block text-sm text-gray-300 mb-2" for="emailPassword">{{ t('accountSettings.currentPassword') }}</label>
           <input
             id="emailPassword"
             v-model="emailPassword"
@@ -53,15 +53,15 @@
           :disabled="emailSaving"
           class="px-5 py-2 rounded bg-cyan-600 hover:bg-cyan-700 disabled:opacity-60 transition"
         >
-          {{ emailSaving ? 'Updating...' : 'Update Email' }}
+          {{ emailSaving ? t('accountSettings.updatingEmail') : t('accountSettings.updateEmail') }}
         </button>
       </form>
 
       <form @submit.prevent="submitPasswordChange" class="bg-zinc-900 rounded-lg p-6 border border-zinc-800 space-y-4">
-        <h2 class="text-xl font-semibold">Change Password</h2>
+        <h2 class="text-xl font-semibold">{{ t('accountSettings.changePassword') }}</h2>
 
         <div>
-          <label class="block text-sm text-gray-300 mb-2" for="currentPassword">Current Password</label>
+          <label class="block text-sm text-gray-300 mb-2" for="currentPassword">{{ t('accountSettings.currentPassword') }}</label>
           <input
             id="currentPassword"
             v-model="currentPassword"
@@ -73,7 +73,7 @@
         </div>
 
         <div>
-          <label class="block text-sm text-gray-300 mb-2" for="newPassword">New Password</label>
+          <label class="block text-sm text-gray-300 mb-2" for="newPassword">{{ t('accountSettings.newPassword') }}</label>
           <input
             id="newPassword"
             v-model="newPassword"
@@ -86,7 +86,7 @@
         </div>
 
         <div>
-          <label class="block text-sm text-gray-300 mb-2" for="confirmPassword">Confirm New Password</label>
+          <label class="block text-sm text-gray-300 mb-2" for="confirmPassword">{{ t('accountSettings.confirmNewPassword') }}</label>
           <input
             id="confirmPassword"
             v-model="confirmPassword"
@@ -105,62 +105,61 @@
           :disabled="passwordSaving"
           class="px-5 py-2 rounded bg-cyan-600 hover:bg-cyan-700 disabled:opacity-60 transition"
         >
-          {{ passwordSaving ? 'Updating...' : 'Update Password' }}
+          {{ passwordSaving ? t('accountSettings.updatingPassword') : t('accountSettings.updatePassword') }}
         </button>
       </form>
 
       <div id="passkeys" class="bg-zinc-900 rounded-lg p-6 border border-zinc-800 space-y-4">
         <div class="flex items-center justify-between gap-4">
           <div>
-            <h2 class="text-xl font-semibold">Passkeys</h2>
-            <p class="text-sm text-gray-400">Use biometrics or device PIN for faster sign-in.</p>
+            <h2 class="text-xl font-semibold">{{ t('accountSettings.passkeys') }}</h2>
+            <p class="text-sm text-gray-400">{{ t('accountSettings.passkeysHelper') }}</p>
           </div>
           <button
             @click="registerPasskey"
             :disabled="passkeySaving"
             class="px-4 py-2 rounded bg-cyan-600 hover:bg-cyan-700 disabled:opacity-60 transition"
           >
-            {{ passkeySaving ? 'Waiting...' : 'Add Passkey' }}
+            {{ passkeySaving ? t('accountSettings.waiting') : t('accountSettings.addPasskey') }}
           </button>
         </div>
 
         <p v-if="passkeyMessage" class="text-sm" :class="passkeyError ? 'text-red-400' : 'text-green-400'">{{ passkeyMessage }}</p>
 
         <div v-if="!supportsPasskeys" class="text-sm text-yellow-300 bg-yellow-900/40 border border-yellow-700 rounded p-3">
-          This browser does not support passkeys.
+          {{ t('accountSettings.passkeyUnsupported') }}
         </div>
 
         <div v-if="passkeys.length === 0" class="text-sm text-gray-400">
-          No passkeys registered yet.
+          {{ t('accountSettings.noPasskeys') }}
         </div>
 
         <div v-else class="space-y-3">
           <div v-for="item in passkeys" :key="item.id" class="flex items-center justify-between rounded border border-zinc-700 px-4 py-3">
             <div>
               <p class="font-medium">{{ item.name }}</p>
-              <p class="text-xs text-gray-400">Added {{ formatDate(item.created_at) }}</p>
-              <p v-if="item.last_used_at" class="text-xs text-gray-500">Last used {{ formatDate(item.last_used_at) }}</p>
+              <p class="text-xs text-gray-400">{{ t('accountSettings.addedDate', { date: formatDate(item.created_at) }) }}</p>
+              <p v-if="item.last_used_at" class="text-xs text-gray-500">{{ t('accountSettings.lastUsed', { date: formatDate(item.last_used_at) }) }}</p>
             </div>
             <button
               @click="removePasskey(item.id)"
               :disabled="passkeyDeletingId === item.id"
               class="px-3 py-1.5 rounded bg-red-600 hover:bg-red-700 disabled:opacity-60 transition text-sm"
             >
-              {{ passkeyDeletingId === item.id ? 'Removing...' : 'Remove' }}
+              {{ passkeyDeletingId === item.id ? t('accountSettings.removingPasskey') : t('accountSettings.removePasskey') }}
             </button>
           </div>
         </div>
       </div>
 
       <div class="bg-zinc-900 rounded-lg p-6 border border-red-800 space-y-4">
-        <h2 class="text-xl font-semibold text-red-300">Delete Account</h2>
+        <h2 class="text-xl font-semibold text-red-300">{{ t('accountSettings.deleteAccount') }}</h2>
         <p class="text-sm text-red-200">
-          This permanently removes your account and fully scrubs associated channels, videos, comments, and likes.
-          This action cannot be undone.
+          {{ t('accountSettings.deleteMessage') }}
         </p>
 
         <div>
-          <label class="block text-sm text-gray-300 mb-2" for="deletePassword">Current Password</label>
+          <label class="block text-sm text-gray-300 mb-2" for="deletePassword">{{ t('accountSettings.currentPassword') }}</label>
           <input
             id="deletePassword"
             v-model="deletePassword"
@@ -171,7 +170,7 @@
         </div>
 
         <div>
-          <label class="block text-sm text-gray-300 mb-2" for="deleteConfirm">Type DELETE to confirm</label>
+          <label class="block text-sm text-gray-300 mb-2" for="deleteConfirm">{{ t('accountSettings.typeDelete') }}</label>
           <input
             id="deleteConfirm"
             v-model="deleteConfirmText"
@@ -187,7 +186,7 @@
           :disabled="deleteSaving"
           class="px-5 py-2 rounded bg-red-600 hover:bg-red-700 disabled:opacity-60 transition"
         >
-          {{ deleteSaving ? 'Deleting...' : 'Delete Account Permanently' }}
+          {{ deleteSaving ? t('accountSettings.deleting') : t('accountSettings.deleteButton') }}
         </button>
       </div>
     </div>
@@ -197,6 +196,8 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
+import { useLocalePath } from '#i18n'
 import {
   beginPasskeyRegistration,
   deleteMyAccount,
@@ -216,6 +217,8 @@ useMetaTags({
 })
 
 const router = useRouter()
+const { t } = useI18n()
+const localePath = useLocalePath()
 
 const isLoading = ref(true)
 const profile = ref({
@@ -254,7 +257,7 @@ const passkeyError = ref(false)
 onMounted(async () => {
   const userId = localStorage.getItem('user_id')
   if (!userId) {
-    router.push('/login')
+    router.push(localePath('/login'))
     return
   }
 
@@ -283,10 +286,10 @@ const loadProfile = async () => {
   } catch (error: any) {
     const status = error?.response?.status
     if (status === 401) {
-      router.push('/login')
+      router.push(localePath('/login'))
       return
     }
-    emailMessage.value = error?.response?.data?.error || 'Failed to load account profile'
+    emailMessage.value = error?.response?.data?.error || t('accountSettings.loadError')
     emailError.value = true
   } finally {
     isLoading.value = false
@@ -298,13 +301,13 @@ const submitEmailChange = async () => {
   emailError.value = false
 
   if (!newEmail.value.trim()) {
-    emailMessage.value = 'Please enter an email address'
+    emailMessage.value = t('accountSettings.emailRequired')
     emailError.value = true
     return
   }
 
   if (!emailPassword.value) {
-    emailMessage.value = 'Current password is required'
+    emailMessage.value = t('accountSettings.currentPasswordRequired')
     emailError.value = true
     return
   }
@@ -319,9 +322,9 @@ const submitEmailChange = async () => {
     localStorage.setItem('email', response.email)
     profile.value.email = response.email
     emailPassword.value = ''
-    emailMessage.value = 'Email updated successfully'
+    emailMessage.value = t('accountSettings.emailSuccess')
   } catch (error: any) {
-    emailMessage.value = error?.response?.data?.error || 'Failed to update email'
+    emailMessage.value = error?.response?.data?.error || t('accountSettings.emailError')
     emailError.value = true
   } finally {
     emailSaving.value = false
@@ -333,19 +336,19 @@ const submitPasswordChange = async () => {
   passwordError.value = false
 
   if (!currentPassword.value || !newPassword.value || !confirmPassword.value) {
-    passwordMessage.value = 'All password fields are required'
+    passwordMessage.value = t('accountSettings.passwordRequired')
     passwordError.value = true
     return
   }
 
   if (newPassword.value.length < 6) {
-    passwordMessage.value = 'New password must be at least 6 characters'
+    passwordMessage.value = t('accountSettings.passwordTooShort')
     passwordError.value = true
     return
   }
 
   if (newPassword.value !== confirmPassword.value) {
-    passwordMessage.value = 'New passwords do not match'
+    passwordMessage.value = t('accountSettings.passwordMismatch')
     passwordError.value = true
     return
   }
@@ -360,9 +363,9 @@ const submitPasswordChange = async () => {
     currentPassword.value = ''
     newPassword.value = ''
     confirmPassword.value = ''
-    passwordMessage.value = 'Password updated successfully'
+    passwordMessage.value = t('accountSettings.passwordSuccess')
   } catch (error: any) {
-    passwordMessage.value = error?.response?.data?.error || 'Failed to update password'
+    passwordMessage.value = error?.response?.data?.error || t('accountSettings.passwordUpdateError')
     passwordError.value = true
   } finally {
     passwordSaving.value = false
@@ -373,7 +376,7 @@ const loadPasskeys = async () => {
   try {
     passkeys.value = await listMyPasskeys()
   } catch (error: any) {
-    passkeyMessage.value = error?.response?.data?.error || 'Failed to load passkeys'
+    passkeyMessage.value = error?.response?.data?.error || t('accountSettings.passkeysLoadError')
     passkeyError.value = true
   }
 }
@@ -383,7 +386,7 @@ const registerPasskey = async () => {
   passkeyError.value = false
 
   if (!supportsPasskeys) {
-    passkeyMessage.value = 'Passkeys are not supported in this browser.'
+    passkeyMessage.value = t('accountSettings.passkeyUnsupported')
     passkeyError.value = true
     return
   }
@@ -396,16 +399,16 @@ const registerPasskey = async () => {
 
     const credential = await navigator.credentials.create({ publicKey })
     if (!credential) {
-      throw new Error('No passkey credential returned')
+      throw new Error(t('accountSettings.passkeyCredentialMissing'))
     }
 
     const payload = serializeRegistrationCredential(credential as PublicKeyCredential)
     await finishPasskeyRegistration(begin.session_token, payload)
 
-    passkeyMessage.value = 'Passkey registered successfully'
+    passkeyMessage.value = t('accountSettings.passkeyRegistered')
     await loadPasskeys()
   } catch (error: any) {
-    passkeyMessage.value = error?.response?.data?.error || error?.message || 'Failed to register passkey'
+    passkeyMessage.value = error?.response?.data?.error || error?.message || t('accountSettings.passkeyRegisterError')
     passkeyError.value = true
   } finally {
     passkeySaving.value = false
@@ -420,9 +423,9 @@ const removePasskey = async (id: string) => {
   try {
     await deleteMyPasskey(id)
     passkeys.value = passkeys.value.filter(item => item.id !== id)
-    passkeyMessage.value = 'Passkey removed'
+    passkeyMessage.value = t('accountSettings.passkeyRemoved')
   } catch (error: any) {
-    passkeyMessage.value = error?.response?.data?.error || 'Failed to remove passkey'
+    passkeyMessage.value = error?.response?.data?.error || t('accountSettings.passkeyRemoveError')
     passkeyError.value = true
   } finally {
     passkeyDeletingId.value = ''
@@ -434,18 +437,18 @@ const submitDeleteAccount = async () => {
   deleteError.value = false
 
   if (!deletePassword.value) {
-    deleteMessage.value = 'Current password is required'
+    deleteMessage.value = t('accountSettings.currentPasswordRequired')
     deleteError.value = true
     return
   }
 
   if (deleteConfirmText.value.trim().toUpperCase() !== 'DELETE') {
-    deleteMessage.value = 'Please type DELETE to confirm account deletion'
+    deleteMessage.value = t('accountSettings.deleteTypeError')
     deleteError.value = true
     return
   }
 
-  const ok = window.confirm('This will permanently delete your account and all associated data. Continue?')
+  const ok = window.confirm(t('accountSettings.deleteConfirmPrompt'))
   if (!ok) {
     return
   }
@@ -461,10 +464,10 @@ const submitDeleteAccount = async () => {
     localStorage.removeItem('active_account')
     localStorage.removeItem('active_account_name')
 
-    router.push('/')
+    router.push(localePath('/'))
     window.location.reload()
   } catch (error: any) {
-    deleteMessage.value = error?.response?.data?.error || 'Failed to delete account'
+    deleteMessage.value = error?.response?.data?.error || t('accountSettings.deleteError')
     deleteError.value = true
   } finally {
     deleteSaving.value = false
