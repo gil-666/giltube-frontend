@@ -5,7 +5,6 @@
         <div>
           <h1 class="text-3xl font-semibold tracking-tight sm:text-4xl">{{ t('home.title') }}</h1>
         </div>
-        <NuxtLink :to="localePath('/search')" class="text-sm text-zinc-400 hover:text-white">{{ t('home.searchAll') }}</NuxtLink>
       </div>
 
       <div v-if="isLoading" class="mt-8 space-y-8">

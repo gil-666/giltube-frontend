@@ -4,6 +4,37 @@
       <video ref="videoElement" class="video-js vjs-default-skin" controls
         preload="auto"></video>
 
+      <!-- Custom progress bar overlaid above the control bar (YouTube style) -->
+      <div
+        ref="progressBarOverlay"
+        class="progress-bar-overlay"
+        style="position: absolute; bottom: 32px; left: 2px; right: 2px; width: calc(100% - 4px); height: 5px; background-color: rgb(55, 65, 81); cursor: pointer; z-index: 50; pointer-events: auto; border-radius: 4px; overflow: hidden;"
+        @mousedown="handleProgressBarInteraction"
+        @touchstart="handleProgressBarInteraction"
+        @mousemove="handleProgressBarHover"
+        @touchmove="handleProgressBarHover"
+      >
+        <!-- Buffered amount -->
+        <div
+          v-if="bufferedEnd > 0"
+          class="buffered-amount"
+          style="position: absolute; left: 0; top: 0; height: 100%; background-color: rgb(107, 114, 128); opacity: 0.6;"
+          :style="{ width: `${(bufferedEnd / duration) * 100}%` }"
+        />
+        <!-- Played amount -->
+        <div
+          class="played-amount"
+          style="position: absolute; left: 0; top: 0; height: 100%; background-color: rgb(239, 68, 68); transition: width 75ms ease;"
+          :style="{ width: `${(currentTime / duration) * 100}%` }"
+        />
+        <!-- Seek circle indicator -->
+        <div
+          class="seek-indicator"
+          style="position: absolute; top: 50%; width: 12px; height: 12px; background-color: rgb(239, 68, 68); border-radius: 50%; box-shadow: 0 4px 6px rgba(0,0,0,0.5); opacity: 0; transition: opacity 150ms ease; pointer-events: none;"
+          :style="{ left: `${(seekPreviewTime / duration) * 100}%`, transform: 'translate(-50%, -50%)' }"
+        />
+      </div>
+
       <!-- Presence overlay (live only) -->
       <div v-if="isLive && (viewers.length > 0 || anonymousCount > 0)" class="presence-overlay absolute left-3 top-3 bg-black/60 text-white rounded-md p-2 flex items-center gap-3">
         <div class="avatars flex items-center gap-2">
@@ -35,6 +66,7 @@ interface Props {
 
 const emit = defineEmits<{
   play: []
+  ended: []
 }>()
 
 const props = withDefaults(defineProps<Props>(), {
@@ -54,6 +86,14 @@ const anonText = computed(() => {
   const n = anonymousCount.value
   return `${n} anonymous viewer${n === 1 ? '' : 's'}`
 })
+
+// Progress bar state
+const currentTime = ref(0)
+const duration = ref(0)
+const bufferedEnd = ref(0)
+const seekPreviewTime = ref(0)
+const isSeekingProgress = ref(false)
+const progressBarOverlay = ref<HTMLElement | null>(null)
 
 const videoElement = ref<HTMLVideoElement | null>(null)
 let player: any = null
@@ -289,6 +329,131 @@ const inferSourceType = (src: string) => {
     return 'video/quicktime'
   }
   return 'application/x-mpegURL'
+}
+
+const reorderControlBar = () => {
+  if (!player) return
+
+  const controlBarEl = player.controlBar?.el?.() as HTMLElement | undefined
+  if (!controlBarEl) return
+
+  // Remove skip buttons from DOM
+  const skipBackwardBtn = controlBarEl.querySelector('[class*="skip-backward"]')
+  const skipForwardBtn = controlBarEl.querySelector('[class*="skip-forward"]')
+  if (skipBackwardBtn) skipBackwardBtn.remove()
+  if (skipForwardBtn) skipForwardBtn.remove()
+
+  let leftGroup = controlBarEl.querySelector('.giltube-control-group-left') as HTMLElement | null
+  let spacer = controlBarEl.querySelector('.giltube-control-group-spacer') as HTMLElement | null
+  let rightGroup = controlBarEl.querySelector('.giltube-control-group-right') as HTMLElement | null
+
+  if (!leftGroup) {
+    leftGroup = document.createElement('div')
+    leftGroup.className = 'giltube-control-group giltube-control-group-left'
+  }
+  if (!spacer) {
+    spacer = document.createElement('div')
+    spacer.className = 'giltube-control-group giltube-control-group-spacer'
+  }
+  if (!rightGroup) {
+    rightGroup = document.createElement('div')
+    rightGroup.className = 'giltube-control-group giltube-control-group-right'
+  }
+
+  if (!leftGroup.parentElement) {
+    controlBarEl.insertBefore(leftGroup, controlBarEl.firstChild)
+  }
+  if (!spacer.parentElement) {
+    controlBarEl.insertBefore(spacer, controlBarEl.firstChild?.nextSibling ?? null)
+  }
+  if (!rightGroup.parentElement) {
+    controlBarEl.appendChild(rightGroup)
+  }
+
+  const playControl = controlBarEl.querySelector('.vjs-play-control')
+  const volumePanel = controlBarEl.querySelector('.vjs-volume-panel')
+  const currentTime = controlBarEl.querySelector('.vjs-current-time')
+  const timeDivider = controlBarEl.querySelector('.vjs-time-divider')
+  const duration = controlBarEl.querySelector('.vjs-duration')
+  const pipControl = controlBarEl.querySelector('.vjs-picture-in-picture-control') || controlBarEl.querySelector('.vjs-picture-in-picture-toggle')
+  const fullscreenControl = controlBarEl.querySelector('.vjs-fullscreen-control')
+  const qualityControl = qualityButton?.el?.() as HTMLElement | undefined
+
+  ;[playControl, volumePanel, currentTime, timeDivider, duration].filter(Boolean).forEach((node) => {
+    leftGroup!.appendChild(node as HTMLElement)
+  })
+
+  ;[pipControl, fullscreenControl, qualityControl].filter(Boolean).forEach((node) => {
+    rightGroup!.appendChild(node as HTMLElement)
+  })
+}
+
+// Progress bar interaction handlers
+const handleProgressBarInteraction = (event: MouseEvent | TouchEvent) => {
+  if (!player || duration.value === 0) return
+
+  isSeekingProgress.value = true
+
+  const seekTime = getSeekTimeFromEvent(event)
+  if (seekTime !== null) {
+    currentTime.value = seekTime
+    player.currentTime(seekTime)
+  }
+
+  // Add listeners for mouse/touch move and end
+  const handleMove = (e: MouseEvent | TouchEvent) => {
+    const newSeekTime = getSeekTimeFromEvent(e)
+    if (newSeekTime !== null) {
+      currentTime.value = newSeekTime
+      player.currentTime(newSeekTime)
+    }
+  }
+
+  const handleEnd = () => {
+    isSeekingProgress.value = false
+    document.removeEventListener('mousemove', handleMove as EventListener)
+    document.removeEventListener('touchmove', handleMove as EventListener)
+    document.removeEventListener('mouseup', handleEnd)
+    document.removeEventListener('touchend', handleEnd)
+  }
+
+  document.addEventListener('mousemove', handleMove as EventListener)
+  document.addEventListener('touchmove', handleMove as EventListener)
+  document.addEventListener('mouseup', handleEnd)
+  document.addEventListener('touchend', handleEnd)
+}
+
+const handleProgressBarHover = (event: MouseEvent | TouchEvent) => {
+  if (duration.value === 0) return
+
+  const seekTime = getSeekTimeFromEvent(event)
+  if (seekTime !== null) {
+    seekPreviewTime.value = seekTime
+  }
+}
+
+const getSeekTimeFromEvent = (event: MouseEvent | TouchEvent): number | null => {
+  const progressBar = event.currentTarget as HTMLElement | null
+  if (!progressBar) return null
+
+  const rect = progressBar.getBoundingClientRect()
+  const clientX = event instanceof TouchEvent ? event.touches[0]?.clientX : (event as MouseEvent).clientX
+
+  if (clientX === undefined) return null
+
+  const percentage = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width))
+  return percentage * duration.value
+}
+
+const attachProgressBarOverlay = () => {
+  if (!player || !progressBarOverlay.value) return
+
+  const playerEl = player.el?.() as HTMLElement | undefined
+  if (!playerEl) return
+
+  if (progressBarOverlay.value.parentElement !== playerEl) {
+    playerEl.appendChild(progressBarOverlay.value)
+  }
 }
 
 // Create quality button component
@@ -541,13 +706,25 @@ onMounted(async () => {
         }
       },
       controlBar: {
-        remainingTimeDisplay: true,
-        progressControl: true,
+        remainingTimeDisplay: false,
+        progressControl: false,
         playToggle: true,
         volumePanel: {
           inline: false,
           vertical: true
-        }
+        },
+        pictureInPictureToggle: true,
+        fullscreenToggle: true,
+        playbackRateMenuButton: false,
+        chaptersButton: false,
+        descriptionsButton: false,
+        subsCapsButton: false,
+        audioTrackButton: false,
+        liveDisplay: false,
+        seekToLive: false,
+        skipButtons: false,
+        skipBackButton: false,
+        skipForwardButton: false
       }
     })
 
@@ -556,9 +733,31 @@ onMounted(async () => {
       qualityButton = player.controlBar.addChild('QualityButton', {})
       qualityButton.hide()
 
+      reorderControlBar()
+      setTimeout(reorderControlBar, 0)
+      attachProgressBarOverlay()
+
       // Emit 'play' event when video starts playing
       player.on('play', () => {
         emit('play')
+      })
+
+      // Update progress bar state from player
+      player.on('timeupdate', () => {
+        if (!isSeekingProgress.value) {
+          currentTime.value = player.currentTime() || 0
+        }
+      })
+
+      player.on('durationchange', () => {
+        duration.value = player.duration() || 0
+      })
+
+      player.on('progress', () => {
+        const buffered = player.buffered()
+        if (buffered && buffered.length > 0) {
+          bufferedEnd.value = buffered.end(buffered.length - 1)
+        }
       })
 
       const qualityLevels = player.qualityLevels?.()
@@ -571,9 +770,13 @@ onMounted(async () => {
       player.on('fullscreenchange', updateQualityButtonVisibility)
       player.on('loadedmetadata', syncUltrawideFullscreenClass)
       player.on('fullscreenchange', syncUltrawideFullscreenClass)
+      player.on('fullscreenchange', attachProgressBarOverlay)
       player.on('play', syncUltrawideFullscreenClass)
       player.on('pause', syncUltrawideFullscreenClass)
       player.on('ended', syncUltrawideFullscreenClass)
+      player.on('ended', () => {
+        emit('ended')
+      })
       player.on('userinactive', handleUserInactive)
 
       player.on('fullscreenchange', dumpPlayerDebugState)
@@ -604,6 +807,9 @@ onBeforeUnmount(() => {
     const playerEl = player.el?.() as HTMLElement | undefined
     if (playerEl) {
       playerEl.classList.remove('giltube-ultrawide-fullscreen')
+    }
+    if (progressBarOverlay.value?.parentElement) {
+      progressBarOverlay.value.parentElement.removeChild(progressBarOverlay.value)
     }
     player.dispose()
     player = null
@@ -642,6 +848,37 @@ watch(
   .video-player-container {
     height: 500px;
   }
+}
+
+.progress-bar-overlay {
+  pointer-events: auto;
+  z-index: 50 !important;
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 0.25s ease, visibility 0.25s ease;
+}
+
+.progress-bar-overlay:hover {
+  height: 7px !important;
+}
+
+:deep(.video-js.vjs-user-inactive .progress-bar-overlay),
+:deep(.video-js.vjs-fullscreen.vjs-user-inactive .progress-bar-overlay) {
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(4px);
+}
+
+:deep(.video-js.vjs-user-active .progress-bar-overlay),
+:deep(.video-js.vjs-fullscreen.vjs-user-active .progress-bar-overlay),
+:deep(.video-js.vjs-fullscreen.giltube-ultrawide-fullscreen .progress-bar-overlay) {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.progress-bar-overlay:hover .seek-indicator {
+  opacity: 1 !important;
 }
 
 :deep(.video-js) {
@@ -718,10 +955,30 @@ watch(
   background-color: #4b5563;
 }
 
+:deep(.vjs-skip-backward),
+:deep(.vjs-skip-forward),
+:deep([class*="skip-backward"]),
+:deep([class*="skip-forward"]) {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  visibility: hidden !important;
+  position: absolute !important;
+  left: -9999px !important;
+}
+
 :deep(.vjs-control-bar) {
   background: linear-gradient(to top, rgba(0, 0, 0, 0.9), transparent);
   position: absolute;
   z-index: 30 !important;
+  display: flex !important;
+  align-items: center !important;
+  padding: 8px 12px !important;
+  gap: 4px !important;
+  width: 100% !important;
+  box-sizing: border-box;
 }
 
 :deep(.vjs-control-bar .vjs-control) {
@@ -730,6 +987,71 @@ watch(
   color: #fff !important;
   opacity: 1 !important;
   visibility: visible !important;
+  flex-shrink: 0;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  height: 28px !important;
+  margin: 0 !important;
+  padding: 0 6px !important;
+  line-height: 1 !important;
+}
+
+:deep(.giltube-control-group) {
+  display: flex !important;
+  align-items: center !important;
+  gap: 4px;
+  min-width: 0;
+}
+
+:deep(.giltube-control-group-left) {
+  flex: 0 0 auto;
+}
+
+:deep(.giltube-control-group-spacer) {
+  flex: 1 1 auto;
+}
+
+:deep(.giltube-control-group-right) {
+  flex: 0 0 auto;
+  margin-left: auto;
+}
+
+:deep(.vjs-current-time),
+:deep(.vjs-time-divider),
+:deep(.vjs-duration) {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  font-family: monospace;
+  font-size: 12px;
+  font-weight: normal;
+  line-height: 1 !important;
+}
+
+:deep(.vjs-current-time-display),
+:deep(.vjs-duration-display),
+:deep(.vjs-remaining-time-display) {
+  display: inline-flex !important;
+  align-items: center !important;
+}
+
+:deep(.vjs-current-time)::after {
+  content: ' / ';
+  white-space: nowrap;
+  display: inline;
+  margin: 0 2px;
+  line-height: inherit;
+}
+
+:deep(.vjs-time-divider) {
+  display: none !important;
+}
+
+:deep(.vjs-remaining-time) {
+  display: none !important;
 }
 
 :deep(.video-js.vjs-fullscreen .vjs-control-bar) {
@@ -755,7 +1077,7 @@ watch(
 }
 
 :deep(.vjs-progress-control) {
-  background-color: transparent;
+  display: none !important;
 }
 
 :deep(.vjs-play-progress) {
@@ -782,15 +1104,17 @@ watch(
   font-size: 12px;
   color: white;
   cursor: pointer;
-  padding: 5px 8px;
+  padding: 0 8px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  height: 28px;
   background-color: transparent !important;
   border: none;
   width: auto;
   gap: 3px;
   touch-action: manipulation;
+  line-height: 1;
 }
 
 :deep(.vjs-quality-button .vjs-icon-placeholder) {
@@ -936,5 +1260,232 @@ watch(
   opacity: 1 !important;
   visibility: visible !important;
   text-shadow: 0 0 2px rgba(0, 0, 0, 0.9) !important;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  /* Hide current time and duration, show only remaining time */
+  :deep(.vjs-current-time) {
+    display: none !important;
+  }
+
+  :deep(.vjs-time-divider) {
+    display: none !important;
+  }
+
+  :deep(.vjs-duration) {
+    display: none !important;
+  }
+
+  :deep(.vjs-remaining-time) {
+    display: inline-flex !important;
+    margin: 0 2px !important;
+    padding: 0 2px !important;
+    font-size: 10px !important;
+  }
+
+  :deep(.vjs-remaining-time-display) {
+    font-size: 10px !important;
+  }
+
+  :deep(.vjs-control-bar) {
+    padding: 8px 8px !important;
+    gap: 2px !important;
+  }
+
+  /* Reduce control button padding and size */
+  :deep(.vjs-control-bar .vjs-button) {
+    padding: 4px 4px !important;
+    width: 32px !important;
+    height: 32px !important;
+    font-size: 14px !important;
+  }
+
+  :deep(.vjs-control-bar .vjs-control) {
+    padding: 0 4px !important;
+    height: 32px !important;
+  }
+
+  :deep(.vjs-play-control) {
+    width: 32px !important;
+    height: 32px !important;
+  }
+
+  :deep(.vjs-volume-panel) {
+    width: 30px !important;
+  }
+
+  :deep(.vjs-volume-control) {
+    width: 30px !important;
+  }
+
+  :deep(.vjs-quality-button) {
+    width: 32px !important;
+    height: 32px !important;
+  }
+
+  :deep(.vjs-fullscreen-control) {
+    width: 32px !important;
+    height: 32px !important;
+  }
+
+  :deep(.vjs-picture-in-picture-toggle) {
+    width: 32px !important;
+    height: 32px !important;
+  }
+
+  :deep(.giltube-control-group) {
+    gap: 1px;
+  }
+
+  :deep(.giltube-control-group-spacer) {
+    flex: 1 1 auto;
+  }
+
+  .progress-bar-overlay {
+    height: 8px !important;
+  }
+
+  .progress-bar-overlay:hover {
+    height: 12px !important;
+  }
+}
+
+@media (max-width: 400px) {
+  :deep(.vjs-control-bar) {
+    padding: 6px 4px !important;
+    gap: 0 !important;
+  }
+
+  :deep(.vjs-control-bar .vjs-button) {
+    padding: 0 !important;
+    width: 26px !important;
+    height: 26px !important;
+    margin: 0 !important;
+    font-size: 12px !important;
+  }
+
+  :deep(.vjs-control-bar .vjs-control) {
+    padding: 0 !important;
+    height: 26px !important;
+  }
+
+  :deep(.vjs-play-control) {
+    width: 26px !important;
+    height: 26px !important;
+  }
+
+  :deep(.vjs-volume-panel) {
+    width: 24px !important;
+  }
+
+  :deep(.vjs-volume-control) {
+    width: 24px !important;
+  }
+
+  :deep(.vjs-quality-button) {
+    width: 26px !important;
+    height: 26px !important;
+  }
+
+  :deep(.vjs-fullscreen-control) {
+    width: 26px !important;
+    height: 26px !important;
+  }
+
+  :deep(.vjs-picture-in-picture-toggle) {
+    width: 26px !important;
+    height: 26px !important;
+  }
+
+  :deep(.vjs-remaining-time) {
+    font-size: 8px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    white-space: nowrap;
+  }
+
+  :deep(.giltube-control-group) {
+    gap: 0;
+  }
+
+  .progress-bar-overlay {
+    height: 10px !important;
+  }
+
+  .progress-bar-overlay:hover {
+    height: 14px !important;
+  }
+}
+
+@media (max-width: 340px) {
+  :deep(.vjs-control-bar) {
+    padding: 4px 2px !important;
+    gap: 0 !important;
+  }
+
+  :deep(.vjs-control-bar .vjs-button) {
+    padding: 0 !important;
+    width: 24px !important;
+    height: 24px !important;
+    margin: 0 !important;
+    font-size: 11px !important;
+  }
+
+  :deep(.vjs-control-bar .vjs-control) {
+    padding: 0 !important;
+    height: 24px !important;
+  }
+
+  :deep(.vjs-play-control) {
+    width: 24px !important;
+    height: 24px !important;
+  }
+
+  :deep(.vjs-volume-panel) {
+    width: 22px !important;
+  }
+
+  :deep(.vjs-volume-control) {
+    width: 22px !important;
+  }
+
+  :deep(.vjs-quality-button) {
+    width: 24px !important;
+    height: 24px !important;
+  }
+
+  :deep(.vjs-fullscreen-control) {
+    width: 24px !important;
+    height: 24px !important;
+  }
+
+  :deep(.vjs-picture-in-picture-toggle) {
+    width: 24px !important;
+    height: 24px !important;
+  }
+
+  :deep(.vjs-remaining-time) {
+    font-size: 7px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    white-space: nowrap;
+  }
+
+  :deep(.vjs-time-control) {
+    width: unset !important;
+  }
+
+  :deep(.giltube-control-group) {
+    gap: 0;
+  }
+
+  .progress-bar-overlay {
+    height: 12px !important;
+  }
+
+  .progress-bar-overlay:hover {
+    height: 16px !important;
+  }
 }
 </style>

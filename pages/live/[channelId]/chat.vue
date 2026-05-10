@@ -1,7 +1,7 @@
 <template>
-    <div class="min-h-screen bg-zinc-950 text-white p-3">
-        <div class="h-[calc(100vh-1.5rem)] max-w-[460px] mx-auto bg-zinc-900 border border-zinc-800 rounded-lg flex flex-col">
-            <div class="p-3 border-b border-zinc-800 flex items-center justify-between gap-2">
+    <div class="fixed inset-0 bg-zinc-950 text-white z-50">
+        <div class="h-screen w-screen bg-zinc-900 flex flex-col">
+            <div class="p-3 border-b border-zinc-800 flex items-center justify-between gap-2 bg-zinc-900">
                 <div class="min-w-0">
                     <p class="font-semibold truncate">{{ channelName }} Chat</p>
                     <p class="text-xs text-gray-400">Detached live chat window</p>

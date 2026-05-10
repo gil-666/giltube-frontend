@@ -4,7 +4,7 @@ let selectedCategory = ref<any>(null)
 
 export const useSelectedCategory = () => {
   // Initialize from localStorage on client-only during mount
-  if (process.client && selectedCategory.value === null) {
+  if (process.client && typeof window !== 'undefined' && selectedCategory.value === null) {
     const stored = localStorage.getItem('selected_category')
     if (stored) {
       try {
@@ -17,7 +17,7 @@ export const useSelectedCategory = () => {
 
   // Watch for changes and save to localStorage (client-only)
   watch(selectedCategory, (newValue) => {
-    if (process.client) {
+    if (process.client && typeof window !== 'undefined') {
       if (newValue === null) {
         localStorage.removeItem('selected_category')
       } else {

@@ -41,7 +41,44 @@
                     </button>
                 </div>
 
-                <p class="comment-text text-gray-300 mt-1 text-xs break-words" v-html="renderCommentText(comment.text)"></p>
+                <div class="mt-1 space-y-1.5">
+                    <p class="comment-text text-gray-300 text-xs break-words" v-html="renderCommentText(comment.text)"></p>
+
+                    <div v-if="videoPreviewList.length > 0" class="space-y-1.5">
+                        <NuxtLink
+                            v-for="preview in videoPreviewList"
+                            :key="preview.id"
+                            :to="localePath(`/video/${preview.id}`)"
+                            class="group flex items-center gap-2 rounded-md border border-zinc-700 bg-zinc-800/80 p-2 transition hover:bg-zinc-700/80"
+                        >
+                            <img
+                                v-if="getVideoThumbnailUrl(preview.thumbnail_url)"
+                                :src="getVideoThumbnailUrl(preview.thumbnail_url)"
+                                :alt="preview.title"
+                                class="h-10 w-16 rounded object-cover flex-shrink-0"
+                            />
+                            <div
+                                v-else
+                                class="h-10 w-16 rounded bg-zinc-700 text-[10px] font-semibold text-zinc-300 flex items-center justify-center flex-shrink-0"
+                            >
+                                VIDEO
+                            </div>
+
+                            <div class="min-w-0 flex-1">
+                                <p class="text-[11px] font-semibold text-zinc-100 truncate group-hover:text-yellow-300 transition">
+                                    {{ preview.title }}
+                                </p>
+                                <p class="text-[10px] text-zinc-400 truncate">
+                                    {{ preview.channel_name || t('app.myChannel') }}
+                                </p>
+                            </div>
+                        </NuxtLink>
+
+                        <p v-if="moreVideoPreviewCount > 0" class="text-[10px] text-zinc-500">
+                            +{{ moreVideoPreviewCount }} more linked {{ moreVideoPreviewCount === 1 ? 'video' : 'videos' }}
+                        </p>
+                    </div>
+                </div>
 
                 <div class="mt-2 flex items-center gap-3">
                     <button
@@ -126,9 +163,13 @@
 import { computed, ref, watch } from 'vue'
 import VerifiedBadge from '~/app/components/VerifiedBadge.vue'
 import { useI18n } from 'vue-i18n'
+import { useLocalePath } from '#i18n'
+import { apiBaseURL } from '~/app/service/client'
+import { getVideo } from '~/app/service/videos'
 
 defineOptions({ name: 'CommentNode' })
 const { t } = useI18n()
+const localePath = useLocalePath()
 
 type ThreadComment = {
     id: string
@@ -179,6 +220,16 @@ const parentComment = computed(() => {
     return props.commentsById[props.comment.parent_comment_id] || null
 })
 
+type CommentVideoPreview = {
+    id: string
+    title: string
+    thumbnail_url?: string
+    channel_name?: string
+}
+
+const videoPreviewCache = useState<Record<string, CommentVideoPreview | null>>('comment-video-preview-cache', () => ({}))
+const videoPreviewLoading = useState<Record<string, boolean>>('comment-video-preview-loading', () => ({}))
+
 const subtreeContainsTarget = (items: ThreadComment[], targetID: string): boolean => {
     for (const item of items || []) {
         if (item.id === targetID) return true
@@ -204,6 +255,30 @@ const markAvatarFailed = (commentID: string) => {
     props.failedCommentAvatars[commentID] = true
 }
 
+const extractVideoIdFromLink = (rawUrl: string) => {
+    const href = rawUrl.startsWith('http')
+        ? rawUrl
+        : rawUrl.startsWith('/')
+            ? `${siteOrigin}${rawUrl}`
+            : `https://${rawUrl}`
+
+    try {
+        const parsed = new URL(href)
+        const segments = parsed.pathname.split('/').filter(Boolean)
+        if (segments.length >= 2 && segments[0] === 'video') {
+            return segments[1] || ''
+        }
+
+        if (segments.length >= 3 && segments[1] === 'video') {
+            return segments[2] || ''
+        }
+
+        return ''
+    } catch {
+        return ''
+    }
+}
+
 const escapeHTML = (value: string) =>
     value
         .replace(/&/g, '&amp;')
@@ -212,22 +287,132 @@ const escapeHTML = (value: string) =>
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#39;')
 
+const siteOrigin = (() => {
+    try {
+        const siteUrl = useRuntimeConfig().public.siteUrl || 'https://giltube.gilservers.com'
+        return new URL(siteUrl).origin
+    } catch {
+        return 'https://giltube.gilservers.com'
+    }
+})()
+
+const resolveCommentLink = (rawUrl: string) => {
+    const href = rawUrl.startsWith('http')
+        ? rawUrl
+        : rawUrl.startsWith('/')
+            ? `${siteOrigin}${rawUrl}`
+            : `https://${rawUrl}`
+
+    try {
+        const parsed = new URL(href)
+        const isGiltubeHost = /(^|\.)giltube\.gilservers\.com$/i.test(parsed.hostname)
+        const isInternalVideoLink = isGiltubeHost && /^\/(?:[a-z]{2}(?:-[a-z]{2})?\/)?(video|live)\/[A-Za-z0-9-]+/i.test(parsed.pathname)
+
+        if (isInternalVideoLink) {
+            return {
+                href: localePath(parsed.pathname) + parsed.search + parsed.hash,
+                internal: true,
+            }
+        }
+
+        return { href, internal: false }
+    } catch {
+        return { href, internal: false }
+    }
+}
+
 const renderCommentText = (value: string) => {
     const escaped = escapeHTML(value || '')
     const withLinks = escaped.replace(
-        /\b((https?:\/\/|www\.)[^\s<]+)/gi,
+        /\b((https?:\/\/|www\.)[^\s<]+|\/(?:video|live)\/[A-Za-z0-9-]+(?:\?[^\s<]*)?)/gi,
         (rawUrl) => {
-            const href = rawUrl.startsWith('http') ? rawUrl : `https://${rawUrl}`
+            const { href, internal } = resolveCommentLink(rawUrl)
             // Render direct .gif links inline in comments
             if (/\.gif(\?|$)/i.test(href)) {
                 return `<div class="comment-gif-wrap"><img src="${href}" loading="lazy" alt="gif" class="comment-gif" /></div>`
             }
-            return `<a href="${href}" target="_blank" rel="noopener noreferrer nofollow" class="comment-link">${rawUrl}</a>`
+            return internal
+                ? `<span class="comment-link-hidden" aria-hidden="true"></span>`
+                : `<a href="${href}" target="_blank" rel="noopener noreferrer nofollow" class="comment-link">${rawUrl}</a>`
         }
     )
 
     return withLinks.replace(/\n/g, '<br>')
 }
+
+const internalVideoIds = computed(() => {
+    const ids = new Set<string>()
+    const text = props.comment.text || ''
+    const matches = text.match(/\b((https?:\/\/|www\.)[^\s<]+|\/(?:[a-z]{2}(?:-[a-z]{2})\/)?video\/[A-Za-z0-9-]+(?:\?[^\s<]*)?)/gi) || []
+
+    for (const rawUrl of matches) {
+        const videoID = extractVideoIdFromLink(rawUrl)
+        if (videoID) {
+            ids.add(videoID)
+        }
+    }
+
+    return Array.from(ids)
+})
+
+const videoPreviewList = computed(() => {
+    return internalVideoIds.value
+        .map((id) => videoPreviewCache.value[id])
+        .filter((preview): preview is CommentVideoPreview => !!preview)
+        .slice(0, 2)
+})
+
+const moreVideoPreviewCount = computed(() => {
+    const totalResolved = internalVideoIds.value.length
+    return Math.max(0, totalResolved - videoPreviewList.value.length)
+})
+
+const getVideoThumbnailUrl = (thumbnailUrl?: string) => {
+    if (!thumbnailUrl) return ''
+    if (/^https?:\/\//i.test(thumbnailUrl)) {
+        return thumbnailUrl
+    }
+
+    if (thumbnailUrl.startsWith('/api/v1/')) {
+        return thumbnailUrl.replace(/^\/api\/v1/, '')
+    }
+
+    if (thumbnailUrl.startsWith('/videos/')) {
+        return thumbnailUrl
+    }
+
+    if (thumbnailUrl.startsWith('videos/')) {
+        return `/${thumbnailUrl}`
+    }
+
+    return thumbnailUrl.startsWith('/') ? thumbnailUrl : `/${thumbnailUrl}`
+}
+
+watch(
+    internalVideoIds,
+    async (ids) => {
+        const missingIds = ids.filter((id) => !videoPreviewCache.value[id] && !videoPreviewLoading.value[id])
+        if (missingIds.length === 0) return
+
+        await Promise.all(missingIds.map(async (id) => {
+            videoPreviewLoading.value[id] = true
+            try {
+                const video = await getVideo(id)
+                videoPreviewCache.value[id] = {
+                    id: video.id,
+                    title: video.title || 'Untitled video',
+                    thumbnail_url: video.thumbnail_url || '',
+                    channel_name: video.channel?.name || '',
+                }
+            } catch {
+                videoPreviewCache.value[id] = null
+            } finally {
+                videoPreviewLoading.value[id] = false
+            }
+        }))
+    },
+    { immediate: true }
+)
 
 const cancelReply = () => {
     isReplying.value = false
@@ -278,6 +463,14 @@ const submitReply = async () => {
 
 .comment-text :deep(.comment-link:hover) {
     color: rgb(147 197 253);
+}
+
+.comment-text :deep(.comment-link-internal) {
+    font-weight: 600;
+}
+
+.comment-link-hidden {
+    display: none;
 }
 
 .comment-gif-wrap {

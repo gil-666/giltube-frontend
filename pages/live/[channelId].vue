@@ -70,7 +70,7 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 6l-4-4-4 4"/>
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 2v13"/>
                             </svg>
-                            <span>{{ shareButtonText }}</span>
+                            <span>{{ t('live.share') }}</span>
                         </button>
                     </div>
                 </div>
@@ -165,6 +165,7 @@ import {
 import { useMetaTags } from '~/app/composables/useMetaTags'
 import { useI18n } from 'vue-i18n'
 import { useLocalePath } from '#i18n'
+import { useFetch } from '#app'
 
 const { t } = useI18n()
 const localePath = useLocalePath()
@@ -197,6 +198,39 @@ const channelAvatarFailed = ref(false)
 const chatListRef = ref<HTMLElement | null>(null)
 const shareCopied = ref(false)
 
+// Fetch live stream data during SSR
+const { data: fetchedLive } = useFetch(
+    () => `/api/v1/live/channels/${encodeURIComponent(channelId.value)}`,
+    {
+        watch: [channelId],
+        transform: (res: any) => res as LiveStreamState
+    }
+)
+
+// Sync fetched data to live ref
+watch(fetchedLive, (newData) => {
+    if (newData) {
+        live.value = newData
+    }
+})
+
+// Update meta tags whenever live data is available
+watch(
+    live,
+    (newLive) => {
+        const title = (newLive?.title || 'GilTube Live') + ' - GilTube'
+        const description = newLive?.description || 'Watch live streams on GilTube.'
+        const image = newLive?.thumbnail_url || undefined
+        
+        useMetaTags({
+            title,
+            description,
+            image
+        })
+    },
+    { immediate: true }
+)
+
 const shareButtonText = computed(() => shareCopied.value ? t('live.shareCopied') : t('live.share'))
 
 type PresenceViewer = {
@@ -224,10 +258,23 @@ const channelName = computed(() => live.value?.channel?.name || t('app.myChannel
 const channelAvatar = computed(() => live.value?.channel?.avatar_url || '')
 const channelVerified = computed(() => !!live.value?.channel?.verified)
 const liveVideoId = computed(() => live.value?.id || channelId.value || '')
-useMetaTags({
-    title: liveTitle.value+' - GilTube',
-    description: 'Watch live streams on GilTube.'
-})
+
+// Watch for live stream data and update meta tags with actual values
+watch(
+    live,
+    (newLive) => {
+        const title = (newLive?.title || 'GilTube Live') + ' - GilTube'
+        const description = newLive?.description || 'Watch live streams on GilTube.'
+        const image = newLive?.thumbnail_url || undefined
+        
+        useMetaTags({
+            title,
+            description,
+            image
+        })
+    },
+    { immediate: true }
+)
 const canSendChat = computed(() => {
     return (
         isLoggedIn.value &&
@@ -564,7 +611,7 @@ onMounted(async () => {
             chatPollTimer = setInterval(async () => {
                 await loadLiveState()
                 await refreshChat()
-            }, 4000)
+            }, 2000)
         },
         { immediate: true }
     )

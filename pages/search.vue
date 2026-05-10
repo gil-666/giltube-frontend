@@ -51,7 +51,7 @@
                         </div>
 
                         <div class="flex items-center gap-2 text-xs text-gray-500 mt-1">
-                            <span>{{ t('searchPage.views', { count: formatViews(video.views) }) }}</span>
+                            <span>{{ t('searchPage.views', { count: formatViews(video.views || 0) }) }}</span>
                         </div>
                     </NuxtLink>
                 </div>
@@ -108,7 +108,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import VerifiedBadge from '~/app/components/VerifiedBadge.vue'
 import { useI18n } from 'vue-i18n'
@@ -180,6 +180,7 @@ const performSearch = async () => {
 
     isLoading.value = true
     error.value = ''
+    results.value = [] // Clear previous results
 
     try {
         const response = await fetch(
@@ -227,16 +228,22 @@ onMounted(() => {
     }
 })
 
-// Watch for query changes
-watch(() => route.query, () => {
-    searchQuery.value = route.query.q as string || ''
-    currentPage.value = parseInt(route.query.page as string) || 1
-    if (searchQuery.value) {
-        performSearch()
-    }
-})
-
-import { watch } from 'vue'
+// Watch for query changes - trigger search when q or page params change
+watch(
+    () => route.query,
+    (newQuery) => {
+        const newSearchQuery = newQuery.q as string || ''
+        const newPage = parseInt(newQuery.page as string) || 1
+        
+        searchQuery.value = newSearchQuery
+        currentPage.value = newPage
+        
+        if (newSearchQuery) {
+            performSearch()
+        }
+    },
+    { deep: true }
+)
 </script>
 
 <style scoped></style>

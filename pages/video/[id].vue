@@ -9,6 +9,7 @@
           :src="videoSrc" 
           :status="video?.status"
           @play="onVideoPlay"
+          @ended="handleVideoEnded"
         />
       </div>
 
@@ -54,7 +55,7 @@
         
         <!-- Views and Date -->
         <div class="flex gap-4 text-sm text-gray-400 mt-3">
-          <span>{{ formatViews(video.views) }} views</span>
+          <span>{{ formatViews(video.views) }} {{ t('video.views') }}</span>
           <span>{{ getTimeAgo(video.created_at) }}</span>
         </div>
 
@@ -76,8 +77,8 @@
           </div>
         </NuxtLink>
 
-        <!-- Action Buttons (Like, Share) -->
-        <div class="flex gap-4 mt-4">
+        <!-- Action Buttons (Like, Share, Add to Playlist) -->
+        <div class="flex gap-4 mt-4 flex-wrap">
           <button
             @click="toggleLike"
             :disabled="!isLoggedIn || isToggglingLike"
@@ -93,6 +94,16 @@
           </button>
 
           <button
+            v-if="isLoggedIn"
+            @click="showAddToPlaylist = true"
+            class="flex items-center gap-2 px-4 py-2 rounded-lg transition text-sm font-medium bg-zinc-700 hover:bg-zinc-600"
+            title="Add to Playlist"
+          >
+            <span class="text-lg font-bold">+</span>
+            <span>{{ t('playlists.addVideoButton') }}</span>
+          </button>
+
+          <button
             @click="shareVideo"
             class="flex items-center gap-2 px-4 py-2 rounded-lg transition text-sm font-medium bg-zinc-700 hover:bg-zinc-600"
             title="Share"
@@ -102,8 +113,71 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 6l-4-4-4 4"/>
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 2v13"/>
             </svg>
-            <span>{{ shareButtonText }}</span>
+            <span>{{ t('video.share') }}</span>
           </button>
+        </div>
+      </div>
+
+      <!-- Mobile Playlist Queue -->
+      <div v-if="isPlayingFromPlaylist && playlistVideos.length > 0" class="mt-8 lg:hidden">
+        <div class="bg-zinc-900 rounded-lg p-4 mb-3">
+          <div class="flex items-center justify-between gap-3 mb-2">
+            <div>
+              <h2 class="text-lg font-bold">{{ t('playlists.playingFrom') }}</h2>
+              <NuxtLink :to="localePath(`/playlists/${currentPlaylistId}`)" class="text-red-400 hover:text-red-300 text-sm truncate block">
+                {{ currentPlaylistName }}
+              </NuxtLink>
+            </div>
+            <button
+              v-if="playlistVideos.length > 3"
+              @click="isPlaylistQueueExpanded = !isPlaylistQueueExpanded"
+              class="shrink-0 px-3 py-2 bg-zinc-800 hover:bg-zinc-700 rounded text-xs font-semibold transition"
+            >
+              {{ isPlaylistQueueExpanded ? 'Show less' : 'Show all' }}
+            </button>
+          </div>
+          <p class="text-xs text-gray-500">
+            {{ isPlaylistQueueExpanded ? playlistVideos.length : Math.min(3, playlistVideos.length) }} / {{ playlistVideos.length }}
+          </p>
+        </div>
+
+        <div class="space-y-2">
+          <NuxtLink
+            v-for="item in playlistQueueVideos"
+            :key="`${item.video.id}-${item.index}`"
+            :to="localePath(`/video/${item.video.id}?playlist_id=${currentPlaylistId}&index=${item.index}`)"
+            :class="{
+              'bg-red-900 border-red-500 border': item.index === currentVideoIndex,
+              'bg-zinc-800 hover:bg-zinc-700': item.index !== currentVideoIndex
+            }"
+            class="block p-3 rounded-lg transition group"
+          >
+            <div class="flex gap-3 min-w-0">
+              <div class="w-16 h-12 flex-shrink-0 bg-zinc-700 rounded overflow-hidden relative">
+                <img
+                  v-if="item.video.thumbnail_url"
+                  :src="item.video.thumbnail_url"
+                  :alt="item.video.title"
+                  class="w-full h-full object-cover"
+                />
+                <div v-else class="w-full h-full flex items-center justify-center text-gray-400 text-xs">
+                  {{ t('playlists.noThumbnail') }}
+                </div>
+                <div class="absolute top-0.5 left-0.5 bg-black bg-opacity-70 px-1 py-0.5 rounded text-xs font-bold text-white">
+                  {{ item.index + 1 }}
+                </div>
+              </div>
+
+              <div class="flex-1 min-w-0">
+                <p class="text-xs font-semibold line-clamp-2 group-hover:text-red-300 transition">
+                  {{ item.video.title }}
+                </p>
+                <p class="text-xs text-gray-500 mt-1">
+                  {{ item.video.channel?.name || t('playlists.unknownChannel') }}
+                </p>
+              </div>
+            </div>
+          </NuxtLink>
         </div>
       </div>
 
@@ -118,7 +192,7 @@
             <label class="text-xs text-gray-400 block mb-2">{{ t('video.commentAs') }}</label>
             <select
               v-model="personalAccountSelectedChannel"
-              class="w-full bg-zinc-800 border border-zinc-700 rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-blue-500"
+              class="w-full bg-zinc-800 border border-zinc-700 rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-red-500"
             >
               <option v-for="channel in userChannels" :key="channel.id" :value="channel.id">
                 {{ channel.name }}
@@ -133,9 +207,9 @@
                 :src="getChannelAvatarUrl((activeAccount === userId || activeAccount === 'personal') ? personalAccountSelectedChannel : activeAccount)"
                 :alt="selectedChannelName"
                 class="w-full h-full object-cover"
-                @error="(e) => e.target.style.display = 'none'"
+                @error="(e) => { const target = e.target as HTMLImageElement | null; if (target) target.style.display = 'none' }"
               />
-              <span v-show="!getChannelAvatarUrl((activeAccount === userId || activeAccount === 'personal') ? personalAccountSelectedChannel : activeAccount) || ($event?.target?.style?.display === 'none')">{{ selectedChannelName.charAt(0).toUpperCase() }}</span>
+              <span v-show="!getChannelAvatarUrl((activeAccount === userId || activeAccount === 'personal') ? personalAccountSelectedChannel : activeAccount)">{{ selectedChannelName.charAt(0).toUpperCase() }}</span>
             </div>
             <textarea
               v-model="newCommentText"
@@ -145,20 +219,30 @@
               class="flex-1 bg-zinc-800 border border-zinc-700 rounded px-3 py-1 text-white text-sm focus:outline-none focus:border-blue-500 resize-none"
             />
           </div>
-          <div class="flex gap-2 justify-end">
+          <div class="flex gap-2 justify-between">
             <button
-              @click="newCommentText = ''"
-              class="px-4 py-2 text-gray-400 hover:text-white transition text-sm"
+              type="button"
+              @click="showGiphyPicker = true"
+              class="px-3 py-2 text-gray-400 hover:text-white transition text-sm flex items-center gap-1"
+              title="Add GIF"
             >
-              {{ t('video.cancel') }}
+              <span>GIF</span>
             </button>
-            <button
-              @click="postComment"
-              :disabled="!newCommentText.trim() || isPostingComment"
-              class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded transition disabled:opacity-50 disabled:cursor-not-allowed text-sm"
-            >
-              {{ isPostingComment ? t('video.posting') : t('video.comment') }}
-            </button>
+            <div class="flex gap-2">
+              <button
+                @click="newCommentText = ''"
+                class="px-4 py-2 text-gray-400 hover:text-white transition text-sm"
+              >
+                {{ t('video.cancel') }}
+              </button>
+              <button
+                @click="postComment"
+                :disabled="!newCommentText.trim() || isPostingComment"
+                class="px-4 py-2 bg-red-600 hover:bg-red-700 rounded transition disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+              >
+                {{ isPostingComment ? t('video.posting') : t('video.comment') }}
+              </button>
+            </div>
           </div>
           <p class="text-xs text-gray-500 mt-2">{{ newCommentText.length }}/500</p>
         </div>
@@ -211,13 +295,143 @@
           />
         </div>
       </div>
+
+    </div>
+
+    <!-- Mobile Related Videos -->
+    <div v-if="relatedVideos.length > 0" class="lg:hidden mt-8 px-4">
+      <h2 class="text-lg font-bold mb-4">{{ t('video.relatedVideos') }}</h2>
+
+      <div class="relative">
+        <button
+          @click="scrollCarousel('left')"
+          class="absolute left-0 top-1/3 -translate-y-1/2 z-10 bg-black bg-opacity-70 hover:bg-opacity-100 rounded-full p-2 transition"
+        >
+          <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
+
+        <div ref="carouselContainer" class="overflow-x-auto pb-2 px-8" style="scrollbar-width: none; -ms-overflow-style: none;">
+          <div class="flex gap-3 whitespace-nowrap" style="-webkit-overflow-scrolling: touch;">
+            <NuxtLink
+              v-for="relatedVideo in relatedVideos"
+              :key="relatedVideo.id"
+              :to="localePath(`/video/${relatedVideo.id}`)"
+              class="inline-block hover:opacity-80 transition flex-shrink-0"
+            >
+              <div class="bg-zinc-800 rounded overflow-hidden w-40 aspect-video mb-1.5 relative">
+                <img
+                  class="w-full h-full object-cover"
+                  :src="baseUrl + relatedVideo.thumbnail_url"
+                  :alt="relatedVideo.title"
+                />
+                <div v-if="relatedVideo.width == 7680" class="absolute top-1 right-1 bg-green-900 text-green-200 px-1.5 py-0.5 rounded text-xs font-semibold border border-green-700">{{ t('video.eightKBadge') }}</div>
+                <div v-if="relatedVideo.width == 3840" class="absolute top-1 right-1 bg-green-900 text-green-200 px-1.5 py-0.5 rounded text-xs font-semibold border border-green-700">{{ t('video.fourKBadge') }}</div>
+              </div>
+              <p class="text-xs font-semibold line-clamp-2 w-40">{{ relatedVideo.title }}</p>
+              <div class="flex items-center gap-1">
+                <NuxtLink :to="localePath(`/channel/${relatedVideo.channel?.id}`)" class="text-xs text-gray-400 hover:text-yellow-400 transition">{{ relatedVideo.channel?.name }}</NuxtLink>
+                <VerifiedBadge :verified="relatedVideo.channel?.verified || false" size="sm" />
+              </div>
+              <p class="text-xs text-gray-500">{{ formatViews(relatedVideo.views) }} views</p>
+            </NuxtLink>
+          </div>
+        </div>
+
+        <button
+          @click="scrollCarousel('right')"
+          class="absolute right-0 top-1/3 -translate-y-1/2 z-10 bg-black bg-opacity-70 hover:bg-opacity-100 rounded-full p-2 transition"
+        >
+          <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
+      </div>
     </div>
 
     <!-- Right: Sidebar (full width on mobile as carousel, wider on tablet, sidebar on lg) -->
-    <div class="w-full md:w-full lg:w-64 lg:flex-shrink-0">
+    <div class="hidden lg:block w-full md:w-full lg:w-64 lg:flex-shrink-0">
       <div class="md:sticky md:top-6">
+        <!-- Playlist Queue (when playing from playlist) -->
+        <div v-if="isPlayingFromPlaylist && playlistVideos.length > 0" class="px-4 md:px-0">
+          <div
+            class="relative bg-zinc-900 rounded-lg p-4 mb-4 cursor-pointer border border-transparent hover:border-zinc-700 transition"
+            role="button"
+            tabindex="0"
+            @click="isPlaylistQueueExpanded = !isPlaylistQueueExpanded"
+            @keydown.enter.prevent="isPlaylistQueueExpanded = !isPlaylistQueueExpanded"
+            @keydown.space.prevent="isPlaylistQueueExpanded = !isPlaylistQueueExpanded"
+          >
+            <div class="absolute top-3 right-3 inline-flex h-8 w-8 items-center justify-center rounded-full bg-zinc-800/90 text-white shadow-lg ring-1 ring-white/10 transition group-hover:bg-zinc-700">
+              <svg v-if="isPlaylistQueueExpanded" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd" />
+              </svg>
+              <svg v-else xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+              </svg>
+            </div>
+
+            <div class="min-w-0 pr-12">
+              <h2 class="text-lg font-bold">{{ t('playlists.playingFrom') }}</h2>
+              <NuxtLink :to="localePath(`/playlists/${currentPlaylistId}`)" class="text-red-400 hover:text-red-300 text-sm truncate block">
+                {{ currentPlaylistName }}
+              </NuxtLink>
+              <div class="mt-2 flex flex-wrap items-center gap-2 text-xs text-gray-400">
+                <span>
+                  {{ currentVideoIndex + 1 }} / {{ playlistVideos.length }}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <h3 class="text-sm font-semibold text-gray-400 mb-3 uppercase tracking-wide">{{ t('playlists.upNext') }}</h3>
+          
+          <div class="space-y-2">
+            <NuxtLink
+              v-for="item in playlistQueueVideos"
+              :key="`${item.video.id}-${item.index}`"
+              :to="localePath(`/video/${item.video.id}?playlist_id=${currentPlaylistId}&index=${item.index}`)"
+              :class="{
+                'bg-red-900 border-red-500 border': item.index === currentVideoIndex,
+                'bg-zinc-800 hover:bg-zinc-700': item.index !== currentVideoIndex
+              }"
+              class="block p-3 rounded-lg transition group"
+            >
+              <div class="flex gap-3 min-w-0">
+                <!-- Thumbnail -->
+                <div class="w-16 h-12 flex-shrink-0 bg-zinc-700 rounded overflow-hidden relative">
+                  <img
+                    v-if="item.video.thumbnail_url"
+                    :src="item.video.thumbnail_url"
+                    :alt="item.video.title"
+                    class="w-full h-full object-cover"
+                  />
+                  <div v-else class="w-full h-full flex items-center justify-center text-gray-400 text-xs">
+                    {{ t('playlists.noThumbnail') }}
+                  </div>
+                  <!-- Video index badge -->
+                  <div class="absolute top-0.5 left-0.5 bg-black bg-opacity-70 px-1 py-0.5 rounded text-xs font-bold text-white">
+                    {{ item.index + 1 }}
+                  </div>
+                </div>
+
+                <!-- Video Info -->
+                <div class="flex-1 min-w-0">
+                  <p class="text-xs font-semibold line-clamp-2 group-hover:text-red-300 transition">
+                    {{ item.video.title }}
+                  </p>
+                  <p class="text-xs text-gray-500 mt-1">
+                    {{ item.video.channel?.name || t('playlists.unknownChannel') }}
+                  </p>
+                </div>
+              </div>
+            </NuxtLink>
+          </div>
+        </div>
+
         <!-- Related Videos -->
-        <div class="px-4 md:px-0">
+        <div v-else class="px-4 md:px-0">
           <h2 class="text-lg font-bold mb-4">{{ t('video.relatedVideos') }}</h2>
           
           <!-- Mobile: Horizontal Carousel (hidden on md and above) -->
@@ -420,14 +634,35 @@
     </div>
 
   </div>
+
+  <!-- Giphy Picker Modal -->
+  <GiphyPicker 
+    :is-open="showGiphyPicker"
+    @close="showGiphyPicker = false"
+    @select="handleGiphySelect"
+  />
+
+  <!-- Add to Playlist Modal (client-only to avoid SSR teleport/hydration issues) -->
+  <client-only>
+    <AddToPlaylistModal
+      :is-open="showAddToPlaylist"
+      :video-id="id"
+      @close="showAddToPlaylist = false"
+      @select="handlePlaylistSelect"
+      @create-new="handleCreateNewPlaylist"
+    />
+  </client-only>
 </template>
 
 <script setup lang="ts">
 import VideoPlayer from '~/app/components/videoplayer/VideoPlayer.vue'
 import VerifiedBadge from '~/app/components/VerifiedBadge.vue'
 import CommentNode from '~/app/components/comments/CommentNode.vue'
+import GiphyPicker from '~/app/components/GiphyPicker.vue'
+import AddToPlaylistModal from '~/app/components/AddToPlaylistModal.vue'
 import { getVideo, incrementViews, getVideos, likeVideo, unlikeVideo, checkIfLiked } from '~/app/service/videos'
 import { getVideoComments, postComment as apiPostComment, deleteComment, likeComment, unlikeComment } from '~/app/service/comments'
+import { insertGiphyIntoComment, type GiphyGif } from '~/app/utils/giphy'
 import { getTimeAgo } from '~/app/utils/time'
 import { formatViews } from '~/app/utils/format'
 import { useMetaTags } from '~/app/composables/useMetaTags'
@@ -447,12 +682,12 @@ const isLoggedIn = ref(false)
 const userId = ref('')
 const activeAccount = ref('personal')
 const activeChannelName = ref('')
-const userChannels = ref([])
+const userChannels = ref<any[]>([])
 const personalAccountSelectedChannel = ref('')
 const selectedChannelName = ref('')
 const failedCommentAvatars = ref({})
 
-const comments = ref([])
+const comments = ref<any[]>([])
 const newCommentText = ref('')
 const isPostingComment = ref(false)
 const postingReplyForCommentId = ref<Record<string, boolean>>({})
@@ -469,11 +704,37 @@ const showExplicitWarning = ref(false)
 const neverShowExplicitWarningAgain = ref(false)
 const highlightedCommentId = ref('')
 const pendingJumpCommentID = ref('')
+const showGiphyPicker = ref(false)
+const showAddToPlaylist = ref(false)
 
 const showSidebar = ref(true)
 
-const relatedVideos = ref([])
+const relatedVideos = ref<any[]>([])
 const carouselContainer = ref<HTMLElement | null>(null)
+
+// Playlist playback mode
+const isPlayingFromPlaylist = ref(false)
+const currentPlaylistId = ref('')
+const currentPlaylistName = ref('')
+const playlistVideos = ref<any[]>([])
+const currentVideoIndex = ref(0)
+const isPlaylistQueueExpanded = ref(false)
+
+const playlistQueueVideos = computed(() => {
+  if (!playlistVideos.value.length) return []
+
+  if (isPlaylistQueueExpanded.value || playlistVideos.value.length <= 3) {
+    return playlistVideos.value.map((video: any, index: number) => ({ video, index }))
+  }
+
+  const start = Math.max(0, currentVideoIndex.value - 1)
+  const end = Math.min(playlistVideos.value.length, currentVideoIndex.value + 2)
+
+  return playlistVideos.value.slice(start, end).map((video: any, offset: number) => ({
+    video,
+    index: start + offset
+  }))
+})
 
 const commentsById = computed(() => {
   const map: Record<string, any> = {}
@@ -497,11 +758,13 @@ const targetCommentId = computed(() => {
   return typeof raw === 'string' ? raw.trim() : ''
 })
 
-const scrollCarousel = (direction: 'left' | 'right') => {
-  if (!carouselContainer.value) return
+const desktopCarouselContainer = ref<HTMLElement | null>(null)
+
+const scrollCarousel = (direction: 'left' | 'right', containerRef: typeof carouselContainer = carouselContainer) => {
+  if (!containerRef.value) return
   const scrollAmount = 300
-  const newScroll = carouselContainer.value.scrollLeft + (direction === 'left' ? -scrollAmount : scrollAmount)
-  carouselContainer.value.scrollTo({ left: newScroll, behavior: 'smooth' })
+  const newScroll = containerRef.value.scrollLeft + (direction === 'left' ? -scrollAmount : scrollAmount)
+  containerRef.value.scrollTo({ left: newScroll, behavior: 'smooth' })
 }
 
 const loadChannelsForAccount = () => {
@@ -571,7 +834,7 @@ const { data: video } = await useAsyncData(`video-${id}`, () =>
 )
 
 if (video.value) {
-  const siteUrl = process.server 
+  const siteUrl = import.meta.server
     ? (() => { const headers = useRequestHeaders(['host', 'x-forwarded-proto']); return `${headers['x-forwarded-proto'] || 'http'}://${headers.host || 'localhost:3000'}`; })()
     : typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000'
   
@@ -606,6 +869,7 @@ watch([() => activeAccount.value], async () => {
 
     const commentActorId = getCurrentCommentActorID()
     comments.value = await getVideoComments(id, commentActorId || undefined)
+    comments.value.reverse()
   } catch (err) {
     console.error('Failed to check like status:', err)
   }
@@ -663,9 +927,26 @@ onMounted(async () => {
   
   syncActiveAccountFromStorage()
 
+  // Check if playing from playlist
+  const playlistId = route.query.playlist_id
+  const playlistIndex = route.query.index
+  if (playlistId && typeof playlistId === 'string') {
+    isPlayingFromPlaylist.value = true
+    currentPlaylistId.value = playlistId
+    await loadPlaylist(playlistId)
+    // Use the index from URL if provided, otherwise search for current video
+    if (playlistIndex && typeof playlistIndex === 'string') {
+      const indexNum = parseInt(playlistIndex, 10)
+      if (!isNaN(indexNum) && indexNum >= 0 && indexNum < playlistVideos.value.length) {
+        currentVideoIndex.value = indexNum
+      }
+    }
+  }
+
   try {
     const commentActorId = getCurrentCommentActorID()
     comments.value = await getVideoComments(id, commentActorId || undefined)
+    comments.value.reverse()
   } catch (err) {
     console.error('Failed to load comments:', err)
   }
@@ -684,14 +965,15 @@ onMounted(async () => {
     }
   }
 
+  // Always load related videos so mobile can still surface recommendations during playlist playback
   try {
     const allVideos = await getVideos()
-    relatedVideos.value = allVideos.filter(v => v.id !== id).slice(0, 10)
+    relatedVideos.value = allVideos.filter((v: any) => v.id !== id).slice(0, 10)
   } catch (err) {
     console.error('Failed to load related videos:', err)
   }
 
-  const handleStorageChange = (e) => {
+  const handleStorageChange = (e: StorageEvent) => {
     if (e.key === 'active_account' || e.key === 'active_account_name' || e.key === 'user_channels') {
       syncActiveAccountFromStorage()
     }
@@ -805,9 +1087,9 @@ const shareVideo = async () => {
     const origin = typeof window !== 'undefined' ? window.location.origin : 'https://giltube.gilservers.com'
     const sharePath = localePath(`/video/${id}`)
     const url = `${origin}${sharePath}`
-    if (process.client && navigator.share) {
+    if (import.meta.client && navigator.share) {
       await navigator.share({ title: video.value?.title || 'GilTube', url })
-    } else if (process.client && navigator.clipboard) {
+    } else if (import.meta.client && navigator.clipboard) {
       await navigator.clipboard.writeText(url)
       shareCopied.value = true
       setTimeout(() => (shareCopied.value = false), 2000)
@@ -815,6 +1097,10 @@ const shareVideo = async () => {
   } catch (err) {
     console.error('Share failed:', err)
   }
+}
+
+const handleGiphySelect = (gif: GiphyGif) => {
+  newCommentText.value = insertGiphyIntoComment(newCommentText.value, gif.images.downsized.url, gif.title)
 }
 
 const postComment = async () => {
@@ -833,6 +1119,7 @@ const postComment = async () => {
     
     // Reload comments
     comments.value = await getVideoComments(id, commentChannelId)
+    comments.value.reverse()
   } catch (err) {
     console.error('Failed to post comment:', err)
   } finally {
@@ -852,6 +1139,7 @@ const postReply = async (parentCommentId: string, text: string) => {
   try {
     await apiPostComment(id, commentChannelId, text, parentCommentId)
     comments.value = await getVideoComments(id, commentChannelId)
+    comments.value.reverse()
   } catch (err) {
     console.error('Failed to post reply:', err)
   } finally {
@@ -866,7 +1154,7 @@ const getCurrentCommentActorID = () => {
 }
 
 // Check if logged-in user owns a comment
-const isCommentOwner = (comment) => {
+const isCommentOwner = (comment: any) => {
   if (!isLoggedIn.value) return false
 
   const currentAccountId = getCurrentCommentActorID()
@@ -876,7 +1164,7 @@ const isCommentOwner = (comment) => {
 
 // Delete a comment
 const deleteUserComment = async (commentId: string) => {
-  const findInThread = (items, idToFind) => {
+  const findInThread = (items: any[], idToFind: string): any => {
     for (const item of items) {
       if (item.id === idToFind) return item
       if (item.replies?.length) {
@@ -900,6 +1188,7 @@ const deleteUserComment = async (commentId: string) => {
     await deleteComment(commentId)
     const commentActorId = getCurrentCommentActorID()
     comments.value = await getVideoComments(id, commentActorId || undefined)
+    comments.value.reverse()
   } catch (err) {
     console.error('Failed to delete comment:', err)
     errorMessage.value = 'Failed to delete comment'
@@ -938,7 +1227,7 @@ const toggleCommentLike = async (commentId: string, nextLiked: boolean) => {
 }
 
 const jumpToComment = async (commentId: string) => {
-  if (!process.client || !commentId) return
+  if (!import.meta.client || !commentId) return
   highlightedCommentId.value = commentId
 
   for (let attempt = 0; attempt < 10; attempt++) {
@@ -960,14 +1249,14 @@ const jumpToComment = async (commentId: string) => {
 
 watch(targetCommentId, async (newID) => {
   pendingJumpCommentID.value = newID
-  if (!process.client) return
+  if (!import.meta.client) return
   if (newID) {
     await jumpToComment(newID)
   }
 }, { immediate: true })
 
 watch(() => commentsById.value[pendingJumpCommentID.value], async (found) => {
-  if (!process.client) return
+  if (!import.meta.client) return
   if (!pendingJumpCommentID.value || !found) return
   const targetID = pendingJumpCommentID.value
   pendingJumpCommentID.value = ''
@@ -985,5 +1274,95 @@ const continueToVideo = () => {
 const goBackHome = async () => {
   await navigateTo(localePath('/'))
 }
+
+// Playlist methods
+const handlePlaylistSelect = async (playlistId: string) => {
+  const userID = localStorage.getItem('user_id')
+  if (!userID) return
+
+  try {
+    const response = await fetch(`/api/v1/playlists/${playlistId}/videos`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-User-ID': userID
+      },
+      body: JSON.stringify({ video_id: id })
+    })
+
+    if (response.ok) {
+      // Show success message
+      errorMessage.value = t('playlists.addedToPlaylist') || 'Added to playlist'
+      showErrorDialog.value = false
+      showAddToPlaylist.value = false
+      // Could show a toast notification here
+    }
+  } catch (error) {
+    console.error('Failed to add video to playlist:', error)
+    errorMessage.value = t('playlists.failedToAddToPlaylist') || 'Failed to add to playlist'
+    showErrorDialog.value = true
+  }
+}
+
+const handleCreateNewPlaylist = () => {
+  // Close the add to playlist modal
+  showAddToPlaylist.value = false
+  // Optionally navigate to create playlist page
+  navigateTo(localePath('/playlists'))
+}
+
+// Load playlist for playback mode
+const loadPlaylist = async (playlistId: string) => {
+  try {
+    const response = await fetch(`/api/v1/playlists/${playlistId}`)
+    if (response.ok) {
+      const data = await response.json()
+      const playlist = data.playlist || data
+      currentPlaylistName.value = playlist.title
+      playlistVideos.value = playlist.videos || data.videos || []
+      
+      // Find the current video index in the playlist
+      const index = playlistVideos.value.findIndex(v => v.id === id)
+      if (index !== -1) {
+        currentVideoIndex.value = index
+      }
+      console.log('Loaded playlist:', { playlistId, videoCount: playlistVideos.value.length, currentIndex: currentVideoIndex.value })
+    }
+  } catch (err) {
+    console.error('Failed to load playlist:', err)
+  }
+}
+
+// Skip to next video in playlist
+const skipToNextVideo = async () => {
+  if (!isPlayingFromPlaylist.value || !currentPlaylistId.value) {
+    console.log('Cannot skip: not in playlist mode or missing playlistId')
+    return
+  }
+  
+  if (currentVideoIndex.value >= playlistVideos.value.length - 1) {
+    console.log('Already at last video')
+    return
+  }
+  
+  const nextVideo = playlistVideos.value[currentVideoIndex.value + 1]
+  if (nextVideo) {
+    console.log('Skipping to next video:', nextVideo.id)
+    await navigateTo(localePath(`/video/${nextVideo.id}?playlist_id=${currentPlaylistId.value}&index=${currentVideoIndex.value + 1}`))
+  }
+}
+
+// Autoplay next video when current ends
+const handleVideoEnded = async () => {
+  console.log('Video ended. isPlayingFromPlaylist:', isPlayingFromPlaylist.value, 'currentIndex:', currentVideoIndex.value, 'total:', playlistVideos.value.length)
+  if (!isPlayingFromPlaylist.value) return
+  
+  if (currentVideoIndex.value < playlistVideos.value.length - 1) {
+    await skipToNextVideo()
+  }
+}
 </script>
+
+
+
 

@@ -9,7 +9,7 @@
 
         <div class="space-y-4">
           <button
-            class="group flex w-full items-center justify-center gap-3 rounded-lg bg-blue-600 px-6 py-4 text-lg font-semibold text-white transition hover:bg-blue-700"
+            class="group flex w-full items-center justify-center gap-3 rounded-lg bg-red-600 px-6 py-4 text-lg font-semibold text-white transition hover:bg-blue-700"
             @click="selectLocale('en')"
           >
             <span class="text-3xl transition-transform group-hover:scale-110">🇺🇸</span>
@@ -17,7 +17,7 @@
           </button>
 
           <button
-            class="group flex w-full items-center justify-center gap-3 rounded-lg bg-emerald-600 px-6 py-4 text-lg font-semibold text-white transition hover:bg-emerald-700"
+            class="group flex w-full items-center justify-center gap-3 rounded-lg bg-red-600 px-6 py-4 text-lg font-semibold text-white transition hover:bg-emerald-700"
             @click="selectLocale('es')"
           >
             <span class="text-3xl transition-transform group-hover:scale-110">🇲🇽</span>
