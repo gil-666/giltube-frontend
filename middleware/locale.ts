@@ -9,7 +9,7 @@ export default defineNuxtRouteMiddleware((to: RouteLocationNormalized, from: Rou
   if (!savedLocale) return
 
   // Routes that should not be prefixed
-  const skipPrefixRoutes = ['/login', '/register']
+  const skipPrefixRoutes = ['/login', '/register', '/auth/callback']
 
   // Check if route already has locale prefix
   const hasLocalePrefix = /^\/[a-z]{2}(?:\/|$)/.test(to.path)

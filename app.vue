@@ -321,6 +321,52 @@
 
   <!-- Locale Picker Modal (shown only on first visit) -->
   <LocalePickerModal />
+  <div
+    v-if="showGilIDLinkModal"
+    class="giltube-modal-overlay bg-black/70 backdrop-blur-sm flex items-center justify-center p-4"
+  >
+    <div class="w-full max-w-lg rounded-2xl border border-cyan-800 bg-zinc-950 shadow-2xl">
+      <div class="border-b border-zinc-800 px-6 py-5">
+        <div class="flex items-center gap-3">
+          <img src="./assets/gilservices-logo.png" alt="GilServices" class="h-10 w-10 rounded-lg object-contain bg-white/5 p-1" />
+          <p class="text-xs font-semibold uppercase tracking-[0.2em] text-cyan-300">{{ t('login.gilidNetworkBadge') }}</p>
+        </div>
+        <h2 class="mt-3 text-2xl font-bold text-white">{{ t('app.gilidLinkTitle') }}</h2>
+        <p class="mt-3 text-sm leading-6 text-zinc-300">{{ t('app.gilidLinkBody') }}</p>
+        <p class="mt-3 text-sm text-cyan-200">{{ t('app.gilidLinkPasskeyNote') }}</p>
+      </div>
+
+      <div class="px-6 py-5">
+        <label class="flex items-start gap-3 text-sm text-zinc-300">
+          <input
+            v-model="hideGilIDPromptPermanently"
+            type="checkbox"
+            class="mt-1 h-4 w-4 rounded border-zinc-600 bg-zinc-900 text-cyan-500 focus:ring-cyan-500"
+          />
+          <span>{{ t('app.gilidDontShowAgain') }}</span>
+        </label>
+      </div>
+
+      <div class="flex flex-col-reverse gap-3 border-t border-zinc-800 px-6 py-5 sm:flex-row sm:justify-end">
+        <button
+          type="button"
+          class="rounded-lg border border-zinc-700 px-4 py-2 text-sm font-medium text-zinc-200 transition hover:border-zinc-500 hover:bg-zinc-900"
+          @click="dismissGilIDLinkModal"
+        >
+          {{ t('app.gilidDismiss') }}
+        </button>
+        <button
+          type="button"
+          :disabled="gilidLinking"
+          class="inline-flex items-center justify-center gap-2 rounded-lg bg-cyan-500 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-cyan-400 disabled:bg-zinc-700 disabled:text-zinc-300"
+          @click="startGilIDLink"
+        >
+          <img src="./assets/gilservices-logo.png" alt="" class="h-4 w-4 object-contain" />
+          {{ gilidLinking ? t('accountSettings.gilidRedirecting') : t('app.gilidLinkButton') }}
+        </button>
+      </div>
+    </div>
+  </div>
   <!-- Profile Dropdown Portal (outside header for z-index independence) -->
   <!-- Overlay for click outside -->
   <div v-if="dropdownOpen" class="fixed inset-0 pointer-events-auto" :style="{ zIndex: 9998 }"
@@ -398,6 +444,7 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted, computed, watch, nextTick } from 'vue'
+import { beginGilIDAuth, getMyAccount } from '~/app/service/auth'
 import { fetchUserChannels } from '~/app/service/upload'
 import {
   listNotifications,
@@ -464,9 +511,18 @@ const notificationsPollInterval = ref(15000)
 const mainScrollRef = ref(null)
 const contentScrollRef = ref(null)
 const headerScrolled = ref(false)
+const showGilIDLinkModal = ref(false)
+const hideGilIDPromptPermanently = ref(false)
+const gilidLinking = ref(false)
 
 const PASSKEY_PROMPT_DISMISS_KEY = 'passkey_prompt_dismissed_session'
 const AUTH_STATE_CHANGED_EVENT = 'giltube-auth-changed'
+const GILID_LINK_PROMPT_KEY_PREFIX = 'gilid_link_prompt_dismissed'
+
+const gilidPromptStorageKey = computed(() => {
+  if (!userId.value) return `${GILID_LINK_PROMPT_KEY_PREFIX}:guest`
+  return `${GILID_LINK_PROMPT_KEY_PREFIX}:${userId.value}`
+})
 
 const emitAuthStateChanged = () => {
   if (!process.client) return
@@ -758,6 +814,7 @@ onMounted(async () => {
   if (isLoggedIn.value) {
     loadChannels()
     checkPasskeyPrompt()
+    await checkGilIDLinkPrompt()
     await Promise.all([refreshNotificationCount(), loadNotificationPreview()])
     startNotificationPolling()
     await syncPushSubscriptionForCurrentUser()
@@ -885,6 +942,7 @@ watch(isLoggedIn, (newValue) => {
   if (newValue) {
     loadChannels()
     checkPasskeyPrompt()
+    checkGilIDLinkPrompt()
     refreshNotificationCount()
     loadNotificationPreview()
     startNotificationPolling()
@@ -898,6 +956,8 @@ watch(isLoggedIn, (newValue) => {
   } else {
     channels.value = []
     showPasskeyPrompt.value = false
+    showGilIDLinkModal.value = false
+    hideGilIDPromptPermanently.value = false
     notificationsDropdownOpen.value = false
     notificationPreview.value = []
     unreadNotificationCount.value = 0
@@ -919,6 +979,9 @@ watch(activeChannelAvatar, () => {
 watch(() => route.fullPath, async () => {
   await nextTick()
   handleMainContentScroll()
+  if (isLoggedIn.value) {
+    checkGilIDLinkPrompt()
+  }
 })
 
 const checkAuthStatus = () => {
@@ -1003,6 +1066,55 @@ const dismissPasskeyPrompt = () => {
   showPasskeyPrompt.value = false
   if (!process.client) return
   sessionStorage.setItem(PASSKEY_PROMPT_DISMISS_KEY, '1')
+}
+
+const dismissGilIDLinkModal = () => {
+  showGilIDLinkModal.value = false
+  if (!process.client) return
+  if (hideGilIDPromptPermanently.value) {
+    localStorage.setItem(gilidPromptStorageKey.value, '1')
+  } else {
+    localStorage.removeItem(gilidPromptStorageKey.value)
+  }
+}
+
+const startGilIDLink = async () => {
+  gilidLinking.value = true
+  try {
+    const response = await beginGilIDAuth('link', route.fullPath || '/')
+    window.location.href = response.authorize_url
+  } catch (err) {
+    console.error('Failed to start GILid linking:', err)
+    gilidLinking.value = false
+  }
+}
+
+const checkGilIDLinkPrompt = async () => {
+  if (!process.client || !isLoggedIn.value || !userId.value) {
+    showGilIDLinkModal.value = false
+    hideGilIDPromptPermanently.value = false
+    return
+  }
+
+  if (normalizedRoutePath.value.startsWith('/login') || normalizedRoutePath.value.startsWith('/register') || normalizedRoutePath.value.startsWith('/auth/callback')) {
+    showGilIDLinkModal.value = false
+    return
+  }
+
+  if (localStorage.getItem(gilidPromptStorageKey.value) === '1') {
+    showGilIDLinkModal.value = false
+    hideGilIDPromptPermanently.value = true
+    return
+  }
+
+  try {
+    const account = await getMyAccount()
+    showGilIDLinkModal.value = !account.gilid_linked
+    hideGilIDPromptPermanently.value = false
+  } catch (err) {
+    console.error('Failed to check GILid link status:', err)
+    showGilIDLinkModal.value = false
+  }
 }
 
 const checkPasskeyPrompt = async () => {
@@ -1098,6 +1210,7 @@ if (process.client) {
     checkAuthStatus()
     if (isLoggedIn.value) {
       checkPasskeyPrompt()
+      checkGilIDLinkPrompt()
     }
   })
 }

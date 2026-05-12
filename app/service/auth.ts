@@ -35,6 +35,31 @@ interface AccountProfile {
   user_type: string
   status: string
   created_at: string
+  gilid_linked: boolean
+  gilid_email: string
+  gilid_username: string
+  gilid_linked_at: string | null
+}
+
+interface GilIDStartResponse {
+  authorize_url: string
+  state: string
+}
+
+interface GilIDCallbackResponse extends LoginResponse {
+  gilid_linked: boolean
+  linked_existing_account: boolean
+  new_account: boolean
+  mode: 'login' | 'link'
+  return_to: string
+}
+
+interface GilIDSessionProfile {
+  id: string
+  email: string
+  username: string
+  first_name?: string
+  last_name?: string
 }
 
 interface UpdateEmailRequest {
@@ -117,6 +142,51 @@ export const beginPasskeyLogin = async (): Promise<PasskeyBeginResponse> => {
 export const finishPasskeyLogin = async (sessionToken: string, credentialPayload: any): Promise<LoginResponse> => {
   const res = await api.post<LoginResponse>(`/passkeys/login/finish?session_token=${encodeURIComponent(sessionToken)}`, credentialPayload)
   return res.data
+}
+
+export const beginGilIDAuth = async (mode: 'login' | 'link', returnTo = '/'): Promise<GilIDStartResponse> => {
+  const res = await api.post<GilIDStartResponse>('/oauth/gilid/start', {
+    mode,
+    return_to: returnTo
+  })
+  return res.data
+}
+
+export const completeGilIDAuth = async (code: string, state: string): Promise<GilIDCallbackResponse> => {
+  const res = await api.post<GilIDCallbackResponse>('/oauth/gilid/callback', { code, state })
+  return res.data
+}
+
+const gilidAPIBase = 'https://auth.gilservers.com/api'
+
+export const getGilIDSessionProfile = async (): Promise<GilIDSessionProfile | null> => {
+  try {
+    const response = await fetch(`${gilidAPIBase}/auth/me`, {
+      method: 'GET',
+      credentials: 'include',
+      headers: {
+        Accept: 'application/json'
+      }
+    })
+
+    if (!response.ok) {
+      return null
+    }
+
+    return await response.json()
+  } catch {
+    return null
+  }
+}
+
+export const logoutGilIDSession = async (): Promise<void> => {
+  await fetch(`${gilidAPIBase}/auth/logout`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: {
+      Accept: 'application/json'
+    }
+  })
 }
 
 export const deleteMyPasskey = async (passkeyID: string): Promise<{ message: string }> => {

@@ -19,7 +19,30 @@
         </div>
       </div>
 
-      <form @submit.prevent="submitEmailChange" class="bg-zinc-900 rounded-lg p-6 border border-zinc-800 space-y-4">
+      <div class="bg-zinc-900 rounded-lg p-6 border border-cyan-800 space-y-4">
+        <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div>
+            <p class="text-xs font-semibold uppercase tracking-[0.2em] text-cyan-300">{{ t('login.gilidNetworkBadge') }}</p>
+            <h2 class="mt-2 text-xl font-semibold">{{ t('accountSettings.gilidTitle') }}</h2>
+            <p class="mt-2 text-sm text-gray-300">
+              {{ profile.gilid_linked ? t('accountSettings.gilidLinkedBody') : t('accountSettings.gilidUnlinkedBody') }}
+            </p>
+            <p v-if="profile.gilid_linked && profile.gilid_email" class="mt-2 text-xs text-cyan-200">
+              {{ t('accountSettings.gilidLinkedEmail', { email: profile.gilid_email }) }}
+            </p>
+          </div>
+          <button
+            v-if="!profile.gilid_linked"
+            @click="linkGilID"
+            :disabled="gilidLinking"
+            class="rounded-lg bg-cyan-500 px-4 py-2 font-semibold text-slate-950 transition hover:bg-cyan-400 disabled:bg-gray-600 disabled:text-white"
+          >
+            {{ gilidLinking ? t('accountSettings.gilidRedirecting') : t('accountSettings.linkGilid') }}
+          </button>
+        </div>
+      </div>
+
+      <form v-if="!profile.gilid_linked" @submit.prevent="submitEmailChange" class="bg-zinc-900 rounded-lg p-6 border border-zinc-800 space-y-4">
         <h2 class="text-xl font-semibold">{{ t('accountSettings.changeEmail') }}</h2>
 
         <div>
@@ -57,7 +80,7 @@
         </button>
       </form>
 
-      <form @submit.prevent="submitPasswordChange" class="bg-zinc-900 rounded-lg p-6 border border-zinc-800 space-y-4">
+      <form v-if="!profile.gilid_linked" @submit.prevent="submitPasswordChange" class="bg-zinc-900 rounded-lg p-6 border border-zinc-800 space-y-4">
         <h2 class="text-xl font-semibold">{{ t('accountSettings.changePassword') }}</h2>
 
         <div>
@@ -158,7 +181,7 @@
           {{ t('accountSettings.deleteMessage') }}
         </p>
 
-        <div>
+        <div v-if="!profile.gilid_linked">
           <label class="block text-sm text-gray-300 mb-2" for="deletePassword">{{ t('accountSettings.currentPassword') }}</label>
           <input
             id="deletePassword"
@@ -199,6 +222,7 @@ import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useLocalePath } from '#i18n'
 import {
+  beginGilIDAuth,
   beginPasskeyRegistration,
   deleteMyAccount,
   deleteMyPasskey,
@@ -225,7 +249,9 @@ const profile = ref({
   id: '',
   username: '',
   email: '',
-  status: ''
+  status: '',
+  gilid_linked: false,
+  gilid_email: ''
 })
 
 const newEmail = ref('')
@@ -253,6 +279,7 @@ const passkeySaving = ref(false)
 const passkeyDeletingId = ref('')
 const passkeyMessage = ref('')
 const passkeyError = ref(false)
+const gilidLinking = ref(false)
 
 onMounted(async () => {
   const userId = localStorage.getItem('user_id')
@@ -280,7 +307,9 @@ const loadProfile = async () => {
       id: data.id,
       username: data.username,
       email: data.email,
-      status: data.status
+      status: data.status,
+      gilid_linked: data.gilid_linked,
+      gilid_email: data.gilid_email || ''
     }
     newEmail.value = data.email
   } catch (error: any) {
@@ -436,7 +465,7 @@ const submitDeleteAccount = async () => {
   deleteMessage.value = ''
   deleteError.value = false
 
-  if (!deletePassword.value) {
+  if (!profile.value.gilid_linked && !deletePassword.value) {
     deleteMessage.value = t('accountSettings.currentPasswordRequired')
     deleteError.value = true
     return
@@ -471,6 +500,18 @@ const submitDeleteAccount = async () => {
     deleteError.value = true
   } finally {
     deleteSaving.value = false
+  }
+}
+
+const linkGilID = async () => {
+  gilidLinking.value = true
+  try {
+    const response = await beginGilIDAuth('link', '/account-settings')
+    window.location.href = response.authorize_url
+  } catch (error: any) {
+    emailMessage.value = error?.response?.data?.error || t('accountSettings.gilidLinkError')
+    emailError.value = true
+    gilidLinking.value = false
   }
 }
 </script>
