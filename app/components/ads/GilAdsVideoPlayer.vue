@@ -86,7 +86,7 @@ defineEmits<{
 }>()
 
 const PREROLL_COOLDOWN_VIDEOS = 3
-const PREROLL_COOLDOWN_MS = 8 * 60 * 1000
+const PREROLL_COOLDOWN_MS = 0 * 60 * 1000
 const PREROLL_CAP_KEY = 'giltube:gilads:preroll-cap:v1'
 
 interface PrerollCapState {
