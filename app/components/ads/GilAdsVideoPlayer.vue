@@ -85,6 +85,7 @@ defineEmits<{
 const PREROLL_COOLDOWN_VIDEOS = 3
 const PREROLL_COOLDOWN_MS = 0 * 60 * 1000
 const PREROLL_CAP_KEY = 'giltube:gilads:preroll-cap:v1'
+const MAX_PREROLL_FETCH_ATTEMPTS = 4
 
 interface PrerollCapState {
   videosUntilNextAd: number
@@ -164,6 +165,38 @@ const markPrerollShown = () => {
   })
 }
 
+const creativeType = (candidate: GilAdsServeResponse | null) => {
+  return String(candidate?.creative?.type || '').trim().toLowerCase()
+}
+
+const isPlayableVideoAd = (candidate: GilAdsServeResponse | null) => {
+  return Boolean(
+    candidate?.creative?.assetUrl && creativeType(candidate) === 'video'
+  )
+}
+
+const loadVideoPrerollAd = async () => {
+  for (let attempt = 0; attempt < MAX_PREROLL_FETCH_ATTEMPTS; attempt += 1) {
+    const candidate = await serveGilAd({
+      placement: GILADS_PLACEMENTS.videoPreroll,
+      type: 'video',
+      context: adContext.value,
+    })
+
+    if (!candidate?.creative) {
+      return null
+    }
+
+    if (isPlayableVideoAd(candidate)) {
+      return candidate
+    }
+
+    console.warn('Skipping non-video GilAds preroll creative:', candidate.creative.type, candidate.creative.id)
+  }
+
+  return null
+}
+
 const inferSourceType = (src: string) => {
   const normalized = (src.split('?')[0] ?? src).toLowerCase()
   if (normalized.endsWith('.m3u8')) return 'application/x-mpegURL'
@@ -182,7 +215,7 @@ const disposeAdPlayer = () => {
 
 const createAdPlayer = async () => {
   await nextTick()
-  if (!adVideoElement.value || !prerollAd.value?.creative?.assetUrl) return
+  if (!adVideoElement.value || !isPlayableVideoAd(prerollAd.value)) return
 
   disposeAdPlayer()
 
@@ -225,6 +258,12 @@ const createAdPlayer = async () => {
   })
 
   adPlayer.ready(() => {
+    if (!isPlayableVideoAd(prerollAd.value)) {
+      disposeAdPlayer()
+      showPreroll.value = false
+      return
+    }
+
     adPlayer.src({
       src: prerollAd.value?.creative?.assetUrl || '',
       type: inferSourceType(prerollAd.value?.creative?.assetUrl || ''),
@@ -238,7 +277,7 @@ const createAdPlayer = async () => {
 }
 
 const trackAdEvent = async (eventType: 'impression' | 'click' | 'video_view') => {
-  if (!prerollAd.value?.creative?.id) return
+  if (!prerollAd.value?.creative?.id || creativeType(prerollAd.value) !== 'video') return
   try {
     await trackGilAdEvent({
       creativeId: prerollAd.value.creative.id,
@@ -288,15 +327,9 @@ onMounted(async () => {
     return
   }
 
-  prerollAd.value = await serveGilAd({
-    placement: GILADS_PLACEMENTS.videoPreroll,
-    type: 'video',
-    context: adContext.value,
-  })
+  prerollAd.value = await loadVideoPrerollAd()
+  showPreroll.value = isPlayableVideoAd(prerollAd.value)
 
-  showPreroll.value = Boolean(
-    prerollAd.value?.creative?.assetUrl && prerollAd.value.creative.type === 'video'
-  )
   if (showPreroll.value) {
     markPrerollShown()
     await createAdPlayer()
