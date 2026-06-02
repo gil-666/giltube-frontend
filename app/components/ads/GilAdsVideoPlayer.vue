@@ -85,6 +85,16 @@ defineEmits<{
   ended: []
 }>()
 
+const PREROLL_COOLDOWN_VIDEOS = 3
+const PREROLL_COOLDOWN_MS = 8 * 60 * 1000
+const PREROLL_CAP_KEY = 'giltube:gilads:preroll-cap:v1'
+
+interface PrerollCapState {
+  videosUntilNextAd: number
+  lastAdAt: number
+  lastVideoId: string
+}
+
 const prerollAd = ref<GilAdsServeResponse | null>(null)
 const showPreroll = ref(false)
 const impressionTracked = ref(false)
@@ -97,6 +107,64 @@ const adContext = computed(() => ({
   channelId: props.channelId,
   page: 'watch',
 }))
+
+const defaultPrerollCapState = (): PrerollCapState => ({
+  videosUntilNextAd: 0,
+  lastAdAt: 0,
+  lastVideoId: '',
+})
+
+const readPrerollCapState = (): PrerollCapState => {
+  if (typeof window === 'undefined') return defaultPrerollCapState()
+
+  try {
+    const raw = window.localStorage.getItem(PREROLL_CAP_KEY)
+    if (!raw) return defaultPrerollCapState()
+
+    const parsed = JSON.parse(raw) as Partial<PrerollCapState>
+    return {
+      videosUntilNextAd: Math.max(0, Number(parsed.videosUntilNextAd || 0)),
+      lastAdAt: Number(parsed.lastAdAt || 0),
+      lastVideoId: String(parsed.lastVideoId || ''),
+    }
+  } catch {
+    return defaultPrerollCapState()
+  }
+}
+
+const writePrerollCapState = (state: PrerollCapState) => {
+  if (typeof window === 'undefined') return
+  window.localStorage.setItem(PREROLL_CAP_KEY, JSON.stringify(state))
+}
+
+const currentVideoKey = () => props.videoId || props.src || 'unknown-video'
+
+const shouldRequestPrerollAd = () => {
+  const state = readPrerollCapState()
+  const videoKey = currentVideoKey()
+  const isNewVideo = state.lastVideoId !== videoKey
+
+  if (!isNewVideo) {
+    return state.videosUntilNextAd <= 0 && Date.now() - state.lastAdAt >= PREROLL_COOLDOWN_MS
+  }
+
+  const nextState = {
+    ...state,
+    lastVideoId: videoKey,
+    videosUntilNextAd: Math.max(0, state.videosUntilNextAd - 1),
+  }
+  writePrerollCapState(nextState)
+
+  return nextState.videosUntilNextAd <= 0 && Date.now() - nextState.lastAdAt >= PREROLL_COOLDOWN_MS
+}
+
+const markPrerollShown = () => {
+  writePrerollCapState({
+    videosUntilNextAd: PREROLL_COOLDOWN_VIDEOS,
+    lastAdAt: Date.now(),
+    lastVideoId: currentVideoKey(),
+  })
+}
 
 const trackAdEvent = async (eventType: 'impression' | 'click' | 'video_view') => {
   if (!prerollAd.value?.creative?.id) return
@@ -144,6 +212,10 @@ const handleAdClick = () => {
 }
 
 onMounted(async () => {
+  if (!shouldRequestPrerollAd()) {
+    return
+  }
+
   prerollAd.value = await serveGilAd({
     placement: GILADS_PLACEMENTS.videoPreroll,
     type: 'video',
@@ -151,5 +223,8 @@ onMounted(async () => {
   })
 
   showPreroll.value = Boolean(prerollAd.value?.creative?.assetUrl)
+  if (showPreroll.value) {
+    markPrerollShown()
+  }
 })
 </script>
