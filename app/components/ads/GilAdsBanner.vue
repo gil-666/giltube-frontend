@@ -90,6 +90,31 @@ const copyClass = computed(() => (
     : 'space-y-1 px-4 py-3'
 ))
 
+const isDisplayableBannerAd = (candidate: GilAdsServeResponse | null) => {
+  return Boolean(candidate?.creative && candidate.creative.type !== 'video')
+}
+
+const loadBannerAd = async () => {
+  for (let attempt = 0; attempt < 4; attempt += 1) {
+    const candidate = await serveGilAd({
+      placement: props.placement,
+      type: props.type,
+      size: props.size,
+      context: props.context,
+    })
+
+    if (!candidate?.creative) {
+      return null
+    }
+
+    if (isDisplayableBannerAd(candidate)) {
+      return candidate
+    }
+  }
+
+  return null
+}
+
 const trackOnce = async (eventType: 'impression' | 'click') => {
   if (!ad.value?.creative?.id) return
   try {
@@ -115,12 +140,7 @@ const maybeTrackImpression = async () => {
 }
 
 onMounted(async () => {
-  ad.value = await serveGilAd({
-    placement: props.placement,
-    type: props.type,
-    size: props.size,
-    context: props.context,
-  })
+  ad.value = await loadBannerAd()
 
   if (!ad.value?.creative || !rootElement.value || typeof window === 'undefined') {
     return
