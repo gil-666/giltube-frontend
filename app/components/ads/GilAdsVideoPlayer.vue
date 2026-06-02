@@ -11,33 +11,35 @@
           playsinline
           preload="auto"
         />
-        <div class="pointer-events-none absolute inset-x-0 top-0 z-20 flex items-start justify-between bg-gradient-to-b from-black/75 to-transparent p-4">
+        <div class="pointer-events-none absolute inset-x-0 top-0 z-20 flex items-start justify-start bg-gradient-to-b from-black/75 to-transparent p-4">
           <div class="pointer-events-auto rounded-full border border-cyan-300/30 bg-black/60 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-cyan-200">
             Sponsored
           </div>
-          <button
-            type="button"
-            class="pointer-events-auto rounded-full border border-white/15 bg-black/70 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-black/85 disabled:cursor-not-allowed disabled:opacity-60"
-            :disabled="skipCountdown > 0"
-            @click="finishPreroll"
-          >
-            {{ skipCountdown > 0 ? `Skip in ${skipCountdown}s` : 'Skip ad' }}
-          </button>
+        </div>
+        <button
+          type="button"
+          class="absolute bottom-4 right-4 z-30 rounded-full border border-white/20 bg-black/80 px-5 py-3 text-sm font-black text-white shadow-[0_10px_30px_rgba(0,0,0,0.35)] transition hover:bg-black disabled:cursor-not-allowed disabled:opacity-75"
+          :disabled="skipCountdown > 0"
+          @click="finishPreroll"
+        >
+          {{ skipCountdown > 0 ? `Skip in ${skipCountdown}s` : 'Skip ad' }}
+        </button>
+      </div>
+      <div class="flex flex-col gap-3 border-t border-white/10 bg-zinc-950/90 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+        <div class="min-w-0">
+          <p class="text-sm font-semibold text-white">{{ prerollAd.creative.headline || 'Sponsored video' }}</p>
+          <p v-if="prerollAd.creative.body" class="mt-1 text-sm text-zinc-300">{{ prerollAd.creative.body }}</p>
         </div>
         <a
           v-if="prerollAd.creative.destinationUrl"
           :href="prerollAd.creative.destinationUrl"
           target="_blank"
           rel="noopener noreferrer"
-          class="absolute bottom-4 right-4 z-20 rounded-full border border-cyan-300/30 bg-cyan-500/20 px-4 py-2 text-sm font-semibold text-white backdrop-blur transition hover:bg-cyan-500/30"
+          class="inline-flex shrink-0 items-center justify-center rounded-full border border-cyan-300/30 bg-cyan-500/20 px-4 py-2 text-sm font-semibold text-white backdrop-blur transition hover:bg-cyan-500/30"
           @click="handleAdClick"
         >
           Visit sponsor
         </a>
-      </div>
-      <div class="border-t border-white/10 bg-zinc-950/90 px-4 py-3">
-        <p class="text-sm font-semibold text-white">{{ prerollAd.creative.headline || 'Sponsored video' }}</p>
-        <p v-if="prerollAd.creative.body" class="mt-1 text-sm text-zinc-300">{{ prerollAd.creative.body }}</p>
       </div>
     </div>
 
