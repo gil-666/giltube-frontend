@@ -5,9 +5,11 @@
     <div class="flex-1 min-w-0">
       <!-- Video Player -->
       <div class="w-full">
-        <VideoPlayer 
-          :src="videoSrc" 
+        <GilAdsVideoPlayer
+          :src="videoSrc"
           :status="video?.status"
+          :video-id="id"
+          :channel-id="video?.channel?.id"
           @play="onVideoPlay"
           @ended="handleVideoEnded"
         />
@@ -300,6 +302,15 @@
 
     <!-- Mobile Related Videos -->
     <div v-if="relatedVideos.length > 0" class="lg:hidden mt-8 px-4">
+      <GilAdsBanner
+        :placement="GILADS_PLACEMENTS.videoSidebarSquare"
+        type="banner"
+        size="600x600"
+        variant="square"
+        :context="{ page: 'watch', videoId: id, channelId: video?.channel?.id }"
+        fallback-title="Watch page sponsor"
+        class="mb-5"
+      />
       <h2 class="text-lg font-bold mb-4">{{ t('video.relatedVideos') }}</h2>
 
       <div class="relative">
@@ -353,6 +364,16 @@
     <!-- Right: Sidebar (full width on mobile as carousel, wider on tablet, sidebar on lg) -->
     <div class="hidden lg:block w-full md:w-full lg:w-64 lg:flex-shrink-0">
       <div class="md:sticky md:top-6">
+        <GilAdsBanner
+          :placement="GILADS_PLACEMENTS.videoSidebarSquare"
+          type="banner"
+          size="600x600"
+          variant="square"
+          :context="{ page: 'watch', videoId: id, channelId: video?.channel?.id }"
+          fallback-title="Watch page sponsor"
+          class="mb-4"
+        />
+
         <!-- Playlist Queue (when playing from playlist) -->
         <div v-if="isPlayingFromPlaylist && playlistVideos.length > 0" class="px-4 md:px-0">
           <div
@@ -655,11 +676,13 @@
 </template>
 
 <script setup lang="ts">
-import VideoPlayer from '~/app/components/videoplayer/VideoPlayer.vue'
+import GilAdsVideoPlayer from '~/app/components/ads/GilAdsVideoPlayer.vue'
+import GilAdsBanner from '~/app/components/ads/GilAdsBanner.vue'
 import VerifiedBadge from '~/app/components/VerifiedBadge.vue'
 import CommentNode from '~/app/components/comments/CommentNode.vue'
 import GiphyPicker from '~/app/components/GiphyPicker.vue'
 import AddToPlaylistModal from '~/app/components/AddToPlaylistModal.vue'
+import { GILADS_PLACEMENTS } from '~/app/service/gilads'
 import { getVideo, incrementViews, getVideos, likeVideo, unlikeVideo, checkIfLiked } from '~/app/service/videos'
 import { getVideoComments, postComment as apiPostComment, deleteComment, likeComment, unlikeComment } from '~/app/service/comments'
 import { insertGiphyIntoComment, type GiphyGif } from '~/app/utils/giphy'

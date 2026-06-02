@@ -35,6 +35,15 @@
       </div>
 
       <div v-else class="mt-8 space-y-10">
+        <GilAdsBanner
+          :placement="GILADS_PLACEMENTS.homeBanner"
+          type="banner"
+          size="1200x320"
+          variant="banner"
+          :context="{ page: 'home' }"
+          fallback-title="Featured sponsor"
+        />
+
         <section v-if="liveStreams.length > 0">
           <div class="mb-4 flex items-center justify-between gap-4">
             <div>
@@ -232,7 +241,9 @@
 
 <script setup>
 import { defineComponent, h, nextTick, onMounted, onUnmounted, ref } from 'vue'
+import GilAdsBanner from '~/app/components/ads/GilAdsBanner.vue'
 import { getVideos } from '~/app/service/videos'
+import { GILADS_PLACEMENTS } from '~/app/service/gilads'
 import { listActiveLiveStreams } from '~/app/service/live'
 import { getTimeAgo } from '~/app/utils/time'
 import { formatViews } from '~/app/utils/format'
