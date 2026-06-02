@@ -7,16 +7,11 @@
       <div class="relative aspect-video bg-black">
         <video
           ref="adVideoElement"
-          class="h-full w-full object-contain"
-          :src="prerollAd.creative.assetUrl"
-          autoplay
+          class="video-js vjs-default-skin h-full w-full object-contain gilads-preroll-video"
           playsinline
-          controls
-          @play="handleAdPlay"
-          @timeupdate="handleAdTimeUpdate"
-          @ended="finishPreroll"
+          preload="auto"
         />
-        <div class="pointer-events-none absolute inset-x-0 top-0 flex items-start justify-between bg-gradient-to-b from-black/75 to-transparent p-4">
+        <div class="pointer-events-none absolute inset-x-0 top-0 z-20 flex items-start justify-between bg-gradient-to-b from-black/75 to-transparent p-4">
           <div class="pointer-events-auto rounded-full border border-cyan-300/30 bg-black/60 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-cyan-200">
             Sponsored
           </div>
@@ -34,7 +29,7 @@
           :href="prerollAd.creative.destinationUrl"
           target="_blank"
           rel="noopener noreferrer"
-          class="absolute bottom-4 right-4 rounded-full border border-cyan-300/30 bg-cyan-500/20 px-4 py-2 text-sm font-semibold text-white backdrop-blur transition hover:bg-cyan-500/30"
+          class="absolute bottom-4 right-4 z-20 rounded-full border border-cyan-300/30 bg-cyan-500/20 px-4 py-2 text-sm font-semibold text-white backdrop-blur transition hover:bg-cyan-500/30"
           @click="handleAdClick"
         >
           Visit sponsor
@@ -57,7 +52,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
+import videojs from 'video.js'
+import 'video.js/dist/video-js.css'
 import VideoPlayer from '~/app/components/videoplayer/VideoPlayer.vue'
 import {
   GILADS_PLACEMENTS,
@@ -101,6 +98,7 @@ const impressionTracked = ref(false)
 const videoViewTracked = ref(false)
 const skipCountdown = ref(5)
 const adVideoElement = ref<HTMLVideoElement | null>(null)
+let adPlayer: any = null
 
 const adContext = computed(() => ({
   videoId: props.videoId,
@@ -166,6 +164,79 @@ const markPrerollShown = () => {
   })
 }
 
+const inferSourceType = (src: string) => {
+  const normalized = (src.split('?')[0] ?? src).toLowerCase()
+  if (normalized.endsWith('.m3u8')) return 'application/x-mpegURL'
+  if (normalized.endsWith('.mp4') || normalized.endsWith('.m4v')) return 'video/mp4'
+  if (normalized.endsWith('.webm')) return 'video/webm'
+  if (normalized.endsWith('.mov')) return 'video/quicktime'
+  return 'application/x-mpegURL'
+}
+
+const disposeAdPlayer = () => {
+  if (adPlayer) {
+    adPlayer.dispose()
+    adPlayer = null
+  }
+}
+
+const createAdPlayer = async () => {
+  await nextTick()
+  if (!adVideoElement.value || !prerollAd.value?.creative?.assetUrl) return
+
+  disposeAdPlayer()
+
+  adPlayer = videojs(adVideoElement.value, {
+    controls: true,
+    autoplay: true,
+    muted: false,
+    preload: 'auto',
+    fluid: false,
+    fill: true,
+    responsive: false,
+    inactivityTimeout: 0,
+    html5: {
+      hls: {
+        overrideNative: true,
+        enableLowInitialPlaylist: false,
+      },
+    },
+    controlBar: {
+      playToggle: false,
+      progressControl: false,
+      currentTimeDisplay: false,
+      durationDisplay: false,
+      timeDivider: false,
+      remainingTimeDisplay: false,
+      liveDisplay: false,
+      seekToLive: false,
+      pictureInPictureToggle: false,
+      fullscreenToggle: false,
+      playbackRateMenuButton: false,
+      chaptersButton: false,
+      descriptionsButton: false,
+      subsCapsButton: false,
+      audioTrackButton: false,
+      volumePanel: {
+        inline: false,
+        vertical: true,
+      },
+    },
+  })
+
+  adPlayer.ready(() => {
+    adPlayer.src({
+      src: prerollAd.value?.creative?.assetUrl || '',
+      type: inferSourceType(prerollAd.value?.creative?.assetUrl || ''),
+    })
+
+    adPlayer.on('play', handleAdPlay)
+    adPlayer.on('timeupdate', handleAdTimeUpdate)
+    adPlayer.on('ended', finishPreroll)
+    adPlayer.play()?.catch?.(() => {})
+  })
+}
+
 const trackAdEvent = async (eventType: 'impression' | 'click' | 'video_view') => {
   if (!prerollAd.value?.creative?.id) return
   try {
@@ -186,6 +257,7 @@ const finishPreroll = () => {
     videoViewTracked.value = true
   }
   showPreroll.value = false
+  disposeAdPlayer()
 }
 
 const handleAdPlay = async () => {
@@ -196,9 +268,9 @@ const handleAdPlay = async () => {
 }
 
 const handleAdTimeUpdate = async () => {
-  if (!adVideoElement.value) return
+  if (!adPlayer) return
 
-  const watchedSeconds = Math.floor(adVideoElement.value.currentTime)
+  const watchedSeconds = Math.floor(adPlayer.currentTime?.() || 0)
   skipCountdown.value = Math.max(0, 5 - watchedSeconds)
 
   if (!videoViewTracked.value && watchedSeconds >= 5) {
@@ -222,9 +294,49 @@ onMounted(async () => {
     context: adContext.value,
   })
 
-  showPreroll.value = Boolean(prerollAd.value?.creative?.assetUrl)
+  showPreroll.value = Boolean(
+    prerollAd.value?.creative?.assetUrl && prerollAd.value.creative.type === 'video'
+  )
   if (showPreroll.value) {
     markPrerollShown()
+    await createAdPlayer()
   }
 })
+
+onBeforeUnmount(() => {
+  disposeAdPlayer()
+})
 </script>
+
+<style scoped>
+:deep(.gilads-preroll-video),
+:deep(.video-js) {
+  width: 100%;
+  height: 100%;
+  background: #000;
+}
+
+:deep(.gilads-preroll-video .vjs-tech),
+:deep(.video-js .vjs-tech) {
+  object-fit: contain;
+}
+
+:deep(.gilads-preroll-video .vjs-control-bar) {
+  z-index: 15;
+  display: flex !important;
+  justify-content: flex-start;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.78), transparent);
+  pointer-events: auto;
+}
+
+:deep(.gilads-preroll-video .vjs-play-control),
+:deep(.gilads-preroll-video .vjs-progress-control),
+:deep(.gilads-preroll-video .vjs-current-time),
+:deep(.gilads-preroll-video .vjs-duration),
+:deep(.gilads-preroll-video .vjs-time-divider),
+:deep(.gilads-preroll-video .vjs-remaining-time),
+:deep(.gilads-preroll-video .vjs-picture-in-picture-control),
+:deep(.gilads-preroll-video .vjs-fullscreen-control) {
+  display: none !important;
+}
+</style>
