@@ -49,6 +49,29 @@
         </div>
       </div>
 
+      <!-- <div v-if="episodeLabel" class="series-episode-label absolute left-3 top-3 rounded bg-black/70 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-white">
+        {{ episodeLabel }}
+      </div> -->
+
+      <div class="series-player-actions absolute right-4 bottom-6 z-[60] flex items-center justify-end gap-3">
+        <button
+          v-if="showSkipIntroButton"
+          type="button"
+          class="rounded bg-white px-4 py-2 text-sm font-semibold text-black shadow-lg transition hover:bg-zinc-200"
+          @click="skipIntro"
+        >
+          Skip intro
+        </button>
+        <button
+          v-if="showNextEpisodeOverlay"
+          type="button"
+          class="rounded bg-white px-4 py-2 text-sm font-semibold text-black shadow-lg transition hover:bg-zinc-200"
+          @click="emit('nextEpisode')"
+        >
+          {{ nextEpisodeLabel }}
+        </button>
+      </div>
+
     </div>
   </div>
 </template>
@@ -62,15 +85,26 @@ import 'videojs-contrib-quality-levels'
 interface Props {
   src?: string
   status?: 'processing' | 'ready' | 'failed' | string
+  episodeLabel?: string
+  introStartSeconds?: number
+  introEndSeconds?: number
+  hasNextEpisode?: boolean
+  nextEpisodeLabel?: string
 }
 
 const emit = defineEmits<{
   play: []
   ended: []
+  nextEpisode: []
 }>()
 
 const props = withDefaults(defineProps<Props>(), {
-  status: 'ready'
+  status: 'ready',
+  episodeLabel: '',
+  introStartSeconds: 0,
+  introEndSeconds: 0,
+  hasNextEpisode: false,
+  nextEpisodeLabel: 'Next episode'
 })
 
 type PresenceViewer = {
@@ -94,10 +128,22 @@ const bufferedEnd = ref(0)
 const seekPreviewTime = ref(0)
 const isSeekingProgress = ref(false)
 const progressBarOverlay = ref<HTMLElement | null>(null)
+const showSkipIntroButton = computed(() =>
+  props.introEndSeconds > props.introStartSeconds &&
+  currentTime.value >= props.introStartSeconds &&
+  currentTime.value < props.introEndSeconds
+)
+const showNextEpisodeOverlay = computed(() =>
+  props.hasNextEpisode &&
+  duration.value > 0 &&
+  duration.value - currentTime.value <= 45
+)
 
 const videoElement = ref<HTMLVideoElement | null>(null)
 let player: any = null
 let qualityButton: any = null
+let audioButton: any = null
+let nextEpisodeButton: any = null
 const DEFAULT_INACTIVITY_TIMEOUT = 3000
 let ultrawideControlsGuardInterval: ReturnType<typeof setInterval> | null = null
 
@@ -146,6 +192,41 @@ const updateQualityButtonVisibility = () => {
       menu.classList.remove('vjs-open')
     }
   }
+}
+
+const countSelectableAudioTracks = (tracks: any) => {
+  if (!tracks || typeof tracks.length !== 'number') return 0
+  let count = 0
+  for (let i = 0; i < tracks.length; i++) {
+    const track = tracks[i]
+    if (track?.kind !== 'metadata') {
+      count++
+    }
+  }
+  return count
+}
+
+const updateAudioButtonVisibility = () => {
+  if (!player || !audioButton || typeof player.audioTracks !== 'function') return
+
+  const tracks = player.audioTracks()
+  const trackCount = countSelectableAudioTracks(tracks)
+
+  if (trackCount > 1) {
+    audioButton.show()
+  } else {
+    audioButton.hide()
+    const menu = audioButton.menu
+    if (menu) {
+      menu.classList.remove('vjs-open')
+    }
+  }
+}
+
+const resetAudioButtonMenu = () => {
+  if (!audioButton?.menu) return
+  audioButton.menu.innerHTML = ''
+  audioButton.menu.classList.remove('vjs-open')
 }
 
 const dumpPlayerDebugState = () => {
@@ -377,15 +458,179 @@ const reorderControlBar = () => {
   const duration = controlBarEl.querySelector('.vjs-duration')
   const pipControl = controlBarEl.querySelector('.vjs-picture-in-picture-control') || controlBarEl.querySelector('.vjs-picture-in-picture-toggle')
   const fullscreenControl = controlBarEl.querySelector('.vjs-fullscreen-control')
+  const captionsControl =
+    controlBarEl.querySelector('.vjs-subs-caps-button') ||
+    controlBarEl.querySelector('.vjs-captions-button') ||
+    controlBarEl.querySelector('.vjs-subtitles-button')
   const qualityControl = qualityButton?.el?.() as HTMLElement | undefined
+  const audioControl = audioButton?.el?.() as HTMLElement | undefined
+  const nextControl = nextEpisodeButton?.el?.() as HTMLElement | undefined
 
   ;[playControl, volumePanel, currentTime, timeDivider, duration].filter(Boolean).forEach((node) => {
     leftGroup!.appendChild(node as HTMLElement)
   })
 
-  ;[pipControl, fullscreenControl, qualityControl].filter(Boolean).forEach((node) => {
+  ;[nextControl, audioControl, captionsControl, pipControl, fullscreenControl, qualityControl].filter(Boolean).forEach((node) => {
     rightGroup!.appendChild(node as HTMLElement)
   })
+}
+
+const skipIntro = () => {
+  if (!player || props.introEndSeconds <= props.introStartSeconds) return
+  player.currentTime(props.introEndSeconds)
+}
+
+const createNextEpisodeButton = () => {
+  const Button = videojs.getComponent('Button')
+
+  class NextEpisodeButton extends Button {
+    constructor(playerRef: any, options: any) {
+      super(playerRef, options)
+      this.addClass('vjs-next-episode-button')
+      this.controlText('Next episode')
+      setTimeout(() => {
+        const el = this.el()
+        if (el) {
+          el.innerHTML = '<span class="vjs-icon-placeholder">Next</span><span class="vjs-control-text">Next episode</span>'
+        }
+      }, 0)
+    }
+
+    handleClick() {
+      emit('nextEpisode')
+    }
+  }
+
+  videojs.registerComponent('NextEpisodeButton', NextEpisodeButton)
+  return 'NextEpisodeButton'
+}
+
+const getAudioTrackLabel = (track: any, index: number) => {
+  const label = track?.label || track?.language || `Audio ${index + 1}`
+  return String(label).trim() || `Audio ${index + 1}`
+}
+
+const createAudioButton = () => {
+  const Button = videojs.getComponent('Button')
+
+  class AudioButton extends Button {
+    menu: any = null
+    audioTracks: any = null
+
+    constructor(playerRef: any, options: any) {
+      super(playerRef, options)
+      this.addClass('vjs-audio-button')
+      this.controlText('Audio')
+      this.audioTracks = playerRef.audioTracks?.()
+
+      setTimeout(() => {
+        const el = this.el()
+        if (el) {
+          el.innerHTML = '<span class="vjs-icon-placeholder"></span><span class="vjs-control-text">Audio</span>'
+        }
+      }, 0)
+
+      if (this.audioTracks) {
+        this.audioTracks.on?.('addtrack', () => {
+          this.buildMenu()
+          updateAudioButtonVisibility()
+        })
+        this.audioTracks.on?.('removetrack', () => {
+          this.buildMenu()
+          updateAudioButtonVisibility()
+        })
+        this.audioTracks.on?.('change', () => {
+          this.updateMenuSelection()
+        })
+      }
+    }
+
+    bindPress(el: Element, handler: (e: Event) => void) {
+      const node = el as HTMLElement
+      node.onclick = (e) => {
+        e.preventDefault()
+        e.stopPropagation()
+        handler(e)
+      }
+    }
+
+    buildMenu() {
+      if (!this.audioTracks || this.audioTracks.length === 0) return
+
+      if (this.menu) {
+        this.menu.innerHTML = ''
+      } else {
+        this.menu = videojs.dom.createEl('div', {
+          className: 'vjs-audio-menu'
+        })
+        this.el().appendChild(this.menu)
+      }
+
+      for (let i = 0; i < this.audioTracks.length; i++) {
+        const track = this.audioTracks[i]
+        if (track?.kind === 'metadata') continue
+
+        const item = videojs.dom.createEl('button', {
+          className: 'vjs-audio-menu-item',
+          innerHTML: getAudioTrackLabel(track, i),
+          type: 'button'
+        }) as HTMLButtonElement
+        item.dataset.trackIndex = i.toString()
+
+        this.bindPress(item, () => {
+          const selectedIndex = parseInt(item.dataset.trackIndex || '0')
+          for (let j = 0; j < this.audioTracks.length; j++) {
+            this.audioTracks[j].enabled = j === selectedIndex
+          }
+          this.updateMenuSelection()
+          this.toggleMenu()
+        })
+
+        this.menu.appendChild(item)
+      }
+
+      this.updateMenuSelection()
+    }
+
+    updateMenuSelection() {
+      if (!this.menu || !this.audioTracks) return
+
+      const items = this.menu.querySelectorAll('.vjs-audio-menu-item')
+      items.forEach((item: any) => {
+        const trackIndex = parseInt(item.dataset.trackIndex || '-1')
+        const track = this.audioTracks[trackIndex]
+        item.classList.toggle('vjs-selected', Boolean(track?.enabled))
+      })
+    }
+
+    handleClick() {
+      if (!this.audioTracks || countSelectableAudioTracks(this.audioTracks) <= 1) return
+
+      if (!this.menu || this.menu.children.length === 0) {
+        this.buildMenu()
+      }
+
+      this.toggleMenu()
+    }
+
+    handleTap(event: Event) {
+      if (event) {
+        event.preventDefault()
+        event.stopPropagation()
+      }
+
+      this.handleClick()
+    }
+
+    toggleMenu() {
+      if (this.menu) {
+        this.menu.classList.toggle('vjs-open')
+      }
+    }
+  }
+
+  videojs.registerComponent('AudioButton', AudioButton)
+  return 'AudioButton'
 }
 
 // Progress bar interaction handlers
@@ -690,6 +935,8 @@ onMounted(async () => {
   if (videoElement.value) {
     // Register quality button before creating player
     createQualityButton(null)
+    createAudioButton()
+    createNextEpisodeButton()
 
     player = videojs(videoElement.value, {
       controls: true,
@@ -718,7 +965,7 @@ onMounted(async () => {
         playbackRateMenuButton: false,
         chaptersButton: false,
         descriptionsButton: false,
-        subsCapsButton: false,
+        subsCapsButton: true,
         audioTrackButton: false,
         liveDisplay: false,
         seekToLive: false,
@@ -732,6 +979,14 @@ onMounted(async () => {
       // Add quality button to control bar
       qualityButton = player.controlBar.addChild('QualityButton', {})
       qualityButton.hide()
+      audioButton = player.controlBar.addChild('AudioButton', {})
+      audioButton.hide()
+      nextEpisodeButton = player.controlBar.addChild('NextEpisodeButton', {})
+      if (props.hasNextEpisode) {
+        nextEpisodeButton.show()
+      } else {
+        nextEpisodeButton.hide()
+      }
 
       reorderControlBar()
       setTimeout(reorderControlBar, 0)
@@ -766,8 +1021,21 @@ onMounted(async () => {
         qualityLevels.on('change', updateQualityButtonVisibility)
       }
 
+      const audioTracks = player.audioTracks?.()
+      if (audioTracks) {
+        audioTracks.on?.('addtrack', updateAudioButtonVisibility)
+        audioTracks.on?.('removetrack', updateAudioButtonVisibility)
+        audioTracks.on?.('change', updateAudioButtonVisibility)
+      }
+
       player.on('loadedmetadata', updateQualityButtonVisibility)
+      player.on('loadedmetadata', () => {
+        resetAudioButtonMenu()
+        audioButton?.buildMenu?.()
+        updateAudioButtonVisibility()
+      })
       player.on('fullscreenchange', updateQualityButtonVisibility)
+      player.on('fullscreenchange', updateAudioButtonVisibility)
       player.on('loadedmetadata', syncUltrawideFullscreenClass)
       player.on('fullscreenchange', syncUltrawideFullscreenClass)
       player.on('fullscreenchange', attachProgressBarOverlay)
@@ -814,6 +1082,8 @@ onBeforeUnmount(() => {
     player.dispose()
     player = null
     qualityButton = null
+    audioButton = null
+    nextEpisodeButton = null
   }
 })
 
@@ -821,6 +1091,8 @@ watch(
   () => props.src,
   (newSrc) => {
     if (player && newSrc && props.status === 'ready') {
+      audioButton?.hide?.()
+      resetAudioButtonMenu()
       player.src({
         src: newSrc,
         type: inferSourceType(newSrc)
@@ -834,6 +1106,18 @@ watch(
   (newStatus) => {
     if (newStatus === 'processing' && player) {
       player.pause()
+    }
+  }
+)
+
+watch(
+  () => props.hasNextEpisode,
+  (hasNext) => {
+    if (!nextEpisodeButton) return
+    if (hasNext) {
+      nextEpisodeButton.show()
+    } else {
+      nextEpisodeButton.hide()
     }
   }
 )
@@ -997,6 +1281,17 @@ watch(
   line-height: 1 !important;
 }
 
+:deep(.vjs-control-bar .vjs-control.vjs-hidden),
+:deep(.vjs-control-bar .vjs-button.vjs-hidden),
+:deep(.vjs-control-bar .vjs-hidden) {
+  display: none !important;
+  width: 0 !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  visibility: hidden !important;
+}
+
 :deep(.giltube-control-group) {
   display: flex !important;
   align-items: center !important;
@@ -1117,6 +1412,49 @@ watch(
   line-height: 1;
 }
 
+:deep(.vjs-audio-button) {
+  font-size: 11px;
+  color: white;
+  cursor: pointer;
+  padding: 0 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 28px;
+  background-color: transparent !important;
+  border: none;
+  width: auto;
+  min-width: 36px;
+  touch-action: manipulation;
+  line-height: 1;
+}
+
+:deep(.vjs-next-episode-button) {
+  width: auto !important;
+  min-width: 48px;
+  padding: 0 10px !important;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+:deep(.vjs-audio-button::before),
+:deep(.vjs-next-episode-button::before) {
+  content: none !important;
+  display: none !important;
+}
+
+:deep(.vjs-next-episode-button .vjs-icon-placeholder) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+:deep(.vjs-next-episode-button .vjs-control-text) {
+  display: none;
+}
+
 :deep(.vjs-quality-button .vjs-icon-placeholder) {
   display: inline-block;
   font-size: 18px;
@@ -1137,7 +1475,23 @@ watch(
   color: #ef4444;
 }
 
-:deep(.vjs-quality-menu) {
+:deep(.vjs-audio-button:hover) {
+  color: #ef4444;
+}
+
+:deep(.vjs-audio-button .vjs-icon-placeholder) {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+:deep(.vjs-audio-button .vjs-control-text) {
+  display: none;
+}
+
+:deep(.vjs-quality-menu),
+:deep(.vjs-audio-menu) {
   position: absolute;
   bottom: 35px;
   right: 0;
@@ -1163,11 +1517,13 @@ watch(
 }
 
 
-:deep(.vjs-quality-menu.vjs-open) {
+:deep(.vjs-quality-menu.vjs-open),
+:deep(.vjs-audio-menu.vjs-open) {
   display: block !important;
 }
 
-:deep(.vjs-quality-menu-item) {
+:deep(.vjs-quality-menu-item),
+:deep(.vjs-audio-menu-item) {
   display: flex;
   align-items: center;
   justify-content: flex-start;
@@ -1192,16 +1548,19 @@ watch(
   -webkit-appearance: none;
 }
 
-:deep(.vjs-quality-menu-item:last-child) {
+:deep(.vjs-quality-menu-item:last-child),
+:deep(.vjs-audio-menu-item:last-child) {
   border-bottom: none;
 }
 
-:deep(.vjs-quality-menu-item:hover) {
+:deep(.vjs-quality-menu-item:hover),
+:deep(.vjs-audio-menu-item:hover) {
   background-color: #ef4444;
   color: white;
 }
 
-:deep(.vjs-quality-menu-item.vjs-selected) {
+:deep(.vjs-quality-menu-item.vjs-selected),
+:deep(.vjs-audio-menu-item.vjs-selected) {
   background-color: #ef4444;
   font-weight: bold;
 }
@@ -1322,6 +1681,12 @@ watch(
   :deep(.vjs-quality-button) {
     width: 32px !important;
     height: 32px !important;
+  }
+
+  :deep(.vjs-audio-button) {
+    width: 38px !important;
+    height: 32px !important;
+    padding: 0 4px !important;
   }
 
   :deep(.vjs-fullscreen-control) {

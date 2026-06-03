@@ -8,6 +8,8 @@ interface UploadVideoRequest {
   explicit?: boolean
   categoryId?: string
   thumbnail?: File
+  hidden?: boolean
+  uploadBaseURL?: string
   onProgress?: (progress: number) => void
 }
 
@@ -65,6 +67,7 @@ export const uploadVideo = async (data: UploadVideoRequest) => {
 
   // Generate a unique upload session ID
   const uploadSessionId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+  const requestConfig = data.uploadBaseURL ? { baseURL: data.uploadBaseURL } : {}
 
   try {
     // Upload file in chunks
@@ -82,6 +85,7 @@ export const uploadVideo = async (data: UploadVideoRequest) => {
 
       // Upload this chunk
       await api.post('/videos/upload-chunk', chunkFormData, {
+        ...requestConfig,
         timeout: 0, // No timeout for chunk uploads
         onUploadProgress: (progressEvent: any) => {
           uploadedBytes = start + progressEvent.loaded
@@ -101,6 +105,9 @@ export const uploadVideo = async (data: UploadVideoRequest) => {
     if (data.explicit) {
       finalizeFormData.append('explicit', 'true')
     }
+    if (data.hidden) {
+      finalizeFormData.append('hidden', 'true')
+    }
     if (data.categoryId) {
       finalizeFormData.append('category_ids[]', data.categoryId)
     }
@@ -109,6 +116,7 @@ export const uploadVideo = async (data: UploadVideoRequest) => {
     }
 
     const response = await api.post('/videos/finalize-upload', finalizeFormData, {
+      ...requestConfig,
       timeout: 0,
     })
 

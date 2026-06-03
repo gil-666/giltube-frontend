@@ -2,53 +2,116 @@
   <div class="relative">
     <div
       v-if="showPreroll && prerollAd?.creative"
-      class="overflow-hidden rounded-2xl border border-cyan-400/20 bg-black shadow-[0_30px_90px_rgba(6,182,212,0.16)]"
+      class="gilads-preroll-container overflow-hidden rounded-lg bg-black"
     >
-      <div class="relative aspect-video bg-black">
+      <div class="relative h-full w-full bg-black">
         <video
           ref="adVideoElement"
           class="video-js vjs-default-skin h-full w-full object-contain gilads-preroll-video"
           playsinline
           preload="auto"
         />
-        <div class="pointer-events-none absolute inset-x-0 top-0 z-20 flex items-start justify-start bg-gradient-to-b from-black/75 to-transparent p-4">
-          <div class="pointer-events-auto rounded-full border border-cyan-300/30 bg-black/60 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-cyan-200">
-            Sponsored
+        <div class="gilads-preroll-controls">
+          <div class="absolute inset-x-0 top-0 flex items-start justify-between gap-3 bg-gradient-to-b from-black/75 to-transparent p-4">
+            <div class="pointer-events-auto flex max-w-[calc(100%-4rem)] items-center gap-2 rounded-full border border-cyan-300/30 bg-black/60 px-3 py-1 text-xs text-cyan-200">
+              <span class="shrink-0 font-semibold uppercase tracking-[0.18em]">Sponsored</span>
+              <span class="truncate font-medium normal-case tracking-normal text-white/85">{{ prerollAd.creative.headline || 'Sponsored video' }}</span>
+            </div>
+            <button
+              type="button"
+              class="pointer-events-auto flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-white/15 bg-black/70 text-sm font-bold text-white transition hover:bg-black"
+              aria-label="About this sponsor"
+              title="About this sponsor"
+              @click="showSponsorInfo = true"
+            >
+              i
+            </button>
+          </div>
+
+          <div class="absolute inset-x-0 bottom-0 flex items-end justify-between gap-3 bg-gradient-to-t from-black/70 to-transparent p-5">
+            <a
+              v-if="prerollAd.creative.destinationUrl"
+              :href="prerollAd.creative.destinationUrl"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="pointer-events-auto inline-flex min-w-0 max-w-[60%] shrink items-center justify-center truncate rounded border border-cyan-300/30 bg-cyan-500/20 px-4 py-2 text-sm font-semibold text-white backdrop-blur transition hover:bg-cyan-500/30"
+              @click="handleAdClick"
+            >
+              Visit sponsor
+            </a>
+            <span v-else />
+
+            <button
+              type="button"
+              class="pointer-events-auto shrink-0 rounded border border-white/20 bg-black/85 px-4 py-2 text-sm font-semibold text-white shadow-[0_10px_30px_rgba(0,0,0,0.35)] transition hover:bg-black disabled:cursor-not-allowed disabled:opacity-75"
+              :disabled="skipCountdown > 0"
+              @click="finishPreroll"
+            >
+              {{ skipCountdown > 0 ? `Skip in ${skipCountdown}s` : 'Skip ad' }}
+            </button>
           </div>
         </div>
-        <button
-          type="button"
-          class="absolute bottom-4 right-4 z-30 rounded-full border border-white/20 bg-black/80 px-5 py-3 text-sm font-black text-white shadow-[0_10px_30px_rgba(0,0,0,0.35)] transition hover:bg-black disabled:cursor-not-allowed disabled:opacity-75"
-          :disabled="skipCountdown > 0"
-          @click="finishPreroll"
-        >
-          {{ skipCountdown > 0 ? `Skip in ${skipCountdown}s` : 'Skip ad' }}
-        </button>
-      </div>
-      <div class="flex flex-col gap-3 border-t border-white/10 bg-zinc-950/90 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-        <div class="min-w-0">
-          <p class="text-sm font-semibold text-white">{{ prerollAd.creative.headline || 'Sponsored video' }}</p>
-          <p v-if="prerollAd.creative.body" class="mt-1 text-sm text-zinc-300">{{ prerollAd.creative.body }}</p>
-        </div>
-        <a
-          v-if="prerollAd.creative.destinationUrl"
-          :href="prerollAd.creative.destinationUrl"
-          target="_blank"
-          rel="noopener noreferrer"
-          class="inline-flex shrink-0 items-center justify-center rounded-full border border-cyan-300/30 bg-cyan-500/20 px-4 py-2 text-sm font-semibold text-white backdrop-blur transition hover:bg-cyan-500/30"
-          @click="handleAdClick"
-        >
-          Visit sponsor
-        </a>
       </div>
     </div>
 
+    <Teleport to="body">
+      <div
+        v-if="showSponsorInfo && prerollAd?.creative"
+        class="fixed inset-0 flex items-center justify-center bg-black/50 px-4"
+        style="z-index: 2147483647 !important; pointer-events: auto; overflow: visible;"
+        @click.self="showSponsorInfo = false"
+      >
+        <div class="w-full max-w-md rounded-lg bg-zinc-800" style="z-index: 2147483647 !important; position: relative; overflow: visible;">
+          <div class="flex items-center justify-between border-b border-zinc-700 px-6 py-4">
+            <h2 class="text-lg font-semibold text-white">About this sponsor</h2>
+            <button type="button" class="text-gray-400 hover:text-white" @click="showSponsorInfo = false">
+              <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+
+          <div class="space-y-4 px-6 py-4">
+            <div>
+              <p class="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-300/80">Sponsored video</p>
+              <h3 class="mt-1 text-base font-semibold text-white">{{ prerollAd.creative.headline || 'Sponsored video' }}</h3>
+              <p v-if="prerollAd.creative.body" class="mt-2 text-sm text-zinc-300">{{ prerollAd.creative.body }}</p>
+            </div>
+
+            <div v-if="prerollAd.creative.destinationUrl" class="rounded border border-zinc-700 bg-zinc-900 p-3">
+              <p class="text-xs uppercase tracking-[0.18em] text-zinc-500">Sponsor link</p>
+              <p class="mt-1 break-all text-sm text-zinc-200">{{ prerollAd.creative.destinationUrl }}</p>
+            </div>
+
+            <div class="flex justify-end">
+              <a
+                v-if="prerollAd.creative.destinationUrl"
+                :href="prerollAd.creative.destinationUrl"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="rounded bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-700"
+                @click="handleAdClick"
+              >
+                Visit sponsor
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Teleport>
+
     <VideoPlayer
-      v-else
+      v-if="!showPreroll || !prerollAd?.creative"
       :src="src"
       :status="status"
+      :episode-label="episodeLabel"
+      :intro-start-seconds="introStartSeconds"
+      :intro-end-seconds="introEndSeconds"
+      :has-next-episode="hasNextEpisode"
+      :next-episode-label="nextEpisodeLabel"
       @play="$emit('play')"
       @ended="$emit('ended')"
+      @next-episode="$emit('nextEpisode')"
     />
   </div>
 </template>
@@ -70,6 +133,11 @@ interface Props {
   status?: string
   videoId?: string
   channelId?: string
+  episodeLabel?: string
+  introStartSeconds?: number
+  introEndSeconds?: number
+  hasNextEpisode?: boolean
+  nextEpisodeLabel?: string
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -77,11 +145,17 @@ const props = withDefaults(defineProps<Props>(), {
   status: 'ready',
   videoId: '',
   channelId: '',
+  episodeLabel: '',
+  introStartSeconds: 0,
+  introEndSeconds: 0,
+  hasNextEpisode: false,
+  nextEpisodeLabel: 'Next episode',
 })
 
 defineEmits<{
   play: []
   ended: []
+  nextEpisode: []
 }>()
 
 const PREROLL_COOLDOWN_VIDEOS = 3
@@ -101,6 +175,7 @@ const impressionTracked = ref(false)
 const videoViewTracked = ref(false)
 const skipCountdown = ref(5)
 const adVideoElement = ref<HTMLVideoElement | null>(null)
+const showSponsorInfo = ref(false)
 let adPlayer: any = null
 
 const adContext = computed(() => ({
@@ -298,6 +373,7 @@ const finishPreroll = () => {
     videoViewTracked.value = true
   }
   showPreroll.value = false
+  showSponsorInfo.value = false
   disposeAdPlayer()
 }
 
@@ -339,11 +415,30 @@ onMounted(async () => {
 })
 
 onBeforeUnmount(() => {
+  showSponsorInfo.value = false
   disposeAdPlayer()
 })
 </script>
 
 <style scoped>
+.gilads-preroll-container {
+  position: relative;
+  height: 250px;
+}
+
+.gilads-preroll-controls {
+  position: absolute;
+  inset: 0;
+  z-index: 2147483600;
+  pointer-events: none;
+}
+
+@media (min-width: 768px) {
+  .gilads-preroll-container {
+    height: 500px;
+  }
+}
+
 :deep(.gilads-preroll-video),
 :deep(.video-js) {
   width: 100%;

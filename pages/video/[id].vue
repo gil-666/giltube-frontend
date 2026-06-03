@@ -10,8 +10,14 @@
           :status="video?.status"
           :video-id="id"
           :channel-id="video?.channel?.id"
+          :episode-label="currentEpisodeLabel"
+          :intro-start-seconds="currentSeriesEpisode?.intro_start_seconds || 0"
+          :intro-end-seconds="currentSeriesEpisode?.intro_end_seconds || 0"
+          :has-next-episode="hasNextQueueVideo"
+          :next-episode-label="isPlayingFromSeries ? 'Next episode' : 'Next video'"
           @play="onVideoPlay"
           @ended="handleVideoEnded"
+          @next-episode="skipToNextVideo"
         />
       </div>
 
@@ -118,15 +124,62 @@
             <span>{{ t('video.share') }}</span>
           </button>
         </div>
+
+        <section v-if="trailerSeries" class="mt-6 rounded-lg border border-red-500/30 bg-zinc-900 p-4">
+          <div class="flex flex-col gap-4 sm:flex-row">
+            <div class="w-32 shrink-0 overflow-hidden rounded bg-zinc-800">
+              <img
+                :src="getTrailerSeriesPosterUrl(trailerSeries.poster_url)"
+                :alt="trailerSeries.title"
+                class="aspect-[2/3] h-full w-full object-cover"
+              />
+            </div>
+            <div class="min-w-0 flex-1">
+              <p class="text-xs font-semibold uppercase tracking-[0.18em] text-red-300">Series Trailer</p>
+              <h2 class="mt-1 text-2xl font-bold text-white">{{ trailerSeries.title }}</h2>
+              <p class="mt-2 line-clamp-3 text-sm leading-6 text-gray-300">{{ trailerSeries.synopsis }}</p>
+              <NuxtLink
+                v-if="trailerSeries.first_episode"
+                :to="localePath(`/video/${trailerSeries.first_episode.video_id}?series_id=${trailerSeries.id}&index=0`)"
+                class="mt-4 inline-flex rounded bg-red-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-red-700"
+              >
+                Watch series
+              </NuxtLink>
+            </div>
+          </div>
+        </section>
+
+        <section v-if="currentSeries && currentSeriesEpisode" class="mt-6 rounded-lg border border-red-500/30 bg-zinc-900 p-4">
+          <div class="flex flex-col gap-4 sm:flex-row">
+            <div class="w-32 shrink-0 overflow-hidden rounded bg-zinc-800">
+              <img
+                :src="getTrailerSeriesPosterUrl(currentSeries.poster_url)"
+                :alt="currentSeries.title"
+                class="aspect-[2/3] h-full w-full object-cover"
+              />
+            </div>
+            <div class="min-w-0 flex-1">
+              <p class="text-xs font-semibold uppercase tracking-[0.18em] text-red-300">{{ currentSeries.title }}</p>
+              <h2 class="mt-1 text-2xl font-bold text-white">{{ currentSeriesEpisode.title }}</h2>
+              <p class="mt-2 line-clamp-3 text-sm leading-6 text-gray-300">{{ currentSeriesEpisode.description }}</p>
+              <NuxtLink
+                :to="localePath(`/category/series?series_id=${currentSeries.id}`)"
+                class="mt-4 inline-flex rounded bg-red-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-red-700"
+              >
+                View series
+              </NuxtLink>
+            </div>
+          </div>
+        </section>
       </div>
 
       <!-- Mobile Playlist Queue -->
-      <div v-if="isPlayingFromPlaylist && playlistVideos.length > 0" class="mt-8 lg:hidden">
+      <div v-if="isQueuePlayback && playlistVideos.length > 0" class="mt-8 lg:hidden">
         <div class="bg-zinc-900 rounded-lg p-4 mb-3">
           <div class="flex items-center justify-between gap-3 mb-2">
             <div>
-              <h2 class="text-lg font-bold">{{ t('playlists.playingFrom') }}</h2>
-              <NuxtLink :to="localePath(`/playlists/${currentPlaylistId}`)" class="text-red-400 hover:text-red-300 text-sm truncate block">
+              <h2 class="text-lg font-bold">{{ queueHeading }}</h2>
+              <NuxtLink :to="queueSourceLink" class="text-red-400 hover:text-red-300 text-sm truncate block">
                 {{ currentPlaylistName }}
               </NuxtLink>
             </div>
@@ -147,7 +200,7 @@
           <NuxtLink
             v-for="item in playlistQueueVideos"
             :key="`${item.video.id}-${item.index}`"
-            :to="localePath(`/video/${item.video.id}?playlist_id=${currentPlaylistId}&index=${item.index}`)"
+            :to="queueVideoLink(item.video.id, item.index)"
             :class="{
               'bg-red-900 border-red-500 border': item.index === currentVideoIndex,
               'bg-zinc-800 hover:bg-zinc-700': item.index !== currentVideoIndex
@@ -166,7 +219,7 @@
                   {{ t('playlists.noThumbnail') }}
                 </div>
                 <div class="absolute top-0.5 left-0.5 bg-black bg-opacity-70 px-1 py-0.5 rounded text-xs font-bold text-white">
-                  {{ item.index + 1 }}
+                  {{ isPlayingFromSeries ? `S${item.video.season_number} E${item.video.episode_number}` : item.index + 1 }}
                 </div>
               </div>
 
@@ -375,7 +428,7 @@
         />
 
         <!-- Playlist Queue (when playing from playlist) -->
-        <div v-if="isPlayingFromPlaylist && playlistVideos.length > 0" class="px-4 md:px-0">
+        <div v-if="isQueuePlayback && playlistVideos.length > 0" class="px-4 md:px-0">
           <div
             class="relative bg-zinc-900 rounded-lg p-4 mb-4 cursor-pointer border border-transparent hover:border-zinc-700 transition"
             role="button"
@@ -394,8 +447,8 @@
             </div>
 
             <div class="min-w-0 pr-12">
-              <h2 class="text-lg font-bold">{{ t('playlists.playingFrom') }}</h2>
-              <NuxtLink :to="localePath(`/playlists/${currentPlaylistId}`)" class="text-red-400 hover:text-red-300 text-sm truncate block">
+              <h2 class="text-lg font-bold">{{ queueHeading }}</h2>
+              <NuxtLink :to="queueSourceLink" class="text-red-400 hover:text-red-300 text-sm truncate block">
                 {{ currentPlaylistName }}
               </NuxtLink>
               <div class="mt-2 flex flex-wrap items-center gap-2 text-xs text-gray-400">
@@ -412,7 +465,7 @@
             <NuxtLink
               v-for="item in playlistQueueVideos"
               :key="`${item.video.id}-${item.index}`"
-              :to="localePath(`/video/${item.video.id}?playlist_id=${currentPlaylistId}&index=${item.index}`)"
+              :to="queueVideoLink(item.video.id, item.index)"
               :class="{
                 'bg-red-900 border-red-500 border': item.index === currentVideoIndex,
                 'bg-zinc-800 hover:bg-zinc-700': item.index !== currentVideoIndex
@@ -433,7 +486,7 @@
                   </div>
                   <!-- Video index badge -->
                   <div class="absolute top-0.5 left-0.5 bg-black bg-opacity-70 px-1 py-0.5 rounded text-xs font-bold text-white">
-                    {{ item.index + 1 }}
+                    {{ isPlayingFromSeries ? `S${item.video.season_number} E${item.video.episode_number}` : item.index + 1 }}
                   </div>
                 </div>
 
@@ -443,7 +496,7 @@
                     {{ item.video.title }}
                   </p>
                   <p class="text-xs text-gray-500 mt-1">
-                    {{ item.video.channel?.name || t('playlists.unknownChannel') }}
+                    {{ item.video.channel?.name || (!isPlayingFromSeries ? t('playlists.unknownChannel') : '') }}
                   </p>
                 </div>
               </div>
@@ -684,6 +737,7 @@ import GiphyPicker from '~/app/components/GiphyPicker.vue'
 import AddToPlaylistModal from '~/app/components/AddToPlaylistModal.vue'
 import { GILADS_PLACEMENTS } from '~/app/service/gilads'
 import { getVideo, incrementViews, getVideos, likeVideo, unlikeVideo, checkIfLiked } from '~/app/service/videos'
+import { getSeries, getSeriesEpisodeContext, getSeriesTrailerContext } from '~/app/service/series'
 import { getVideoComments, postComment as apiPostComment, deleteComment, likeComment, unlikeComment } from '~/app/service/comments'
 import { insertGiphyIntoComment, type GiphyGif } from '~/app/utils/giphy'
 import { getTimeAgo } from '~/app/utils/time'
@@ -729,6 +783,8 @@ const highlightedCommentId = ref('')
 const pendingJumpCommentID = ref('')
 const showGiphyPicker = ref(false)
 const showAddToPlaylist = ref(false)
+const trailerSeries = ref<any | null>(null)
+const currentSeries = ref<any | null>(null)
 
 const showSidebar = ref(true)
 
@@ -737,6 +793,7 @@ const carouselContainer = ref<HTMLElement | null>(null)
 
 // Playlist playback mode
 const isPlayingFromPlaylist = ref(false)
+const isPlayingFromSeries = ref(false)
 const currentPlaylistId = ref('')
 const currentPlaylistName = ref('')
 const playlistVideos = ref<any[]>([])
@@ -758,6 +815,34 @@ const playlistQueueVideos = computed(() => {
     index: start + offset
   }))
 })
+
+const isQueuePlayback = computed(() => isPlayingFromPlaylist.value || isPlayingFromSeries.value)
+const hasNextQueueVideo = computed(() => isQueuePlayback.value && currentVideoIndex.value < playlistVideos.value.length - 1)
+const queueHeading = computed(() => isPlayingFromSeries.value ? 'Playing series' : t('playlists.playingFrom'))
+const queueSourceLink = computed(() => {
+  if (isPlayingFromSeries.value) return localePath('/category/series')
+  return localePath(`/playlists/${currentPlaylistId.value}`)
+})
+const currentSeriesEpisode = computed(() => {
+  if (!isPlayingFromSeries.value) return null
+  return playlistVideos.value[currentVideoIndex.value] || null
+})
+const currentEpisodeLabel = computed(() => {
+  const episode = currentSeriesEpisode.value
+  if (!episode) return ''
+  return `Season ${episode.season_number} | Episode ${episode.episode_number}`
+})
+const getTrailerSeriesPosterUrl = (posterUrl: string) => {
+  if (!posterUrl) return `${baseUrl}/videos/placeholder-thumbnail.jpg`
+  if (/^https?:\/\//i.test(posterUrl)) return posterUrl
+  return `${baseUrl}${posterUrl.startsWith('/') ? '' : '/'}${posterUrl}`
+}
+const queueVideoLink = (videoId: string, index: number) => {
+  if (isPlayingFromSeries.value) {
+    return localePath(`/video/${videoId}?series_id=${currentPlaylistId.value}&index=${index}`)
+  }
+  return localePath(`/video/${videoId}?playlist_id=${currentPlaylistId.value}&index=${index}`)
+}
 
 const commentsById = computed(() => {
   const map: Record<string, any> = {}
@@ -951,9 +1036,20 @@ onMounted(async () => {
   syncActiveAccountFromStorage()
 
   // Check if playing from playlist
+  const seriesId = route.query.series_id
   const playlistId = route.query.playlist_id
   const playlistIndex = route.query.index
-  if (playlistId && typeof playlistId === 'string') {
+  if (seriesId && typeof seriesId === 'string') {
+    isPlayingFromSeries.value = true
+    currentPlaylistId.value = seriesId
+    await loadSeries(seriesId)
+    if (playlistIndex && typeof playlistIndex === 'string') {
+      const indexNum = parseInt(playlistIndex, 10)
+      if (!isNaN(indexNum) && indexNum >= 0 && indexNum < playlistVideos.value.length) {
+        currentVideoIndex.value = indexNum
+      }
+    }
+  } else if (playlistId && typeof playlistId === 'string') {
     isPlayingFromPlaylist.value = true
     currentPlaylistId.value = playlistId
     await loadPlaylist(playlistId)
@@ -964,7 +1060,11 @@ onMounted(async () => {
         currentVideoIndex.value = indexNum
       }
     }
+  } else {
+    await loadSeriesContextForVideo()
   }
+
+  await loadTrailerContextForVideo()
 
   try {
     const commentActorId = getCurrentCommentActorID()
@@ -1356,10 +1456,68 @@ const loadPlaylist = async (playlistId: string) => {
   }
 }
 
+const normalizeSeriesEpisode = (episode: any) => ({
+  ...(episode.video || {}),
+  id: episode.video_id,
+  title: episode.title || episode.video?.title,
+  description: episode.synopsis || episode.video?.description,
+  thumbnail_url: episode.video?.thumbnail_url,
+  season_number: episode.season_number,
+  episode_number: episode.episode_number,
+  intro_start_seconds: episode.intro_start_seconds,
+  intro_end_seconds: episode.intro_end_seconds,
+  series_episode_id: episode.id,
+})
+
+const loadSeries = async (seriesId: string) => {
+  try {
+    const data = await getSeries(seriesId)
+    currentSeries.value = data.series || null
+    currentPlaylistName.value = data.series?.title || 'Series'
+    playlistVideos.value = (data.episodes || []).map(normalizeSeriesEpisode)
+
+    const index = playlistVideos.value.findIndex(v => v.id === id)
+    if (index !== -1) {
+      currentVideoIndex.value = index
+    }
+  } catch (err) {
+    console.error('Failed to load series:', err)
+  }
+}
+
+const loadSeriesContextForVideo = async () => {
+  try {
+    const data = await getSeriesEpisodeContext(id)
+    isPlayingFromSeries.value = true
+    currentSeries.value = data.series || null
+    currentPlaylistId.value = data.series?.id || ''
+    currentPlaylistName.value = data.series?.title || 'Series'
+    playlistVideos.value = (data.episodes || []).map(normalizeSeriesEpisode)
+    if (typeof data.current_index === 'number' && data.current_index >= 0) {
+      currentVideoIndex.value = data.current_index
+    }
+  } catch (err: any) {
+    if (err?.response?.status !== 404) {
+      console.error('Failed to load series context:', err)
+    }
+  }
+}
+
+const loadTrailerContextForVideo = async () => {
+  try {
+    const data = await getSeriesTrailerContext(id)
+    trailerSeries.value = data.series || null
+  } catch (err: any) {
+    if (err?.response?.status !== 404) {
+      console.error('Failed to load series trailer context:', err)
+    }
+  }
+}
+
 // Skip to next video in playlist
 const skipToNextVideo = async () => {
-  if (!isPlayingFromPlaylist.value || !currentPlaylistId.value) {
-    console.log('Cannot skip: not in playlist mode or missing playlistId')
+  if (!isQueuePlayback.value || !currentPlaylistId.value) {
+    console.log('Cannot skip: not in queue mode or missing source id')
     return
   }
   
@@ -1371,21 +1529,17 @@ const skipToNextVideo = async () => {
   const nextVideo = playlistVideos.value[currentVideoIndex.value + 1]
   if (nextVideo) {
     console.log('Skipping to next video:', nextVideo.id)
-    await navigateTo(localePath(`/video/${nextVideo.id}?playlist_id=${currentPlaylistId.value}&index=${currentVideoIndex.value + 1}`))
+    await navigateTo(queueVideoLink(nextVideo.id, currentVideoIndex.value + 1))
   }
 }
 
 // Autoplay next video when current ends
 const handleVideoEnded = async () => {
-  console.log('Video ended. isPlayingFromPlaylist:', isPlayingFromPlaylist.value, 'currentIndex:', currentVideoIndex.value, 'total:', playlistVideos.value.length)
-  if (!isPlayingFromPlaylist.value) return
+  console.log('Video ended. isQueuePlayback:', isQueuePlayback.value, 'currentIndex:', currentVideoIndex.value, 'total:', playlistVideos.value.length)
+  if (!isQueuePlayback.value) return
   
   if (currentVideoIndex.value < playlistVideos.value.length - 1) {
     await skipToNextVideo()
   }
 }
 </script>
-
-
-
-

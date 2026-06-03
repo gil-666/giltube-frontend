@@ -46,6 +46,12 @@
       >
         🎬 Videos
       </button>
+      <button
+        @click="activeTab = 'series'"
+        :class="['px-4 py-2 border-b-2 font-semibold transition', activeTab === 'series' ? 'border-blue-500 text-blue-400' : 'border-transparent text-gray-400 hover:text-white']"
+      >
+        Series
+      </button>
     </div>
 
     <!-- Users Tab -->
@@ -212,6 +218,148 @@
       <p class="text-gray-400">Total Comments: <span class="text-white font-bold">{{ stats.total_comments }}</span></p>
     </div>
 
+    <!-- Series Tab -->
+    <div v-if="activeTab === 'series'" class="space-y-6">
+      <div>
+        <h2 class="text-2xl font-bold text-white">Series Creator</h2>
+        <p class="mt-1 text-sm text-gray-400">Create metadata, upload a public trailer, and ingest hidden episode videos.</p>
+      </div>
+
+      <div class="rounded-lg border border-zinc-700 bg-zinc-900 p-5">
+        <label class="mb-2 block text-sm font-medium text-gray-300">Resume existing series</label>
+        <div class="grid gap-3 md:grid-cols-[minmax(0,1fr)_9rem]">
+          <select v-model="selectedSeriesId" class="rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-white focus:outline-none focus:border-blue-500" @change="selectExistingSeries">
+            <option value="">Create a new series</option>
+            <option v-for="item in adminSeries" :key="item.id" :value="item.id">
+              {{ item.title }} · {{ item.episode_count || 0 }} episodes
+            </option>
+          </select>
+          <button type="button" class="rounded bg-zinc-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-zinc-600" @click="startNewSeries">
+            New series
+          </button>
+        </div>
+      </div>
+
+      <div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
+        <form class="space-y-5 rounded-lg border border-zinc-700 bg-zinc-900 p-5" @submit.prevent="handleCreateSeries">
+          <div class="grid gap-4 md:grid-cols-2">
+            <div>
+              <label class="mb-2 block text-sm font-medium text-gray-300">Title</label>
+              <input v-model="seriesForm.title" required class="w-full rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-white focus:outline-none focus:border-blue-500" />
+            </div>
+            <div>
+              <label class="mb-2 block text-sm font-medium text-gray-300">Slug</label>
+              <input v-model="seriesForm.slug" placeholder="Auto-generated if blank" class="w-full rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500" />
+            </div>
+            <div>
+              <label class="mb-2 block text-sm font-medium text-gray-300">Primary Genre</label>
+              <input v-model="seriesForm.genre" required class="w-full rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-white focus:outline-none focus:border-blue-500" />
+            </div>
+            <div>
+              <label class="mb-2 block text-sm font-medium text-gray-300">Seasons</label>
+              <input v-model.number="seriesForm.seasons" min="1" type="number" class="w-full rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-white focus:outline-none focus:border-blue-500" />
+            </div>
+          </div>
+
+          <div>
+            <label class="mb-2 block text-sm font-medium text-gray-300">Synopsis</label>
+            <textarea v-model="seriesForm.synopsis" rows="4" class="w-full rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-white focus:outline-none focus:border-blue-500" />
+          </div>
+
+          <div class="grid gap-4 md:grid-cols-3">
+            <div>
+              <label class="mb-2 block text-sm font-medium text-gray-300">Genres</label>
+              <input v-model="seriesForm.genres" placeholder="Drama, Mystery" class="w-full rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500" />
+            </div>
+            <div>
+              <label class="mb-2 block text-sm font-medium text-gray-300">Directors</label>
+              <input v-model="seriesForm.directors" placeholder="Comma-separated" class="w-full rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500" />
+            </div>
+            <div>
+              <label class="mb-2 block text-sm font-medium text-gray-300">Cast</label>
+              <input v-model="seriesForm.cast" placeholder="Comma-separated" class="w-full rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500" />
+            </div>
+          </div>
+
+          <div class="grid gap-4 md:grid-cols-2">
+            <div>
+              <label class="mb-2 block text-sm font-medium text-gray-300">Poster Image</label>
+              <input type="file" accept="image/*" class="block w-full text-sm text-gray-300 file:mr-3 file:rounded file:border-0 file:bg-zinc-700 file:px-3 file:py-2 file:text-white" @change="onSeriesImageSelected($event, 'poster')" />
+            </div>
+            <div>
+              <label class="mb-2 block text-sm font-medium text-gray-300">Backdrop Image</label>
+              <input type="file" accept="image/*" class="block w-full text-sm text-gray-300 file:mr-3 file:rounded file:border-0 file:bg-zinc-700 file:px-3 file:py-2 file:text-white" @change="onSeriesImageSelected($event, 'backdrop')" />
+            </div>
+          </div>
+
+          <label class="flex items-center gap-3 rounded border border-zinc-700 bg-zinc-800 p-3 text-sm text-gray-300">
+            <input v-model="seriesForm.isFeatured" type="checkbox" class="h-4 w-4 accent-red-600" />
+            Feature this series in the Series category hero
+          </label>
+
+          <button type="submit" :disabled="seriesCreating || !!createdSeriesId" class="rounded bg-red-600 px-5 py-2.5 font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50">
+            {{ createdSeriesId ? 'Series selected' : seriesCreating ? 'Creating...' : 'Create series' }}
+          </button>
+        </form>
+
+        <aside class="rounded-lg border border-zinc-700 bg-zinc-900 p-5">
+          <h3 class="font-semibold text-white">Series Channel</h3>
+          <p class="mt-2 break-all text-sm text-gray-400">{{ seriesChannelId }}</p>
+          <p class="mt-4 text-sm text-gray-400">Trailers are public videos. Episodes are uploaded as hidden videos, then attached to the series playback queue.</p>
+          <div v-if="seriesProgressMessage" class="mt-4 rounded border border-blue-500/30 bg-blue-950/40 p-3 text-sm text-blue-100">{{ seriesProgressMessage }}</div>
+          <div v-if="seriesError" class="mt-4 rounded border border-red-500/30 bg-red-950/40 p-3 text-sm text-red-100">{{ seriesError }}</div>
+        </aside>
+      </div>
+
+      <div v-if="createdSeriesId" class="space-y-5 rounded-lg border border-zinc-700 bg-zinc-900 p-5">
+        <div>
+          <h3 class="text-lg font-semibold text-white">Trailer</h3>
+          <p class="mt-1 text-sm text-gray-400">This video stays visible in normal GilTube surfaces and links viewers into the series.</p>
+        </div>
+        <div class="grid gap-4 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_12rem]">
+          <input v-model="trailerForm.title" placeholder="Trailer title" class="rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500" />
+          <input type="file" accept="video/*" class="block w-full text-sm text-gray-300 file:mr-3 file:rounded file:border-0 file:bg-zinc-700 file:px-3 file:py-2 file:text-white" @change="onTrailerFileSelected" />
+          <button type="button" :disabled="!trailerFile || trailerUploading" class="rounded bg-red-600 px-4 py-2 font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50" @click="uploadTrailer">
+            {{ trailerUploading ? `${trailerProgress}%` : 'Upload trailer' }}
+          </button>
+        </div>
+      </div>
+
+      <div v-if="createdSeriesId" class="space-y-5 rounded-lg border border-zinc-700 bg-zinc-900 p-5">
+        <div class="flex items-center justify-between gap-4">
+          <div>
+            <h3 class="text-lg font-semibold text-white">Episodes</h3>
+            <p class="mt-1 text-sm text-gray-400">Episode videos are hidden from the main feeds after upload.</p>
+          </div>
+          <button type="button" class="rounded bg-zinc-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-zinc-600" @click="addEpisodeRow">Add episode</button>
+        </div>
+
+        <div class="space-y-4">
+          <div v-for="(episode, index) in episodeRows" :key="episode.localId" class="rounded border border-zinc-800 bg-zinc-950 p-4">
+            <div class="grid gap-3 md:grid-cols-[5rem_5rem_minmax(0,1fr)]">
+              <input v-model.number="episode.seasonNumber" min="1" type="number" class="rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-white" />
+              <input v-model.number="episode.episodeNumber" min="1" type="number" class="rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-white" />
+              <input v-model="episode.title" placeholder="Episode title" class="rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-white placeholder-gray-500" />
+            </div>
+            <textarea v-model="episode.synopsis" rows="2" placeholder="Episode synopsis" class="mt-3 w-full rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-white placeholder-gray-500" />
+            <div class="mt-3 grid gap-3 md:grid-cols-[minmax(0,1fr)_8rem_8rem_18rem]">
+              <input type="file" accept="video/*" class="block w-full text-sm text-gray-300 file:mr-3 file:rounded file:border-0 file:bg-zinc-700 file:px-3 file:py-2 file:text-white" @change="onEpisodeFileSelected($event, index)" />
+              <input v-model.number="episode.introStartSeconds" min="0" type="number" placeholder="Intro start" class="rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-white placeholder-gray-500" />
+              <input v-model.number="episode.introEndSeconds" min="0" type="number" placeholder="Intro end" class="rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-white placeholder-gray-500" />
+              <div class="grid grid-cols-2 gap-2">
+                <button type="button" :disabled="!episode.file || episode.uploading || episode.attached" class="rounded bg-red-600 px-4 py-2 font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50" @click="uploadEpisode(index)">
+                  {{ episode.attached ? 'Attached' : episode.uploading ? `${episode.progress}%` : 'Upload' }}
+                </button>
+                <button type="button" :disabled="!episode.file || episode.uploading || episode.attached" class="rounded bg-blue-600 px-4 py-2 font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50" @click="uploadEpisode(index, true)">
+                  Local upload
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Loading State -->
     <div v-if="loading" class="text-center text-gray-400 py-8">
       Loading admin data...
@@ -228,6 +376,8 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useLocalePath } from '#i18n'
+import { uploadVideo } from '~/app/service/upload'
+import { addSeriesEpisode, createSeries, getSeries, listSeries, setSeriesTrailer, GILTUBE_SERIES_CHANNEL_ID } from '~/app/service/series'
 
 const router = useRouter()
 const localePath = useLocalePath()
@@ -248,6 +398,51 @@ const stats = ref({
 
 const users = ref<any[]>([])
 const channels = ref<any[]>([])
+const adminSeries = ref<any[]>([])
+const selectedSeriesId = ref('')
+const seriesChannelId = GILTUBE_SERIES_CHANNEL_ID
+const localUploadBaseURL = 'http://localhost:8080/api/v1'
+
+const seriesForm = ref({
+  title: '',
+  slug: '',
+  synopsis: '',
+  genre: 'Drama',
+  genres: '',
+  seasons: 1,
+  directors: '',
+  cast: '',
+  isFeatured: false,
+  poster: null as File | null,
+  backdrop: null as File | null,
+})
+const createdSeriesId = ref('')
+const seriesCreating = ref(false)
+const seriesError = ref('')
+const seriesProgressMessage = ref('')
+
+const trailerForm = ref({
+  title: '',
+})
+const trailerFile = ref<File | null>(null)
+const trailerUploading = ref(false)
+const trailerProgress = ref(0)
+
+type EpisodeRow = {
+  localId: string
+  seasonNumber: number
+  episodeNumber: number
+  title: string
+  synopsis: string
+  introStartSeconds: number
+  introEndSeconds: number
+  file: File | null
+  uploading: boolean
+  progress: number
+  attached: boolean
+}
+
+const episodeRows = ref<EpisodeRow[]>([])
 
 // Get user_id from localStorage
 const userId = typeof localStorage !== 'undefined' ? localStorage.getItem('user_id') : null
@@ -325,6 +520,9 @@ const loadAdminData = async () => {
     if (channelsRes.ok) {
       channels.value = await channelsRes.json() || []
     }
+
+    const seriesData = await listSeries()
+    adminSeries.value = seriesData.series || []
   } catch (err) {
     console.error('Failed to load admin data:', err)
     error.value = 'Failed to load admin data'
@@ -346,6 +544,91 @@ const formatNumber = (num: number) => {
   if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M'
   if (num >= 1000) return (num / 1000).toFixed(1) + 'K'
   return num.toString()
+}
+
+const listToText = (value: unknown) => Array.isArray(value) ? value.join(', ') : ''
+
+const resetSeriesWorkspace = () => {
+  createdSeriesId.value = ''
+  selectedSeriesId.value = ''
+  seriesForm.value = {
+    title: '',
+    slug: '',
+    synopsis: '',
+    genre: 'Drama',
+    genres: '',
+    seasons: 1,
+    directors: '',
+    cast: '',
+    isFeatured: false,
+    poster: null,
+    backdrop: null,
+  }
+  trailerForm.value = { title: '' }
+  trailerFile.value = null
+  trailerProgress.value = 0
+  episodeRows.value = []
+  seriesProgressMessage.value = ''
+  seriesError.value = ''
+}
+
+const startNewSeries = () => {
+  resetSeriesWorkspace()
+}
+
+const hydrateSeriesWorkspace = async (seriesId: string) => {
+  if (!seriesId) {
+    resetSeriesWorkspace()
+    return
+  }
+
+  seriesError.value = ''
+  seriesProgressMessage.value = ''
+  try {
+    const detail = await getSeries(seriesId)
+    const item = detail.series
+    createdSeriesId.value = item.id
+    selectedSeriesId.value = item.id
+    seriesForm.value = {
+      title: item.title || '',
+      slug: item.slug || '',
+      synopsis: item.synopsis || '',
+      genre: item.genre || 'Drama',
+      genres: listToText(item.genres),
+      seasons: item.seasons || 1,
+      directors: listToText(item.directors),
+      cast: listToText(item.cast),
+      isFeatured: Boolean(item.is_featured),
+      poster: null,
+      backdrop: null,
+    }
+    trailerForm.value.title = `${seriesForm.value.title} Trailer`
+    trailerFile.value = null
+    trailerProgress.value = 0
+    episodeRows.value = (detail.episodes || []).map((episode: any) => ({
+      localId: episode.id || `${episode.video_id}-${episode.season_number}-${episode.episode_number}`,
+      seasonNumber: episode.season_number || 1,
+      episodeNumber: episode.episode_number || 1,
+      title: episode.title || '',
+      synopsis: episode.synopsis || '',
+      introStartSeconds: episode.intro_start_seconds || 0,
+      introEndSeconds: episode.intro_end_seconds || 0,
+      file: null,
+      uploading: false,
+      progress: 100,
+      attached: true,
+    }))
+    if (episodeRows.value.length === 0) {
+      addEpisodeRow()
+    }
+    seriesProgressMessage.value = `Loaded "${seriesForm.value.title}". You can upload more episodes below.`
+  } catch (err: any) {
+    seriesError.value = err?.response?.data?.error || err?.message || 'Failed to load series'
+  }
+}
+
+const selectExistingSeries = async () => {
+  await hydrateSeriesWorkspace(selectedSeriesId.value)
 }
 
 const toggleUserAdmin = async (userIdToAffect: string, currentType: string) => {
@@ -568,6 +851,155 @@ const unsuspendChannel = async (channelId: string, channelName: string) => {
   } catch (err) {
     console.error('Error unsuspending channel:', err)
     error.value = 'Failed to unsuspend channel'
+  }
+}
+
+const onSeriesImageSelected = (event: Event, kind: 'poster' | 'backdrop') => {
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0] || null
+  if (kind === 'poster') {
+    seriesForm.value.poster = file
+  } else {
+    seriesForm.value.backdrop = file
+  }
+}
+
+const handleCreateSeries = async () => {
+  seriesError.value = ''
+  seriesProgressMessage.value = ''
+  if (!seriesForm.value.title.trim()) {
+    seriesError.value = 'Series title is required'
+    return
+  }
+
+  seriesCreating.value = true
+  try {
+    const created = await createSeries({
+      title: seriesForm.value.title,
+      slug: seriesForm.value.slug,
+      synopsis: seriesForm.value.synopsis,
+      genre: seriesForm.value.genre,
+      genres: seriesForm.value.genres,
+      seasons: seriesForm.value.seasons,
+      directors: seriesForm.value.directors,
+      cast: seriesForm.value.cast,
+      channelId: seriesChannelId,
+      isFeatured: seriesForm.value.isFeatured,
+      poster: seriesForm.value.poster,
+      backdrop: seriesForm.value.backdrop,
+    })
+    createdSeriesId.value = created.id
+    selectedSeriesId.value = created.id
+    trailerForm.value.title = `${seriesForm.value.title} Trailer`
+    if (episodeRows.value.length === 0) {
+      addEpisodeRow()
+    }
+    await loadAdminData()
+    seriesProgressMessage.value = 'Series created. Upload a trailer and episodes next.'
+  } catch (err: any) {
+    seriesError.value = err?.response?.data?.error || err?.message || 'Failed to create series'
+  } finally {
+    seriesCreating.value = false
+  }
+}
+
+const onTrailerFileSelected = (event: Event) => {
+  const input = event.target as HTMLInputElement
+  trailerFile.value = input.files?.[0] || null
+}
+
+const uploadTrailer = async () => {
+  if (!createdSeriesId.value || !trailerFile.value) return
+
+  trailerUploading.value = true
+  trailerProgress.value = 0
+  seriesError.value = ''
+  try {
+    const uploaded = await uploadVideo({
+      title: trailerForm.value.title || `${seriesForm.value.title} Trailer`,
+      description: `Trailer for ${seriesForm.value.title}`,
+      channelId: seriesChannelId,
+      videoFile: trailerFile.value,
+      explicit: false,
+      hidden: false,
+      onProgress: (progress) => {
+        trailerProgress.value = progress
+      },
+    })
+    await setSeriesTrailer(createdSeriesId.value, uploaded.video_id)
+    await loadAdminData()
+    seriesProgressMessage.value = 'Trailer uploaded and linked.'
+  } catch (err: any) {
+    seriesError.value = err?.response?.data?.error || err?.message || 'Failed to upload trailer'
+  } finally {
+    trailerUploading.value = false
+  }
+}
+
+const addEpisodeRow = () => {
+  const nextNumber = episodeRows.value.length + 1
+  episodeRows.value.push({
+    localId: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    seasonNumber: 1,
+    episodeNumber: nextNumber,
+    title: '',
+    synopsis: '',
+    introStartSeconds: 0,
+    introEndSeconds: 0,
+    file: null,
+    uploading: false,
+    progress: 0,
+    attached: false,
+  })
+}
+
+const onEpisodeFileSelected = (event: Event, index: number) => {
+  const input = event.target as HTMLInputElement
+  const row = episodeRows.value[index]
+  if (!row) return
+  row.file = input.files?.[0] || null
+  if (row.file && !row.title) {
+    row.title = row.file.name.replace(/\.[^.]+$/, '')
+  }
+}
+
+const uploadEpisode = async (index: number, useLocalUpload = false) => {
+  const row = episodeRows.value[index]
+  if (!createdSeriesId.value || !row?.file) return
+
+  row.uploading = true
+  row.progress = 0
+  seriesError.value = ''
+  try {
+    const uploaded = await uploadVideo({
+      title: row.title || `${seriesForm.value.title} S${row.seasonNumber} E${row.episodeNumber}`,
+      description: row.synopsis,
+      channelId: seriesChannelId,
+      videoFile: row.file,
+      explicit: false,
+      hidden: true,
+      uploadBaseURL: useLocalUpload ? localUploadBaseURL : undefined,
+      onProgress: (progress) => {
+        row.progress = progress
+      },
+    })
+
+    await addSeriesEpisode(createdSeriesId.value, {
+      videoId: uploaded.video_id,
+      seasonNumber: row.seasonNumber,
+      episodeNumber: row.episodeNumber,
+      title: row.title,
+      synopsis: row.synopsis,
+      introStartSeconds: row.introStartSeconds,
+      introEndSeconds: row.introEndSeconds,
+    })
+    row.attached = true
+    await loadAdminData()
+    seriesProgressMessage.value = `Attached S${row.seasonNumber} E${row.episodeNumber}${useLocalUpload ? ' via local upload' : ''}.`
+  } catch (err: any) {
+    seriesError.value = err?.response?.data?.error || err?.message || 'Failed to upload episode'
+  } finally {
+    row.uploading = false
   }
 }
 </script>

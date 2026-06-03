@@ -583,7 +583,7 @@ const getChannelAvatarUrl = (channel) => {
 }
 
 const categoriesWithVideos = computed(() => {
-  return categories.value.filter(cat => (cat.video_count || 0) > 0)
+  return categories.value.filter(cat => cat.slug === 'series' || (cat.video_count || 0) > 0)
 })
 
 const syncCategoriesFromStorage = () => {
@@ -1223,7 +1223,6 @@ if (process.client) {
   z-index: 2147483647 !important;
 }
 </style>
-
 
 
 
