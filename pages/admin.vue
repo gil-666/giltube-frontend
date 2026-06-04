@@ -241,7 +241,7 @@
       </div>
 
       <div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
-        <form class="space-y-5 rounded-lg border border-zinc-700 bg-zinc-900 p-5" @submit.prevent="handleCreateSeries">
+        <form class="space-y-5 rounded-lg border border-zinc-700 bg-zinc-900 p-5" @submit.prevent="handleSeriesSubmit">
           <div class="grid gap-4 md:grid-cols-2">
             <div>
               <label class="mb-2 block text-sm font-medium text-gray-300">Title</label>
@@ -297,8 +297,8 @@
             Feature this series in the Series category hero
           </label>
 
-          <button type="submit" :disabled="seriesCreating || !!createdSeriesId" class="rounded bg-red-600 px-5 py-2.5 font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50">
-            {{ createdSeriesId ? 'Series selected' : seriesCreating ? 'Creating...' : 'Create series' }}
+          <button type="submit" :disabled="seriesCreating || seriesSaving" class="rounded bg-red-600 px-5 py-2.5 font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50">
+            {{ createdSeriesId ? (seriesSaving ? 'Saving...' : 'Save series details') : (seriesCreating ? 'Creating...' : 'Create series') }}
           </button>
         </form>
 
@@ -341,20 +341,166 @@
               <input v-model.number="episode.episodeNumber" min="1" type="number" class="rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-white" />
               <input v-model="episode.title" placeholder="Episode title" class="rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-white placeholder-gray-500" />
             </div>
+            <div v-if="episode.episodeId || episode.videoId" class="mt-3 grid gap-2 rounded border border-zinc-800 bg-black/30 px-3 py-2 text-xs md:grid-cols-2">
+              <div v-if="episode.episodeId" class="min-w-0">
+                <span class="font-semibold uppercase tracking-wide text-gray-500">Episode ID</span>
+                <code class="mt-1 block select-all break-all font-mono text-gray-200">{{ episode.episodeId }}</code>
+              </div>
+              <div v-if="episode.videoId" class="min-w-0">
+                <span class="font-semibold uppercase tracking-wide text-gray-500">Video ID</span>
+                <code class="mt-1 block select-all break-all font-mono text-gray-200">{{ episode.videoId }}</code>
+              </div>
+            </div>
             <textarea v-model="episode.synopsis" rows="2" placeholder="Episode synopsis" class="mt-3 w-full rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-white placeholder-gray-500" />
-            <div class="mt-3 grid gap-3 md:grid-cols-[minmax(0,1fr)_8rem_8rem_18rem]">
+            <div class="mt-3 grid gap-3 md:grid-cols-[minmax(0,1fr)_7.5rem_7.5rem_8.5rem_26rem]">
               <input type="file" accept="video/*" class="block w-full text-sm text-gray-300 file:mr-3 file:rounded file:border-0 file:bg-zinc-700 file:px-3 file:py-2 file:text-white" @change="onEpisodeFileSelected($event, index)" />
               <input v-model.number="episode.introStartSeconds" min="0" type="number" placeholder="Intro start" class="rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-white placeholder-gray-500" />
               <input v-model.number="episode.introEndSeconds" min="0" type="number" placeholder="Intro end" class="rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-white placeholder-gray-500" />
-              <div class="grid grid-cols-2 gap-2">
-                <button type="button" :disabled="!episode.file || episode.uploading || episode.attached" class="rounded bg-red-600 px-4 py-2 font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50" @click="uploadEpisode(index)">
-                  {{ episode.attached ? 'Attached' : episode.uploading ? `${episode.progress}%` : 'Upload' }}
+              <button type="button" :disabled="!episode.file" class="rounded bg-zinc-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-zinc-600 disabled:cursor-not-allowed disabled:opacity-50" @click="openIntroPicker(index)">
+                Pick intro
+              </button>
+              <div class="grid grid-cols-3 gap-2">
+                <button type="button" :disabled="(!episode.file && !episode.videoId) || episode.uploading || episode.attached" class="rounded bg-red-600 px-4 py-2 font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50" @click="uploadEpisode(index)">
+                  {{ episode.attached ? 'Attached' : episode.uploading ? `${episode.progress}%` : episode.videoId ? 'Attach' : 'Upload' }}
                 </button>
-                <button type="button" :disabled="!episode.file || episode.uploading || episode.attached" class="rounded bg-blue-600 px-4 py-2 font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50" @click="uploadEpisode(index, true)">
+                <button type="button" :disabled="!episode.file || !!episode.videoId || episode.uploading || episode.attached" class="rounded bg-blue-600 px-4 py-2 font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50" @click="uploadEpisode(index, true)">
                   Local upload
+                </button>
+                <button type="button" :disabled="!episode.attached || episode.saving" class="rounded bg-green-700 px-4 py-2 font-semibold text-white transition hover:bg-green-600 disabled:cursor-not-allowed disabled:opacity-50" @click="saveEpisode(index)">
+                  {{ episode.saving ? 'Saving...' : 'Save' }}
                 </button>
               </div>
             </div>
+
+            <div v-if="episode.attached" class="mt-4 rounded border border-zinc-800 bg-black/30 p-4">
+              <div class="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <h4 class="text-sm font-semibold text-white">Subtitles</h4>
+                  <p class="mt-1 text-xs text-gray-500">Upload .srt, .ass, or .vtt. Non-VTT files are converted automatically.</p>
+                </div>
+                <div class="flex flex-wrap gap-2">
+                  <button
+                    v-if="needsSubtitleDefaultFix(episode)"
+                    type="button"
+                    :disabled="episode.subtitleUploading"
+                    class="rounded bg-amber-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-amber-500 disabled:cursor-not-allowed disabled:opacity-50"
+                    @click="fixSubtitleDefaults(index)"
+                  >
+                    Fix defaults
+                  </button>
+                  <button type="button" class="rounded bg-zinc-800 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-zinc-700" @click="loadEpisodeSubtitles(episode)">
+                    Refresh tracks
+                  </button>
+                </div>
+              </div>
+
+              <div v-if="episode.subtitles.length" class="mt-3 space-y-2">
+                <div v-for="track in episode.subtitles" :key="track.id" class="flex flex-wrap items-center justify-between gap-3 rounded bg-zinc-900 px-3 py-2">
+                  <div class="min-w-0">
+                    <p class="truncate text-sm font-medium text-white">{{ track.label || track.language || track.id }}</p>
+                    <p class="text-xs text-gray-500">{{ track.language || 'und' }} · {{ track.default ? 'Default' : 'Optional' }}</p>
+                  </div>
+                  <div class="flex flex-wrap gap-2">
+                    <input v-model.number="track.delay_ms" type="number" step="100" placeholder="Delay ms" class="w-28 rounded border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-xs text-white placeholder-gray-500" />
+                    <button v-if="!track.default || hasDuplicateSubtitleDefaults(episode)" type="button" :disabled="episode.subtitleUploading" class="rounded bg-emerald-700 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-emerald-600 disabled:cursor-not-allowed disabled:opacity-50" @click="makeSubtitleDefault(index, track)">
+                      {{ track.default ? 'Keep as only default' : 'Make default' }}
+                    </button>
+                    <button type="button" :disabled="episode.subtitleUploading" class="rounded bg-blue-700 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-blue-600 disabled:cursor-not-allowed disabled:opacity-50" @click="saveSubtitleDelay(index, track)">
+                      Save delay
+                    </button>
+                    <a
+                      :href="subtitleDownloadUrl(episode, track)"
+                      :download="subtitleDownloadName(episode, track)"
+                      class="rounded bg-zinc-700 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-zinc-600"
+                    >
+                      Download
+                    </a>
+                    <button type="button" :disabled="episode.subtitleUploading" class="rounded bg-zinc-700 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-zinc-600 disabled:cursor-not-allowed disabled:opacity-50" @click="startReplaceSubtitle(index, track)">
+                      Replace
+                    </button>
+                    <button type="button" :disabled="episode.subtitleUploading" class="rounded bg-red-900 px-3 py-1.5 text-xs font-semibold text-red-100 transition hover:bg-red-800 disabled:cursor-not-allowed disabled:opacity-50" @click="deleteSubtitle(index, track)">
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <p v-else class="mt-3 text-sm text-gray-500">No subtitle tracks found in the master playlist.</p>
+
+              <div class="mt-4 grid gap-3 md:grid-cols-[minmax(0,1fr)_8rem_10rem_8rem_8rem]">
+                <input type="file" accept=".srt,.ass,.vtt,text/vtt" class="block w-full text-sm text-gray-300 file:mr-3 file:rounded file:border-0 file:bg-zinc-700 file:px-3 file:py-2 file:text-white" @change="onSubtitleFileSelected($event, index)" />
+                <input v-model="episode.subtitleLanguage" placeholder="en" class="rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-white placeholder-gray-500" />
+                <input v-model="episode.subtitleLabel" placeholder="English" class="rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-white placeholder-gray-500" />
+                <label class="flex items-center gap-2 rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-xs text-gray-300">
+                  <input v-model="episode.subtitleDefault" type="checkbox" class="h-4 w-4 accent-red-600" />
+                  Default
+                </label>
+                <input v-model.number="episode.subtitleDelayMS" type="number" step="100" placeholder="Delay ms" class="rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-white placeholder-gray-500" />
+              </div>
+              <div class="mt-3 flex flex-wrap gap-2">
+                <button type="button" :disabled="(!episode.subtitleFile && !episode.subtitleReplacingTrackId) || episode.subtitleUploading" class="rounded bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50" @click="uploadSubtitle(index, episode.subtitleReplacingTrackId)">
+                  {{ episode.subtitleUploading ? 'Saving...' : episode.subtitleReplacingTrackId ? 'Save subtitle' : 'Add subtitle' }}
+                </button>
+                <button v-if="episode.subtitleReplacingTrackId" type="button" class="rounded bg-zinc-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-zinc-600" @click="cancelReplaceSubtitle(index)">
+                  Cancel replace
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div v-if="introPickerOpen" class="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/80 px-4 py-16">
+      <div class="w-full max-w-4xl rounded-lg border border-zinc-700 bg-zinc-950 shadow-2xl">
+        <div class="flex items-start justify-between gap-4 border-b border-zinc-800 p-4">
+          <div>
+            <h3 class="text-lg font-semibold text-white">Pick Intro Times</h3>
+            <p class="mt-1 text-sm text-gray-400">{{ activeIntroEpisode?.title || activeIntroEpisode?.file?.name || 'Episode preview' }}</p>
+          </div>
+          <button type="button" class="rounded bg-zinc-800 px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-zinc-700" @click="closeIntroPicker">
+            Close
+          </button>
+        </div>
+
+        <div class="space-y-4 p-4">
+          <video
+            ref="introPickerVideo"
+            :src="introPickerVideoUrl"
+            controls
+            playsinline
+            class="aspect-video w-full rounded bg-black"
+            @loadedmetadata="onIntroPickerLoaded"
+            @timeupdate="onIntroPickerTimeUpdate"
+          />
+
+          <div class="grid gap-3 md:grid-cols-3">
+            <div class="rounded border border-zinc-800 bg-black/30 p-3">
+              <p class="text-xs uppercase tracking-wide text-gray-500">Current time</p>
+              <p class="mt-1 text-xl font-semibold text-white">{{ formatDuration(introPickerCurrentTime) }}</p>
+            </div>
+            <div class="rounded border border-zinc-800 bg-black/30 p-3">
+              <p class="text-xs uppercase tracking-wide text-gray-500">Intro start</p>
+              <p class="mt-1 text-xl font-semibold text-white">{{ formatDuration(activeIntroEpisode?.introStartSeconds || 0) }}</p>
+            </div>
+            <div class="rounded border border-zinc-800 bg-black/30 p-3">
+              <p class="text-xs uppercase tracking-wide text-gray-500">Intro end</p>
+              <p class="mt-1 text-xl font-semibold text-white">{{ formatDuration(activeIntroEpisode?.introEndSeconds || 0) }}</p>
+            </div>
+          </div>
+
+          <div class="flex flex-wrap gap-2">
+            <button type="button" class="rounded bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700" @click="setIntroPickerPoint('start')">
+              Set start here
+            </button>
+            <button type="button" class="rounded bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700" @click="setIntroPickerPoint('end')">
+              Set end here
+            </button>
+            <button type="button" :disabled="!canPreviewIntroRange" class="rounded bg-zinc-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-zinc-600 disabled:cursor-not-allowed disabled:opacity-50" @click="previewIntroRange">
+              Preview range
+            </button>
+            <button type="button" class="ml-auto rounded bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-700" @click="closeIntroPicker">
+              Done
+            </button>
           </div>
         </div>
       </div>
@@ -373,11 +519,23 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, nextTick, onBeforeUnmount, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useLocalePath } from '#i18n'
 import { uploadVideo } from '~/app/service/upload'
-import { addSeriesEpisode, createSeries, getSeries, listSeries, setSeriesTrailer, GILTUBE_SERIES_CHANNEL_ID } from '~/app/service/series'
+import {
+  addSeriesEpisode,
+  createSeries,
+  deleteSeriesEpisodeSubtitle,
+  getSeries,
+  listSeries,
+  listSeriesEpisodeSubtitles,
+  setSeriesTrailer,
+  updateSeries,
+  updateSeriesEpisode,
+  uploadSeriesEpisodeSubtitle,
+  GILTUBE_SERIES_CHANNEL_ID
+} from '~/app/service/series'
 
 const router = useRouter()
 const localePath = useLocalePath()
@@ -415,9 +573,12 @@ const seriesForm = ref({
   isFeatured: false,
   poster: null as File | null,
   backdrop: null as File | null,
+  posterUrl: '',
+  backdropUrl: '',
 })
 const createdSeriesId = ref('')
 const seriesCreating = ref(false)
+const seriesSaving = ref(false)
 const seriesError = ref('')
 const seriesProgressMessage = ref('')
 
@@ -430,6 +591,8 @@ const trailerProgress = ref(0)
 
 type EpisodeRow = {
   localId: string
+  episodeId: string
+  videoId: string
   seasonNumber: number
   episodeNumber: number
   title: string
@@ -440,9 +603,44 @@ type EpisodeRow = {
   uploading: boolean
   progress: number
   attached: boolean
+  saving: boolean
+  subtitles: SubtitleTrack[]
+  subtitleFile: File | null
+  subtitleLabel: string
+  subtitleLanguage: string
+  subtitleDefault: boolean
+  subtitleDelayMS: number
+  subtitleUploading: boolean
+  subtitleReplacingTrackId: string
+}
+
+type SubtitleTrack = {
+  id: string
+  label: string
+  language: string
+  uri: string
+  default: boolean
+  delay_ms: number
 }
 
 const episodeRows = ref<EpisodeRow[]>([])
+const introPickerOpen = ref(false)
+const introPickerEpisodeIndex = ref(-1)
+const introPickerVideoUrl = ref('')
+const introPickerVideo = ref<HTMLVideoElement | null>(null)
+const introPickerCurrentTime = ref(0)
+const introPickerDuration = ref(0)
+const introPickerPreviewing = ref(false)
+
+const activeIntroEpisode = computed(() => {
+  if (introPickerEpisodeIndex.value < 0) return null
+  return episodeRows.value[introPickerEpisodeIndex.value] || null
+})
+
+const canPreviewIntroRange = computed(() => {
+  const row = activeIntroEpisode.value
+  return Boolean(row && row.introEndSeconds > row.introStartSeconds)
+})
 
 // Get user_id from localStorage
 const userId = typeof localStorage !== 'undefined' ? localStorage.getItem('user_id') : null
@@ -548,6 +746,60 @@ const formatNumber = (num: number) => {
 
 const listToText = (value: unknown) => Array.isArray(value) ? value.join(', ') : ''
 
+const createEpisodeRow = (episode: any = {}, nextNumber = 1): EpisodeRow => ({
+  localId: episode.id || `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+  episodeId: episode.id || '',
+  videoId: episode.video_id || '',
+  seasonNumber: episode.season_number || 1,
+  episodeNumber: episode.episode_number || nextNumber,
+  title: episode.title || '',
+  synopsis: episode.synopsis || '',
+  introStartSeconds: episode.intro_start_seconds || 0,
+  introEndSeconds: episode.intro_end_seconds || 0,
+  file: null,
+  uploading: false,
+  progress: episode.id ? 100 : 0,
+  attached: Boolean(episode.id),
+  saving: false,
+  subtitles: [],
+  subtitleFile: null,
+  subtitleLabel: '',
+  subtitleLanguage: 'en',
+  subtitleDefault: false,
+  subtitleDelayMS: 0,
+  subtitleUploading: false,
+  subtitleReplacingTrackId: '',
+})
+
+const loadEpisodeSubtitles = async (row: EpisodeRow) => {
+  if (!row.episodeId) return
+  try {
+    const data = await listSeriesEpisodeSubtitles(row.episodeId)
+    row.subtitles = data.subtitles || []
+  } catch (err) {
+    console.error('Failed to load episode subtitles:', err)
+    row.subtitles = []
+  }
+}
+
+const loadAllEpisodeSubtitles = async () => {
+  await Promise.all(episodeRows.value.filter(row => row.episodeId).map(loadEpisodeSubtitles))
+}
+
+const subtitleDownloadUrl = (row: EpisodeRow, track: SubtitleTrack) => {
+  if (!row.videoId || !track.uri) return '#'
+  const subtitlePath = track.uri.replace(/playlist\.m3u8(?:\?.*)?$/i, 'captions.vtt')
+  return `${import.meta.env.VITE_API_BASE_URL || ''}/videos/${row.videoId}/${subtitlePath.startsWith('/') ? subtitlePath.slice(1) : subtitlePath}`
+}
+
+const subtitleDownloadName = (row: EpisodeRow, track: SubtitleTrack) => {
+  const label = (track.label || track.language || track.id || 'subtitle')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+  return `s${row.seasonNumber}e${row.episodeNumber}-${label || 'subtitle'}.vtt`
+}
+
 const resetSeriesWorkspace = () => {
   createdSeriesId.value = ''
   selectedSeriesId.value = ''
@@ -563,6 +815,8 @@ const resetSeriesWorkspace = () => {
     isFeatured: false,
     poster: null,
     backdrop: null,
+    posterUrl: '',
+    backdropUrl: '',
   }
   trailerForm.value = { title: '' }
   trailerFile.value = null
@@ -601,23 +855,14 @@ const hydrateSeriesWorkspace = async (seriesId: string) => {
       isFeatured: Boolean(item.is_featured),
       poster: null,
       backdrop: null,
+      posterUrl: item.poster_url || '',
+      backdropUrl: item.backdrop_url || '',
     }
     trailerForm.value.title = `${seriesForm.value.title} Trailer`
     trailerFile.value = null
     trailerProgress.value = 0
-    episodeRows.value = (detail.episodes || []).map((episode: any) => ({
-      localId: episode.id || `${episode.video_id}-${episode.season_number}-${episode.episode_number}`,
-      seasonNumber: episode.season_number || 1,
-      episodeNumber: episode.episode_number || 1,
-      title: episode.title || '',
-      synopsis: episode.synopsis || '',
-      introStartSeconds: episode.intro_start_seconds || 0,
-      introEndSeconds: episode.intro_end_seconds || 0,
-      file: null,
-      uploading: false,
-      progress: 100,
-      attached: true,
-    }))
+    episodeRows.value = (detail.episodes || []).map((episode: any, index: number) => createEpisodeRow(episode, index + 1))
+    await loadAllEpisodeSubtitles()
     if (episodeRows.value.length === 0) {
       addEpisodeRow()
     }
@@ -903,6 +1148,55 @@ const handleCreateSeries = async () => {
   }
 }
 
+const handleSeriesSubmit = async () => {
+  if (createdSeriesId.value) {
+    await saveSeriesDetails()
+  } else {
+    await handleCreateSeries()
+  }
+}
+
+const saveSeriesDetails = async () => {
+  if (!createdSeriesId.value) return
+  seriesError.value = ''
+  seriesProgressMessage.value = ''
+  if (!seriesForm.value.title.trim()) {
+    seriesError.value = 'Series title is required'
+    return
+  }
+
+  seriesSaving.value = true
+  try {
+    const updated = await updateSeries(createdSeriesId.value, {
+      title: seriesForm.value.title,
+      slug: seriesForm.value.slug,
+      synopsis: seriesForm.value.synopsis,
+      genre: seriesForm.value.genre,
+      genres: seriesForm.value.genres,
+      seasons: seriesForm.value.seasons,
+      directors: seriesForm.value.directors,
+      cast: seriesForm.value.cast,
+      channelId: seriesChannelId,
+      isFeatured: seriesForm.value.isFeatured,
+      poster: seriesForm.value.poster,
+      backdrop: seriesForm.value.backdrop,
+      posterUrl: seriesForm.value.posterUrl,
+      backdropUrl: seriesForm.value.backdropUrl,
+    })
+    if (updated.poster_url) seriesForm.value.posterUrl = updated.poster_url
+    if (updated.backdrop_url) seriesForm.value.backdropUrl = updated.backdrop_url
+    seriesForm.value.poster = null
+    seriesForm.value.backdrop = null
+    await loadAdminData()
+    await hydrateSeriesWorkspace(createdSeriesId.value)
+    seriesProgressMessage.value = 'Series details saved.'
+  } catch (err: any) {
+    seriesError.value = err?.response?.data?.error || err?.message || 'Failed to save series details'
+  } finally {
+    seriesSaving.value = false
+  }
+}
+
 const onTrailerFileSelected = (event: Event) => {
   const input = event.target as HTMLInputElement
   trailerFile.value = input.files?.[0] || null
@@ -938,19 +1232,7 @@ const uploadTrailer = async () => {
 
 const addEpisodeRow = () => {
   const nextNumber = episodeRows.value.length + 1
-  episodeRows.value.push({
-    localId: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
-    seasonNumber: 1,
-    episodeNumber: nextNumber,
-    title: '',
-    synopsis: '',
-    introStartSeconds: 0,
-    introEndSeconds: 0,
-    file: null,
-    uploading: false,
-    progress: 0,
-    attached: false,
-  })
+  episodeRows.value.push(createEpisodeRow({}, nextNumber))
 }
 
 const onEpisodeFileSelected = (event: Event, index: number) => {
@@ -963,29 +1245,147 @@ const onEpisodeFileSelected = (event: Event, index: number) => {
   }
 }
 
+const revokeIntroPickerUrl = () => {
+  if (!introPickerVideoUrl.value) return
+  URL.revokeObjectURL(introPickerVideoUrl.value)
+  introPickerVideoUrl.value = ''
+}
+
+const openIntroPicker = async (index: number) => {
+  const row = episodeRows.value[index]
+  if (!row?.file) return
+
+  revokeIntroPickerUrl()
+  introPickerEpisodeIndex.value = index
+  introPickerCurrentTime.value = row.introStartSeconds || 0
+  introPickerDuration.value = 0
+  introPickerVideoUrl.value = URL.createObjectURL(row.file)
+  introPickerOpen.value = true
+
+  await nextTick()
+  if (introPickerVideo.value && row.introStartSeconds > 0) {
+    introPickerVideo.value.currentTime = row.introStartSeconds
+  }
+}
+
+const closeIntroPicker = () => {
+  introPickerOpen.value = false
+  introPickerPreviewing.value = false
+  if (introPickerVideo.value) {
+    introPickerVideo.value.pause()
+    introPickerVideo.value.removeAttribute('src')
+    introPickerVideo.value.load()
+  }
+  introPickerEpisodeIndex.value = -1
+  introPickerCurrentTime.value = 0
+  introPickerDuration.value = 0
+  revokeIntroPickerUrl()
+}
+
+const onIntroPickerLoaded = () => {
+  if (!introPickerVideo.value) return
+  introPickerDuration.value = Number.isFinite(introPickerVideo.value.duration) ? introPickerVideo.value.duration : 0
+  const row = activeIntroEpisode.value
+  if (row && row.introStartSeconds > 0) {
+    introPickerVideo.value.currentTime = Math.min(row.introStartSeconds, introPickerDuration.value || row.introStartSeconds)
+  }
+}
+
+const onIntroPickerTimeUpdate = () => {
+  const currentTime = introPickerVideo.value?.currentTime || 0
+  introPickerCurrentTime.value = currentTime
+
+  const row = activeIntroEpisode.value
+  if (introPickerPreviewing.value && row && currentTime >= row.introEndSeconds) {
+    introPickerVideo.value?.pause()
+    introPickerPreviewing.value = false
+  }
+}
+
+const roundedVideoTime = () => Math.max(0, Number((introPickerVideo.value?.currentTime || 0).toFixed(2)))
+
+const setIntroPickerPoint = (point: 'start' | 'end') => {
+  const row = activeIntroEpisode.value
+  if (!row) return
+
+  const value = roundedVideoTime()
+  if (point === 'start') {
+    row.introStartSeconds = value
+    if (row.introEndSeconds < value) {
+      row.introEndSeconds = value
+    }
+    return
+  }
+
+  row.introEndSeconds = value
+  if (row.introStartSeconds > value) {
+    row.introStartSeconds = value
+  }
+}
+
+const previewIntroRange = async () => {
+  const row = activeIntroEpisode.value
+  const video = introPickerVideo.value
+  if (!row || !video || row.introEndSeconds <= row.introStartSeconds) return
+
+  video.currentTime = row.introStartSeconds
+  introPickerPreviewing.value = true
+  await video.play().catch(() => {
+    introPickerPreviewing.value = false
+  })
+}
+
+const formatDuration = (seconds: number) => {
+  const total = Math.max(0, seconds || 0)
+  const mins = Math.floor(total / 60)
+  const secs = total % 60
+  return `${mins}:${secs.toFixed(2).padStart(5, '0')}`
+}
+
+const onSubtitleFileSelected = (event: Event, index: number) => {
+  const input = event.target as HTMLInputElement
+  const row = episodeRows.value[index]
+  if (!row) return
+  row.subtitleFile = input.files?.[0] || null
+  if (row.subtitleFile && !row.subtitleLabel) {
+    row.subtitleLabel = row.subtitleFile.name.replace(/\.[^.]+$/, '')
+  }
+}
+
 const uploadEpisode = async (index: number, useLocalUpload = false) => {
   const row = episodeRows.value[index]
-  if (!createdSeriesId.value || !row?.file) return
+  if (!createdSeriesId.value || (!row?.file && !row?.videoId)) return
 
   row.uploading = true
-  row.progress = 0
+  if (!row.videoId) {
+    row.progress = 0
+  }
   seriesError.value = ''
   try {
-    const uploaded = await uploadVideo({
-      title: row.title || `${seriesForm.value.title} S${row.seasonNumber} E${row.episodeNumber}`,
-      description: row.synopsis,
-      channelId: seriesChannelId,
-      videoFile: row.file,
-      explicit: false,
-      hidden: true,
-      uploadBaseURL: useLocalUpload ? localUploadBaseURL : undefined,
-      onProgress: (progress) => {
-        row.progress = progress
-      },
-    })
+    let uploadedVideoId = row.videoId
+    if (!uploadedVideoId && row.file) {
+      const uploaded = await uploadVideo({
+        title: row.title || `${seriesForm.value.title} S${row.seasonNumber} E${row.episodeNumber}`,
+        description: row.synopsis,
+        channelId: seriesChannelId,
+        videoFile: row.file,
+        explicit: false,
+        hidden: true,
+        uploadBaseURL: useLocalUpload ? localUploadBaseURL : undefined,
+        onProgress: (progress) => {
+          row.progress = progress
+        },
+      })
+      uploadedVideoId = uploaded.video_id || uploaded.id || uploaded.video?.id || ''
+      row.videoId = uploadedVideoId
+    }
+
+    if (!uploadedVideoId) {
+      throw new Error('Upload finalized but no video id was returned')
+    }
 
     await addSeriesEpisode(createdSeriesId.value, {
-      videoId: uploaded.video_id,
+      videoId: uploadedVideoId,
       seasonNumber: row.seasonNumber,
       episodeNumber: row.episodeNumber,
       title: row.title,
@@ -994,6 +1394,8 @@ const uploadEpisode = async (index: number, useLocalUpload = false) => {
       introEndSeconds: row.introEndSeconds,
     })
     row.attached = true
+    row.videoId = uploadedVideoId
+    await hydrateSeriesWorkspace(createdSeriesId.value)
     await loadAdminData()
     seriesProgressMessage.value = `Attached S${row.seasonNumber} E${row.episodeNumber}${useLocalUpload ? ' via local upload' : ''}.`
   } catch (err: any) {
@@ -1002,6 +1404,170 @@ const uploadEpisode = async (index: number, useLocalUpload = false) => {
     row.uploading = false
   }
 }
+
+const saveEpisode = async (index: number) => {
+  const row = episodeRows.value[index]
+  if (!row?.episodeId) return
+
+  row.saving = true
+  seriesError.value = ''
+  try {
+    await updateSeriesEpisode(row.episodeId, {
+      seasonNumber: row.seasonNumber,
+      episodeNumber: row.episodeNumber,
+      title: row.title,
+      synopsis: row.synopsis,
+      introStartSeconds: row.introStartSeconds,
+      introEndSeconds: row.introEndSeconds,
+    })
+    if (createdSeriesId.value) {
+      await hydrateSeriesWorkspace(createdSeriesId.value)
+    }
+    seriesProgressMessage.value = `Saved S${row.seasonNumber} E${row.episodeNumber}.`
+  } catch (err: any) {
+    seriesError.value = err?.response?.data?.error || err?.message || 'Failed to save episode'
+  } finally {
+    row.saving = false
+  }
+}
+
+const uploadSubtitle = async (index: number, trackId = '') => {
+  const row = episodeRows.value[index]
+  if (!row?.episodeId || (!row.subtitleFile && !trackId)) return
+
+  row.subtitleUploading = true
+  seriesError.value = ''
+  try {
+    const data = await uploadSeriesEpisodeSubtitle(row.episodeId, {
+      file: row.subtitleFile,
+      label: row.subtitleLabel,
+      language: row.subtitleLanguage,
+      isDefault: row.subtitleDefault,
+      delayMs: row.subtitleDelayMS || 0,
+      trackId,
+    })
+    row.subtitles = data.subtitles || []
+    row.subtitleFile = null
+    row.subtitleLabel = ''
+    row.subtitleLanguage = 'en'
+    row.subtitleDefault = false
+    row.subtitleDelayMS = 0
+    row.subtitleReplacingTrackId = ''
+    seriesProgressMessage.value = 'Subtitle track updated.'
+  } catch (err: any) {
+    seriesError.value = err?.response?.data?.error || err?.message || 'Failed to update subtitle track'
+  } finally {
+    row.subtitleUploading = false
+  }
+}
+
+const startReplaceSubtitle = (index: number, track: SubtitleTrack) => {
+  const row = episodeRows.value[index]
+  if (!row) return
+  row.subtitleReplacingTrackId = track.id
+  row.subtitleLabel = track.label || ''
+  row.subtitleLanguage = track.language || 'en'
+  row.subtitleDefault = Boolean(track.default)
+  row.subtitleDelayMS = track.delay_ms || 0
+  row.subtitleFile = null
+}
+
+const cancelReplaceSubtitle = (index: number) => {
+  const row = episodeRows.value[index]
+  if (!row) return
+  row.subtitleReplacingTrackId = ''
+  row.subtitleLabel = ''
+  row.subtitleLanguage = 'en'
+  row.subtitleDefault = false
+  row.subtitleDelayMS = 0
+  row.subtitleFile = null
+}
+
+const saveSubtitleDelay = async (index: number, track: SubtitleTrack) => {
+  const row = episodeRows.value[index]
+  if (!row?.episodeId) return
+
+  row.subtitleUploading = true
+  seriesError.value = ''
+  try {
+    const data = await uploadSeriesEpisodeSubtitle(row.episodeId, {
+      label: track.label,
+      language: track.language,
+      isDefault: track.default,
+      delayMs: track.delay_ms || 0,
+      trackId: track.id,
+    })
+    row.subtitles = data.subtitles || []
+    seriesProgressMessage.value = 'Subtitle delay updated.'
+  } catch (err: any) {
+    seriesError.value = err?.response?.data?.error || err?.message || 'Failed to update subtitle delay'
+  } finally {
+    row.subtitleUploading = false
+  }
+}
+
+const subtitleDefaultCount = (row: EpisodeRow) => row.subtitles.filter(track => track.default).length
+
+const hasDuplicateSubtitleDefaults = (row: EpisodeRow) => subtitleDefaultCount(row) > 1
+
+const needsSubtitleDefaultFix = (row: EpisodeRow) => row.subtitles.length > 0 && subtitleDefaultCount(row) !== 1
+
+const subtitleDefaultFixTarget = (row: EpisodeRow) => {
+  const defaults = row.subtitles.filter(track => track.default)
+  return defaults[defaults.length - 1] || row.subtitles[0] || null
+}
+
+const makeSubtitleDefault = async (index: number, track: SubtitleTrack) => {
+  const row = episodeRows.value[index]
+  if (!row?.episodeId) return
+
+  row.subtitleUploading = true
+  seriesError.value = ''
+  try {
+    const data = await uploadSeriesEpisodeSubtitle(row.episodeId, {
+      label: track.label,
+      language: track.language,
+      isDefault: true,
+      delayMs: track.delay_ms || 0,
+      trackId: track.id,
+    })
+    row.subtitles = data.subtitles || []
+    seriesProgressMessage.value = 'Default subtitle track updated.'
+  } catch (err: any) {
+    seriesError.value = err?.response?.data?.error || err?.message || 'Failed to update default subtitle track'
+  } finally {
+    row.subtitleUploading = false
+  }
+}
+
+const fixSubtitleDefaults = async (index: number) => {
+  const row = episodeRows.value[index]
+  if (!row?.episodeId) return
+
+  const target = subtitleDefaultFixTarget(row)
+  if (!target) return
+
+  await makeSubtitleDefault(index, target)
+}
+
+const deleteSubtitle = async (index: number, track: SubtitleTrack) => {
+  const row = episodeRows.value[index]
+  if (!row?.episodeId) return
+  if (!confirm(`Delete subtitle track "${track.label}"?`)) return
+
+  seriesError.value = ''
+  try {
+    const data = await deleteSeriesEpisodeSubtitle(row.episodeId, track.id)
+    row.subtitles = data.subtitles || []
+    seriesProgressMessage.value = 'Subtitle track deleted.'
+  } catch (err: any) {
+    seriesError.value = err?.response?.data?.error || err?.message || 'Failed to delete subtitle track'
+  }
+}
+
+onBeforeUnmount(() => {
+  revokeIntroPickerUrl()
+})
 </script>
 
 <style scoped>

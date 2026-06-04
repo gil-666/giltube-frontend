@@ -30,7 +30,9 @@ export const useMetaTags = (options: {
   const image = options.image
     ? (options.image.startsWith('http') ? options.image : `${siteUrl}${options.image}`)
     : `${siteUrl}/logo.png`
-  const url = options.url || siteUrl
+  const url = options.url
+    ? (options.url.startsWith('http') ? options.url : `${siteUrl}${options.url}`)
+    : siteUrl
   const type = options.type || 'website'
   const twitterCard = options.twitterCard || 'summary_large_image'
 
@@ -53,4 +55,3 @@ export const useMetaTags = (options: {
     ]
   })
 }
-

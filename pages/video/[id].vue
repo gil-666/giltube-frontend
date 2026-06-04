@@ -1064,7 +1064,9 @@ onMounted(async () => {
     await loadSeriesContextForVideo()
   }
 
-  await loadTrailerContextForVideo()
+  if (!isPlayingFromSeries.value) {
+    await loadTrailerContextForVideo()
+  }
 
   try {
     const commentActorId = getCurrentCommentActorID()

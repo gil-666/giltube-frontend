@@ -4,6 +4,19 @@
       <video ref="videoElement" class="video-js vjs-default-skin" controls
         preload="auto"></video>
 
+      <!-- <button
+        v-if="isPictureInPictureSupported"
+        ref="mobilePiPOverlay"
+        type="button"
+        class="mobile-pip-overlay"
+        aria-label="Picture in picture"
+        @click="togglePictureInPicture"
+      >
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <path d="M4.75 5.5A2.25 2.25 0 0 1 7 3.25h10A2.25 2.25 0 0 1 19.25 5.5v13A2.25 2.25 0 0 1 17 20.75H7a2.25 2.25 0 0 1-2.25-2.25v-13Zm2.25-.75a.75.75 0 0 0-.75.75v13c0 .41.34.75.75.75h10a.75.75 0 0 0 .75-.75v-13a.75.75 0 0 0-.75-.75H7Zm4.25 8.25c0-.41.34-.75.75-.75h4.5c.41 0 .75.34.75.75v3.5c0 .41-.34.75-.75.75H12a.75.75 0 0 1-.75-.75V13Z" fill="currentColor" />
+        </svg>
+      </button> -->
+
       <!-- Custom progress bar overlaid above the control bar (YouTube style) -->
       <div
         ref="progressBarOverlay"
@@ -53,7 +66,7 @@
         {{ episodeLabel }}
       </div> -->
 
-      <div class="series-player-actions absolute right-4 bottom-6 z-[60] flex items-center justify-end gap-3">
+      <div ref="seriesActionsOverlay" class="series-player-actions flex items-center justify-end gap-3">
         <button
           v-if="showSkipIntroButton"
           type="button"
@@ -128,6 +141,9 @@ const bufferedEnd = ref(0)
 const seekPreviewTime = ref(0)
 const isSeekingProgress = ref(false)
 const progressBarOverlay = ref<HTMLElement | null>(null)
+const seriesActionsOverlay = ref<HTMLElement | null>(null)
+const mobilePiPOverlay = ref<HTMLElement | null>(null)
+const isPictureInPictureSupported = ref(false)
 const showSkipIntroButton = computed(() =>
   props.introEndSeconds > props.introStartSeconds &&
   currentTime.value >= props.introStartSeconds &&
@@ -143,9 +159,11 @@ const videoElement = ref<HTMLVideoElement | null>(null)
 let player: any = null
 let qualityButton: any = null
 let audioButton: any = null
+let mobileSettingsButton: any = null
 let nextEpisodeButton: any = null
 const DEFAULT_INACTIVITY_TIMEOUT = 3000
 let ultrawideControlsGuardInterval: ReturnType<typeof setInterval> | null = null
+let mobileControlsQuery: MediaQueryList | null = null
 
 declare global {
   interface Window {
@@ -170,6 +188,15 @@ const countUniqueQualityLevels = (levels: any) => {
 
 const updateQualityButtonVisibility = () => {
   if (!player || !qualityButton || typeof player.qualityLevels !== 'function') return
+
+  if (isMobileControlsWidth()) {
+    qualityButton.hide()
+    const menu = qualityButton.menu
+    if (menu) {
+      menu.classList.remove('vjs-open')
+    }
+    return
+  }
 
   if (player.isFullscreen?.()) {
     qualityButton.hide()
@@ -209,6 +236,15 @@ const countSelectableAudioTracks = (tracks: any) => {
 const updateAudioButtonVisibility = () => {
   if (!player || !audioButton || typeof player.audioTracks !== 'function') return
 
+  if (isMobileControlsWidth()) {
+    audioButton.hide()
+    const menu = audioButton.menu
+    if (menu) {
+      menu.classList.remove('vjs-open')
+    }
+    return
+  }
+
   const tracks = player.audioTracks()
   const trackCount = countSelectableAudioTracks(tracks)
 
@@ -220,6 +256,109 @@ const updateAudioButtonVisibility = () => {
     if (menu) {
       menu.classList.remove('vjs-open')
     }
+  }
+}
+
+const countCaptionTracks = () => {
+  if (!player || typeof player.textTracks !== 'function') return 0
+  const tracks = player.textTracks()
+  if (!tracks || typeof tracks.length !== 'number') return 0
+
+  let count = 0
+  for (let i = 0; i < tracks.length; i++) {
+    if (isCaptionTrack(tracks[i])) {
+      count++
+    }
+  }
+  return count
+}
+
+const updateMobileSettingsButtonVisibility = () => {
+  if (!player || !mobileSettingsButton) return
+
+  if (!isMobileControlsWidth()) {
+    mobileSettingsButton.hide()
+    if (mobileSettingsButton.menu) {
+      mobileSettingsButton.menu.classList.remove('vjs-open')
+    }
+    return
+  }
+
+  const levels = typeof player.qualityLevels === 'function' ? player.qualityLevels() : null
+  const tracks = typeof player.audioTracks === 'function' ? player.audioTracks() : null
+  const hasSettings =
+    countUniqueQualityLevels(levels) > 1 ||
+    countSelectableAudioTracks(tracks) > 1 ||
+    countCaptionTracks() > 0
+
+  if (hasSettings) {
+    mobileSettingsButton.show()
+    mobileSettingsButton.buildMenu?.()
+  } else {
+    mobileSettingsButton.hide()
+  }
+}
+
+const nativeCaptionsControlSelectors = '.vjs-subs-caps-button, .vjs-captions-button, .vjs-subtitles-button'
+
+const collapseNativeCaptionsControl = () => {
+  const playerEl = player?.el?.() as HTMLElement | undefined
+  if (!playerEl) return
+
+  const shouldCollapse = isMobileControlsWidth()
+  playerEl.querySelectorAll(nativeCaptionsControlSelectors).forEach((node) => {
+    const el = node as HTMLElement
+    el.classList.toggle('giltube-mobile-native-track-hidden', shouldCollapse)
+    if (shouldCollapse) {
+      el.style.setProperty('display', 'none', 'important')
+      el.style.setProperty('width', '0', 'important')
+      el.style.setProperty('min-width', '0', 'important')
+      el.style.setProperty('flex', '0 0 0', 'important')
+      el.style.setProperty('margin', '0', 'important')
+      el.style.setProperty('padding', '0', 'important')
+      el.style.setProperty('overflow', 'hidden', 'important')
+    } else {
+      el.classList.remove('giltube-mobile-native-track-hidden')
+      el.style.removeProperty('display')
+      el.style.removeProperty('width')
+      el.style.removeProperty('min-width')
+      el.style.removeProperty('flex')
+      el.style.removeProperty('margin')
+      el.style.removeProperty('padding')
+      el.style.removeProperty('overflow')
+    }
+  })
+}
+
+const isMobileControlsWidth = () => {
+  if (typeof window === 'undefined') return false
+  mobileControlsQuery ||= window.matchMedia('(max-width: 768px)')
+  return mobileControlsQuery.matches
+}
+
+const updateResponsiveControls = () => {
+  updateQualityButtonVisibility()
+  updateAudioButtonVisibility()
+  updateMobileSettingsButtonVisibility()
+  collapseNativeCaptionsControl()
+}
+
+const startMobileControlsWatcher = () => {
+  if (typeof window === 'undefined') return
+  mobileControlsQuery ||= window.matchMedia('(max-width: 768px)')
+  if (typeof mobileControlsQuery.addEventListener === 'function') {
+    mobileControlsQuery.addEventListener('change', updateResponsiveControls)
+  } else if (typeof mobileControlsQuery.addListener === 'function') {
+    mobileControlsQuery.addListener(updateResponsiveControls)
+  }
+}
+
+const stopMobileControlsWatcher = () => {
+  if (!mobileControlsQuery) return
+  if (typeof mobileControlsQuery.removeEventListener === 'function') {
+    mobileControlsQuery.removeEventListener('change', updateResponsiveControls)
+  } else if (typeof mobileControlsQuery.removeListener === 'function') {
+    mobileControlsQuery.removeListener(updateResponsiveControls)
   }
 }
 
@@ -464,13 +603,14 @@ const reorderControlBar = () => {
     controlBarEl.querySelector('.vjs-subtitles-button')
   const qualityControl = qualityButton?.el?.() as HTMLElement | undefined
   const audioControl = audioButton?.el?.() as HTMLElement | undefined
+  const mobileSettingsControl = mobileSettingsButton?.el?.() as HTMLElement | undefined
   const nextControl = nextEpisodeButton?.el?.() as HTMLElement | undefined
 
   ;[playControl, volumePanel, currentTime, timeDivider, duration].filter(Boolean).forEach((node) => {
     leftGroup!.appendChild(node as HTMLElement)
   })
 
-  ;[nextControl, audioControl, captionsControl, pipControl, fullscreenControl, qualityControl].filter(Boolean).forEach((node) => {
+  ;[nextControl, mobileSettingsControl, audioControl, captionsControl, pipControl, fullscreenControl, qualityControl].filter(Boolean).forEach((node) => {
     rightGroup!.appendChild(node as HTMLElement)
   })
 }
@@ -491,7 +631,7 @@ const createNextEpisodeButton = () => {
       setTimeout(() => {
         const el = this.el()
         if (el) {
-          el.innerHTML = '<span class="vjs-icon-placeholder">Next</span><span class="vjs-control-text">Next episode</span>'
+          el.innerHTML = '<span class="vjs-icon-placeholder" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M5 6.75v10.5c0 .6.67.96 1.17.62L13.5 13v4.25c0 .6.67.96 1.17.62l7.5-5.25a.75.75 0 0 0 0-1.24l-7.5-5.25a.75.75 0 0 0-1.17.62V11L6.17 6.13A.75.75 0 0 0 5 6.75Z" fill="currentColor"/></svg></span><span class="vjs-control-text">Next episode</span>'
         }
       }, 0)
     }
@@ -633,6 +773,273 @@ const createAudioButton = () => {
   return 'AudioButton'
 }
 
+const getTextTrackLabel = (track: any, index: number) => {
+  const label = track?.label || track?.language || `Caption ${index + 1}`
+  return String(label).trim() || `Caption ${index + 1}`
+}
+
+const isCaptionTrack = (track: any) => track?.kind === 'subtitles' || track?.kind === 'captions'
+
+const createMobileSettingsButton = () => {
+  const Button = videojs.getComponent('Button')
+
+  class MobileSettingsButton extends Button {
+    menu: HTMLElement | null = null
+    pane: 'root' | 'quality' | 'audio' | 'captions' = 'root'
+
+    constructor(playerRef: any, options: any) {
+      super(playerRef, options)
+      this.addClass('vjs-mobile-settings-button')
+      this.controlText('Settings')
+
+      setTimeout(() => {
+        const el = this.el()
+        if (el) {
+          el.innerHTML = '<span class="vjs-icon-placeholder">&#9881;</span><span class="vjs-control-text">Settings</span>'
+        }
+      }, 0)
+    }
+
+    bindPress(el: Element, handler: (e: Event) => void) {
+      const node = el as HTMLElement
+      node.onclick = (e) => {
+        e.preventDefault()
+        e.stopPropagation()
+        handler(e)
+      }
+    }
+
+    addHeading(title: string) {
+      if (!this.menu) return
+      const heading = videojs.dom.createEl('div', {
+        className: 'vjs-mobile-settings-heading',
+        innerHTML: title
+      })
+      this.menu.appendChild(heading)
+    }
+
+    addItem(label: string, selected: boolean, handler: () => void, closeAfterSelect = true) {
+      if (!this.menu) return
+      const item = videojs.dom.createEl('button', {
+        className: `vjs-mobile-settings-item${selected ? ' vjs-selected' : ''}`,
+        innerHTML: label,
+        type: 'button'
+      }) as HTMLButtonElement
+
+      this.bindPress(item, () => {
+        handler()
+        this.buildMenu()
+        if (closeAfterSelect) {
+          this.menu?.classList.remove('vjs-open')
+        }
+      })
+
+      this.menu.appendChild(item)
+    }
+
+    addBackItem() {
+      if (!this.menu) return
+      const item = videojs.dom.createEl('button', {
+        className: 'vjs-mobile-settings-item vjs-mobile-settings-back',
+        innerHTML: 'Back',
+        type: 'button'
+      }) as HTMLButtonElement
+
+      this.bindPress(item, () => {
+        this.pane = 'root'
+        this.buildMenu()
+      })
+
+      this.menu.appendChild(item)
+    }
+
+    hasQualityItems() {
+      const levels = this.player_?.qualityLevels?.()
+      return Boolean(levels && countUniqueQualityLevels(levels) > 1)
+    }
+
+    hasAudioItems() {
+      const tracks = this.player_?.audioTracks?.()
+      return Boolean(tracks && countSelectableAudioTracks(tracks) > 1)
+    }
+
+    getCaptionTracks() {
+      const tracks = this.player_?.textTracks?.()
+      const captionTracks: Array<{ track: any, index: number }> = []
+      if (!tracks || typeof tracks.length !== 'number') return captionTracks
+
+      for (let i = 0; i < tracks.length; i++) {
+        if (isCaptionTrack(tracks[i])) {
+          captionTracks.push({ track: tracks[i], index: i })
+        }
+      }
+      return captionTracks
+    }
+
+    buildRootItems() {
+      let count = 0
+
+      if (this.hasQualityItems()) {
+        this.buildQualityItems(false)
+        count++
+      }
+
+      if (this.hasAudioItems()) {
+        this.buildAudioItems(false)
+        count++
+      }
+
+      if (this.getCaptionTracks().length > 0) {
+        this.buildCaptionItems(false)
+        count++
+      }
+
+      if (count === 0) {
+        const empty = videojs.dom.createEl('div', {
+          className: 'vjs-mobile-settings-empty',
+          innerHTML: 'No settings'
+        })
+        this.menu?.appendChild(empty)
+      }
+    }
+
+    buildQualityItems(showBack = true) {
+      const levels = this.player_?.qualityLevels?.()
+      if (!levels || countUniqueQualityLevels(levels) <= 1) return false
+
+      if (showBack) {
+        this.addBackItem()
+      }
+      this.addHeading('Quality')
+      let enabledIndexes: number[] = []
+      for (let i = 0; i < levels.length; i++) {
+        if (levels[i]?.enabled) enabledIndexes.push(i)
+      }
+      const isAuto = enabledIndexes.length !== 1
+
+      this.addItem('Auto', isAuto, () => {
+        if (qualityButton) {
+          qualityButton.manualSelectionIndex = null
+        }
+        for (let i = 0; i < levels.length; i++) {
+          levels[i].enabled = true
+        }
+        qualityButton?.refreshQuality?.()
+        qualityButton?.updateMenuSelection?.()
+      })
+
+      const seenLabels = new Set<string>()
+      for (let i = 0; i < levels.length; i++) {
+        const level = levels[i]
+        const label = level?.label?.match?.(/(\d+p)/)?.[1] || (level?.height ? `${level.height}p` : `Quality ${i + 1}`)
+        if (seenLabels.has(label)) continue
+        seenLabels.add(label)
+        const selected = enabledIndexes.length === 1 && enabledIndexes[0] === i
+        this.addItem(label, selected, () => {
+          if (qualityButton) {
+            qualityButton.manualSelectionIndex = i
+          }
+          for (let j = 0; j < levels.length; j++) {
+            levels[j].enabled = j === i
+          }
+          qualityButton?.refreshQuality?.()
+          qualityButton?.updateMenuSelection?.()
+        })
+      }
+      return true
+    }
+
+    buildAudioItems(showBack = true) {
+      const tracks = this.player_?.audioTracks?.()
+      if (!tracks || countSelectableAudioTracks(tracks) <= 1) return false
+
+      if (showBack) {
+        this.addBackItem()
+      }
+      this.addHeading('Audio')
+      for (let i = 0; i < tracks.length; i++) {
+        const track = tracks[i]
+        if (track?.kind === 'metadata') continue
+        this.addItem(getAudioTrackLabel(track, i), Boolean(track?.enabled), () => {
+          for (let j = 0; j < tracks.length; j++) {
+            tracks[j].enabled = j === i
+          }
+          audioButton?.updateMenuSelection?.()
+        })
+      }
+      return true
+    }
+
+    buildCaptionItems(showBack = true) {
+      const captionTracks = this.getCaptionTracks()
+      if (captionTracks.length === 0) return false
+
+      if (showBack) {
+        this.addBackItem()
+      }
+      this.addHeading('Captions')
+      const captionsOff = !captionTracks.some(({ track }) => track?.mode === 'showing')
+      this.addItem('Off', captionsOff, () => {
+        captionTracks.forEach(({ track }) => {
+          track.mode = 'disabled'
+        })
+      })
+
+      captionTracks.forEach(({ track, index }) => {
+        this.addItem(getTextTrackLabel(track, index), track?.mode === 'showing', () => {
+          captionTracks.forEach(({ track: candidate }) => {
+            candidate.mode = candidate === track ? 'showing' : 'disabled'
+          })
+        })
+      })
+      return true
+    }
+
+    buildMenu() {
+      if (this.menu) {
+        this.menu.innerHTML = ''
+      } else {
+        this.menu = videojs.dom.createEl('div', {
+          className: 'vjs-mobile-settings-menu'
+        }) as HTMLElement
+      }
+      const playerEl = this.player_?.el?.()
+      if (playerEl && this.menu.parentElement !== playerEl) {
+        playerEl.appendChild(this.menu)
+      }
+
+      if (this.pane === 'quality') {
+        this.buildQualityItems()
+      } else if (this.pane === 'audio') {
+        this.buildAudioItems()
+      } else if (this.pane === 'captions') {
+        this.buildCaptionItems()
+      } else {
+        this.buildRootItems()
+      }
+    }
+
+    handleClick() {
+      this.pane = 'root'
+      if (!this.menu || this.menu.children.length === 0) {
+        this.buildMenu()
+      }
+      this.menu?.classList.toggle('vjs-open')
+    }
+
+    handleTap(event: Event) {
+      if (event) {
+        event.preventDefault()
+        event.stopPropagation()
+      }
+      this.handleClick()
+    }
+  }
+
+  videojs.registerComponent('MobileSettingsButton', MobileSettingsButton)
+  return 'MobileSettingsButton'
+}
+
 // Progress bar interaction handlers
 const handleProgressBarInteraction = (event: MouseEvent | TouchEvent) => {
   if (!player || duration.value === 0) return
@@ -698,6 +1105,57 @@ const attachProgressBarOverlay = () => {
 
   if (progressBarOverlay.value.parentElement !== playerEl) {
     playerEl.appendChild(progressBarOverlay.value)
+  }
+}
+
+const attachSeriesActionsOverlay = () => {
+  if (!player || !seriesActionsOverlay.value) return
+  const playerEl = player.el?.() as HTMLElement | undefined
+  if (!playerEl || seriesActionsOverlay.value.parentElement === playerEl) return
+  playerEl.appendChild(seriesActionsOverlay.value)
+}
+
+const attachMobilePiPOverlay = () => {
+  if (!player || !mobilePiPOverlay.value) return
+  const playerEl = player.el?.() as HTMLElement | undefined
+  if (!playerEl || mobilePiPOverlay.value.parentElement === playerEl) return
+  playerEl.appendChild(mobilePiPOverlay.value)
+}
+
+const updatePictureInPictureSupport = () => {
+  const video = videoElement.value as (HTMLVideoElement & { requestPictureInPicture?: () => Promise<any> }) | null
+  const doc = typeof document !== 'undefined'
+    ? document as Document & { pictureInPictureEnabled?: boolean }
+    : null
+  isPictureInPictureSupported.value = Boolean(
+    player?.requestPictureInPicture ||
+    (doc?.pictureInPictureEnabled && video?.requestPictureInPicture)
+  )
+}
+
+const togglePictureInPicture = async () => {
+  const video = videoElement.value as (HTMLVideoElement & { requestPictureInPicture?: () => Promise<any> }) | null
+  if (!video) return
+  const doc = document as Document & {
+    pictureInPictureEnabled?: boolean
+    pictureInPictureElement?: Element | null
+    exitPictureInPicture?: () => Promise<void>
+  }
+
+  try {
+    if (doc.pictureInPictureElement) {
+      await doc.exitPictureInPicture?.()
+      return
+    }
+    if (player?.requestPictureInPicture) {
+      await player.requestPictureInPicture()
+      return
+    }
+    if (doc.pictureInPictureEnabled && video.requestPictureInPicture) {
+      await video.requestPictureInPicture()
+    }
+  } catch (err) {
+    console.warn('Picture-in-picture failed:', err)
   }
 }
 
@@ -931,11 +1389,13 @@ const createQualityButton = (player: any) => {
 
 onMounted(async () => {
   await nextTick()
+  startMobileControlsWatcher()
 
   if (videoElement.value) {
     // Register quality button before creating player
     createQualityButton(null)
     createAudioButton()
+    createMobileSettingsButton()
     createNextEpisodeButton()
 
     player = videojs(videoElement.value, {
@@ -981,6 +1441,8 @@ onMounted(async () => {
       qualityButton.hide()
       audioButton = player.controlBar.addChild('AudioButton', {})
       audioButton.hide()
+      mobileSettingsButton = player.controlBar.addChild('MobileSettingsButton', {})
+      mobileSettingsButton.hide()
       nextEpisodeButton = player.controlBar.addChild('NextEpisodeButton', {})
       if (props.hasNextEpisode) {
         nextEpisodeButton.show()
@@ -991,6 +1453,10 @@ onMounted(async () => {
       reorderControlBar()
       setTimeout(reorderControlBar, 0)
       attachProgressBarOverlay()
+      attachSeriesActionsOverlay()
+      updatePictureInPictureSupport()
+      nextTick(attachMobilePiPOverlay)
+      updateResponsiveControls()
 
       // Emit 'play' event when video starts playing
       player.on('play', () => {
@@ -1019,6 +1485,8 @@ onMounted(async () => {
       if (qualityLevels) {
         qualityLevels.on('addqualitylevel', updateQualityButtonVisibility)
         qualityLevels.on('change', updateQualityButtonVisibility)
+        qualityLevels.on('addqualitylevel', updateMobileSettingsButtonVisibility)
+        qualityLevels.on('change', updateMobileSettingsButtonVisibility)
       }
 
       const audioTracks = player.audioTracks?.()
@@ -1026,6 +1494,16 @@ onMounted(async () => {
         audioTracks.on?.('addtrack', updateAudioButtonVisibility)
         audioTracks.on?.('removetrack', updateAudioButtonVisibility)
         audioTracks.on?.('change', updateAudioButtonVisibility)
+        audioTracks.on?.('addtrack', updateMobileSettingsButtonVisibility)
+        audioTracks.on?.('removetrack', updateMobileSettingsButtonVisibility)
+        audioTracks.on?.('change', updateMobileSettingsButtonVisibility)
+      }
+
+      const textTracks = player.textTracks?.()
+      if (textTracks) {
+        textTracks.on?.('addtrack', updateResponsiveControls)
+        textTracks.on?.('removetrack', updateResponsiveControls)
+        textTracks.on?.('change', updateResponsiveControls)
       }
 
       player.on('loadedmetadata', updateQualityButtonVisibility)
@@ -1033,12 +1511,18 @@ onMounted(async () => {
         resetAudioButtonMenu()
         audioButton?.buildMenu?.()
         updateAudioButtonVisibility()
+        updateMobileSettingsButtonVisibility()
+        updatePictureInPictureSupport()
+        nextTick(attachMobilePiPOverlay)
       })
       player.on('fullscreenchange', updateQualityButtonVisibility)
       player.on('fullscreenchange', updateAudioButtonVisibility)
+      player.on('fullscreenchange', updateMobileSettingsButtonVisibility)
       player.on('loadedmetadata', syncUltrawideFullscreenClass)
       player.on('fullscreenchange', syncUltrawideFullscreenClass)
       player.on('fullscreenchange', attachProgressBarOverlay)
+      player.on('fullscreenchange', attachSeriesActionsOverlay)
+      player.on('fullscreenchange', attachMobilePiPOverlay)
       player.on('play', syncUltrawideFullscreenClass)
       player.on('pause', syncUltrawideFullscreenClass)
       player.on('ended', syncUltrawideFullscreenClass)
@@ -1067,6 +1551,7 @@ onMounted(async () => {
 })
 
 onBeforeUnmount(() => {
+  stopMobileControlsWatcher()
   stopUltrawideControlsGuard()
   if (window.giltubePlayerDebug?.getPlayer?.() === player) {
     delete window.giltubePlayerDebug
@@ -1079,10 +1564,17 @@ onBeforeUnmount(() => {
     if (progressBarOverlay.value?.parentElement) {
       progressBarOverlay.value.parentElement.removeChild(progressBarOverlay.value)
     }
+    if (seriesActionsOverlay.value?.parentElement) {
+      seriesActionsOverlay.value.parentElement.removeChild(seriesActionsOverlay.value)
+    }
+    if (mobilePiPOverlay.value?.parentElement) {
+      mobilePiPOverlay.value.parentElement.removeChild(mobilePiPOverlay.value)
+    }
     player.dispose()
     player = null
     qualityButton = null
     audioButton = null
+    mobileSettingsButton = null
     nextEpisodeButton = null
   }
 })
@@ -1092,7 +1584,12 @@ watch(
   (newSrc) => {
     if (player && newSrc && props.status === 'ready') {
       audioButton?.hide?.()
+      mobileSettingsButton?.hide?.()
       resetAudioButtonMenu()
+      if (mobileSettingsButton?.menu) {
+        mobileSettingsButton.menu.innerHTML = ''
+        mobileSettingsButton.menu.classList.remove('vjs-open')
+      }
       player.src({
         src: newSrc,
         type: inferSourceType(newSrc)
@@ -1126,6 +1623,8 @@ watch(
 <style scoped>
 .video-player-container {
   height: 250px;
+  isolation: isolate;
+  z-index: 0;
 }
 
 @media (min-width: 768px) {
@@ -1144,6 +1643,55 @@ watch(
 
 .progress-bar-overlay:hover {
   height: 7px !important;
+}
+
+.series-player-actions {
+  position: absolute;
+  right: 1rem;
+  bottom: 4.75rem;
+  z-index: 90;
+  max-width: calc(100% - 2rem);
+  pointer-events: none;
+}
+
+:deep(.video-js .series-player-actions) {
+  position: absolute;
+  right: 1rem;
+  bottom: 4.75rem;
+  z-index: 90;
+  max-width: calc(100% - 2rem);
+  pointer-events: none;
+}
+
+:deep(.video-js .series-player-actions button),
+.series-player-actions button {
+  min-height: 44px;
+  padding: 0.75rem 1rem;
+  border: 1px solid rgba(0, 0, 0, 0.35);
+  background: rgba(255, 255, 255, 0.96) !important;
+  color: #000 !important;
+  font-size: 0.875rem;
+  font-weight: 800;
+  line-height: 1;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.2);
+  pointer-events: auto;
+}
+
+:deep(.video-js .series-player-actions button:hover),
+.series-player-actions button:hover {
+  background: #fff !important;
+}
+
+:deep(.video-js.vjs-fullscreen .series-player-actions) {
+  bottom: 5.5rem;
+  right: 1.5rem;
+  z-index: 90;
+}
+
+:deep(.video-js.vjs-fullscreen .series-player-actions button) {
+  min-height: 52px;
+  padding: 0.9rem 1.15rem;
+  font-size: 1rem;
 }
 
 :deep(.video-js.vjs-user-inactive .progress-bar-overlay),
@@ -1165,10 +1713,56 @@ watch(
   opacity: 1 !important;
 }
 
+.mobile-pip-overlay {
+  display: none;
+  position: absolute;
+  right: 0.75rem;
+  top: 0.75rem;
+  z-index: 70;
+  height: 40px;
+  width: 40px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(0, 0, 0, 0.68);
+  color: #fff;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
+  pointer-events: auto;
+  transition: opacity 160ms ease, transform 160ms ease, visibility 160ms ease, background-color 160ms ease;
+}
+
+.mobile-pip-overlay:hover {
+  background: rgba(0, 0, 0, 0.82);
+}
+
+.mobile-pip-overlay svg {
+  height: 22px;
+  width: 22px;
+}
+
+:deep(.video-js.vjs-user-inactive .mobile-pip-overlay),
+:deep(.video-js.vjs-fullscreen.vjs-user-inactive .mobile-pip-overlay) {
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-4px);
+  pointer-events: none;
+}
+
+:deep(.video-js.vjs-user-active .mobile-pip-overlay),
+:deep(.video-js.vjs-fullscreen.vjs-user-active .mobile-pip-overlay),
+:deep(.video-js.vjs-fullscreen.giltube-ultrawide-fullscreen .mobile-pip-overlay) {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
 :deep(.video-js) {
   width: 100%;
   height: 100%;
   background-color: #000;
+  isolation: isolate;
+  z-index: 0;
 }
 
 :deep(.vjs-tech) {
@@ -1429,14 +2023,39 @@ watch(
   line-height: 1;
 }
 
+:deep(.vjs-mobile-settings-button) {
+  display: none !important;
+  position: relative;
+  color: white;
+  cursor: pointer;
+  padding: 0 8px;
+  align-items: center;
+  justify-content: center;
+  height: 28px;
+  width: 32px;
+  background-color: transparent !important;
+  border: none;
+  touch-action: manipulation;
+  line-height: 1;
+}
+
+:deep(.vjs-mobile-settings-button::before) {
+  content: none !important;
+  display: none !important;
+}
+
+:deep(.vjs-mobile-settings-button .vjs-icon-placeholder) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  line-height: 1;
+}
+
 :deep(.vjs-next-episode-button) {
-  width: auto !important;
-  min-width: 48px;
-  padding: 0 10px !important;
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
+  width: 40px !important;
+  min-width: 40px;
+  padding: 0 !important;
 }
 
 :deep(.vjs-audio-button::before),
@@ -1449,6 +2068,13 @@ watch(
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  height: 100%;
+  width: 100%;
+}
+
+:deep(.vjs-next-episode-button .vjs-icon-placeholder svg) {
+  height: 22px;
+  width: 22px;
 }
 
 :deep(.vjs-next-episode-button .vjs-control-text) {
@@ -1570,9 +2196,115 @@ watch(
   background-color: #333;
   margin: 0px 0;
 }
+
+:deep(.vjs-mobile-settings-menu) {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 56px;
+  z-index: 40;
+  display: none;
+  max-height: min(360px, calc(100% - 72px));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 8px;
+  background-color: rgba(18, 18, 22, 0.98);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.55);
+  -webkit-overflow-scrolling: touch;
+}
+
+:deep(.vjs-mobile-settings-menu.vjs-open) {
+  display: block !important;
+}
+
+:deep(.vjs-mobile-settings-heading) {
+  padding: 8px 12px 4px;
+  color: #9ca3af;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+:deep(.vjs-mobile-settings-item),
+:deep(.vjs-mobile-settings-empty) {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  width: 100%;
+  min-height: 34px;
+  padding: 8px 12px;
+  border: 0;
+  border-bottom: 1px solid #333;
+  border-radius: 0;
+  background: transparent;
+  color: white;
+  font-size: 12px;
+  line-height: 1.2;
+  text-align: left;
+  touch-action: manipulation;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+:deep(.vjs-mobile-settings-item:hover),
+:deep(.vjs-mobile-settings-item.vjs-selected) {
+  background-color: #ef4444;
+  color: white;
+  font-weight: 700;
+}
+
+:deep(.vjs-mobile-settings-back) {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background-color: #111827;
+  font-weight: 700;
+}
 </style>
 
 <style>
+.video-js .vjs-mobile-settings-button {
+  display: none !important;
+  position: relative !important;
+  overflow: visible !important;
+}
+
+.video-js .vjs-mobile-settings-menu {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 56px;
+  z-index: 40;
+  display: none;
+  max-height: min(360px, calc(100% - 72px));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 8px;
+  background-color: rgba(18, 18, 22, 0.98);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.55);
+  -webkit-overflow-scrolling: touch;
+}
+
+.video-js.vjs-fullscreen .vjs-mobile-settings-menu {
+  bottom: 64px;
+  z-index: 50;
+}
+
+.video-js .vjs-mobile-settings-menu.vjs-open {
+  display: block !important;
+}
+
+.video-js .vjs-mobile-settings-back {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background-color: #111827;
+  font-weight: 700;
+}
+
 .video-js.vjs-fullscreen .vjs-control-bar {
   background: linear-gradient(to top, rgba(0, 0, 0, 0.9), transparent) !important;
   background-color: rgba(0, 0, 0, 0.9) !important;
@@ -1623,6 +2355,70 @@ watch(
 
 /* Mobile responsiveness */
 @media (max-width: 768px) {
+  .video-js .vjs-mobile-settings-button {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  .video-js .vjs-quality-button,
+  .video-js .vjs-audio-button,
+  .video-js .vjs-subs-caps-button,
+  .video-js .vjs-captions-button,
+  .video-js .vjs-subtitles-button,
+  .video-js .vjs-picture-in-picture-control,
+  .video-js .vjs-picture-in-picture-toggle {
+    display: none !important;
+    flex: 0 0 0 !important;
+    width: 0 !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    visibility: hidden !important;
+  }
+
+  .video-js .vjs-control-bar .giltube-mobile-native-track-hidden,
+  .video-js.vjs-fullscreen .vjs-control-bar .giltube-mobile-native-track-hidden,
+  .video-js.vjs-fullscreen .vjs-control-bar .giltube-mobile-native-track-hidden.vjs-button,
+  .video-js.vjs-fullscreen .vjs-control-bar .giltube-mobile-native-track-hidden.vjs-control {
+    display: none !important;
+    flex: 0 0 0 !important;
+    width: 0 !important;
+    min-width: 0 !important;
+    height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    overflow: hidden !important;
+    pointer-events: none !important;
+  }
+
+  :deep(.vjs-mobile-settings-button) {
+    display: inline-flex !important;
+  }
+
+  :deep(.vjs-quality-button),
+  :deep(.vjs-audio-button),
+  :deep(.vjs-subs-caps-button),
+  :deep(.vjs-captions-button),
+  :deep(.vjs-subtitles-button),
+  :deep(.vjs-picture-in-picture-control),
+  :deep(.vjs-picture-in-picture-toggle) {
+    display: none !important;
+    flex: 0 0 0 !important;
+    width: 0 !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    visibility: hidden !important;
+  }
+
+  .mobile-pip-overlay,
+  :deep(.mobile-pip-overlay) {
+    display: inline-flex;
+  }
+
   /* Hide current time and duration, show only remaining time */
   :deep(.vjs-current-time) {
     display: none !important;
@@ -1695,8 +2491,14 @@ watch(
   }
 
   :deep(.vjs-picture-in-picture-toggle) {
-    width: 32px !important;
-    height: 32px !important;
+    display: none !important;
+    flex: 0 0 0 !important;
+    width: 0 !important;
+    min-width: 0 !important;
+    height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    visibility: hidden !important;
   }
 
   :deep(.giltube-control-group) {
@@ -1713,6 +2515,18 @@ watch(
 
   .progress-bar-overlay:hover {
     height: 12px !important;
+  }
+
+  .series-player-actions {
+    right: 0.75rem;
+    bottom: 5.25rem;
+    gap: 0.5rem;
+  }
+
+  .series-player-actions button {
+    min-height: 42px;
+    padding: 0.65rem 0.85rem;
+    font-size: 0.8125rem;
   }
 }
 
@@ -1759,8 +2573,14 @@ watch(
   }
 
   :deep(.vjs-picture-in-picture-toggle) {
-    width: 26px !important;
-    height: 26px !important;
+    display: none !important;
+    flex: 0 0 0 !important;
+    width: 0 !important;
+    min-width: 0 !important;
+    height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    visibility: hidden !important;
   }
 
   :deep(.vjs-remaining-time) {
@@ -1826,8 +2646,14 @@ watch(
   }
 
   :deep(.vjs-picture-in-picture-toggle) {
-    width: 24px !important;
-    height: 24px !important;
+    display: none !important;
+    flex: 0 0 0 !important;
+    width: 0 !important;
+    min-width: 0 !important;
+    height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    visibility: hidden !important;
   }
 
   :deep(.vjs-remaining-time) {
