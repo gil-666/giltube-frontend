@@ -2,7 +2,7 @@
   <div class="p-6 space-y-6 max-w-7xl mx-auto">
     <!-- Page Header -->
     <div class="mb-8">
-      <h1 class="text-4xl font-bold text-white mb-2">🔧 Admin Panel</h1>
+      <h1 class="text-4xl font-bold text-white mb-2">Admin Panel</h1>
       <p class="text-gray-400">Platform management and statistics</p>
     </div>
 
@@ -103,41 +103,41 @@
                   @click="toggleUserAdmin(user.id, user.user_type)"
                   :class="['px-2 py-1 rounded text-xs transition', user.user_type === 'admin' ? 'bg-yellow-900 hover:bg-yellow-800 text-yellow-200' : 'bg-purple-900 hover:bg-purple-800 text-purple-200']"
                 >
-                  {{ user.user_type === 'admin' ? '⬇️ Demote' : '⬆️ Promote' }}
+                  {{ user.user_type === 'admin' ? 'Demote' : 'Promote' }}
                 </button>
                 <button
                   v-if="user.status !== 'suspended'"
                   @click="suspendUser(user.id, user.username)"
                   class="px-2 py-1 bg-yellow-900 hover:bg-yellow-800 text-yellow-200 rounded text-xs transition"
                 >
-                  ⏸️ Suspend
+                  Suspend
                 </button>
                 <button
                   v-if="user.status === 'suspended'"
                   @click="unsuspendUser(user.id, user.username)"
                   class="px-2 py-1 bg-green-900 hover:bg-green-800 text-green-200 rounded text-xs transition"
                 >
-                  ✅ Unsuspend
+                  Unsuspend
                 </button>
                 <button
                   v-if="user.status !== 'banned'"
                   @click="banUser(user.id, user.username)"
                   class="px-2 py-1 bg-red-900 hover:bg-red-800 text-red-200 rounded text-xs transition"
                 >
-                  🚫 Ban
+                  Ban
                 </button>
                 <button
                   v-if="user.status === 'banned'"
                   @click="unbanUser(user.id, user.username)"
                   class="px-2 py-1 bg-green-900 hover:bg-green-800 text-green-200 rounded text-xs transition"
                 >
-                  ✅ Unban
+                  Unban
                 </button>
                 <button
                   @click="deleteUser(user.id, user.username)"
                   class="px-2 py-1 bg-gray-900 hover:bg-gray-800 text-gray-200 rounded text-xs transition"
                 >
-                  🗑️ Delete
+                  Delete
                 </button>
               </td>
             </tr>

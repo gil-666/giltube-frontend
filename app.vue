@@ -243,7 +243,7 @@
 
         <!-- Sidebar -->
         <aside v-if="!shouldHideHeaderSidebar"
-          class="w-60 border-r transition-transform duration-300 fixed left-0 bottom-0 md:bottom-auto md:transform-none md:transition-none overflow-y-auto h-full"
+          class="giltube-sidebar-scrollbar w-60 border-r transition-transform duration-300 fixed left-0 bottom-0 md:bottom-auto md:transform-none md:transition-none overflow-y-auto h-full"
           :class="{
             '-translate-x-full': !isSidebarOpen,
             'translate-x-0': isSidebarOpen,
@@ -321,6 +321,40 @@
 
   <!-- Locale Picker Modal (shown only on first visit) -->
   <LocalePickerModal />
+  <div
+    v-if="activeWatchParty"
+    class="fixed bottom-4 right-4 z-[90] w-[min(22rem,calc(100vw-2rem))] rounded-xl border border-red-500/40 bg-zinc-950/95 p-4 text-white shadow-2xl backdrop-blur"
+  >
+    <div class="flex items-start justify-between gap-4">
+      <div class="min-w-0">
+        <p class="text-xs font-semibold uppercase tracking-[0.18em] text-red-300">Watch party running</p>
+        <p class="mt-1 truncate text-sm font-semibold">{{ activeWatchParty.title || 'Watch party' }}</p>
+      </div>
+      <button
+        type="button"
+        class="rounded-full p-1 text-zinc-400 transition hover:bg-zinc-800 hover:text-white"
+        aria-label="Dismiss watch party widget"
+        @click="clearActiveWatchParty"
+      >
+        X
+      </button>
+    </div>
+    <div class="mt-3 flex gap-2">
+      <NuxtLink
+        :to="localePath(`/watch-party/${activeWatchParty.id}?room=1`)"
+        class="flex-1 rounded-lg bg-red-600 px-3 py-2 text-center text-sm font-semibold transition hover:bg-red-700"
+      >
+        Open
+      </NuxtLink>
+      <button
+        type="button"
+        class="rounded-lg bg-zinc-800 px-3 py-2 text-sm font-semibold transition hover:bg-zinc-700"
+        @click="leaveActiveWatchParty"
+      >
+        Leave
+      </button>
+    </div>
+  </div>
   <div
     v-if="showGilIDLinkModal"
     class="giltube-modal-overlay bg-black/70 backdrop-blur-sm flex items-center justify-center p-4"
@@ -454,6 +488,7 @@ import {
   getPushConfig,
   subscribePush,
 } from '~/app/service/notifications'
+import { leaveWatchParty } from '~/app/service/watchParties'
 
 const router = useRouter()
 const route = useRoute()
@@ -467,6 +502,7 @@ const userStatus = ref('active')
 const isSidebarOpen = ref(false)
 const showSearchBar = ref(false)
 const searchQuery = ref('')
+const activeWatchParty = ref(null)
 
 const handleDesktopSearch = async () => {
   if (searchQuery.value.trim()) {
@@ -583,7 +619,7 @@ const getChannelAvatarUrl = (channel) => {
 }
 
 const categoriesWithVideos = computed(() => {
-  return categories.value.filter(cat => cat.slug === 'series' || (cat.video_count || 0) > 0)
+  return categories.value.filter(cat => ['series', 'movies'].includes(cat.slug) || (cat.video_count || 0) > 0)
 })
 
 const syncCategoriesFromStorage = () => {
@@ -808,7 +844,36 @@ const handleLogoClick = async () => {
   await scrollToTop()
 }
 
+const loadActiveWatchParty = () => {
+  if (!process.client) return
+  try {
+    const raw = localStorage.getItem('giltube:active-watch-party')
+    activeWatchParty.value = raw ? JSON.parse(raw) : null
+  } catch (err) {
+    activeWatchParty.value = null
+  }
+}
+
+const clearActiveWatchParty = () => {
+  if (process.client) {
+    localStorage.removeItem('giltube:active-watch-party')
+  }
+  activeWatchParty.value = null
+}
+
+const leaveActiveWatchParty = async () => {
+  const partyId = activeWatchParty.value?.id
+  clearActiveWatchParty()
+  if (!partyId) return
+  try {
+    await leaveWatchParty(partyId)
+  } catch (err) {
+    console.error('Failed to leave watch party:', err)
+  }
+}
+
 onMounted(async () => {
+  loadActiveWatchParty()
   checkAuthStatus()
   await loadCategories()
   if (isLoggedIn.value) {
@@ -828,6 +893,8 @@ onMounted(async () => {
   }
 
   window.addEventListener('resize', handleSidebarResize)
+  window.addEventListener('storage', loadActiveWatchParty)
+  window.addEventListener('giltube:watch-party-updated', loadActiveWatchParty)
   document.addEventListener('click', handleNotificationClickOutside)
   document.addEventListener('visibilitychange', handleNotificationVisibilityChange)
   offlineMode.value = !navigator.onLine
@@ -927,6 +994,8 @@ onMounted(async () => {
 
 onUnmounted(() => {
   window.removeEventListener('resize', handleSidebarResize)
+  window.removeEventListener('storage', loadActiveWatchParty)
+  window.removeEventListener('giltube:watch-party-updated', loadActiveWatchParty)
   window.removeEventListener('online', handleOnline)
   window.removeEventListener('offline', handleOffline)
   window.removeEventListener('scroll', handleMainContentScroll)
@@ -1222,8 +1291,29 @@ if (process.client) {
   top: 0; left: 0; right: 0; bottom: 0;
   z-index: 2147483647 !important;
 }
+
+.giltube-sidebar-scrollbar {
+  scrollbar-color: rgba(113, 113, 122, 0.75) rgba(24, 24, 27, 0.25);
+  scrollbar-width: thin;
+}
+
+.giltube-sidebar-scrollbar::-webkit-scrollbar {
+  width: 10px;
+}
+
+.giltube-sidebar-scrollbar::-webkit-scrollbar-track {
+  background: rgba(24, 24, 27, 0.35);
+  border-left: 1px solid rgba(63, 63, 70, 0.25);
+}
+
+.giltube-sidebar-scrollbar::-webkit-scrollbar-thumb {
+  min-height: 48px;
+  background: linear-gradient(180deg, rgba(161, 161, 170, 0.72), rgba(82, 82, 91, 0.78));
+  border: 2px solid rgba(24, 24, 27, 0.9);
+  border-radius: 999px;
+}
+
+.giltube-sidebar-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, rgba(212, 212, 216, 0.86), rgba(113, 113, 122, 0.9));
+}
 </style>
-
-
-
-

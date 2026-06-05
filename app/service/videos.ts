@@ -141,6 +141,31 @@ export const incrementViews = async (id: string) => {
   return res.data
 }
 
+export const getWatchProgress = async (videoId: string) => {
+  const res = await api.get(`/videos/${videoId}/progress`)
+  return res.data
+}
+
+export const getWatchProgressMap = async (videoIds: string[]) => {
+  const ids = [...new Set(videoIds.filter(Boolean))].slice(0, 100)
+  if (!ids.length) return { progress: {} }
+  const res = await api.get('/watch-progress/videos', {
+    params: { ids: ids.join(',') },
+  })
+  return res.data
+}
+
+export const saveWatchProgress = async (videoId: string, data: {
+  positionSeconds: number
+  durationSeconds: number
+}) => {
+  const res = await api.put(`/videos/${videoId}/progress`, {
+    position_seconds: data.positionSeconds,
+    duration_seconds: data.durationSeconds,
+  })
+  return res.data
+}
+
 export const likeVideo = async (videoId: string, channelId: string) => {
   const res = await api.post(`/videos/${videoId}/like?channel_id=${channelId}`)
   return res.data

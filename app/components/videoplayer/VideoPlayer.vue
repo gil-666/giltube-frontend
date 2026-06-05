@@ -103,12 +103,16 @@ interface Props {
   introEndSeconds?: number
   hasNextEpisode?: boolean
   nextEpisodeLabel?: string
+  startTimeSeconds?: number
 }
 
 const emit = defineEmits<{
   play: []
+  pause: []
+  seeked: [payload: { currentTime: number }]
   ended: []
   nextEpisode: []
+  progress: [payload: { currentTime: number, duration: number }]
 }>()
 
 const props = withDefaults(defineProps<Props>(), {
@@ -117,7 +121,8 @@ const props = withDefaults(defineProps<Props>(), {
   introStartSeconds: 0,
   introEndSeconds: 0,
   hasNextEpisode: false,
-  nextEpisodeLabel: 'Next episode'
+  nextEpisodeLabel: 'Next episode',
+  startTimeSeconds: 0
 })
 
 type PresenceViewer = {
@@ -164,6 +169,8 @@ let nextEpisodeButton: any = null
 const DEFAULT_INACTIVITY_TIMEOUT = 3000
 let ultrawideControlsGuardInterval: ReturnType<typeof setInterval> | null = null
 let mobileControlsQuery: MediaQueryList | null = null
+let hasAppliedInitialStartTime = false
+let lastProgressEmitAt = 0
 
 declare global {
   interface Window {
@@ -1115,6 +1122,44 @@ const attachSeriesActionsOverlay = () => {
   playerEl.appendChild(seriesActionsOverlay.value)
 }
 
+const setPlaybackTime = (seconds: number) => {
+  if (!player || !Number.isFinite(seconds)) return
+  player.currentTime(Math.max(0, seconds))
+}
+
+const playFrom = async (seconds?: number) => {
+  if (!player) return
+  if (typeof seconds === 'number') {
+    setPlaybackTime(seconds)
+  }
+  try {
+    await player.play?.()
+  } catch (err) {
+    // Remote play can be blocked until the user interacts with the page.
+  }
+}
+
+const pauseAt = (seconds?: number) => {
+  if (!player) return
+  if (typeof seconds === 'number') {
+    setPlaybackTime(seconds)
+  }
+  player.pause?.()
+}
+
+const getPlaybackState = () => ({
+  currentTime: Number(player?.currentTime?.() || currentTime.value || 0),
+  duration: Number(player?.duration?.() || duration.value || 0),
+  paused: Boolean(player?.paused?.() ?? true),
+})
+
+defineExpose({
+  setPlaybackTime,
+  playFrom,
+  pauseAt,
+  getPlaybackState,
+})
+
 const attachMobilePiPOverlay = () => {
   if (!player || !mobilePiPOverlay.value) return
   const playerEl = player.el?.() as HTMLElement | undefined
@@ -1157,6 +1202,37 @@ const togglePictureInPicture = async () => {
   } catch (err) {
     console.warn('Picture-in-picture failed:', err)
   }
+}
+
+const applyInitialStartTime = () => {
+  if (!player || hasAppliedInitialStartTime) return
+  const startTime = Number(props.startTimeSeconds || 0)
+  const playerDuration = Number(player.duration?.() || duration.value || 0)
+  if (!Number.isFinite(startTime) || startTime <= 5) {
+    return
+  }
+  if (!Number.isFinite(playerDuration) || playerDuration <= 0) return
+  if (playerDuration > 0 && startTime / playerDuration >= 0.9) {
+    hasAppliedInitialStartTime = true
+    return
+  }
+  player.currentTime(Math.max(0, startTime - 2))
+  currentTime.value = Math.max(0, startTime - 2)
+  hasAppliedInitialStartTime = true
+}
+
+const emitWatchProgress = (force = false) => {
+  if (!player) return
+  const now = Date.now()
+  if (!force && now - lastProgressEmitAt < 5000) return
+  const playerDuration = Number(player.duration?.() || duration.value || 0)
+  const playerCurrentTime = Number(player.currentTime?.() || currentTime.value || 0)
+  if (!Number.isFinite(playerDuration) || playerDuration <= 0 || !Number.isFinite(playerCurrentTime)) return
+  lastProgressEmitAt = now
+  emit('progress', {
+    currentTime: Math.max(0, playerCurrentTime),
+    duration: Math.max(0, playerDuration)
+  })
 }
 
 // Create quality button component
@@ -1463,15 +1539,25 @@ onMounted(async () => {
         emit('play')
       })
 
+      player.on('pause', () => {
+        emit('pause')
+      })
+
+      player.on('seeked', () => {
+        emit('seeked', { currentTime: Number(player.currentTime?.() || 0) })
+      })
+
       // Update progress bar state from player
       player.on('timeupdate', () => {
         if (!isSeekingProgress.value) {
           currentTime.value = player.currentTime() || 0
         }
+        emitWatchProgress()
       })
 
       player.on('durationchange', () => {
         duration.value = player.duration() || 0
+        applyInitialStartTime()
       })
 
       player.on('progress', () => {
@@ -1514,6 +1600,7 @@ onMounted(async () => {
         updateMobileSettingsButtonVisibility()
         updatePictureInPictureSupport()
         nextTick(attachMobilePiPOverlay)
+        applyInitialStartTime()
       })
       player.on('fullscreenchange', updateQualityButtonVisibility)
       player.on('fullscreenchange', updateAudioButtonVisibility)
@@ -1527,6 +1614,7 @@ onMounted(async () => {
       player.on('pause', syncUltrawideFullscreenClass)
       player.on('ended', syncUltrawideFullscreenClass)
       player.on('ended', () => {
+        emitWatchProgress(true)
         emit('ended')
       })
       player.on('userinactive', handleUserInactive)
@@ -1557,6 +1645,7 @@ onBeforeUnmount(() => {
     delete window.giltubePlayerDebug
   }
   if (player) {
+    emitWatchProgress(true)
     const playerEl = player.el?.() as HTMLElement | undefined
     if (playerEl) {
       playerEl.classList.remove('giltube-ultrawide-fullscreen')
@@ -1583,6 +1672,8 @@ watch(
   () => props.src,
   (newSrc) => {
     if (player && newSrc && props.status === 'ready') {
+      hasAppliedInitialStartTime = false
+      lastProgressEmitAt = 0
       audioButton?.hide?.()
       mobileSettingsButton?.hide?.()
       resetAudioButtonMenu()
@@ -1604,6 +1695,14 @@ watch(
     if (newStatus === 'processing' && player) {
       player.pause()
     }
+  }
+)
+
+watch(
+  () => props.startTimeSeconds,
+  () => {
+    hasAppliedInitialStartTime = false
+    applyInitialStartTime()
   }
 )
 

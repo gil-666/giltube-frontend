@@ -109,9 +109,11 @@
       :intro-end-seconds="introEndSeconds"
       :has-next-episode="hasNextEpisode"
       :next-episode-label="nextEpisodeLabel"
+      :start-time-seconds="startTimeSeconds"
       @play="$emit('play')"
       @ended="$emit('ended')"
       @next-episode="$emit('nextEpisode')"
+      @progress="$emit('progress', $event)"
     />
   </div>
 </template>
@@ -138,6 +140,7 @@ interface Props {
   introEndSeconds?: number
   hasNextEpisode?: boolean
   nextEpisodeLabel?: string
+  startTimeSeconds?: number
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -150,12 +153,14 @@ const props = withDefaults(defineProps<Props>(), {
   introEndSeconds: 0,
   hasNextEpisode: false,
   nextEpisodeLabel: 'Next episode',
+  startTimeSeconds: 0,
 })
 
 defineEmits<{
   play: []
   ended: []
   nextEpisode: []
+  progress: [payload: { currentTime: number, duration: number }]
 }>()
 
 const PREROLL_COOLDOWN_VIDEOS = 3

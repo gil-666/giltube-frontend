@@ -26,7 +26,7 @@
         {{ loadError }}
       </div>
 
-      <div v-else-if="recommendedVideos.length === 0" class="mt-8 rounded-2xl border border-white/10 bg-white/5 p-8 text-center">
+      <div v-else-if="recommendedVideos.length === 0 && publicWatchParties.length === 0" class="mt-8 rounded-2xl border border-white/10 bg-white/5 p-8 text-center">
         <h2 class="text-xl font-semibold">{{ t('home.noVideos') }}</h2>
         <p class="mt-2 text-sm text-zinc-400">{{ t('home.noVideosBody') }}</p>
         <NuxtLink :to="localePath('/upload')" class="mt-5 inline-flex rounded-full bg-white px-4 py-2 text-sm font-medium text-zinc-950 hover:bg-zinc-200">
@@ -43,6 +43,41 @@
           :context="{ page: 'home' }"
           fallback-title="Featured sponsor"
         />
+
+        <section v-if="publicWatchParties.length > 0">
+          <div class="mb-4 flex items-center justify-between gap-4">
+            <div>
+              <h2 class="text-lg font-semibold">Watch parties live now</h2>
+              <p class="text-sm text-zinc-400">Join a public room and watch together.</p>
+            </div>
+            <div class="hidden items-center gap-2 xl:flex">
+              <button
+                type="button"
+                class="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/5 text-lg text-white transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
+                @click="scrollCarousel('watch-parties', -1)"
+              >
+                â€¹
+              </button>
+              <button
+                type="button"
+                class="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/5 text-lg text-white transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
+                @click="scrollCarousel('watch-parties', 1)"
+              >
+                â€º
+              </button>
+            </div>
+          </div>
+          <div class="grid gap-6 sm:grid-cols-2 md:grid-cols-3 xl:hidden">
+            <WatchPartyTile v-for="party in publicWatchParties" :key="party.id" :party="party" />
+          </div>
+          <div class="hidden xl:block">
+            <div :ref="setCarouselRef('watch-parties')" class="homepage-carousel flex gap-6 overflow-x-auto scroll-smooth pb-2">
+              <div v-for="party in publicWatchParties" :key="party.id" class="homepage-carousel-item shrink-0">
+                <WatchPartyTile :party="party" class="h-full" />
+              </div>
+            </div>
+          </div>
+        </section>
 
         <section v-if="liveStreams.length > 0">
           <div class="mb-4 flex items-center justify-between gap-4">
@@ -242,7 +277,8 @@
 <script setup>
 import { defineComponent, h, nextTick, onMounted, onUnmounted, ref } from 'vue'
 import GilAdsBanner from '~/app/components/ads/GilAdsBanner.vue'
-import { getVideos } from '~/app/service/videos'
+import { getVideos, getWatchProgressMap } from '~/app/service/videos'
+import { listPublicWatchParties } from '~/app/service/watchParties'
 import { GILADS_PLACEMENTS } from '~/app/service/gilads'
 import { listActiveLiveStreams } from '~/app/service/live'
 import { getTimeAgo } from '~/app/utils/time'
@@ -255,12 +291,14 @@ const { t } = useI18n()
 const localePath = useLocalePath()
 const recommendationSourceVideos = ref([])
 const liveStreams = ref([])
+const publicWatchParties = ref([])
 const browseVideos = ref([])
 const recommendedVideos = ref([])
 const trendingVideos = ref([])
 const trustedVideos = ref([])
 const freshVideos = ref([])
 const liveChannelIds = ref(new Set())
+const watchProgressByVideoId = ref({})
 const isLoading = ref(true)
 const isLoadingMore = ref(false)
 const currentPage = ref(0)
@@ -301,6 +339,37 @@ const getThumbnailUrl = (video) => {
   if (!video?.thumbnail_url) return `${baseUrl}/videos/placeholder-thumbnail.jpg`
   if (video.thumbnail_url.startsWith('http')) return video.thumbnail_url
   return `${baseUrl}${video.thumbnail_url}`
+}
+
+const getWatchPartyThumbnailUrl = (party) => {
+  if (!party?.thumbnail_url) return `${baseUrl}/videos/placeholder-thumbnail.jpg`
+  if (party.thumbnail_url.startsWith('http')) return party.thumbnail_url
+  return `${baseUrl}${party.thumbnail_url}`
+}
+
+const watchProgressPercent = (progress) => {
+  const position = Number(progress?.position_seconds || 0)
+  const duration = Number(progress?.duration_seconds || 0)
+  if (progress?.completed || !Number.isFinite(position) || !Number.isFinite(duration) || duration <= 0) return 0
+  if (position <= 5 || position / duration >= 0.9) return 0
+  return Math.min(100, Math.max(0, (position / duration) * 100))
+}
+
+const getVideoProgressPercent = (videoId) => watchProgressPercent(watchProgressByVideoId.value[videoId])
+
+const loadProgressForVideos = async (videoIds) => {
+  const userId = typeof window !== 'undefined' ? localStorage.getItem('user_id') : ''
+  const missingIds = [...new Set((videoIds || []).filter((id) => id && !watchProgressByVideoId.value[id]))]
+  if (!userId || !missingIds.length) return
+  try {
+    const data = await getWatchProgressMap(missingIds)
+    watchProgressByVideoId.value = {
+      ...watchProgressByVideoId.value,
+      ...(data?.progress || {}),
+    }
+  } catch (err) {
+    console.error('Failed to load watch progress:', err)
+  }
 }
 
 const getLiveStartedAgo = (startedAt) => {
@@ -445,16 +514,19 @@ const loadHomeFeed = async () => {
   loadError.value = ''
 
   try {
-    const [recommendedPool, activeLive] = await Promise.all([
+    const [recommendedPool, activeLive, parties] = await Promise.all([
       getVideos({ limit: 48, offset: 0 }),
       listActiveLiveStreams(),
+      listPublicWatchParties(),
     ])
 
     recommendationSourceVideos.value = recommendedPool || []
     liveStreams.value = (activeLive || []).slice(0, 12)
+    publicWatchParties.value = Array.isArray(parties) ? parties : []
     liveChannelIds.value = new Set((activeLive || []).map((entry) => entry.channel_id))
     buildCollections(recommendationSourceVideos.value)
     browseVideos.value = recommendationSourceVideos.value.slice(0, pageSize)
+    await loadProgressForVideos(recommendationSourceVideos.value.map((video) => video.id))
     currentPage.value = 1
     hasMore.value = recommendationSourceVideos.value.length > pageSize
   } catch (err) {
@@ -479,6 +551,7 @@ const loadMoreVideos = async () => {
     }
 
     browseVideos.value = [...browseVideos.value, ...newVideos]
+    await loadProgressForVideos(newVideos.map((video) => video.id))
     currentPage.value += 1
     hasMore.value = newVideos.length === pageSize
   } catch (err) {
@@ -535,6 +608,7 @@ const VideoTile = defineComponent({
 
     const is4K = () => props.video.width == 3840
     const is8K = () => props.video.width == 7680
+    const progressPercent = () => getVideoProgressPercent(props.video.id)
 
     return () => h('article', { class: 'group overflow-hidden rounded-2xl border border-white/10 bg-white/5' }, [
       h(NuxtLink, { to: getVideoLink(), class: 'block' }, () => [
@@ -549,6 +623,14 @@ const VideoTile = defineComponent({
             : is4K()
               ? h('div', { class: 'absolute right-2 top-2 rounded border border-green-700 bg-green-900 px-1.5 py-0.5 text-xs font-semibold text-green-200' }, '4K')
               : null,
+          progressPercent() > 0
+            ? h('div', { class: 'absolute inset-x-0 bottom-0 h-1 bg-black/55' }, [
+                h('div', {
+                  class: 'h-full bg-red-600',
+                  style: { width: `${progressPercent()}%` },
+                }),
+              ])
+            : null,
         ]),
       ]),
       h('div', { class: 'p-4' }, [
@@ -584,6 +666,41 @@ const VideoTile = defineComponent({
             ),
           ]),
         ]),
+      ]),
+    ])
+  },
+})
+
+const WatchPartyTile = defineComponent({
+  name: 'WatchPartyTile',
+  props: {
+    party: {
+      type: Object,
+      required: true,
+    },
+  },
+  setup(props) {
+    const partyLink = () => localePath(`/watch-party/${props.party.id}`)
+
+    return () => h('article', { class: 'group overflow-hidden rounded-2xl border border-red-500/25 bg-red-950/20' }, [
+      h(NuxtLink, { to: partyLink(), class: 'block' }, () => [
+        h('div', { class: 'relative aspect-video bg-black' }, [
+          h('img', {
+            src: getWatchPartyThumbnailUrl(props.party),
+            alt: props.party.video_title || props.party.title || 'Watch party',
+            class: 'h-full w-full object-cover transition duration-200 group-hover:scale-[1.02]',
+          }),
+          h('div', { class: 'absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent' }),
+          h('span', { class: 'absolute left-3 top-3 rounded-full bg-red-600 px-2 py-1 text-xs font-bold uppercase tracking-wide text-white' }, 'Live party'),
+          h('div', { class: 'absolute inset-x-0 bottom-0 p-4' }, [
+            h('h3', { class: 'line-clamp-2 text-sm font-semibold text-white' }, props.party.title || props.party.video_title || 'Watch party'),
+            h('p', { class: 'mt-1 text-xs text-zinc-300' }, `${Number(props.party.participant_count || 0)} watching together`),
+          ]),
+        ]),
+      ]),
+      h('div', { class: 'p-4' }, [
+        h('p', { class: 'line-clamp-1 text-sm text-zinc-300' }, props.party.video_title || ''),
+        h('p', { class: 'mt-1 line-clamp-1 text-xs text-zinc-500' }, props.party.channel_name || ''),
       ]),
     ])
   },

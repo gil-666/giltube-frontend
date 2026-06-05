@@ -15,7 +15,9 @@
           :intro-end-seconds="currentSeriesEpisode?.intro_end_seconds || 0"
           :has-next-episode="hasNextQueueVideo"
           :next-episode-label="isPlayingFromSeries ? 'Next episode' : 'Next video'"
+          :start-time-seconds="resumeStartSeconds"
           @play="onVideoPlay"
+          @progress="handleWatchProgress"
           @ended="handleVideoEnded"
           @next-episode="skipToNextVideo"
         />
@@ -122,6 +124,15 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 2v13"/>
             </svg>
             <span>{{ t('video.share') }}</span>
+          </button>
+
+          <button
+            v-if="isLoggedIn"
+            @click="showWatchPartyDialog = true"
+            class="flex items-center gap-2 px-4 py-2 rounded-lg transition text-sm font-medium bg-red-700 hover:bg-red-600"
+            title="Start watch party"
+          >
+            <span>Watch party</span>
           </button>
         </div>
 
@@ -392,6 +403,9 @@
                 />
                 <div v-if="relatedVideo.width == 7680" class="absolute top-1 right-1 bg-green-900 text-green-200 px-1.5 py-0.5 rounded text-xs font-semibold border border-green-700">{{ t('video.eightKBadge') }}</div>
                 <div v-if="relatedVideo.width == 3840" class="absolute top-1 right-1 bg-green-900 text-green-200 px-1.5 py-0.5 rounded text-xs font-semibold border border-green-700">{{ t('video.fourKBadge') }}</div>
+                <div v-if="videoProgressPercent(relatedVideo.id) > 0" class="absolute inset-x-0 bottom-0 h-1 bg-black/55">
+                  <div class="h-full bg-red-600" :style="{ width: `${videoProgressPercent(relatedVideo.id)}%` }" />
+                </div>
               </div>
               <p class="text-xs font-semibold line-clamp-2 w-40">{{ relatedVideo.title }}</p>
               <div class="flex items-center gap-1">
@@ -535,6 +549,9 @@
                     />
                     <div v-if="relatedVideo.width == 7680" class="absolute top-1 right-1 bg-green-900 text-green-200 px-1.5 py-0.5 rounded text-xs font-semibold border border-green-700">{{ t('video.eightKBadge') }}</div>
                     <div v-if="relatedVideo.width == 3840" class="absolute top-1 right-1 bg-green-900 text-green-200 px-1.5 py-0.5 rounded text-xs font-semibold border border-green-700">{{ t('video.fourKBadge') }}</div>
+                    <div v-if="videoProgressPercent(relatedVideo.id) > 0" class="absolute inset-x-0 bottom-0 h-1 bg-black/55">
+                      <div class="h-full bg-red-600" :style="{ width: `${videoProgressPercent(relatedVideo.id)}%` }" />
+                    </div>
                   </div>
                   <p class="text-xs font-semibold line-clamp-2 w-40">{{ relatedVideo.title }}</p>
                   <div class="flex items-center gap-1">
@@ -572,6 +589,9 @@
                 />
                 <div v-if="relatedVideo.width == 7680" class="absolute top-1 right-1 bg-green-900 text-green-200 px-1.5 py-0.5 rounded text-xs font-semibold border border-green-700">{{ t('video.eightKBadge') }}</div>
                 <div v-if="relatedVideo.width == 3840" class="absolute top-1 right-1 bg-green-900 text-green-200 px-1.5 py-0.5 rounded text-xs font-semibold border border-green-700">{{ t('video.fourKBadge') }}</div>
+                <div v-if="videoProgressPercent(relatedVideo.id) > 0" class="absolute inset-x-0 bottom-0 h-1 bg-black/55">
+                  <div class="h-full bg-red-600" :style="{ width: `${videoProgressPercent(relatedVideo.id)}%` }" />
+                </div>
               </div>
               <p class="text-sm font-semibold line-clamp-2">{{ relatedVideo.title }}</p>
               <div class="flex items-center gap-1">
@@ -598,6 +618,9 @@
                 />
                 <div v-if="relatedVideo.width == 7680" class="absolute top-1 right-1 bg-green-900 text-green-200 px-1.5 py-0.5 rounded text-xs font-semibold border border-green-700">{{ t('video.eightKBadge') }}</div>
                 <div v-if="relatedVideo.width == 3840" class="absolute top-1 right-1 bg-green-900 text-green-200 px-1.5 py-0.5 rounded text-xs font-semibold border border-green-700">{{ t('video.fourKBadge') }}</div>
+                <div v-if="videoProgressPercent(relatedVideo.id) > 0" class="absolute inset-x-0 bottom-0 h-1 bg-black/55">
+                  <div class="h-full bg-red-600" :style="{ width: `${videoProgressPercent(relatedVideo.id)}%` }" />
+                </div>
               </div>
               <p class="text-xs font-semibold line-clamp-2">{{ relatedVideo.title }}</p>
               <div class="flex items-center gap-1">
@@ -726,6 +749,48 @@
       @create-new="handleCreateNewPlaylist"
     />
   </client-only>
+
+  <div
+    v-if="showWatchPartyDialog"
+    class="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4"
+    @click.self="showWatchPartyDialog = false"
+  >
+    <div class="w-full max-w-md rounded-lg border border-zinc-700 bg-zinc-900 p-6 shadow-xl">
+      <h2 class="text-xl font-bold">Start watch party</h2>
+      <p class="mt-2 text-sm leading-6 text-zinc-400">
+        Public parties show on the home page. Private parties are only available through the share link.
+      </p>
+
+      <label class="mt-5 block text-sm font-semibold text-zinc-300">Visibility</label>
+      <select
+        v-model="watchPartyVisibility"
+        class="mt-2 w-full rounded bg-zinc-800 px-3 py-2 text-sm text-white outline-none ring-1 ring-zinc-700 focus:ring-red-500"
+      >
+        <option value="private">Private</option>
+        <option value="public">Public</option>
+      </select>
+
+      <div class="mt-6 flex justify-end gap-3">
+        <button
+          type="button"
+          class="rounded bg-zinc-700 px-4 py-2 text-sm font-semibold hover:bg-zinc-600"
+          @click="showWatchPartyDialog = false"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          class="rounded bg-red-600 px-4 py-2 text-sm font-semibold hover:bg-red-700 disabled:opacity-60"
+          :disabled="creatingWatchParty"
+          @click="startWatchParty"
+        >
+          {{ creatingWatchParty ? 'Starting...' : 'Start party' }}
+        </button>
+      </div>
+
+      <p v-if="watchPartyError" class="mt-3 text-sm text-red-300">{{ watchPartyError }}</p>
+    </div>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -736,8 +801,9 @@ import CommentNode from '~/app/components/comments/CommentNode.vue'
 import GiphyPicker from '~/app/components/GiphyPicker.vue'
 import AddToPlaylistModal from '~/app/components/AddToPlaylistModal.vue'
 import { GILADS_PLACEMENTS } from '~/app/service/gilads'
-import { getVideo, incrementViews, getVideos, likeVideo, unlikeVideo, checkIfLiked } from '~/app/service/videos'
+import { getVideo, incrementViews, getVideos, likeVideo, unlikeVideo, checkIfLiked, getWatchProgress, getWatchProgressMap, saveWatchProgress } from '~/app/service/videos'
 import { getSeries, getSeriesEpisodeContext, getSeriesTrailerContext } from '~/app/service/series'
+import { createWatchParty } from '~/app/service/watchParties'
 import { getVideoComments, postComment as apiPostComment, deleteComment, likeComment, unlikeComment } from '~/app/service/comments'
 import { insertGiphyIntoComment, type GiphyGif } from '~/app/utils/giphy'
 import { getTimeAgo } from '~/app/utils/time'
@@ -750,6 +816,7 @@ import { useI18n } from 'vue-i18n'
 
 const baseUrl = import.meta.env.VITE_API_BASE_URL
 const route = useRoute()
+const router = useRouter()
 const id = route.params.id as string
 const localePath = useLocalePath()
 const { t } = useI18n()
@@ -783,12 +850,17 @@ const highlightedCommentId = ref('')
 const pendingJumpCommentID = ref('')
 const showGiphyPicker = ref(false)
 const showAddToPlaylist = ref(false)
+const showWatchPartyDialog = ref(false)
+const watchPartyVisibility = ref<'public' | 'private'>('private')
+const creatingWatchParty = ref(false)
+const watchPartyError = ref('')
 const trailerSeries = ref<any | null>(null)
 const currentSeries = ref<any | null>(null)
 
 const showSidebar = ref(true)
 
 const relatedVideos = ref<any[]>([])
+const watchProgressByVideoId = ref<Record<string, any>>({})
 const carouselContainer = ref<HTMLElement | null>(null)
 
 // Playlist playback mode
@@ -799,6 +871,8 @@ const currentPlaylistName = ref('')
 const playlistVideos = ref<any[]>([])
 const currentVideoIndex = ref(0)
 const isPlaylistQueueExpanded = ref(false)
+const resumeStartSeconds = ref(0)
+let lastWatchProgressSaveAt = 0
 
 const playlistQueueVideos = computed(() => {
   if (!playlistVideos.value.length) return []
@@ -836,6 +910,31 @@ const getTrailerSeriesPosterUrl = (posterUrl: string) => {
   if (!posterUrl) return `${baseUrl}/videos/placeholder-thumbnail.jpg`
   if (/^https?:\/\//i.test(posterUrl)) return posterUrl
   return `${baseUrl}${posterUrl.startsWith('/') ? '' : '/'}${posterUrl}`
+}
+
+const watchProgressPercent = (progress: any) => {
+  const position = Number(progress?.position_seconds || 0)
+  const duration = Number(progress?.duration_seconds || 0)
+  if (progress?.completed || !Number.isFinite(position) || !Number.isFinite(duration) || duration <= 0) return 0
+  if (position <= 5 || position / duration >= 0.9) return 0
+  return Math.min(100, Math.max(0, (position / duration) * 100))
+}
+
+const videoProgressPercent = (videoId: string) => watchProgressPercent(watchProgressByVideoId.value[videoId])
+
+const loadProgressForVideos = async (videoIds: string[]) => {
+  if (!isLoggedIn.value) return
+  const missingIds = [...new Set((videoIds || []).filter((videoId) => videoId && !watchProgressByVideoId.value[videoId]))]
+  if (!missingIds.length) return
+  try {
+    const data = await getWatchProgressMap(missingIds)
+    watchProgressByVideoId.value = {
+      ...watchProgressByVideoId.value,
+      ...(data?.progress || {}),
+    }
+  } catch (err) {
+    console.error('Failed to load watch progress:', err)
+  }
 }
 const queueVideoLink = (videoId: string, index: number) => {
   if (isPlayingFromSeries.value) {
@@ -994,6 +1093,42 @@ const onVideoPlay = async () => {
   }
 }
 
+const loadWatchResume = async () => {
+  resumeStartSeconds.value = 0
+  if (!isLoggedIn.value) return
+
+  try {
+    const data = await getWatchProgress(id)
+    const progress = data?.progress
+    if (!progress || progress.completed) return
+
+    const position = Number(progress.position_seconds || 0)
+    const durationSeconds = Number(progress.duration_seconds || 0)
+    if (durationSeconds > 0 && position > 5 && position / durationSeconds < 0.9) {
+      resumeStartSeconds.value = position
+    }
+  } catch (err) {
+    console.error('Failed to load watch progress:', err)
+  }
+}
+
+const handleWatchProgress = async (payload: { currentTime: number, duration: number }) => {
+  if (!isLoggedIn.value) return
+  const now = Date.now()
+  if (now - lastWatchProgressSaveAt < 10000) return
+  if (!payload.duration || payload.duration <= 0) return
+
+  lastWatchProgressSaveAt = now
+  try {
+    await saveWatchProgress(id, {
+      positionSeconds: payload.currentTime,
+      durationSeconds: payload.duration,
+    })
+  } catch (err) {
+    console.error('Failed to save watch progress:', err)
+  }
+}
+
 const videoSrc = computed(() => {
   const path = video.value?.hls_path
   if (!path) {
@@ -1034,6 +1169,7 @@ onMounted(async () => {
   }
   
   syncActiveAccountFromStorage()
+  await loadWatchResume()
 
   // Check if playing from playlist
   const seriesId = route.query.series_id
@@ -1094,6 +1230,7 @@ onMounted(async () => {
   try {
     const allVideos = await getVideos()
     relatedVideos.value = allVideos.filter((v: any) => v.id !== id).slice(0, 10)
+    await loadProgressForVideos(relatedVideos.value.map((video: any) => video.id))
   } catch (err) {
     console.error('Failed to load related videos:', err)
   }
@@ -1221,6 +1358,46 @@ const shareVideo = async () => {
     }
   } catch (err) {
     console.error('Share failed:', err)
+  }
+}
+
+const activeWatchPartyChannelId = () => {
+  const isPersonalAccount = activeAccount.value === 'personal' || activeAccount.value === userId.value
+  return isPersonalAccount ? personalAccountSelectedChannel.value : activeAccount.value
+}
+
+const startWatchParty = async () => {
+  if (!isLoggedIn.value) {
+    await router.push(localePath('/login'))
+    return
+  }
+
+  creatingWatchParty.value = true
+  watchPartyError.value = ''
+
+  try {
+    const party = await createWatchParty({
+      videoId: id,
+      visibility: watchPartyVisibility.value,
+      title: video.value?.title || '',
+      channelId: activeWatchPartyChannelId(),
+    })
+
+    showWatchPartyDialog.value = false
+
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('giltube:active-watch-party', JSON.stringify({
+        id: party.id,
+        title: video.value?.title || 'Watch party',
+      }))
+      window.dispatchEvent(new Event('giltube:watch-party-updated'))
+    }
+
+    await router.push(localePath(`/watch-party/${party.id}?room=1`))
+  } catch (err: any) {
+    watchPartyError.value = err?.response?.data?.error || err?.message || 'Failed to start watch party'
+  } finally {
+    creatingWatchParty.value = false
   }
 }
 

@@ -22,6 +22,11 @@ export const getSeriesTrailerContext = async (videoId: string) => {
   return res.data
 }
 
+export const getSeriesWatchProgress = async (seriesId: string) => {
+  const res = await api.get(`/series/${seriesId}/progress`)
+  return res.data
+}
+
 export const createSeries = async (data: {
   title: string
   slug?: string
