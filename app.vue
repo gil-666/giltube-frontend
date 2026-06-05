@@ -322,7 +322,7 @@
   <!-- Locale Picker Modal (shown only on first visit) -->
   <LocalePickerModal />
   <div
-    v-if="activeWatchParty"
+    v-if="activeWatchParty && !isInsideWatchPartyRoute && !isWatchPartyWidgetDismissed"
     class="fixed bottom-4 right-4 z-[90] w-[min(22rem,calc(100vw-2rem))] rounded-xl border border-red-500/40 bg-zinc-950/95 p-4 text-white shadow-2xl backdrop-blur"
   >
     <div class="flex items-start justify-between gap-4">
@@ -334,7 +334,7 @@
         type="button"
         class="rounded-full p-1 text-zinc-400 transition hover:bg-zinc-800 hover:text-white"
         aria-label="Dismiss watch party widget"
-        @click="clearActiveWatchParty"
+        @click="dismissWatchPartyWidget"
       >
         X
       </button>
@@ -355,6 +355,15 @@
       </button>
     </div>
   </div>
+  <button
+    v-else-if="activeWatchParty && !isInsideWatchPartyRoute && isWatchPartyWidgetDismissed"
+    type="button"
+    class="fixed bottom-4 right-4 z-[90] inline-flex items-center gap-2 rounded-full border border-red-500/40 bg-zinc-950/95 px-4 py-3 text-sm font-semibold text-white shadow-2xl backdrop-blur transition hover:bg-zinc-900"
+    @click="restoreWatchPartyWidget"
+  >
+    <span class="h-2.5 w-2.5 rounded-full bg-red-500" />
+    <span class="truncate">{{ activeWatchParty.title || 'Watch party' }}</span>
+  </button>
   <div
     v-if="showGilIDLinkModal"
     class="giltube-modal-overlay bg-black/70 backdrop-blur-sm flex items-center justify-center p-4"
@@ -488,7 +497,7 @@ import {
   getPushConfig,
   subscribePush,
 } from '~/app/service/notifications'
-import { leaveWatchParty } from '~/app/service/watchParties'
+import { getWatchParty, leaveWatchParty } from '~/app/service/watchParties'
 
 const router = useRouter()
 const route = useRoute()
@@ -503,6 +512,9 @@ const isSidebarOpen = ref(false)
 const showSearchBar = ref(false)
 const searchQuery = ref('')
 const activeWatchParty = ref(null)
+const watchPartyWidgetDismissed = ref(false)
+const isInsideWatchPartyRoute = computed(() => route.path.includes('/watch-party/'))
+let watchPartyStatusInterval = null
 
 const handleDesktopSearch = async () => {
   if (searchQuery.value.trim()) {
@@ -844,21 +856,75 @@ const handleLogoClick = async () => {
   await scrollToTop()
 }
 
-const loadActiveWatchParty = () => {
+const verifyActiveWatchParty = async () => {
+  const partyId = activeWatchParty.value?.id
+  if (!process.client || !partyId) return
+  try {
+    const snapshot = await getWatchParty(partyId)
+    if (!snapshot?.party || snapshot.party.status === 'ended') {
+      clearActiveWatchParty()
+    }
+  } catch (err) {
+    clearActiveWatchParty()
+  }
+}
+
+const syncWatchPartyStatusPolling = () => {
+  if (watchPartyStatusInterval) {
+    clearInterval(watchPartyStatusInterval)
+    watchPartyStatusInterval = null
+  }
+  if (!process.client || !activeWatchParty.value?.id || isInsideWatchPartyRoute.value) return
+  watchPartyStatusInterval = setInterval(() => {
+    verifyActiveWatchParty()
+  }, 10000)
+}
+
+const loadActiveWatchParty = async () => {
   if (!process.client) return
   try {
     const raw = localStorage.getItem('giltube:active-watch-party')
     activeWatchParty.value = raw ? JSON.parse(raw) : null
+    if (activeWatchParty.value?.id) {
+      watchPartyWidgetDismissed.value = localStorage.getItem(`giltube:watch-party-widget-dismissed:${activeWatchParty.value.id}`) === '1'
+    } else {
+      watchPartyWidgetDismissed.value = false
+    }
   } catch (err) {
     activeWatchParty.value = null
+    watchPartyWidgetDismissed.value = false
   }
+  syncWatchPartyStatusPolling()
+  await verifyActiveWatchParty()
 }
 
 const clearActiveWatchParty = () => {
+  if (watchPartyStatusInterval) {
+    clearInterval(watchPartyStatusInterval)
+    watchPartyStatusInterval = null
+  }
   if (process.client) {
+    if (activeWatchParty.value?.id) {
+      localStorage.removeItem(`giltube:watch-party-widget-dismissed:${activeWatchParty.value.id}`)
+    }
     localStorage.removeItem('giltube:active-watch-party')
   }
   activeWatchParty.value = null
+  watchPartyWidgetDismissed.value = false
+}
+
+const dismissWatchPartyWidget = () => {
+  if (process.client && activeWatchParty.value?.id) {
+    localStorage.setItem(`giltube:watch-party-widget-dismissed:${activeWatchParty.value.id}`, '1')
+  }
+  watchPartyWidgetDismissed.value = true
+}
+
+const restoreWatchPartyWidget = () => {
+  if (process.client && activeWatchParty.value?.id) {
+    localStorage.removeItem(`giltube:watch-party-widget-dismissed:${activeWatchParty.value.id}`)
+  }
+  watchPartyWidgetDismissed.value = false
 }
 
 const leaveActiveWatchParty = async () => {
@@ -871,6 +937,12 @@ const leaveActiveWatchParty = async () => {
     console.error('Failed to leave watch party:', err)
   }
 }
+
+const isWatchPartyWidgetDismissed = computed(() => watchPartyWidgetDismissed.value)
+
+watch(isInsideWatchPartyRoute, () => {
+  syncWatchPartyStatusPolling()
+})
 
 onMounted(async () => {
   loadActiveWatchParty()
@@ -993,6 +1065,10 @@ onMounted(async () => {
 }})
 
 onUnmounted(() => {
+  if (watchPartyStatusInterval) {
+    clearInterval(watchPartyStatusInterval)
+    watchPartyStatusInterval = null
+  }
   window.removeEventListener('resize', handleSidebarResize)
   window.removeEventListener('storage', loadActiveWatchParty)
   window.removeEventListener('giltube:watch-party-updated', loadActiveWatchParty)

@@ -21,6 +21,7 @@
       <div
         ref="progressBarOverlay"
         class="progress-bar-overlay"
+        :class="{ 'progress-bar-overlay-locked': controlsLocked }"
         style="position: absolute; bottom: 32px; left: 2px; right: 2px; width: calc(100% - 4px); height: 5px; background-color: rgb(55, 65, 81); cursor: pointer; z-index: 50; pointer-events: auto; border-radius: 4px; overflow: hidden;"
         @mousedown="handleProgressBarInteraction"
         @touchstart="handleProgressBarInteraction"
@@ -104,6 +105,7 @@ interface Props {
   hasNextEpisode?: boolean
   nextEpisodeLabel?: string
   startTimeSeconds?: number
+  controlsLocked?: boolean
 }
 
 const emit = defineEmits<{
@@ -122,7 +124,8 @@ const props = withDefaults(defineProps<Props>(), {
   introEndSeconds: 0,
   hasNextEpisode: false,
   nextEpisodeLabel: 'Next episode',
-  startTimeSeconds: 0
+  startTimeSeconds: 0,
+  controlsLocked: false
 })
 
 type PresenceViewer = {
@@ -171,6 +174,10 @@ let ultrawideControlsGuardInterval: ReturnType<typeof setInterval> | null = null
 let mobileControlsQuery: MediaQueryList | null = null
 let hasAppliedInitialStartTime = false
 let lastProgressEmitAt = 0
+let applyingProgrammaticPlayback = false
+let restoringLockedPlayback = false
+let lockedExpectedTime = 0
+let lockedExpectedPaused = true
 
 declare global {
   interface Window {
@@ -197,15 +204,6 @@ const updateQualityButtonVisibility = () => {
   if (!player || !qualityButton || typeof player.qualityLevels !== 'function') return
 
   if (isMobileControlsWidth()) {
-    qualityButton.hide()
-    const menu = qualityButton.menu
-    if (menu) {
-      menu.classList.remove('vjs-open')
-    }
-    return
-  }
-
-  if (player.isFullscreen?.()) {
     qualityButton.hide()
     const menu = qualityButton.menu
     if (menu) {
@@ -1050,6 +1048,11 @@ const createMobileSettingsButton = () => {
 // Progress bar interaction handlers
 const handleProgressBarInteraction = (event: MouseEvent | TouchEvent) => {
   if (!player || duration.value === 0) return
+  if (props.controlsLocked) {
+    event.preventDefault()
+    event.stopPropagation()
+    return
+  }
 
   isSeekingProgress.value = true
 
@@ -1124,27 +1127,43 @@ const attachSeriesActionsOverlay = () => {
 
 const setPlaybackTime = (seconds: number) => {
   if (!player || !Number.isFinite(seconds)) return
-  player.currentTime(Math.max(0, seconds))
+  const nextTime = Math.max(0, seconds)
+  lockedExpectedTime = nextTime
+  void runProgrammaticPlayback(() => {
+    player.currentTime(nextTime)
+  })
 }
 
 const playFrom = async (seconds?: number) => {
   if (!player) return
-  if (typeof seconds === 'number') {
-    setPlaybackTime(seconds)
-  }
-  try {
-    await player.play?.()
-  } catch (err) {
-    // Remote play can be blocked until the user interacts with the page.
-  }
+  await runProgrammaticPlayback(async () => {
+    if (typeof seconds === 'number' && Number.isFinite(seconds)) {
+      lockedExpectedTime = Math.max(0, seconds)
+      player.currentTime(lockedExpectedTime)
+    } else {
+      lockedExpectedTime = Number(player.currentTime?.() || currentTime.value || 0)
+    }
+    lockedExpectedPaused = false
+    try {
+      await player.play?.()
+    } catch (err) {
+      // Remote play can be blocked until the user interacts with the page.
+    }
+  })
 }
 
 const pauseAt = (seconds?: number) => {
   if (!player) return
-  if (typeof seconds === 'number') {
-    setPlaybackTime(seconds)
-  }
-  player.pause?.()
+  void runProgrammaticPlayback(() => {
+    if (typeof seconds === 'number' && Number.isFinite(seconds)) {
+      lockedExpectedTime = Math.max(0, seconds)
+      player.currentTime(lockedExpectedTime)
+    } else {
+      lockedExpectedTime = Number(player.currentTime?.() || currentTime.value || 0)
+    }
+    lockedExpectedPaused = true
+    player.pause?.()
+  })
 }
 
 const getPlaybackState = () => ({
@@ -1233,6 +1252,58 @@ const emitWatchProgress = (force = false) => {
     currentTime: Math.max(0, playerCurrentTime),
     duration: Math.max(0, playerDuration)
   })
+}
+
+const syncControlsLockedClass = () => {
+  const playerEl = player?.el?.() as HTMLElement | undefined
+  if (!playerEl) return
+  playerEl.classList.toggle('giltube-controls-locked', props.controlsLocked)
+}
+
+const captureLockedExpectedState = () => {
+  if (!player) return
+  lockedExpectedTime = Number(player.currentTime?.() || currentTime.value || 0)
+  lockedExpectedPaused = Boolean(player.paused?.() ?? true)
+}
+
+const runProgrammaticPlayback = async (operation: () => void | Promise<void>) => {
+  applyingProgrammaticPlayback = true
+  try {
+    await operation()
+  } finally {
+    window.setTimeout(() => {
+      applyingProgrammaticPlayback = false
+    }, 0)
+  }
+}
+
+const restoreLockedPlayback = async () => {
+  if (!props.controlsLocked || !player || applyingProgrammaticPlayback) return
+
+  restoringLockedPlayback = true
+  try {
+    await runProgrammaticPlayback(async () => {
+      const playerTime = Number(player.currentTime?.() || 0)
+      if (Number.isFinite(lockedExpectedTime) && Math.abs(playerTime - lockedExpectedTime) > 0.35) {
+        player.currentTime(Math.max(0, lockedExpectedTime))
+      }
+
+      if (lockedExpectedPaused) {
+        player.pause?.()
+        return
+      }
+
+      try {
+        await player.play?.()
+      } catch (err) {
+        // Browsers can block programmatic play until user interaction.
+      }
+    })
+  } finally {
+    window.setTimeout(() => {
+      restoringLockedPlayback = false
+    }, 0)
+  }
 }
 
 // Create quality button component
@@ -1533,17 +1604,39 @@ onMounted(async () => {
       updatePictureInPictureSupport()
       nextTick(attachMobilePiPOverlay)
       updateResponsiveControls()
+      syncControlsLockedClass()
+      if (props.controlsLocked) {
+        captureLockedExpectedState()
+      }
 
       // Emit 'play' event when video starts playing
       player.on('play', () => {
+        if (props.controlsLocked && !applyingProgrammaticPlayback) {
+          void restoreLockedPlayback()
+          return
+        }
         emit('play')
       })
 
       player.on('pause', () => {
+        if (props.controlsLocked && !applyingProgrammaticPlayback) {
+          void restoreLockedPlayback()
+          return
+        }
         emit('pause')
       })
 
+      player.on('seeking', () => {
+        if (props.controlsLocked && !applyingProgrammaticPlayback) {
+          void restoreLockedPlayback()
+        }
+      })
+
       player.on('seeked', () => {
+        if (props.controlsLocked && !applyingProgrammaticPlayback) {
+          void restoreLockedPlayback()
+          return
+        }
         emit('seeked', { currentTime: Number(player.currentTime?.() || 0) })
       })
 
@@ -1551,6 +1644,9 @@ onMounted(async () => {
       player.on('timeupdate', () => {
         if (!isSeekingProgress.value) {
           currentTime.value = player.currentTime() || 0
+        }
+        if (props.controlsLocked && !lockedExpectedPaused && !applyingProgrammaticPlayback && !restoringLockedPlayback) {
+          lockedExpectedTime = Number(player.currentTime?.() || currentTime.value || 0)
         }
         emitWatchProgress()
       })
@@ -1649,6 +1745,7 @@ onBeforeUnmount(() => {
     const playerEl = player.el?.() as HTMLElement | undefined
     if (playerEl) {
       playerEl.classList.remove('giltube-ultrawide-fullscreen')
+      playerEl.classList.remove('giltube-controls-locked')
     }
     if (progressBarOverlay.value?.parentElement) {
       progressBarOverlay.value.parentElement.removeChild(progressBarOverlay.value)
@@ -1707,6 +1804,16 @@ watch(
 )
 
 watch(
+  () => props.controlsLocked,
+  (locked) => {
+    syncControlsLockedClass()
+    if (locked) {
+      captureLockedExpectedState()
+    }
+  }
+)
+
+watch(
   () => props.hasNextEpisode,
   (hasNext) => {
     if (!nextEpisodeButton) return
@@ -1742,6 +1849,25 @@ watch(
 
 .progress-bar-overlay:hover {
   height: 7px !important;
+}
+
+.progress-bar-overlay-locked {
+  cursor: not-allowed !important;
+  opacity: 0.7;
+}
+
+:deep(.video-js.giltube-controls-locked .vjs-tech),
+:deep(.video-js.giltube-controls-locked .vjs-play-control),
+:deep(.video-js.giltube-controls-locked .vjs-progress-control),
+:deep(.video-js.giltube-controls-locked .vjs-big-play-button) {
+  pointer-events: none !important;
+  cursor: not-allowed !important;
+}
+
+:deep(.video-js.giltube-controls-locked .vjs-play-control),
+:deep(.video-js.giltube-controls-locked .vjs-progress-control),
+:deep(.video-js.giltube-controls-locked .vjs-big-play-button) {
+  opacity: 0.45 !important;
 }
 
 .series-player-actions {

@@ -52,6 +52,12 @@
       >
         Series
       </button>
+      <button
+        @click="activeTab = 'movies'"
+        :class="['px-4 py-2 border-b-2 font-semibold transition', activeTab === 'movies' ? 'border-blue-500 text-blue-400' : 'border-transparent text-gray-400 hover:text-white']"
+      >
+        Movies
+      </button>
     </div>
 
     <!-- Users Tab -->
@@ -217,6 +223,8 @@
       <p class="text-gray-400">Total Videos: <span class="text-white font-bold">{{ stats.total_videos }}</span></p>
       <p class="text-gray-400">Total Comments: <span class="text-white font-bold">{{ stats.total_comments }}</span></p>
     </div>
+
+    <MovieAdminPanel v-if="activeTab === 'movies'" />
 
     <!-- Series Tab -->
     <div v-if="activeTab === 'series'" class="space-y-6">
@@ -522,6 +530,7 @@
 import { ref, computed, nextTick, onBeforeUnmount, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useLocalePath } from '#i18n'
+import MovieAdminPanel from '~/app/components/admin/MovieAdminPanel.vue'
 import { uploadVideo } from '~/app/service/upload'
 import {
   addSeriesEpisode,

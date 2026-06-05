@@ -69,6 +69,7 @@ import { useMetaTags } from '~/app/composables/useMetaTags'
 import VerifiedBadge from '~/app/components/VerifiedBadge.vue'
 import { getWatchProgressMap } from '~/app/service/videos'
 import { getSeries } from '~/app/service/series'
+import { getMovie } from '~/app/service/movies'
 import { useI18n } from 'vue-i18n'
 import { useLocalePath } from '#i18n'
 
@@ -131,6 +132,27 @@ const { data: ssrSeriesMeta } = await useAsyncData(
   { default: () => null }
 )
 
+const normalizeMovieDetail = (data) => {
+  if (!data) return null
+  if (!data.movie) return data
+  return data.movie
+}
+
+const { data: ssrMovieMeta } = await useAsyncData(
+  `category-movie-social-${route.query.movie_id || 'none'}`,
+  async () => {
+    if (route.params.slug !== 'movies') return null
+    const movieId = typeof route.query.movie_id === 'string' ? route.query.movie_id : ''
+    if (!movieId) return null
+    try {
+      return normalizeMovieDetail(await getMovie(movieId))
+    } catch {
+      return null
+    }
+  },
+  { default: () => null }
+)
+
 const watchProgressPercent = (progress) => {
   const position = Number(progress?.position_seconds || 0)
   const duration = Number(progress?.duration_seconds || 0)
@@ -161,8 +183,8 @@ const updateMetaTags = () => {
     const series = ssrSeriesMeta.value
     if (series?.title) {
       useMetaTags({
-        title: `${series.title} - GilTube Series`,
-        description: series.synopsis || 'Watch this series on GilTube.',
+        title: `${series.title} - ${t('seriesCategory.title')} - GilTube`,
+        description: series.synopsis || t('seriesCategory.synopsisFallback'),
         image: getSeriesImage(series, 'backdrop') || getSeriesImage(series, 'poster'),
         url: route.fullPath,
         type: 'video.tv_show',
@@ -172,8 +194,8 @@ const updateMetaTags = () => {
     }
 
     useMetaTags({
-      title: 'Series - GilTube',
-      description: 'Episodic GilTube series organized by genre.',
+      title: `${t('seriesCategory.title')} - GilTube`,
+      description: t('seriesCategory.metaDescription'),
       url: route.fullPath,
       type: 'website',
       twitterCard: 'summary_large_image',
@@ -182,9 +204,22 @@ const updateMetaTags = () => {
   }
 
   if (isMoviesCategory.value) {
+    const movie = ssrMovieMeta.value
+    if (movie?.title) {
+      useMetaTags({
+        title: `${movie.title} - ${t('moviesCategory.title')} - GilTube`,
+        description: movie.synopsis || t('moviesCategory.synopsisFallback'),
+        image: getThumbnailUrl({ thumbnail_url: movie.backdrop_url || movie.poster_url || movie.video?.thumbnail_url }),
+        url: route.fullPath,
+        type: 'video.movie',
+        twitterCard: 'summary_large_image',
+      })
+      return
+    }
+
     useMetaTags({
-      title: 'Movies - GilTube',
-      description: 'GilTube movies organized by genre.',
+      title: `${t('moviesCategory.title')} - GilTube`,
+      description: t('moviesCategory.metaDescription'),
       url: route.fullPath,
       type: 'website',
       twitterCard: 'summary_large_image',

@@ -1,10 +1,10 @@
 <template>
   <StreamingCategory
-    title="Series"
-    eyebrow="Featured Series"
-    item-label="series"
-    details-label="Episodes"
-    empty-message="No series have been published yet."
+    :title="t('seriesCategory.title')"
+    :eyebrow="t('seriesCategory.featured')"
+    :item-label="t('seriesCategory.itemLabel')"
+    :details-label="t('seriesCategory.details')"
+    :empty-message="t('seriesCategory.empty')"
     :loading="loading"
     :error="error"
     :groups="displayGroups"
@@ -16,6 +16,16 @@
     @close="closeSeriesModal"
     @feature="setFeaturedIndex"
   >
+    <template #modal-actions="{ item }">
+      <button
+        type="button"
+        class="streaming-watch-party-button"
+        @click="openSeriesWatchPartyDialog(item)"
+      >
+        {{ t('watchParty.startButton') }}
+      </button>
+    </template>
+
     <template #details>
       <div v-if="selectedSeries" class="series-details-layout">
         <div class="series-poster-column">
@@ -27,11 +37,11 @@
           <p class="series-synopsis">{{ selectedSeries.synopsis }}</p>
           <dl class="series-meta-grid">
             <div v-if="selectedSeries.directors?.length">
-              <dt>Directors</dt>
+              <dt>{{ t('seriesCategory.meta.directors') }}</dt>
               <dd>{{ selectedSeries.directors.join(', ') }}</dd>
             </div>
             <div v-if="selectedSeries.cast?.length">
-              <dt>Cast</dt>
+              <dt>{{ t('seriesCategory.meta.cast') }}</dt>
               <dd>{{ selectedSeries.cast.join(', ') }}</dd>
             </div>
           </dl>
@@ -44,15 +54,15 @@
               :class="season === activeSeason ? 'series-season-tab is-active' : 'series-season-tab'"
               @click="activeSeason = season"
             >
-              Season {{ season }}
+              {{ t('seriesCategory.seasonLabel', { season }) }}
             </button>
           </div>
 
           <div class="series-mobile-episodes-header">
-            <p>Episodes</p>
+            <p>{{ t('seriesCategory.details') }}</p>
             <div>
-              <button type="button" aria-label="Scroll episodes left" @click="scrollEpisodes('left')">&#8249;</button>
-              <button type="button" aria-label="Scroll episodes right" @click="scrollEpisodes('right')">&#8250;</button>
+              <button type="button" :aria-label="t('seriesCategory.scrollLeft')" @click="scrollEpisodes('left')">&#8249;</button>
+              <button type="button" :aria-label="t('seriesCategory.scrollRight')" @click="scrollEpisodes('right')">&#8250;</button>
             </div>
           </div>
 
@@ -65,7 +75,7 @@
             >
               <EpisodeThumb :episode="episode" :progress="episodeProgressPercent(episode)" :src="getEpisodeThumbnail(episode)" />
               <p class="series-episode-kicker">
-                Season {{ episode.season_number }} | Episode {{ episode.episode_number }}
+                {{ t('seriesCategory.episodeKicker', { season: episode.season_number, episode: episode.episode_number }) }}
               </p>
               <h3 class="series-mobile-episode-title">{{ episode.title }}</h3>
             </NuxtLink>
@@ -73,9 +83,9 @@
 
           <div class="series-desktop-episodes">
             <div class="series-episodes-heading">
-              <h3>Episodes</h3>
+              <h3>{{ t('seriesCategory.details') }}</h3>
               <p>
-                Season {{ activeSeason }} / {{ visibleSelectedEpisodes.length }} episode{{ visibleSelectedEpisodes.length === 1 ? '' : 's' }}
+                {{ t('seriesCategory.episodeCountLabel', { season: activeSeason, count: visibleSelectedEpisodes.length }) }}
               </p>
             </div>
             <div>
@@ -99,18 +109,88 @@
       </div>
     </template>
   </StreamingCategory>
+
+  <Teleport to="body">
+    <div
+      v-if="watchPartyDialogOpen"
+      class="streaming-party-dialog-backdrop"
+      @click.self="watchPartyDialogOpen = false"
+    >
+      <section class="streaming-party-dialog">
+        <h2>{{ t('seriesCategory.watchParty.title') }}</h2>
+        <p>{{ t('seriesCategory.watchParty.body') }}</p>
+
+        <label>{{ t('watchParty.visibility') }}</label>
+        <select v-model="watchPartyVisibility">
+          <option value="private">{{ t('playlists.private') }}</option>
+          <option value="public">{{ t('playlists.public') }}</option>
+        </select>
+
+        <div class="streaming-party-options">
+          <label v-if="seriesPartySavedProgress" class="streaming-party-choice">
+            <input v-model="useSavedSeriesProgress" type="radio" :value="true" />
+            <span>{{ t('seriesCategory.watchParty.continueFrom', { time: formatPlaybackTime(seriesPartySavedProgress.playback_time_seconds) }) }}</span>
+          </label>
+          <label class="streaming-party-choice">
+            <input v-model="useSavedSeriesProgress" type="radio" :value="false" />
+            <span>{{ t('seriesCategory.watchParty.chooseEpisodeStart') }}</span>
+          </label>
+        </div>
+
+        <div v-if="!useSavedSeriesProgress" class="streaming-party-episode-picker">
+          <label>
+            {{ t('seriesCategory.watchParty.startLabel') }}
+            <select v-model="seriesPartyStartMode">
+              <option value="first">{{ t('seriesCategory.watchParty.fromFirstEpisode') }}</option>
+              <option value="specific">{{ t('seriesCategory.watchParty.fromSpecificEpisode') }}</option>
+            </select>
+          </label>
+          <label v-if="seriesPartyStartMode === 'specific'">
+            {{ t('seriesCategory.watchParty.episodeLabel') }}
+            <select v-model="seriesPartyStartVideoId">
+              <optgroup
+                v-for="season in selectedSeriesSeasons"
+                :key="season"
+                :label="t('seriesCategory.seasonLabel', { season })"
+              >
+                <option
+                  v-for="episode in selectedEpisodes.filter((entry) => entry.season_number === season)"
+                  :key="episode.id"
+                  :value="episodeVideoId(episode)"
+                >
+                  {{ t('seriesCategory.watchParty.episodeOption', { season: episode.season_number, episode: episode.episode_number, title: episode.title }) }}
+                </option>
+              </optgroup>
+            </select>
+          </label>
+        </div>
+
+        <p v-if="watchPartyError" class="streaming-party-error">{{ watchPartyError }}</p>
+
+        <div class="streaming-party-dialog-actions">
+          <button type="button" @click="watchPartyDialogOpen = false">{{ t('common.cancel') }}</button>
+          <button type="button" :disabled="creatingWatchParty" @click="startSeriesWatchParty">
+            {{ creatingWatchParty ? t('watchParty.starting') : t('watchParty.startParty') }}
+          </button>
+        </div>
+      </section>
+    </div>
+  </Teleport>
 </template>
 
 <script setup>
 import { computed, defineComponent, h, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import StreamingCategory from './StreamingCategory.vue'
 import { listSeries, getSeries, getSeriesWatchProgress } from '~/app/service/series'
 import { getWatchProgressMap } from '~/app/service/videos'
+import { createWatchParty, getWatchPartySavedProgress } from '~/app/service/watchParties'
 import { useMetaTags } from '~/app/composables/useMetaTags'
 
 const route = useRoute()
 const router = useRouter()
 const localePath = useLocalePath()
+const { t } = useI18n()
 const baseUrl = import.meta.env.VITE_API_BASE_URL || ''
 
 const loading = ref(false)
@@ -125,6 +205,14 @@ const activeSeason = ref(1)
 const selectedSeriesProgress = ref(null)
 const selectedEpisodeProgressByVideoId = ref({})
 const episodeRailElement = ref(null)
+const watchPartyDialogOpen = ref(false)
+const watchPartyVisibility = ref('private')
+const creatingWatchParty = ref(false)
+const watchPartyError = ref('')
+const seriesPartySavedProgress = ref(null)
+const useSavedSeriesProgress = ref(false)
+const seriesPartyStartMode = ref('first')
+const seriesPartyStartVideoId = ref('')
 let featuredHeroTimer = null
 
 const withBaseUrl = (url) => {
@@ -172,14 +260,15 @@ const toDisplaySeries = (series) => {
     ...series,
     posterUrl: getSeriesImage(series, 'poster'),
     backdropUrl: getSeriesImage(series, 'backdrop'),
-    synopsis: series.synopsis || 'Watch full series on GilTube.',
+    synopsis: series.synopsis || t('seriesCategory.synopsisFallback'),
     meta: [
-      `${series.seasons || 1} season${series.seasons === 1 ? '' : 's'}`,
-      `${series.episode_count || series.episodes?.length || 0} episode${(series.episode_count || series.episodes?.length || 0) === 1 ? '' : 's'}`,
+      t('seriesCategory.seasonCount', { count: series.seasons || 1 }),
+      t('seriesCategory.episodeCount', { count: series.episode_count || series.episodes?.length || 0 }),
     ],
-    cardMeta: `${series.episode_count || series.episodes?.length || 0} episodes`,
+    cardMeta: t('seriesCategory.episodeCount', { count: series.episode_count || series.episodes?.length || 0 }),
     primaryLink: primaryEpisode ? seriesWatchLink(series, primaryIndex) : '',
-    primaryLabel: 'Play',
+    startOverLink: primaryEpisode ? localePath(`/video/${primaryEpisode.video_id}?series_id=${series.id}&index=${primaryIndex}&start_over=1`) : '',
+    primaryLabel: t('streaming.actions.play'),
     resumeLink: series === selectedSeries.value ? selectedSeriesResumeLink.value : '',
   }
 }
@@ -229,6 +318,99 @@ const scrollEpisodes = (direction) => {
   rail.scrollBy({ left: (direction === 'right' ? 1 : -1) * Math.max(rail.clientWidth * 0.85, 220), behavior: 'smooth' })
 }
 
+const activeWatchPartyChannelId = () => {
+  const activeAccount = typeof window !== 'undefined' ? localStorage.getItem('active_account') : ''
+  return activeAccount && activeAccount !== 'personal' ? activeAccount : ''
+}
+
+const formatPlaybackTime = (seconds) => {
+  const total = Math.max(0, Math.floor(Number(seconds || 0)))
+  const hours = Math.floor(total / 3600)
+  const minutes = Math.floor((total % 3600) / 60)
+  const secs = total % 60
+  return hours > 0
+    ? `${hours}:${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`
+    : `${minutes}:${String(secs).padStart(2, '0')}`
+}
+
+const orderedSelectedEpisodes = () => [...selectedEpisodes.value].sort((a, b) =>
+  Number(a.season_number || 0) - Number(b.season_number || 0) ||
+  Number(a.episode_number || 0) - Number(b.episode_number || 0)
+)
+
+const openSeriesWatchPartyDialog = async (series) => {
+  if (typeof window !== 'undefined' && !localStorage.getItem('user_id')) {
+    await router.push(localePath('/login'))
+    return
+  }
+  if (!selectedSeries.value || selectedSeries.value.id !== series?.id) {
+    await openSeriesModal(series, false)
+  }
+  watchPartyError.value = ''
+  watchPartyVisibility.value = 'private'
+  seriesPartySavedProgress.value = null
+  useSavedSeriesProgress.value = false
+  seriesPartyStartMode.value = 'first'
+  seriesPartyStartVideoId.value = orderedSelectedEpisodes()[0] ? episodeVideoId(orderedSelectedEpisodes()[0]) : ''
+  watchPartyDialogOpen.value = true
+  try {
+    const data = await getWatchPartySavedProgress('series', selectedSeries.value.id)
+    seriesPartySavedProgress.value = data?.progress || null
+    useSavedSeriesProgress.value = !!seriesPartySavedProgress.value
+  } catch (err) {
+    console.error('Failed to load saved series party progress:', err)
+  }
+}
+
+const startSeriesWatchParty = async () => {
+  const series = selectedSeries.value
+  const ordered = orderedSelectedEpisodes()
+  if (!series?.id || !ordered.length) {
+    watchPartyError.value = t('seriesCategory.watchParty.noEpisodes')
+    return
+  }
+  creatingWatchParty.value = true
+  watchPartyError.value = ''
+  try {
+    const saved = useSavedSeriesProgress.value ? seriesPartySavedProgress.value : null
+    let startVideoId = saved?.video_id || episodeVideoId(ordered[0])
+    let queueVideoIds = Array.isArray(saved?.queue_video_ids) ? saved.queue_video_ids : []
+    let startTimeSeconds = Number(saved?.playback_time_seconds || 0)
+
+    if (!saved) {
+      if (seriesPartyStartMode.value === 'specific' && seriesPartyStartVideoId.value) {
+        startVideoId = seriesPartyStartVideoId.value
+      }
+      const startIndex = Math.max(0, ordered.findIndex((episode) => episodeVideoId(episode) === startVideoId))
+      startVideoId = episodeVideoId(ordered[startIndex])
+      queueVideoIds = ordered.slice(startIndex + 1).map(episodeVideoId).filter(Boolean)
+      startTimeSeconds = 0
+    }
+
+    const party = await createWatchParty({
+      videoId: startVideoId,
+      visibility: watchPartyVisibility.value,
+      title: series.title || '',
+      channelId: activeWatchPartyChannelId(),
+      partyType: 'queue',
+      mediaType: 'series',
+      mediaId: series.id,
+      queueVideoIds,
+      startTimeSeconds,
+    })
+    watchPartyDialogOpen.value = false
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('giltube:active-watch-party', JSON.stringify({ id: party.id, title: series.title || t('watchParty.titleFallback') }))
+      window.dispatchEvent(new Event('giltube:watch-party-updated'))
+    }
+    await router.push(localePath(`/watch-party/${party.id}?room=1`))
+  } catch (err) {
+    watchPartyError.value = err?.response?.data?.error || err?.message || t('watchParty.errors.startFailed')
+  } finally {
+    creatingWatchParty.value = false
+  }
+}
+
 const findLoadedSeries = (id) => allSeries.value.find((series) => series.id === id || series.slug === id) || null
 
 const openSeriesModal = async (series, updateRoute = true) => {
@@ -274,8 +456,8 @@ const startFeaturedHeroTimer = () => {
 const updateMetaTags = () => {
   const series = selectedSeries.value || featuredItems.value[0]
   useMetaTags({
-    title: series?.title ? `${series.title} - GilTube Series` : 'Series - GilTube',
-    description: series?.synopsis || 'Episodic GilTube series organized by genre.',
+    title: series?.title ? `${series.title} - ${t('seriesCategory.title')} - GilTube` : `${t('seriesCategory.title')} - GilTube`,
+    description: series?.synopsis || t('seriesCategory.metaDescription'),
     image: series ? getSeriesImage(series, 'backdrop') || getSeriesImage(series, 'poster') : undefined,
     url: route.fullPath,
     type: series ? 'video.tv_show' : undefined,
@@ -315,7 +497,7 @@ const loadSeriesCategory = async () => {
     updateMetaTags()
   } catch (err) {
     console.error('Failed to load series:', err)
-    error.value = 'Failed to load series.'
+    error.value = t('seriesCategory.errors.load')
     stopFeaturedHeroTimer()
   } finally {
     loading.value = false
@@ -678,6 +860,124 @@ const EpisodeThumb = defineComponent({
   width: 1rem;
   height: 1rem;
   margin-left: 0.125rem;
+}
+
+.streaming-watch-party-button {
+  display: inline-flex;
+  min-height: 3rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.25rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(220, 38, 38, 0.92);
+  padding: 0.75rem 1rem;
+  color: #fff;
+  font-weight: 800;
+  transition: background-color 160ms ease;
+}
+
+.streaming-watch-party-button:hover {
+  background: rgb(185 28 28);
+}
+
+.streaming-party-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483647;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle at center, rgba(127, 29, 29, 0.34), rgba(0, 0, 0, 0.88) 58%);
+  padding: 1rem;
+}
+
+.streaming-party-dialog {
+  width: min(100%, 34rem);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 0.5rem;
+  background: rgb(24 24 27);
+  padding: 1.5rem;
+  color: #fff;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.65);
+}
+
+.streaming-party-dialog h2 {
+  font-size: 1.25rem;
+  font-weight: 800;
+}
+
+.streaming-party-dialog p {
+  margin-top: 0.5rem;
+  color: rgb(161 161 170);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.streaming-party-dialog label {
+  display: block;
+  margin-top: 1rem;
+  color: rgb(212 212 216);
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.streaming-party-dialog select {
+  margin-top: 0.5rem;
+  width: 100%;
+  border-radius: 0.375rem;
+  border: 1px solid rgb(63 63 70);
+  background: rgb(39 39 42);
+  padding: 0.65rem 0.75rem;
+  color: #fff;
+  outline: none;
+}
+
+.streaming-party-options {
+  margin-top: 0.75rem;
+}
+
+.streaming-party-choice {
+  display: flex !important;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.streaming-party-choice input {
+  height: 1rem;
+  width: 1rem;
+}
+
+.streaming-party-episode-picker {
+  display: grid;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.streaming-party-error {
+  color: rgb(252 165 165) !important;
+}
+
+.streaming-party-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+.streaming-party-dialog-actions button {
+  border-radius: 0.375rem;
+  background: rgb(63 63 70);
+  padding: 0.65rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 800;
+}
+
+.streaming-party-dialog-actions button:last-child {
+  background: rgb(220 38 38);
+}
+
+.streaming-party-dialog-actions button:disabled {
+  opacity: 0.6;
 }
 
 @media (min-width: 768px) {

@@ -10,12 +10,29 @@ export const createWatchParty = async (data: {
   visibility: 'public' | 'private'
   title?: string
   channelId?: string
+  partyType?: 'single' | 'queue'
+  mediaType?: 'movie' | 'series'
+  mediaId?: string
+  queueVideoIds?: string[]
+  startTimeSeconds?: number
 }) => {
   const res = await api.post('/watch-parties', {
     video_id: data.videoId,
     visibility: data.visibility,
     title: data.title || '',
     channel_id: data.channelId || '',
+    party_type: data.partyType || 'queue',
+    media_type: data.mediaType || '',
+    media_id: data.mediaId || '',
+    queue_video_ids: data.queueVideoIds || [],
+    start_time_seconds: data.startTimeSeconds || 0,
+  })
+  return res.data
+}
+
+export const getWatchPartySavedProgress = async (mediaType: 'movie' | 'series', mediaId: string) => {
+  const res = await api.get('/watch-parties/saved-progress', {
+    params: { media_type: mediaType, media_id: mediaId },
   })
   return res.data
 }
@@ -32,6 +49,11 @@ export const joinWatchParty = async (partyId: string, channelId?: string) => {
 
 export const leaveWatchParty = async (partyId: string) => {
   const res = await api.post(`/watch-parties/${partyId}/leave`)
+  return res.data
+}
+
+export const saveWatchPartyProgress = async (partyId: string) => {
+  const res = await api.post(`/watch-parties/${partyId}/save-progress`)
   return res.data
 }
 

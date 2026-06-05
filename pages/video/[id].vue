@@ -14,7 +14,7 @@
           :intro-start-seconds="currentSeriesEpisode?.intro_start_seconds || 0"
           :intro-end-seconds="currentSeriesEpisode?.intro_end_seconds || 0"
           :has-next-episode="hasNextQueueVideo"
-          :next-episode-label="isPlayingFromSeries ? 'Next episode' : 'Next video'"
+          :next-episode-label="isPlayingFromSeries ? t('watchPage.nextEpisode') : t('watchPage.nextVideo')"
           :start-time-seconds="resumeStartSeconds"
           @play="onVideoPlay"
           @progress="handleWatchProgress"
@@ -130,9 +130,9 @@
             v-if="isLoggedIn"
             @click="showWatchPartyDialog = true"
             class="flex items-center gap-2 px-4 py-2 rounded-lg transition text-sm font-medium bg-red-700 hover:bg-red-600"
-            title="Start watch party"
+            :title="t('watchParty.startButton')"
           >
-            <span>Watch party</span>
+            <span>{{ t('watchParty.startButton') }}</span>
           </button>
         </div>
 
@@ -146,7 +146,7 @@
               />
             </div>
             <div class="min-w-0 flex-1">
-              <p class="text-xs font-semibold uppercase tracking-[0.18em] text-red-300">Series Trailer</p>
+              <p class="text-xs font-semibold uppercase tracking-[0.18em] text-red-300">{{ t('watchPage.seriesTrailer') }}</p>
               <h2 class="mt-1 text-2xl font-bold text-white">{{ trailerSeries.title }}</h2>
               <p class="mt-2 line-clamp-3 text-sm leading-6 text-gray-300">{{ trailerSeries.synopsis }}</p>
               <NuxtLink
@@ -154,7 +154,7 @@
                 :to="localePath(`/video/${trailerSeries.first_episode.video_id}?series_id=${trailerSeries.id}&index=0`)"
                 class="mt-4 inline-flex rounded bg-red-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-red-700"
               >
-                Watch series
+                {{ t('watchPage.watchSeries') }}
               </NuxtLink>
             </div>
           </div>
@@ -177,7 +177,54 @@
                 :to="localePath(`/category/series?series_id=${currentSeries.id}`)"
                 class="mt-4 inline-flex rounded bg-red-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-red-700"
               >
-                View series
+                {{ t('watchPage.viewSeries') }}
+              </NuxtLink>
+            </div>
+          </div>
+        </section>
+
+        <section v-if="trailerMovie" class="mt-6 rounded-lg border border-red-500/30 bg-zinc-900 p-4">
+          <div class="flex flex-col gap-4 sm:flex-row">
+            <div class="w-32 shrink-0 overflow-hidden rounded bg-zinc-800">
+              <img
+                :src="getTrailerSeriesPosterUrl(trailerMovie.poster_url || trailerMovie.backdrop_url)"
+                :alt="trailerMovie.title"
+                class="aspect-[2/3] h-full w-full object-cover"
+              />
+            </div>
+            <div class="min-w-0 flex-1">
+              <p class="text-xs font-semibold uppercase tracking-[0.18em] text-red-300">{{ t('watchPage.movieTrailer') }}</p>
+              <h2 class="mt-1 text-2xl font-bold text-white">{{ trailerMovie.title }}</h2>
+              <p class="mt-2 line-clamp-3 text-sm leading-6 text-gray-300">{{ trailerMovie.synopsis }}</p>
+              <NuxtLink
+                v-if="trailerMovie.video_id"
+                :to="localePath(`/video/${trailerMovie.video_id}?movie_id=${trailerMovie.id}`)"
+                class="mt-4 inline-flex rounded bg-red-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-red-700"
+              >
+                {{ t('watchPage.watchMovie') }}
+              </NuxtLink>
+            </div>
+          </div>
+        </section>
+
+        <section v-if="currentMovie" class="mt-6 rounded-lg border border-red-500/30 bg-zinc-900 p-4">
+          <div class="flex flex-col gap-4 sm:flex-row">
+            <div class="w-32 shrink-0 overflow-hidden rounded bg-zinc-800">
+              <img
+                :src="getTrailerSeriesPosterUrl(currentMovie.poster_url || currentMovie.backdrop_url)"
+                :alt="currentMovie.title"
+                class="aspect-[2/3] h-full w-full object-cover"
+              />
+            </div>
+            <div class="min-w-0 flex-1">
+              <p class="text-xs font-semibold uppercase tracking-[0.18em] text-red-300">{{ t('watchPage.movieLabel') }}</p>
+              <h2 class="mt-1 text-2xl font-bold text-white">{{ currentMovie.title }}</h2>
+              <p class="mt-2 line-clamp-3 text-sm leading-6 text-gray-300">{{ currentMovie.synopsis || video?.description }}</p>
+              <NuxtLink
+                :to="localePath(`/category/movies?movie_id=${currentMovie.id}`)"
+                class="mt-4 inline-flex rounded bg-red-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-red-700"
+              >
+                {{ t('watchPage.viewMovie') }}
               </NuxtLink>
             </div>
           </div>
@@ -756,19 +803,31 @@
     @click.self="showWatchPartyDialog = false"
   >
     <div class="w-full max-w-md rounded-lg border border-zinc-700 bg-zinc-900 p-6 shadow-xl">
-      <h2 class="text-xl font-bold">Start watch party</h2>
+      <h2 class="text-xl font-bold">{{ t('watchParty.dialog.title') }}</h2>
       <p class="mt-2 text-sm leading-6 text-zinc-400">
-        Public parties show on the home page. Private parties are only available through the share link.
+        {{ t('watchParty.dialog.body') }}
       </p>
 
-      <label class="mt-5 block text-sm font-semibold text-zinc-300">Visibility</label>
+      <label class="mt-5 block text-sm font-semibold text-zinc-300">{{ t('watchParty.visibility') }}</label>
       <select
         v-model="watchPartyVisibility"
         class="mt-2 w-full rounded bg-zinc-800 px-3 py-2 text-sm text-white outline-none ring-1 ring-zinc-700 focus:ring-red-500"
       >
-        <option value="private">Private</option>
-        <option value="public">Public</option>
+        <option value="private">{{ t('playlists.private') }}</option>
+        <option value="public">{{ t('playlists.public') }}</option>
       </select>
+
+      <label class="mt-5 block text-sm font-semibold text-zinc-300">{{ t('watchParty.dialog.partyType') }}</label>
+      <select
+        v-model="watchPartyType"
+        class="mt-2 w-full rounded bg-zinc-800 px-3 py-2 text-sm text-white outline-none ring-1 ring-zinc-700 focus:ring-red-500"
+      >
+        <option value="queue">{{ t('watchParty.dialog.partyTypes.queue') }}</option>
+        <option value="single">{{ t('watchParty.dialog.partyTypes.single') }}</option>
+      </select>
+      <p class="mt-2 text-xs text-zinc-500">
+        {{ t('watchParty.dialog.partyTypeHelp') }}
+      </p>
 
       <div class="mt-6 flex justify-end gap-3">
         <button
@@ -776,7 +835,7 @@
           class="rounded bg-zinc-700 px-4 py-2 text-sm font-semibold hover:bg-zinc-600"
           @click="showWatchPartyDialog = false"
         >
-          Cancel
+          {{ t('common.cancel') }}
         </button>
         <button
           type="button"
@@ -784,7 +843,7 @@
           :disabled="creatingWatchParty"
           @click="startWatchParty"
         >
-          {{ creatingWatchParty ? 'Starting...' : 'Start party' }}
+          {{ creatingWatchParty ? t('watchParty.starting') : t('watchParty.startParty') }}
         </button>
       </div>
 
@@ -803,6 +862,7 @@ import AddToPlaylistModal from '~/app/components/AddToPlaylistModal.vue'
 import { GILADS_PLACEMENTS } from '~/app/service/gilads'
 import { getVideo, incrementViews, getVideos, likeVideo, unlikeVideo, checkIfLiked, getWatchProgress, getWatchProgressMap, saveWatchProgress } from '~/app/service/videos'
 import { getSeries, getSeriesEpisodeContext, getSeriesTrailerContext } from '~/app/service/series'
+import { getMovieVideoContext, getMovieTrailerContext } from '~/app/service/movies'
 import { createWatchParty } from '~/app/service/watchParties'
 import { getVideoComments, postComment as apiPostComment, deleteComment, likeComment, unlikeComment } from '~/app/service/comments'
 import { insertGiphyIntoComment, type GiphyGif } from '~/app/utils/giphy'
@@ -852,10 +912,13 @@ const showGiphyPicker = ref(false)
 const showAddToPlaylist = ref(false)
 const showWatchPartyDialog = ref(false)
 const watchPartyVisibility = ref<'public' | 'private'>('private')
+const watchPartyType = ref<'single' | 'queue'>('queue')
 const creatingWatchParty = ref(false)
 const watchPartyError = ref('')
 const trailerSeries = ref<any | null>(null)
 const currentSeries = ref<any | null>(null)
+const trailerMovie = ref<any | null>(null)
+const currentMovie = ref<any | null>(null)
 
 const showSidebar = ref(true)
 
@@ -1096,6 +1159,8 @@ const onVideoPlay = async () => {
 const loadWatchResume = async () => {
   resumeStartSeconds.value = 0
   if (!isLoggedIn.value) return
+  const startOverQuery = route.query.start_over
+  if (startOverQuery === '1' || startOverQuery === 'true') return
 
   try {
     const data = await getWatchProgress(id)
@@ -1198,6 +1263,9 @@ onMounted(async () => {
     }
   } else {
     await loadSeriesContextForVideo()
+    if (!isPlayingFromSeries.value) {
+      await loadMovieContextForVideo()
+    }
   }
 
   if (!isPlayingFromSeries.value) {
@@ -1381,6 +1449,7 @@ const startWatchParty = async () => {
       visibility: watchPartyVisibility.value,
       title: video.value?.title || '',
       channelId: activeWatchPartyChannelId(),
+      partyType: watchPartyType.value,
     })
 
     showWatchPartyDialog.value = false
@@ -1388,14 +1457,14 @@ const startWatchParty = async () => {
     if (typeof window !== 'undefined') {
       localStorage.setItem('giltube:active-watch-party', JSON.stringify({
         id: party.id,
-        title: video.value?.title || 'Watch party',
+        title: video.value?.title || t('watchParty.titleFallback'),
       }))
       window.dispatchEvent(new Event('giltube:watch-party-updated'))
     }
 
     await router.push(localePath(`/watch-party/${party.id}?room=1`))
   } catch (err: any) {
-    watchPartyError.value = err?.response?.data?.error || err?.message || 'Failed to start watch party'
+    watchPartyError.value = err?.response?.data?.error || err?.message || t('watchParty.errors.startFailed')
   } finally {
     creatingWatchParty.value = false
   }
@@ -1682,6 +1751,17 @@ const loadSeriesContextForVideo = async () => {
   }
 }
 
+const loadMovieContextForVideo = async () => {
+  try {
+    const data = await getMovieVideoContext(id)
+    currentMovie.value = data.movie || null
+  } catch (err: any) {
+    if (err?.response?.status !== 404) {
+      console.error('Failed to load movie context:', err)
+    }
+  }
+}
+
 const loadTrailerContextForVideo = async () => {
   try {
     const data = await getSeriesTrailerContext(id)
@@ -1689,6 +1769,15 @@ const loadTrailerContextForVideo = async () => {
   } catch (err: any) {
     if (err?.response?.status !== 404) {
       console.error('Failed to load series trailer context:', err)
+    }
+  }
+
+  try {
+    const data = await getMovieTrailerContext(id)
+    trailerMovie.value = data.movie || null
+  } catch (err: any) {
+    if (err?.response?.status !== 404) {
+      console.error('Failed to load movie trailer context:', err)
     }
   }
 }

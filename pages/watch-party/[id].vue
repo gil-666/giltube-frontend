@@ -1,6 +1,6 @@
 <template>
-  <main class="min-h-screen bg-black text-white">
-    <div v-if="inviteMode" class="flex min-h-screen items-center justify-center p-4">
+  <main class="min-h-full bg-black text-white">
+    <div v-if="inviteMode" class="flex min-h-full items-center justify-center p-4">
       <section class="w-full max-w-xl rounded-2xl border border-white/10 bg-zinc-950 p-6 text-center shadow-2xl">
         <div class="mx-auto flex h-20 w-20 items-center justify-center overflow-hidden rounded-full bg-zinc-800 text-2xl font-bold">
           <img v-if="hostAvatar" :src="hostAvatar" :alt="hostName" class="h-full w-full object-cover" />
@@ -33,16 +33,19 @@
     </div>
 
     <div v-else class="grid gap-6 p-4 lg:grid-cols-[minmax(0,1fr)_24rem] lg:p-6">
-      <section class="min-w-0">
+      <section class="flex min-w-0 flex-col">
         <div class="relative">
           <VideoPlayer
             ref="videoPlayerRef"
             :src="videoSrc"
             :status="partyData?.video?.status || 'ready'"
+            :start-time-seconds="playbackStartTimeSeconds"
+            :controls-locked="!canControlPlayback"
             @play="sendPlayback('play')"
             @pause="sendPlayback('pause')"
             @seeked="sendPlayback('seek', $event.currentTime)"
             @progress="sendPlaybackProgress"
+            @ended="playNextQueueItem"
           />
           <div v-if="playbackOverlay" class="absolute right-4 top-4 z-20 rounded bg-black/80 px-4 py-2 text-sm font-semibold text-white shadow-lg">
             {{ playbackOverlay }}
@@ -83,6 +86,28 @@
             </button>
           </div>
         </div>
+
+        <div v-if="showShareLinkPreview" class="mt-3 rounded-lg border border-white/10 bg-zinc-950/80 p-3">
+          <p class="mb-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-zinc-500">Share link</p>
+          <input
+            :value="partyShareUrl"
+            readonly
+            class="w-full rounded bg-zinc-900 px-3 py-2 text-sm text-zinc-300 outline-none ring-1 ring-white/10"
+            @focus="$event.target.select()"
+          />
+        </div>
+
+        <WatchPartyQueue
+          v-if="partyData?.party?.party_type !== 'single'"
+          :queue-items="queueItems"
+          :queue-error="queueError"
+          :is-host="isHost"
+          :thumbnail-url="thumbnailUrl"
+          @add="addQueueVideo"
+          @play="playQueueItem"
+          @remove="removeQueueItem"
+          @move="moveQueueItem"
+        />
       </section>
 
       <aside class="flex min-h-[32rem] flex-col rounded border border-white/10 bg-zinc-950">
@@ -95,15 +120,6 @@
             <button class="rounded bg-white/10 px-3 py-1.5 text-xs font-semibold hover:bg-white/15" @click="showParticipants = !showParticipants">
               Participants
             </button>
-          </div>
-          <div class="mt-3 rounded bg-black/35 p-2">
-            <p class="mb-1 text-[11px] font-semibold uppercase tracking-wide text-zinc-500">Share link</p>
-            <input
-              :value="partyShareUrl"
-              readonly
-              class="w-full rounded bg-zinc-900 px-2 py-1.5 text-xs text-zinc-300 outline-none ring-1 ring-white/10"
-              @focus="$event.target.select()"
-            />
           </div>
           <div v-if="showParticipants" class="mt-3 space-y-2">
             <component
@@ -130,7 +146,7 @@
           </div>
         </div>
 
-        <div ref="chatListRef" class="flex-1 space-y-3 overflow-y-auto p-4">
+        <div ref="chatListRef" class="flex-1 space-y-3 p-4">
           <div v-for="item in timeline" :key="item.id || `${item.type}-${item.at}`">
             <div v-if="item.type === 'system'" class="text-center text-xs text-zinc-500">{{ item.text }}</div>
             <div v-else class="rounded bg-white/5 p-3">
@@ -146,48 +162,14 @@
         </div>
 
         <div class="border-t border-white/10 p-3">
-          <section class="mb-4 rounded-lg border border-white/10 bg-black/25 p-3">
-            <div class="mb-3 flex items-center justify-between">
-              <h3 class="text-sm font-semibold">Party queue</h3>
-              <span class="text-xs text-zinc-500">{{ queueItems.length }} item{{ queueItems.length === 1 ? '' : 's' }}</span>
-            </div>
-            <button
-              type="button"
-              class="mb-3 w-full rounded bg-zinc-800 px-3 py-2 text-xs font-semibold transition hover:bg-zinc-700"
-              @click="openQueuePicker"
-            >
-              Add video to queue
-            </button>
-            <p v-if="queueError" class="mb-2 text-xs text-red-300">{{ queueError }}</p>
-            <div v-if="queueItems.length" class="space-y-2">
-              <div v-for="(item, index) in queueItems" :key="item.id" class="flex gap-2 rounded bg-white/5 p-2">
-                <img :src="thumbnailUrl(item.thumbnail_url)" :alt="item.title" class="h-12 w-20 rounded object-cover" />
-                <div class="min-w-0 flex-1">
-                  <p class="line-clamp-1 text-xs font-semibold">{{ item.title }}</p>
-                  <p class="text-[11px] text-zinc-500">Added by {{ item.added_by }}</p>
-                </div>
-                <div v-if="isHost" class="flex shrink-0 items-center gap-1">
-                  <button type="button" class="rounded bg-zinc-700 px-2 py-1 text-[11px] hover:bg-zinc-600" :disabled="index === 0" @click="moveQueueItem(index, -1)">Up</button>
-                  <button type="button" class="rounded bg-zinc-700 px-2 py-1 text-[11px] hover:bg-zinc-600" :disabled="index === queueItems.length - 1" @click="moveQueueItem(index, 1)">Down</button>
-                  <button type="button" class="rounded bg-red-600 px-2 py-1 text-[11px] hover:bg-red-700" @click="playQueueItem(item.id)">Play</button>
-                  <button type="button" class="rounded bg-zinc-700 px-2 py-1 text-[11px] hover:bg-zinc-600" @click="removeQueueItem(item.id)">X</button>
-                </div>
-              </div>
-            </div>
-          </section>
-
           <div class="mb-2 flex gap-2">
             <button v-for="reaction in quickReactions" :key="reaction" class="rounded bg-white/10 px-2 py-1 text-lg hover:bg-white/15" @click="sendReaction(reaction)">
               {{ reaction }}
             </button>
-            <button type="button" class="rounded bg-white/10 px-3 py-1 text-xs font-semibold hover:bg-white/15" @click="showGifInput = !showGifInput">
+            <button type="button" class="rounded bg-white/10 px-3 py-1 text-xs font-semibold hover:bg-white/15" @click="showGiphyPicker = true">
               GIF
             </button>
           </div>
-          <form v-if="showGifInput" class="mb-2 flex gap-2" @submit.prevent="sendGif">
-            <input v-model="gifInput" class="min-w-0 flex-1 rounded bg-zinc-900 px-3 py-2 text-sm outline-none ring-1 ring-white/10 focus:ring-red-500" placeholder="Paste GIF URL" />
-            <button class="rounded bg-zinc-700 px-3 py-2 text-sm font-semibold hover:bg-zinc-600" :disabled="!gifInput.trim()">Send</button>
-          </form>
           <form class="flex gap-2" @submit.prevent="sendMessage">
             <input v-model="chatInput" class="min-w-0 flex-1 rounded bg-zinc-900 px-3 py-2 text-sm outline-none ring-1 ring-white/10 focus:ring-red-500" placeholder="Say something..." maxlength="500" />
             <button class="rounded bg-red-600 px-4 py-2 text-sm font-semibold hover:bg-red-700" :disabled="!chatInput.trim()">Send</button>
@@ -196,62 +178,20 @@
       </aside>
     </div>
 
-    <div
-      v-if="showQueuePicker"
-      class="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4"
-      @click.self="showQueuePicker = false"
-    >
-      <section class="flex max-h-[88vh] w-full max-w-5xl flex-col rounded-2xl border border-white/10 bg-zinc-950 shadow-2xl">
-        <div class="border-b border-white/10 p-4">
-          <div class="flex items-center justify-between gap-3">
-            <h2 class="text-xl font-bold">Add video to queue</h2>
-            <button type="button" class="rounded-full bg-white/10 px-3 py-1.5 text-sm font-bold hover:bg-white/15" @click="showQueuePicker = false">
-              X
-            </button>
-          </div>
-          <input
-            v-model="queueSearch"
-            type="search"
-            class="mt-4 w-full rounded-full bg-zinc-900 px-4 py-3 text-sm outline-none ring-1 ring-white/10 focus:ring-red-500"
-            placeholder="Search videos..."
-            @input="handleQueueSearchInput"
-          />
-        </div>
-        <div class="min-h-0 flex-1 overflow-y-auto p-4">
-          <div v-if="queuePickerLoading" class="py-12 text-center text-sm text-zinc-400">Loading videos...</div>
-          <div v-else-if="queuePickerVideos.length === 0" class="py-12 text-center text-sm text-zinc-400">No videos found.</div>
-          <div v-else class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            <button
-              v-for="video in queuePickerVideos"
-              :key="video.id"
-              type="button"
-              class="group overflow-hidden rounded-xl border border-white/10 bg-white/5 text-left transition hover:border-red-500/50 hover:bg-white/10"
-              @click="addQueueVideo(video.id)"
-            >
-              <div class="relative aspect-video bg-black">
-                <img :src="thumbnailUrl(video.thumbnail_url || video.thumbnail)" :alt="video.title" class="h-full w-full object-cover transition group-hover:scale-[1.02]" />
-                <div class="absolute inset-0 bg-black/0 transition group-hover:bg-black/25" />
-                <span class="absolute inset-x-3 bottom-3 rounded bg-red-600 px-3 py-2 text-center text-xs font-bold opacity-0 transition group-hover:opacity-100">
-                  Add to queue
-                </span>
-              </div>
-              <div class="p-3">
-                <p class="line-clamp-2 text-sm font-semibold">{{ video.title }}</p>
-                <p class="mt-1 line-clamp-1 text-xs text-zinc-500">{{ video.channel || video.channel?.name }}</p>
-              </div>
-            </button>
-          </div>
-        </div>
-      </section>
-    </div>
+    <GiphyPicker
+      :is-open="showGiphyPicker"
+      @close="showGiphyPicker = false"
+      @select="handleGiphySelect"
+    />
   </main>
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import GiphyPicker from '~/app/components/GiphyPicker.vue'
 import VideoPlayer from '~/app/components/videoplayer/VideoPlayer.vue'
+import WatchPartyQueue from '~/app/components/watchparty/WatchPartyQueue.vue'
 import { useMetaTags } from '~/app/composables/useMetaTags'
-import { getVideos } from '~/app/service/videos'
 import {
   addWatchPartyQueueItem,
   getWatchParty,
@@ -262,12 +202,13 @@ import {
   postWatchPartyPlayback,
   removeWatchPartyQueueItem,
   reorderWatchPartyQueue,
-  searchWatchPartyVideos,
+  saveWatchPartyProgress,
   setWatchPartySuggestPermission,
   setWatchPartySyncMode,
   transferWatchPartyHost,
   watchPartyEventURL,
 } from '~/app/service/watchParties'
+import type { GiphyGif } from '~/app/utils/giphy'
 
 const route = useRoute()
 const router = useRouter()
@@ -279,16 +220,12 @@ const participants = ref<any[]>([])
 const queueItems = ref<any[]>([])
 const timeline = ref<any[]>([])
 const chatInput = ref('')
-const gifInput = ref('')
 const queueError = ref('')
-const queueSearch = ref('')
-const queuePickerVideos = ref<any[]>([])
-const queuePickerLoading = ref(false)
-const showQueuePicker = ref(false)
-const showGifInput = ref(false)
+const showGiphyPicker = ref(false)
 const showParticipants = ref(false)
 const playbackOverlay = ref('')
 const linkCopied = ref(false)
+const showShareLinkPreview = ref(false)
 const isLoggedIn = ref(false)
 const hasJoined = ref(false)
 const joiningParty = ref(false)
@@ -297,7 +234,7 @@ const videoPlayerRef = ref<any>(null)
 const quickReactions = ['❤️', '😂', '😮', '👏']
 let events: EventSource | null = null
 let overlayTimer: ReturnType<typeof setTimeout> | null = null
-let searchTimer: ReturnType<typeof setTimeout> | null = null
+let playbackRestoreTimer: ReturnType<typeof setTimeout> | null = null
 let lastPlaybackProgressSyncAt = 0
 let applyingRemotePlayback = false
 
@@ -316,6 +253,15 @@ const isHost = computed(() => !!currentUserId.value && partyData.value?.party?.h
 const syncMode = computed(() => partyData.value?.party?.sync_mode || 'host-only')
 const canControlPlayback = computed(() => isHost.value || syncMode.value === 'open')
 const inviteMode = computed(() => !hasJoined.value || partyEnded.value)
+const playbackStartTimeSeconds = computed(() => {
+  if (!hasJoined.value || !partyData.value?.party) return 0
+  const seconds = Number(partyData.value.party.current_time || 0)
+  const updatedAt = new Date(partyData.value.party.playback_updated_at || Date.now()).getTime()
+  const drift = partyData.value.party.playback_state === 'playing'
+    ? Math.max(0, (Date.now() - updatedAt) / 1000)
+    : 0
+  return Math.max(0, seconds + drift)
+})
 
 const partyShareUrl = computed(() => {
   if (typeof window === 'undefined') return ''
@@ -325,7 +271,8 @@ const partyShareUrl = computed(() => {
 const avatarUrl = (url: string) => {
   if (!url) return ''
   if (/^https?:\/\//i.test(url)) return url
-  return `${baseUrl}${url.startsWith('/') ? '' : '/'}${url}`
+  const normalized = url.startsWith('/avatars/') ? url : `/avatars/${url.replace(/^\/+/, '')}`
+  return `${baseUrl}${normalized}`
 }
 
 const thumbnailUrl = (url: string) => {
@@ -434,18 +381,39 @@ const joinPartyFromInvite = async () => {
     }
     connectEvents(currentUserId.value)
     await nextTick()
-    applySnapshotPlayback()
+    schedulePlaybackRestore()
   } finally {
     joiningParty.value = false
   }
 }
 
-const applySnapshotPlayback = () => {
-  if (!hasJoined.value || !partyData.value?.party) return
-  const seconds = Number(partyData.value.party.current_time || 0)
-  const updatedAt = new Date(partyData.value.party.playback_updated_at || Date.now()).getTime()
-  const drift = partyData.value.party.playback_state === 'playing' ? Math.max(0, (Date.now() - updatedAt) / 1000) : 0
-  applyRemotePlayback(partyData.value.party.playback_state === 'playing' ? 'play' : 'pause', seconds + drift, partyData.value.party.playback_state)
+const clearPlaybackRestoreTimer = () => {
+  if (playbackRestoreTimer) {
+    clearTimeout(playbackRestoreTimer)
+    playbackRestoreTimer = null
+  }
+}
+
+const schedulePlaybackRestore = (attempt = 0) => {
+  clearPlaybackRestoreTimer()
+  if (!hasJoined.value || !partyData.value?.party || !videoSrc.value) return
+
+  playbackRestoreTimer = setTimeout(async () => {
+    const controls = videoPlayerRef.value
+    const state = partyData.value?.party?.playback_state || 'paused'
+    const seconds = playbackStartTimeSeconds.value
+    const playerState = controls?.getPlaybackState?.()
+    const playerDuration = Number(playerState?.duration || 0)
+
+    if (!controls || playerDuration <= 0) {
+      if (attempt < 12) {
+        schedulePlaybackRestore(attempt + 1)
+      }
+      return
+    }
+
+    await applyRemotePlayback(state === 'playing' ? 'play' : 'pause', seconds, state)
+  }, attempt === 0 ? 0 : 250)
 }
 
 const applyRemotePlayback = async (action: string, seconds: number, state = '') => {
@@ -478,12 +446,9 @@ const sendReaction = async (reaction: string) => {
   await postWatchPartyChat(partyId, { reaction, channelId: activeChannelId() })
 }
 
-const sendGif = async () => {
-  const gifUrl = gifInput.value.trim()
-  if (!gifUrl) return
-  gifInput.value = ''
-  showGifInput.value = false
-  await postWatchPartyChat(partyId, { gifUrl, channelId: activeChannelId() })
+const handleGiphySelect = async (gif: GiphyGif) => {
+  showGiphyPicker.value = false
+  await postWatchPartyChat(partyId, { gifUrl: gif.images.downsized.url, channelId: activeChannelId() })
 }
 
 const sendPlayback = async (action: string, currentTime = 0) => {
@@ -506,51 +471,10 @@ const addQueueVideo = async (videoId: string) => {
   queueError.value = ''
   try {
     await addWatchPartyQueueItem(partyId, videoId)
-    showQueuePicker.value = false
     await refreshParty(false)
   } catch (err: any) {
     queueError.value = err?.response?.data?.error || err?.message || 'Failed to add video'
   }
-}
-
-const openQueuePicker = async () => {
-  showQueuePicker.value = true
-  queueError.value = ''
-  queueSearch.value = ''
-  await loadRecommendedQueueVideos()
-}
-
-const loadRecommendedQueueVideos = async () => {
-  queuePickerLoading.value = true
-  try {
-    queuePickerVideos.value = await getVideos({ limit: 24, offset: 0 })
-  } catch (err) {
-    queuePickerVideos.value = []
-  } finally {
-    queuePickerLoading.value = false
-  }
-}
-
-const performQueueSearch = async () => {
-  const query = queueSearch.value.trim()
-  if (!query) {
-    await loadRecommendedQueueVideos()
-    return
-  }
-  queuePickerLoading.value = true
-  try {
-    const data = await searchWatchPartyVideos(query)
-    queuePickerVideos.value = data.results || []
-  } catch (err) {
-    queuePickerVideos.value = []
-  } finally {
-    queuePickerLoading.value = false
-  }
-}
-
-const handleQueueSearchInput = () => {
-  if (searchTimer) clearTimeout(searchTimer)
-  searchTimer = setTimeout(performQueueSearch, 250)
 }
 
 const changeSyncMode = async (mode: 'host-only' | 'open') => {
@@ -559,10 +483,16 @@ const changeSyncMode = async (mode: 'host-only' | 'open') => {
 }
 
 const playQueueItem = async (itemId: string) => {
+  lastPlaybackProgressSyncAt = Date.now()
   await playWatchPartyQueueItem(partyId, itemId)
   await refreshParty(false)
   await nextTick()
   applyRemotePlayback('play', 0)
+}
+
+const playNextQueueItem = async () => {
+  if (!isHost.value || queueItems.value.length === 0) return
+  await playQueueItem(queueItems.value[0].id)
 }
 
 const removeQueueItem = async (itemId: string) => {
@@ -595,12 +525,36 @@ const copyPartyLink = async () => {
   const url = partyShareUrl.value
   await navigator.clipboard?.writeText(url)
   linkCopied.value = true
+  showShareLinkPreview.value = true
   setTimeout(() => {
     linkCopied.value = false
   }, 1800)
+  setTimeout(() => {
+    showShareLinkPreview.value = false
+  }, 5000)
 }
 
 const leaveParty = async () => {
+  if (isHost.value && partyData.value?.party?.media_type && partyData.value?.party?.media_id) {
+    const shouldSave = typeof window !== 'undefined'
+      ? window.confirm('Save watch party progress for another time?')
+      : false
+    if (shouldSave) {
+      try {
+        const state = videoPlayerRef.value?.getPlaybackState?.()
+        if (state) {
+          await postWatchPartyPlayback(partyId, {
+            action: state.paused ? 'pause' : 'progress',
+            currentTime: Number(state.currentTime || 0),
+            channelId: activeChannelId(),
+          })
+        }
+        await saveWatchPartyProgress(partyId)
+      } catch (err) {
+        console.error('Failed to save watch party progress:', err)
+      }
+    }
+  }
   await leaveWatchParty(partyId)
   if (typeof window !== 'undefined') {
     localStorage.removeItem('giltube:active-watch-party')
@@ -620,9 +574,17 @@ onMounted(async () => {
   }
 })
 
+watch(
+  () => [videoSrc.value, hasJoined.value, partyData.value?.video?.id],
+  ([src, joined]) => {
+    if (!src || !joined || inviteMode.value) return
+    schedulePlaybackRestore()
+  }
+)
+
 onBeforeUnmount(() => {
   events?.close()
   if (overlayTimer) clearTimeout(overlayTimer)
-  if (searchTimer) clearTimeout(searchTimer)
+  clearPlaybackRestoreTimer()
 })
 </script>

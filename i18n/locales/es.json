@@ -523,6 +523,203 @@
     "metaTitleSuffix": "Videos - GilTube",
     "metaDescription": "Explora videos de {name} en GilTube"
   },
+  "streaming": {
+    "actions": {
+      "play": "Reproducir",
+      "playNow": "Reproducir ahora",
+      "resume": "Continuar",
+      "startOver": "Empezar de nuevo"
+    }
+  },
+  "moviesCategory": {
+    "title": "Películas",
+    "featured": "Películas destacadas",
+    "itemLabel": "película",
+    "details": "Detalles",
+    "empty": "Aún no se han publicado películas.",
+    "channelName": "GilTube Movies",
+    "fallbackGenre": "Películas",
+    "synopsisFallback": "Mira esta película en GilTube.",
+    "metaDescription": "Películas de GilTube organizadas por género.",
+    "moreLikeThis": "Más como esto",
+    "meta": {
+      "channel": "Canal",
+      "added": "Agregada",
+      "views": "Vistas",
+      "runtime": "Duración"
+    },
+    "watchParty": {
+      "title": "Iniciar watch party de película",
+      "body": "Las watch parties públicas aparecen en la página principal. Las privadas solo están disponibles por enlace compartido.",
+      "continueFrom": "Continuar desde {time} de la última watch party"
+    },
+    "errors": {
+      "load": "No se pudieron cargar las películas."
+    }
+  },
+  "seriesCategory": {
+    "title": "Series",
+    "featured": "Series destacadas",
+    "itemLabel": "serie",
+    "details": "Episodios",
+    "empty": "Aún no se han publicado series.",
+    "synopsisFallback": "Mira la serie completa en GilTube.",
+    "metaDescription": "Series episódicas de GilTube organizadas por género.",
+    "scrollLeft": "Desplazar episodios a la izquierda",
+    "scrollRight": "Desplazar episodios a la derecha",
+    "seasonLabel": "Temporada {season}",
+    "seasonCount": "{count} temporada | {count} temporadas",
+    "episodeCount": "{count} episodio | {count} episodios",
+    "episodeKicker": "Temporada {season} | Episodio {episode}",
+    "episodeCountLabel": "Temporada {season} / {count} episodio | Temporada {season} / {count} episodios",
+    "meta": {
+      "directors": "Directores",
+      "cast": "Reparto"
+    },
+    "watchParty": {
+      "title": "Iniciar watch party de serie",
+      "body": "Inicia una cola sincronizada de episodios para esta serie. Las watch parties públicas aparecen en la página principal.",
+      "continueFrom": "Continuar desde {time} de la última watch party",
+      "chooseEpisodeStart": "Elegir inicio del episodio",
+      "startLabel": "Inicio",
+      "fromFirstEpisode": "Desde el primer episodio",
+      "fromSpecificEpisode": "Desde un episodio específico",
+      "episodeLabel": "Episodio",
+      "episodeOption": "T{season} E{episode} {title}",
+      "noEpisodes": "Esta serie aún no tiene episodios."
+    },
+    "errors": {
+      "load": "No se pudieron cargar las series."
+    }
+  },
+  "watchPage": {
+    "nextEpisode": "Siguiente episodio",
+    "nextVideo": "Siguiente video",
+    "seriesTrailer": "Tráiler de la serie",
+    "watchSeries": "Ver serie",
+    "viewSeries": "Ver serie",
+    "movieTrailer": "Tráiler de la película",
+    "watchMovie": "Ver película",
+    "movieLabel": "Película",
+    "viewMovie": "Ver película"
+  },
+  "watchParty": {
+    "startButton": "Watch party",
+    "starting": "Iniciando...",
+    "startParty": "Iniciar party",
+    "visibility": "Visibilidad",
+    "titleFallback": "Watch party",
+    "dialog": {
+      "title": "Iniciar watch party",
+      "body": "Las watch parties públicas aparecen en la página principal. Las privadas solo están disponibles por enlace compartido.",
+      "partyType": "Modo de party",
+      "partyTypeHelp": "La cola abierta permite que el host y los espectadores autorizados agreguen videos. El video único mantiene la party bloqueada a este video.",
+      "partyTypes": {
+        "queue": "Cola abierta",
+        "single": "Video único"
+      }
+    },
+    "errors": {
+      "startFailed": "No se pudo iniciar la watch party"
+    }
+  },
+  "movieAdmin": {
+    "title": "Creador de películas",
+    "subtitle": "Crea metadatos, sube un tráiler público y enlaza un video oculto para la película completa.",
+    "resumeExisting": "Retomar película existente",
+    "createNewOption": "Crear una película nueva",
+    "linkedBadge": "enlazada",
+    "newMovie": "Nueva película",
+    "featuredToggle": "Destacar esta película en el héroe de la categoría Películas",
+    "defaults": {
+      "genre": "Drama",
+      "trailerSuffix": "Tráiler"
+    },
+    "fields": {
+      "title": "Título",
+      "slug": "Slug",
+      "primaryGenre": "Género principal",
+      "releaseYear": "Año de estreno",
+      "synopsis": "Sinopsis",
+      "genres": "Géneros",
+      "directors": "Directores",
+      "cast": "Reparto",
+      "posterImage": "Imagen del póster",
+      "backdropImage": "Imagen de fondo"
+    },
+    "placeholders": {
+      "slug": "Se genera automáticamente si se deja en blanco",
+      "genres": "Drama, Misterio",
+      "commaSeparated": "Separado por comas",
+      "trailerTitle": "Título del tráiler",
+      "movieVideoTitle": "Título del video de la película",
+      "searchLibrary": "Buscar videos del canal Movies"
+    },
+    "actions": {
+      "createMovie": "Crear película",
+      "creatingMovie": "Creando...",
+      "saveMovieDetails": "Guardar detalles de la película",
+      "uploadTrailer": "Subir tráiler",
+      "upload": "Subir",
+      "replaceUpload": "Reemplazar subida",
+      "localUpload": "Subida local",
+      "attaching": "Enlazando...",
+      "attachMovie": "Enlazar película",
+      "refreshLibrary": "Actualizar biblioteca",
+      "trailerLinked": "Tráiler enlazado",
+      "movieLinked": "Película enlazada",
+      "linking": "Enlazando...",
+      "useAsTrailer": "Usar como tráiler",
+      "useAsMovie": "Usar como película"
+    },
+    "channelCard": {
+      "title": "Canal de películas",
+      "body": "Los tráilers permanecen públicos. Las películas completas se suben como videos ocultos y luego se enlazan al registro de la película."
+    },
+    "ids": {
+      "movieVideo": "ID del video de la película",
+      "trailerVideo": "ID del video del tráiler"
+    },
+    "trailer": {
+      "title": "Tráiler",
+      "body": "Este video sigue visible en las superficies normales de GilTube y lleva a los usuarios hacia la película."
+    },
+    "fullMovie": {
+      "title": "Película completa",
+      "body": "El video enlazado de la película se oculta de los feeds normales y se usa para Reproducir/Continuar en la categoría Películas."
+    },
+    "library": {
+      "title": "Videos existentes del canal Movies",
+      "body": "Reutiliza videos ya subidos del canal Movies como tráiler público o como película completa oculta.",
+      "loading": "Cargando videos...",
+      "empty": "No se encontraron videos coincidentes en el canal Movies.",
+      "hidden": "Oculto",
+      "public": "Público",
+      "unknownDate": "Fecha desconocida"
+    },
+    "messages": {
+      "loaded": "Se cargó \"{title}\".",
+      "created": "Película creada. Ahora sube un tráiler y luego la película completa oculta.",
+      "saved": "Se guardaron los detalles de la película.",
+      "trailerDescription": "Tráiler de {title}",
+      "trailerUploaded": "Tráiler subido y enlazado.",
+      "movieUploaded": "Video de la película subido. Enlázalo para terminar.",
+      "movieUploadedLocal": "Video de la película subido por carga local. Enlázalo para terminar.",
+      "movieLinked": "Película completa enlazada.",
+      "linkedExistingTrailer": "Se enlazó el tráiler existente \"{title}\"."
+    },
+    "errors": {
+      "titleRequired": "El título de la película es obligatorio",
+      "loadLibrary": "No se pudieron cargar los videos del canal Movies",
+      "loadMovie": "No se pudo cargar la película",
+      "createMovie": "No se pudo crear la película",
+      "saveMovie": "No se pudieron guardar los detalles de la película",
+      "uploadTrailer": "No se pudo subir el tráiler",
+      "uploadMovieVideo": "No se pudo subir el video de la película",
+      "attachMovie": "No se pudo enlazar el video de la película",
+      "linkTrailer": "No se pudo enlazar el tráiler existente"
+    }
+  },
   "commentNode": {
     "deleteReply": "Eliminar respuesta",
     "deleteComment": "Eliminar comentario",

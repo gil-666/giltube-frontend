@@ -134,22 +134,22 @@
               <div class="streaming-modal-copy">
                 <p class="streaming-modal-eyebrow">{{ selectedItem.genre }}</p>
                 <h2 class="streaming-modal-title">{{ selectedItem.title }}</h2>
-                <div class="mt-4 flex flex-wrap gap-3">
+                <div class="streaming-modal-actions">
                   <NuxtLink
                     v-if="selectedItem.resumeLink"
-                    :to="selectedItem.resumeLink"
-                    class="streaming-modal-primary-action"
-                  >
+                :to="selectedItem.resumeLink"
+                class="streaming-modal-primary-action"
+              >
                     <span class="streaming-modal-action-icon streaming-modal-action-icon-dark">
                       <svg class="streaming-play-icon" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
                         <path d="M6 4.75v10.5a.75.75 0 0 0 1.16.63l8-5.25a.75.75 0 0 0 0-1.26l-8-5.25A.75.75 0 0 0 6 4.75Z" />
                       </svg>
                     </span>
-                    <span>Resume</span>
+                    <span>{{ t('streaming.actions.resume') }}</span>
                   </NuxtLink>
                   <NuxtLink
                     v-if="selectedItem.primaryLink"
-                    :to="selectedItem.primaryLink"
+                    :to="selectedItem.resumeLink ? (selectedItem.startOverLink || selectedItem.primaryLink) : selectedItem.primaryLink"
                     :class="selectedItem.resumeLink ? 'streaming-modal-secondary-action' : 'streaming-modal-primary-action'"
                   >
                     <span :class="selectedItem.resumeLink ? 'streaming-modal-action-icon streaming-modal-action-icon-light' : 'streaming-modal-action-icon streaming-modal-action-icon-dark'">
@@ -157,8 +157,9 @@
                         <path d="M6 4.75v10.5a.75.75 0 0 0 1.16.63l8-5.25a.75.75 0 0 0 0-1.26l-8-5.25A.75.75 0 0 0 6 4.75Z" />
                       </svg>
                     </span>
-                    <span>{{ selectedItem.resumeLink ? 'Start over' : (selectedItem.primaryLabel || 'Play now') }}</span>
+                    <span>{{ selectedItem.resumeLink ? t('streaming.actions.startOver') : (selectedItem.primaryLabel || t('streaming.actions.playNow')) }}</span>
                   </NuxtLink>
+                  <slot name="modal-actions" :item="selectedItem" />
                 </div>
               </div>
             </div>
@@ -174,7 +175,10 @@
 </template>
 
 <script setup>
-defineProps({
+import { onBeforeUnmount, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
+
+const props = defineProps({
   title: { type: String, required: true },
   eyebrow: { type: String, required: true },
   itemLabel: { type: String, default: 'item' },
@@ -191,11 +195,34 @@ defineProps({
 
 defineEmits(['open', 'close', 'feature'])
 
+const { t } = useI18n()
+
 const progressPercent = (item) => {
   const value = Number(item?.progressPercent || 0)
   if (!Number.isFinite(value) || value <= 0) return 0
   return Math.min(100, Math.max(0, value))
 }
+
+const lockPageScroll = (locked) => {
+  if (typeof document === 'undefined') return
+  const html = document.documentElement
+  const body = document.body
+  if (locked) {
+    html.style.overflow = 'hidden'
+    body.style.overflow = 'hidden'
+    return
+  }
+  html.style.overflow = ''
+  body.style.overflow = ''
+}
+
+watch(() => props.selectedItem, (item) => {
+  lockPageScroll(Boolean(item))
+}, { immediate: true })
+
+onBeforeUnmount(() => {
+  lockPageScroll(false)
+})
 </script>
 
 <style scoped>
@@ -408,12 +435,12 @@ const progressPercent = (item) => {
 .streaming-modal-backdrop {
   position: fixed;
   inset: 0;
-  z-index: 50;
+  z-index: 2147483646;
   display: flex;
   align-items: flex-start;
   justify-content: center;
-  overflow-y: auto;
-  padding: 5rem 0.75rem 1rem;
+  overflow: hidden;
+  padding: 0.75rem;
   color: #fff;
   background: rgba(0, 0, 0, 0.8);
   backdrop-filter: blur(6px);
@@ -423,7 +450,7 @@ const progressPercent = (item) => {
   display: flex;
   width: 100%;
   max-width: 64rem;
-  max-height: calc(100vh - 5.5rem);
+  max-height: calc(100vh - 1.5rem);
   flex-direction: column;
   overflow: hidden;
   border-radius: 0.25rem;
@@ -463,6 +490,7 @@ const progressPercent = (item) => {
   bottom: 0;
   z-index: 10;
   padding: 1.25rem;
+  padding-right: 4.5rem;
 }
 
 .streaming-modal-close {
@@ -488,6 +516,7 @@ const progressPercent = (item) => {
 .streaming-modal-secondary-action {
   display: inline-flex;
   min-height: 4rem;
+  min-width: 0;
   align-items: center;
   gap: 0.75rem;
   border-radius: 0.25rem;
@@ -496,6 +525,13 @@ const progressPercent = (item) => {
   font-weight: 800;
   line-height: 1.2;
   text-decoration: none;
+}
+
+.streaming-modal-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1rem;
 }
 
 .streaming-modal-primary-action {
@@ -555,7 +591,66 @@ const progressPercent = (item) => {
   min-height: 0;
   flex: 1 1 auto;
   overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 1rem;
+  scrollbar-color: rgba(113, 113, 122, 0.75) rgba(24, 24, 27, 0.25);
+  scrollbar-width: thin;
+}
+
+.streaming-modal-body::-webkit-scrollbar {
+  width: 10px;
+}
+
+.streaming-modal-body::-webkit-scrollbar-track {
+  background: rgba(24, 24, 27, 0.35);
+  border-left: 1px solid rgba(63, 63, 70, 0.25);
+}
+
+.streaming-modal-body::-webkit-scrollbar-thumb {
+  min-height: 48px;
+  background: linear-gradient(180deg, rgba(161, 161, 170, 0.72), rgba(82, 82, 91, 0.78));
+  border: 2px solid rgba(24, 24, 27, 0.9);
+  border-radius: 999px;
+}
+
+.streaming-modal-body::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, rgba(212, 212, 216, 0.86), rgba(113, 113, 122, 0.9));
+}
+
+@media (max-width: 639px) {
+  .streaming-modal-hero {
+    min-height: 16.5rem;
+    height: auto;
+  }
+
+  .streaming-modal-title {
+    font-size: clamp(1.9rem, 9vw, 2.7rem);
+  }
+
+  .streaming-modal-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: stretch;
+  }
+
+  .streaming-modal-primary-action,
+  .streaming-modal-secondary-action,
+  :deep(.streaming-watch-party-button) {
+    width: 100%;
+    min-height: 3.5rem;
+    justify-content: center;
+    padding: 0.75rem 1rem;
+  }
+
+  :deep(.streaming-watch-party-button) {
+    grid-column: 1 / -1;
+  }
+
+  .streaming-modal-action-icon {
+    width: 2.25rem;
+    height: 2.25rem;
+    flex-basis: 2.25rem;
+  }
 }
 
 @media (min-width: 640px) {
@@ -575,11 +670,11 @@ const progressPercent = (item) => {
   }
 
   .streaming-modal-backdrop {
-    padding: 6rem 1rem 1.5rem;
+    padding: 1rem;
   }
 
   .streaming-modal-panel {
-    max-height: calc(100vh - 7rem);
+    max-height: calc(100vh - 2rem);
   }
 
   .streaming-modal-hero {

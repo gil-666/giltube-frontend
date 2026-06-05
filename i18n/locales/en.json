@@ -523,6 +523,203 @@
     "metaTitleSuffix": "Videos - GilTube",
     "metaDescription": "Browse {name} videos on GilTube"
   },
+  "streaming": {
+    "actions": {
+      "play": "Play",
+      "playNow": "Play now",
+      "resume": "Resume",
+      "startOver": "Start over"
+    }
+  },
+  "moviesCategory": {
+    "title": "Movies",
+    "featured": "Featured Movies",
+    "itemLabel": "movie",
+    "details": "Details",
+    "empty": "No movies have been published yet.",
+    "channelName": "GilTube Movies",
+    "fallbackGenre": "Movies",
+    "synopsisFallback": "Watch this movie on GilTube.",
+    "metaDescription": "GilTube movies organized by genre.",
+    "moreLikeThis": "More like this",
+    "meta": {
+      "channel": "Channel",
+      "added": "Added",
+      "views": "Views",
+      "runtime": "Runtime"
+    },
+    "watchParty": {
+      "title": "Start movie watch party",
+      "body": "Public parties show on the home page. Private parties are only available through the share link.",
+      "continueFrom": "Continue from {time} from last watch party"
+    },
+    "errors": {
+      "load": "Failed to load movies."
+    }
+  },
+  "seriesCategory": {
+    "title": "Series",
+    "featured": "Featured Series",
+    "itemLabel": "series",
+    "details": "Episodes",
+    "empty": "No series have been published yet.",
+    "synopsisFallback": "Watch full series on GilTube.",
+    "metaDescription": "Episodic GilTube series organized by genre.",
+    "scrollLeft": "Scroll episodes left",
+    "scrollRight": "Scroll episodes right",
+    "seasonLabel": "Season {season}",
+    "seasonCount": "{count} season | {count} seasons",
+    "episodeCount": "{count} episode | {count} episodes",
+    "episodeKicker": "Season {season} | Episode {episode}",
+    "episodeCountLabel": "Season {season} / {count} episode | Season {season} / {count} episodes",
+    "meta": {
+      "directors": "Directors",
+      "cast": "Cast"
+    },
+    "watchParty": {
+      "title": "Start series watch party",
+      "body": "Start a synced episode queue for this series. Public parties show on the home page.",
+      "continueFrom": "Continue from {time} from last watch party",
+      "chooseEpisodeStart": "Choose episode start",
+      "startLabel": "Start",
+      "fromFirstEpisode": "From first episode",
+      "fromSpecificEpisode": "From a specific episode",
+      "episodeLabel": "Episode",
+      "episodeOption": "S{season} E{episode} {title}",
+      "noEpisodes": "This series has no episodes yet."
+    },
+    "errors": {
+      "load": "Failed to load series."
+    }
+  },
+  "watchPage": {
+    "nextEpisode": "Next episode",
+    "nextVideo": "Next video",
+    "seriesTrailer": "Series Trailer",
+    "watchSeries": "Watch series",
+    "viewSeries": "View series",
+    "movieTrailer": "Movie Trailer",
+    "watchMovie": "Watch movie",
+    "movieLabel": "Movie",
+    "viewMovie": "View movie"
+  },
+  "watchParty": {
+    "startButton": "Watch party",
+    "starting": "Starting...",
+    "startParty": "Start party",
+    "visibility": "Visibility",
+    "titleFallback": "Watch party",
+    "dialog": {
+      "title": "Start watch party",
+      "body": "Public parties show on the home page. Private parties are only available through the share link.",
+      "partyType": "Party mode",
+      "partyTypeHelp": "Open queue lets the host and allowed viewers add videos. Single video keeps the party locked to this video.",
+      "partyTypes": {
+        "queue": "Open queue",
+        "single": "Single video"
+      }
+    },
+    "errors": {
+      "startFailed": "Failed to start watch party"
+    }
+  },
+  "movieAdmin": {
+    "title": "Movie Creator",
+    "subtitle": "Create metadata, upload a public trailer, and attach a hidden full movie video.",
+    "resumeExisting": "Resume existing movie",
+    "createNewOption": "Create a new movie",
+    "linkedBadge": "linked",
+    "newMovie": "New movie",
+    "featuredToggle": "Feature this movie in the Movies category hero",
+    "defaults": {
+      "genre": "Drama",
+      "trailerSuffix": "Trailer"
+    },
+    "fields": {
+      "title": "Title",
+      "slug": "Slug",
+      "primaryGenre": "Primary Genre",
+      "releaseYear": "Release Year",
+      "synopsis": "Synopsis",
+      "genres": "Genres",
+      "directors": "Directors",
+      "cast": "Cast",
+      "posterImage": "Poster Image",
+      "backdropImage": "Backdrop Image"
+    },
+    "placeholders": {
+      "slug": "Auto-generated if blank",
+      "genres": "Drama, Mystery",
+      "commaSeparated": "Comma-separated",
+      "trailerTitle": "Trailer title",
+      "movieVideoTitle": "Movie video title",
+      "searchLibrary": "Search Movies channel videos"
+    },
+    "actions": {
+      "createMovie": "Create movie",
+      "creatingMovie": "Creating...",
+      "saveMovieDetails": "Save movie details",
+      "uploadTrailer": "Upload trailer",
+      "upload": "Upload",
+      "replaceUpload": "Replace upload",
+      "localUpload": "Local upload",
+      "attaching": "Attaching...",
+      "attachMovie": "Attach movie",
+      "refreshLibrary": "Refresh library",
+      "trailerLinked": "Trailer linked",
+      "movieLinked": "Movie linked",
+      "linking": "Linking...",
+      "useAsTrailer": "Use as trailer",
+      "useAsMovie": "Use as movie"
+    },
+    "channelCard": {
+      "title": "Movies Channel",
+      "body": "Trailers stay public. Full movies are uploaded as hidden videos, then linked to the movie record."
+    },
+    "ids": {
+      "movieVideo": "Movie Video ID",
+      "trailerVideo": "Trailer Video ID"
+    },
+    "trailer": {
+      "title": "Trailer",
+      "body": "This video stays visible in normal GilTube surfaces and links viewers into the movie."
+    },
+    "fullMovie": {
+      "title": "Full Movie",
+      "body": "The linked movie video is hidden from regular feeds and used for Play/Resume in the movies category."
+    },
+    "library": {
+      "title": "Existing Movies Channel Videos",
+      "body": "Reuse already uploaded videos from the Movies channel as either the public trailer or the hidden full movie.",
+      "loading": "Loading videos...",
+      "empty": "No matching videos found in the Movies channel.",
+      "hidden": "Hidden",
+      "public": "Public",
+      "unknownDate": "Unknown date"
+    },
+    "messages": {
+      "loaded": "Loaded \"{title}\".",
+      "created": "Movie created. Upload a trailer and the hidden full movie next.",
+      "saved": "Movie details saved.",
+      "trailerDescription": "Trailer for {title}",
+      "trailerUploaded": "Trailer uploaded and linked.",
+      "movieUploaded": "Movie video uploaded. Attach it to finish.",
+      "movieUploadedLocal": "Movie video uploaded via local upload. Attach it to finish.",
+      "movieLinked": "Full movie linked.",
+      "linkedExistingTrailer": "Linked existing trailer \"{title}\"."
+    },
+    "errors": {
+      "titleRequired": "Movie title is required",
+      "loadLibrary": "Failed to load Movies channel videos",
+      "loadMovie": "Failed to load movie",
+      "createMovie": "Failed to create movie",
+      "saveMovie": "Failed to save movie details",
+      "uploadTrailer": "Failed to upload trailer",
+      "uploadMovieVideo": "Failed to upload movie video",
+      "attachMovie": "Failed to attach movie video",
+      "linkTrailer": "Failed to link existing trailer"
+    }
+  },
   "commentNode": {
     "deleteReply": "Delete reply",
     "deleteComment": "Delete comment",

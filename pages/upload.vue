@@ -13,7 +13,15 @@
       <!-- Stage 1: File Upload -->
       <div v-if="stage === 'select'">
         <h1 class="text-4xl font-bold mb-8">{{ t('upload.title') }}</h1>
-        <div class="bg-zinc-900 border-2 border-dashed border-zinc-700 rounded-lg p-12 text-center hover:border-blue-500 transition cursor-pointer" @click="triggerFileInput">
+        <div
+          class="bg-zinc-900 border-2 border-dashed rounded-lg p-12 text-center transition cursor-pointer"
+          :class="isDraggingFile ? 'border-blue-500 bg-blue-950/20' : 'border-zinc-700 hover:border-blue-500'"
+          @click="triggerFileInput"
+          @dragenter.prevent="isDraggingFile = true"
+          @dragover.prevent="isDraggingFile = true"
+          @dragleave.prevent="handleFileDragLeave"
+          @drop.prevent="handleFileDrop"
+        >
           <svg class="w-16 h-16 mx-auto mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
           </svg>
@@ -117,6 +125,20 @@
               <svg v-if="form.explicit" class="w-5 h-5 text-red-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
               </svg>
+            </div>
+
+            <!-- Admin Local Upload -->
+            <div v-if="isAdmin" class="flex items-center gap-3 bg-zinc-800 border border-zinc-700 rounded p-4">
+              <input
+                id="local-upload-toggle"
+                v-model="useLocalUpload"
+                type="checkbox"
+                class="w-4 h-4 rounded cursor-pointer accent-blue-500"
+              />
+              <label for="local-upload-toggle" class="flex-1 cursor-pointer">
+                <span class="text-sm font-medium">Local upload</span>
+                <p class="text-xs text-gray-400 mt-1">Upload directly to the local backend on port 8080.</p>
+              </label>
             </div>
 
             <!-- Thumbnail Upload -->
@@ -300,6 +322,7 @@ const isReady = ref(false)
 const userId = ref('')
 const fileInput = ref(null)
 const thumbnailInput = ref(null)
+const localUploadBaseURL = 'http://localhost:8080/api/v1'
 
 const form = ref({
   title: '',
@@ -311,9 +334,12 @@ const form = ref({
 const thumbnailFile = ref<File | null>(null)
 const thumbnailPreview = ref('')
 const selectedFileName = ref('')
-const selectedFile = ref(null)
+const selectedFile = ref<File | null>(null)
 const uploadProgress = ref(0)
 const error = ref('')
+const isAdmin = ref(false)
+const isDraggingFile = ref(false)
+const useLocalUpload = ref(false)
 
 const stage = ref('select')
 const isUploading = ref(false)
@@ -356,6 +382,7 @@ const checkAuthStatus = async () => {
     
     if (userRes.ok) {
       const user = await userRes.json()
+      isAdmin.value = user.user_type === 'admin'
       if (user.status === 'banned') {
         error.value = t('upload.bannedError')
         setTimeout(() => router.push(localePath('/')), 2000)
@@ -414,12 +441,33 @@ const triggerThumbnailInput = () => {
 
 const handleFileSelect = (event) => {
   const file = event.target.files?.[0]
-  if (!file) return
+  setSelectedVideoFile(file)
+}
 
+const setSelectedVideoFile = (file?: File | null) => {
+  if (!file) return
+  if (!file.type.startsWith('video/')) {
+    error.value = 'Please choose a video file.'
+    return
+  }
   selectedFile.value = file
   selectedFileName.value = file.name
   error.value = ''
   stage.value = 'details'
+}
+
+const handleFileDrop = (event: DragEvent) => {
+  isDraggingFile.value = false
+  const file = event.dataTransfer?.files?.[0]
+  setSelectedVideoFile(file)
+}
+
+const handleFileDragLeave = (event: DragEvent) => {
+  const currentTarget = event.currentTarget as HTMLElement | null
+  const relatedTarget = event.relatedTarget as Node | null
+  if (!currentTarget || !relatedTarget || !currentTarget.contains(relatedTarget)) {
+    isDraggingFile.value = false
+  }
 }
 
 const onThumbnailSelected = (event: any) => {
@@ -484,6 +532,7 @@ const handleStartUpload = async () => {
       videoFile: selectedFile.value,
       explicit: form.value.explicit,
       categoryId: form.value.categoryId,
+      uploadBaseURL: isAdmin.value && useLocalUpload.value ? localUploadBaseURL : undefined,
       onProgress: (progress) => {
         uploadProgress.value = progress
       },
@@ -525,6 +574,8 @@ const startOver = () => {
   selectedFileName.value = ''
   thumbnailFile.value = null
   thumbnailPreview.value = ''
+  useLocalUpload.value = false
+  isDraggingFile.value = false
   form.value = {
     title: '',
     description: '',
