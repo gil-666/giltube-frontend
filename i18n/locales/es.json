@@ -188,6 +188,8 @@
     "goBackHome": "Volver al inicio",
     "videoProcessing": "Video en procesamiento",
     "processingMessage": "Este video aún se está procesando. Estará disponible para ver en breve.",
+    "showMore": "Mostrar más",
+    "showLess": "Mostrar menos",
     "matureContentWarning": "Este video contiene contenido para adultos y está dirigido a espectadores mayores de 18 años. Se recomienda discreción.",
     "characterCount": "{current}/500",
     "deleteCommentConfirm": "¿Seguro que quieres eliminar este comentario?",
@@ -623,9 +625,186 @@
       "startFailed": "No se pudo iniciar la watch party"
     }
   },
+  "admin": {
+    "title": "Panel de administración",
+    "subtitle": "Gestión de la plataforma y estadísticas",
+    "help": {
+      "title": "Panel de administración",
+      "body": "Usa esta área para tareas operativas de confianza: moderación, metadatos de streaming, configuración de películas y series, e importaciones espejo de YouTube. Las acciones destructivas están protegidas contra cuentas admin y canales de admins."
+    },
+    "stats": {
+      "totalUsers": "Usuarios totales",
+      "totalChannels": "Canales totales",
+      "totalVideos": "Videos totales",
+      "platformViews": "Vistas de la plataforma"
+    },
+    "tabs": {
+      "users": "Usuarios",
+      "channels": "Canales",
+      "videos": "Videos",
+      "series": "Series",
+      "movies": "Películas",
+      "youtubeMirrors": "Espejos de YouTube"
+    },
+    "actions": {
+      "promote": "Promover",
+      "demote": "Degradar",
+      "suspend": "Suspender",
+      "unsuspend": "Quitar suspensión",
+      "ban": "Banear",
+      "unban": "Quitar ban"
+    },
+    "users": {
+      "title": "Gestión de usuarios",
+      "helpTitle": "Moderación de usuarios",
+      "helpBody": "Suspender bloquea subidas pero mantiene el inicio de sesión. Banear bloquea la cuenta y oculta los videos de sus canales. Las cuentas admin no se pueden suspender, banear o eliminar desde este panel.",
+      "searchPlaceholder": "Buscar usuarios por nombre o correo...",
+      "adminProtected": "Admin protegido",
+      "columns": {
+        "username": "Usuario",
+        "email": "Correo",
+        "type": "Tipo",
+        "status": "Estado",
+        "channels": "Canales",
+        "videos": "Videos",
+        "totalViews": "Vistas totales",
+        "actions": "Acciones"
+      }
+    },
+    "channels": {
+      "title": "Gestión de canales",
+      "helpTitle": "Moderación de canales",
+      "helpBody": "Suspende o banea canales cuando el problema está aislado a un canal. Los canales que pertenecen a admins están protegidos contra moderación destructiva.",
+      "adminProtected": "Canal de admin",
+      "columns": {
+        "name": "Nombre del canal",
+        "owner": "Dueño",
+        "status": "Estado",
+        "videos": "Videos",
+        "totalViews": "Vistas totales",
+        "created": "Creado",
+        "actions": "Acciones"
+      }
+    },
+    "videos": {
+      "title": "Estadísticas de videos",
+      "totalComments": "Comentarios totales"
+    },
+    "loading": "Cargando datos de administración..."
+  },
+  "seriesAdmin": {
+    "title": "Creador de series",
+    "subtitle": "Crea metadatos, sube un trailer público e ingiere episodios ocultos.",
+    "resumeExisting": "Retomar serie existente",
+    "createNewOption": "Crear una serie nueva",
+    "newSeries": "Nueva serie",
+    "episodeCount": "{count} episodios",
+    "featuredToggle": "Destacar esta serie en el héroe de la categoría Series",
+    "fields": {
+      "seasons": "Temporadas"
+    },
+    "placeholders": {
+      "episodeTitle": "Título del episodio",
+      "episodeSynopsis": "Sinopsis del episodio",
+      "introStart": "Inicio intro",
+      "introEnd": "Fin intro"
+    },
+    "actions": {
+      "createSeries": "Crear serie",
+      "creatingSeries": "Creando...",
+      "saveSeriesDetails": "Guardar detalles de la serie",
+      "addEpisode": "Agregar episodio",
+      "pickIntro": "Elegir intro",
+      "attached": "Adjunto",
+      "attach": "Adjuntar"
+    },
+    "channelCard": {
+      "title": "Canal de series",
+      "body": "Los tráilers son videos públicos. Los episodios se suben como videos ocultos y luego se adjuntan a la cola de reproducción de la serie."
+    },
+    "trailer": {
+      "title": "Tráiler",
+      "body": "Este video sigue visible en las superficies normales de GilTube y lleva a los usuarios hacia la serie."
+    },
+    "episodes": {
+      "title": "Episodios",
+      "body": "Los videos de episodios quedan ocultos de los feeds principales después de subirse."
+    },
+    "ids": {
+      "episode": "ID del episodio",
+      "video": "ID del video"
+    },
+    "introPicker": {
+      "title": "Elegir tiempos de intro",
+      "previewFallback": "Vista previa del episodio",
+      "currentTime": "Tiempo actual",
+      "introStart": "Inicio intro",
+      "introEnd": "Fin intro",
+      "setStart": "Marcar inicio aquí",
+      "setEnd": "Marcar fin aquí",
+      "previewRange": "Previsualizar rango"
+    },
+    "help": {
+      "title": "Herramientas de series",
+      "body": "Los registros de series controlan la UI de la categoría streaming. Los trailers quedan públicos en GilTube, mientras los episodios son videos ocultos enlazados a la cola por temporada y episodio. Las herramientas de subtítulos editan el master HLS de cada episodio."
+    }
+  },
+  "youtubeMirrorAdmin": {
+    "title": "Importar desde YouTube",
+    "subtitle": "Importa videos de YouTube a GilTube y enlaza IDs estables de canales de YouTube con canales espejo.",
+    "help": {
+      "title": "Espejos de YouTube",
+      "body": "Los mapeos usan el ID estable del canal de YouTube, no el nombre visible. Esto evita canales duplicados en GilTube si el canal de YouTube cambia de nombre."
+    },
+    "import": {
+      "title": "Importar video",
+      "body": "Pega una URL de YouTube. Si su canal ya está mapeado, GilTube usará ese canal espejo automáticamente.",
+      "helpTitle": "Importar videos de YouTube",
+      "helpBody": "El backend lee metadatos con yt-dlp, crea un video en GilTube, descarga el archivo y lo manda al transcodificador normal. Si no existe mapeo, elige un canal GilTube existente o crea un canal espejo nuevo.",
+      "useMappedChannel": "Usar canal mapeado",
+      "explicit": "Explícito",
+      "hidden": "Oculto",
+      "createNewChannel": "Crear canal espejo",
+      "starting": "Iniciando importación...",
+      "submit": "Importar desde YouTube",
+      "mappingRequired": "Este canal de YouTube necesita un mapeo primero.",
+      "youtubeChannelId": "ID del canal de YouTube",
+      "channel": "Canal",
+      "mappingRequiredBody": "Elige un canal espejo de GilTube existente o activa Crear canal espejo, y vuelve a ejecutar la importación. El mapeo se guardará automáticamente."
+    },
+    "mappings": {
+      "title": "Mapeos de canales de YouTube",
+      "body": "Enlaza IDs estables de YouTube a canales espejo de GilTube para evitar duplicados.",
+      "helpTitle": "Mapeos de canales",
+      "helpBody": "Usa esta tabla para conectar manualmente un ID de canal de YouTube con un canal de GilTube. Si el canal espejo todavía no existe, activa Crear nuevo y se adjuntará a la cuenta GilTube Mirrors.",
+      "youtubeChannelId": "ID del canal de YouTube",
+      "youtubeChannelName": "Nombre del canal de YouTube",
+      "selectGilTubeChannel": "Seleccionar canal de GilTube",
+      "createNew": "Crear nuevo",
+      "loading": "Cargando mapeos...",
+      "empty": "Aún no hay canales de YouTube enlazados.",
+      "untitled": "Canal de YouTube sin título",
+      "mirrorsTo": "Espeja a"
+    },
+    "messages": {
+      "alreadyMirrored": "Ya está espejado como video {id}.",
+      "importStarted": "Importación iniciada como video {id}. La transcodificación empieza cuando termine la descarga de YouTube."
+    },
+    "errors": {
+      "loadMappings": "No se pudieron cargar los mapeos de YouTube",
+      "import": "No se pudo importar el video de YouTube",
+      "saveMapping": "No se pudo guardar el mapeo de YouTube",
+      "deleteMapping": "No se pudo eliminar el mapeo de YouTube"
+    },
+    "confirmDelete": "¿Eliminar el mapeo de YouTube para \"{title}\"?"
+  },
   "movieAdmin": {
     "title": "Creador de películas",
     "subtitle": "Crea metadatos, sube un tráiler público y enlaza un video oculto para la película completa.",
+    "help": {
+      "title": "Herramientas de películas",
+      "body": "Los registros de películas alimentan la UI de la categoría Películas. El tráiler es público y descubrible; la película completa queda oculta de los feeds normales y se enlaza aquí para reproducir, continuar, watch parties y subtítulos."
+    },
     "resumeExisting": "Retomar película existente",
     "createNewOption": "Crear una película nueva",
     "linkedBadge": "enlazada",
@@ -686,7 +865,41 @@
     },
     "fullMovie": {
       "title": "Película completa",
-      "body": "El video enlazado de la película se oculta de los feeds normales y se usa para Reproducir/Continuar en la categoría Películas."
+      "body": "El video enlazado de la película se oculta de los feeds normales y se usa para Reproducir/Continuar en la categoría Películas.",
+      "helpTitle": "Video de película completa",
+      "helpBody": "Sube un archivo nuevo o enlaza un video existente del canal Movies. Cuando esté adjunto, la película puede usar el mismo administrador HLS de subtítulos que los episodios de series."
+    },
+    "subtitles": {
+      "title": "Subtítulos",
+      "body": "Sube archivos .srt, .ass o .vtt. Los archivos que no sean VTT se convierten y se insertan en el master HLS de la película.",
+      "helpTitle": "Subtítulos de películas",
+      "helpBody": "Las pistas se guardan en la carpeta captions del video enlazado. Usa default para elegir la pista inicial del reproductor, delay para mover los tiempos en milisegundos y descargar para revisar el VTT generado.",
+      "default": "Default",
+      "optional": "Opcional",
+      "delayMs": "Delay ms",
+      "fixDefaults": "Arreglar defaults",
+      "keepOnlyDefault": "Mantener como único default",
+      "makeDefault": "Hacer default",
+      "saveDelay": "Guardar delay",
+      "download": "Descargar",
+      "replace": "Reemplazar",
+      "saveSubtitle": "Guardar subtítulo",
+      "addSubtitle": "Agregar subtítulo",
+      "empty": "No se encontraron pistas de subtítulos en el master playlist.",
+      "confirmDelete": "¿Eliminar la pista de subtítulos \"{label}\"?",
+      "messages": {
+        "saved": "Pista de subtítulos guardada.",
+        "delaySaved": "Delay de subtítulos guardado.",
+        "defaultSaved": "Default de subtítulos guardado.",
+        "deleted": "Pista de subtítulos eliminada."
+      },
+      "errors": {
+        "load": "No se pudieron cargar los subtítulos de la película",
+        "save": "No se pudo guardar el subtítulo",
+        "saveDelay": "No se pudo guardar el delay del subtítulo",
+        "default": "No se pudo marcar el subtítulo default",
+        "delete": "No se pudo eliminar el subtítulo"
+      }
     },
     "library": {
       "title": "Videos existentes del canal Movies",
@@ -794,6 +1007,9 @@
     "update": "Actualizar",
     "edit": "Editar",
     "delete": "Eliminar",
+    "close": "Cerrar",
+    "refresh": "Actualizar",
+    "done": "Listo",
     "views": "vistas",
     "save": "Guardar"
   }

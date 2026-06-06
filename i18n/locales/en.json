@@ -188,6 +188,8 @@
     "goBackHome": "Go Back to Home",
     "videoProcessing": "Video Processing",
     "processingMessage": "This video is still being processed. It will be available to watch shortly.",
+    "showMore": "Show more",
+    "showLess": "Show less",
     "matureContentWarning": "This video contains mature content and is intended for viewers 18 years and older. Viewer discretion is advised.",
     "characterCount": "{current}/500",
     "deleteCommentConfirm": "Are you sure you want to delete this comment?",
@@ -623,9 +625,186 @@
       "startFailed": "Failed to start watch party"
     }
   },
+  "admin": {
+    "title": "Admin Panel",
+    "subtitle": "Platform management and statistics",
+    "help": {
+      "title": "Admin panel",
+      "body": "Use this area for trusted operational work: moderation, streaming metadata, movie and series setup, and YouTube mirroring. Destructive actions are protected against admin accounts and admin-owned channels."
+    },
+    "stats": {
+      "totalUsers": "Total Users",
+      "totalChannels": "Total Channels",
+      "totalVideos": "Total Videos",
+      "platformViews": "Platform Views"
+    },
+    "tabs": {
+      "users": "Users",
+      "channels": "Channels",
+      "videos": "Videos",
+      "series": "Series",
+      "movies": "Movies",
+      "youtubeMirrors": "YouTube Mirrors"
+    },
+    "actions": {
+      "promote": "Promote",
+      "demote": "Demote",
+      "suspend": "Suspend",
+      "unsuspend": "Unsuspend",
+      "ban": "Ban",
+      "unban": "Unban"
+    },
+    "users": {
+      "title": "User Management",
+      "helpTitle": "User moderation",
+      "helpBody": "Suspend prevents uploads while keeping login available. Ban blocks the account and hides videos from that user's channels. Admin accounts cannot be suspended, banned, or deleted from this panel.",
+      "searchPlaceholder": "Search users by name or email...",
+      "adminProtected": "Admin protected",
+      "columns": {
+        "username": "Username",
+        "email": "Email",
+        "type": "Type",
+        "status": "Status",
+        "channels": "Channels",
+        "videos": "Videos",
+        "totalViews": "Total Views",
+        "actions": "Actions"
+      }
+    },
+    "channels": {
+      "title": "Channel Management",
+      "helpTitle": "Channel moderation",
+      "helpBody": "Suspend or ban channels when the issue is isolated to one channel. Channels owned by admin users are protected from destructive moderation.",
+      "adminProtected": "Admin-owned channel",
+      "columns": {
+        "name": "Channel Name",
+        "owner": "Owner",
+        "status": "Status",
+        "videos": "Videos",
+        "totalViews": "Total Views",
+        "created": "Created",
+        "actions": "Actions"
+      }
+    },
+    "videos": {
+      "title": "Video Statistics",
+      "totalComments": "Total Comments"
+    },
+    "loading": "Loading admin data..."
+  },
+  "seriesAdmin": {
+    "title": "Series Creator",
+    "subtitle": "Create metadata, upload a public trailer, and ingest hidden episode videos.",
+    "resumeExisting": "Resume existing series",
+    "createNewOption": "Create a new series",
+    "newSeries": "New series",
+    "episodeCount": "{count} episodes",
+    "featuredToggle": "Feature this series in the Series category hero",
+    "fields": {
+      "seasons": "Seasons"
+    },
+    "placeholders": {
+      "episodeTitle": "Episode title",
+      "episodeSynopsis": "Episode synopsis",
+      "introStart": "Intro start",
+      "introEnd": "Intro end"
+    },
+    "actions": {
+      "createSeries": "Create series",
+      "creatingSeries": "Creating...",
+      "saveSeriesDetails": "Save series details",
+      "addEpisode": "Add episode",
+      "pickIntro": "Pick intro",
+      "attached": "Attached",
+      "attach": "Attach"
+    },
+    "channelCard": {
+      "title": "Series Channel",
+      "body": "Trailers are public videos. Episodes are uploaded as hidden videos, then attached to the series playback queue."
+    },
+    "trailer": {
+      "title": "Trailer",
+      "body": "This video stays visible in normal GilTube surfaces and links viewers into the series."
+    },
+    "episodes": {
+      "title": "Episodes",
+      "body": "Episode videos are hidden from the main feeds after upload."
+    },
+    "ids": {
+      "episode": "Episode ID",
+      "video": "Video ID"
+    },
+    "introPicker": {
+      "title": "Pick Intro Times",
+      "previewFallback": "Episode preview",
+      "currentTime": "Current time",
+      "introStart": "Intro start",
+      "introEnd": "Intro end",
+      "setStart": "Set start here",
+      "setEnd": "Set end here",
+      "previewRange": "Preview range"
+    },
+    "help": {
+      "title": "Series tools",
+      "body": "Series records control the streaming category UI. Trailers remain public in normal GilTube surfaces, while episodes are hidden videos linked into the season and episode queue. Subtitle tools edit the HLS master playlist for each episode."
+    }
+  },
+  "youtubeMirrorAdmin": {
+    "title": "YouTube Mirror Import",
+    "subtitle": "Import YouTube videos into GilTube and keep stable YouTube channel IDs linked to mirror channels.",
+    "help": {
+      "title": "YouTube mirrors",
+      "body": "Mirror mappings use the stable YouTube channel ID, not the channel display name. This prevents duplicate GilTube channels when a YouTube channel changes names."
+    },
+    "import": {
+      "title": "Import video",
+      "body": "Paste a YouTube video URL. If its channel is already mapped, GilTube will use that mirror channel automatically.",
+      "helpTitle": "Importing YouTube videos",
+      "helpBody": "The backend reads metadata with yt-dlp, creates a GilTube video record, downloads the video, then queues it for the normal transcoder. If no mapping exists, choose an existing GilTube channel or create a new mirror channel.",
+      "useMappedChannel": "Use mapped channel",
+      "explicit": "Explicit",
+      "hidden": "Hidden",
+      "createNewChannel": "Create mirror channel",
+      "starting": "Starting import...",
+      "submit": "Import from YouTube",
+      "mappingRequired": "This YouTube channel needs a mirror mapping first.",
+      "youtubeChannelId": "YouTube channel ID",
+      "channel": "Channel",
+      "mappingRequiredBody": "Choose an existing GilTube mirror channel or enable Create mirror channel, then run the import again. The mapping will be saved automatically."
+    },
+    "mappings": {
+      "title": "YouTube channel mappings",
+      "body": "Link stable YouTube channel IDs to GilTube mirror channels to avoid duplicate channels.",
+      "helpTitle": "Channel mappings",
+      "helpBody": "Use this table to manually connect a YouTube channel ID to a GilTube channel. If the mirror channel does not exist yet, enable Create new and it will be attached to the GilTube Mirrors account.",
+      "youtubeChannelId": "YouTube channel ID",
+      "youtubeChannelName": "YouTube channel name",
+      "selectGilTubeChannel": "Select GilTube channel",
+      "createNew": "Create new",
+      "loading": "Loading mappings...",
+      "empty": "No YouTube channels are linked yet.",
+      "untitled": "Untitled YouTube channel",
+      "mirrorsTo": "Mirrors to"
+    },
+    "messages": {
+      "alreadyMirrored": "Already mirrored as video {id}.",
+      "importStarted": "Import started as video {id}. Transcoding starts after the YouTube download finishes."
+    },
+    "errors": {
+      "loadMappings": "Failed to load YouTube mirror mappings",
+      "import": "Failed to import YouTube video",
+      "saveMapping": "Failed to save YouTube mirror mapping",
+      "deleteMapping": "Failed to delete YouTube mirror mapping"
+    },
+    "confirmDelete": "Delete YouTube mirror mapping for \"{title}\"?"
+  },
   "movieAdmin": {
     "title": "Movie Creator",
     "subtitle": "Create metadata, upload a public trailer, and attach a hidden full movie video.",
+    "help": {
+      "title": "Movie tools",
+      "body": "Movie records power the Movies category UI. The trailer is public and discoverable; the full movie video is hidden from regular feeds and linked here for Play, Resume, watch parties, and subtitle management."
+    },
     "resumeExisting": "Resume existing movie",
     "createNewOption": "Create a new movie",
     "linkedBadge": "linked",
@@ -686,7 +865,41 @@
     },
     "fullMovie": {
       "title": "Full Movie",
-      "body": "The linked movie video is hidden from regular feeds and used for Play/Resume in the movies category."
+      "body": "The linked movie video is hidden from regular feeds and used for Play/Resume in the movies category.",
+      "helpTitle": "Full movie video",
+      "helpBody": "Upload a new file or link an existing video from the Movies channel. Once attached, the movie can use the same HLS subtitle manager as series episodes."
+    },
+    "subtitles": {
+      "title": "Subtitles",
+      "body": "Upload .srt, .ass, or .vtt files. Non-VTT files are converted and inserted into the movie HLS master playlist.",
+      "helpTitle": "Movie subtitles",
+      "helpBody": "Subtitle tracks are stored in the linked movie video's captions folder. Use default to choose the track players select first, delay to shift cue timing in milliseconds, and download to inspect the generated VTT.",
+      "default": "Default",
+      "optional": "Optional",
+      "delayMs": "Delay ms",
+      "fixDefaults": "Fix defaults",
+      "keepOnlyDefault": "Keep as only default",
+      "makeDefault": "Make default",
+      "saveDelay": "Save delay",
+      "download": "Download",
+      "replace": "Replace",
+      "saveSubtitle": "Save subtitle",
+      "addSubtitle": "Add subtitle",
+      "empty": "No subtitle tracks found in the master playlist.",
+      "confirmDelete": "Delete subtitle track \"{label}\"?",
+      "messages": {
+        "saved": "Subtitle track saved.",
+        "delaySaved": "Subtitle delay saved.",
+        "defaultSaved": "Subtitle default saved.",
+        "deleted": "Subtitle track deleted."
+      },
+      "errors": {
+        "load": "Failed to load movie subtitles",
+        "save": "Failed to save subtitle",
+        "saveDelay": "Failed to save subtitle delay",
+        "default": "Failed to set default subtitle",
+        "delete": "Failed to delete subtitle"
+      }
     },
     "library": {
       "title": "Existing Movies Channel Videos",
@@ -794,6 +1007,9 @@
     "update": "Update",
     "edit": "Edit",
     "delete": "Delete",
+    "close": "Close",
+    "refresh": "Refresh",
+    "done": "Done",
     "views": "views",
     "save": "Save"
   }

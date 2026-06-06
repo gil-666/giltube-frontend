@@ -1,74 +1,89 @@
 <template>
-  <div class="p-6 space-y-6 max-w-7xl mx-auto">
+  <div class="mx-auto max-w-7xl space-y-6 px-3 py-4 sm:p-6">
     <!-- Page Header -->
     <div class="mb-8">
-      <h1 class="text-4xl font-bold text-white mb-2">Admin Panel</h1>
-      <p class="text-gray-400">Platform management and statistics</p>
+      <div class="flex items-center gap-3">
+        <h1 class="mb-2 text-3xl font-bold text-white sm:text-4xl">{{ t('admin.title') }}</h1>
+        <AdminHelpButton :title="t('admin.help.title')" :body="t('admin.help.body')" :close-label="t('common.close')" />
+      </div>
+      <p class="text-gray-400">{{ t('admin.subtitle') }}</p>
     </div>
 
     <!-- Statistics Cards -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
       <div class="bg-zinc-900 border border-zinc-700 rounded-lg p-4">
-        <p class="text-gray-400 text-sm mb-1">Total Users</p>
+        <p class="text-gray-400 text-sm mb-1">{{ t('admin.stats.totalUsers') }}</p>
         <p class="text-3xl font-bold text-blue-400">{{ stats.total_users }}</p>
       </div>
       <div class="bg-zinc-900 border border-zinc-700 rounded-lg p-4">
-        <p class="text-gray-400 text-sm mb-1">Total Channels</p>
+        <p class="text-gray-400 text-sm mb-1">{{ t('admin.stats.totalChannels') }}</p>
         <p class="text-3xl font-bold text-green-400">{{ stats.total_channels }}</p>
       </div>
       <div class="bg-zinc-900 border border-zinc-700 rounded-lg p-4">
-        <p class="text-gray-400 text-sm mb-1">Total Videos</p>
+        <p class="text-gray-400 text-sm mb-1">{{ t('admin.stats.totalVideos') }}</p>
         <p class="text-3xl font-bold text-purple-400">{{ stats.total_videos }}</p>
       </div>
       <div class="bg-zinc-900 border border-zinc-700 rounded-lg p-4">
-        <p class="text-gray-400 text-sm mb-1">Platform Views</p>
+        <p class="text-gray-400 text-sm mb-1">{{ t('admin.stats.platformViews') }}</p>
         <p class="text-3xl font-bold text-yellow-400">{{ formatNumber(stats.total_views) }}</p>
       </div>
     </div>
 
     <!-- Tab Navigation -->
-    <div class="flex gap-4 border-b border-zinc-700">
+    <nav
+      class="admin-tabs -mx-3 flex snap-x snap-mandatory gap-1 overflow-x-auto border-b border-zinc-700 px-3 sm:mx-0 sm:gap-4 sm:px-0"
+      :aria-label="t('admin.title')"
+    >
       <button
         @click="activeTab = 'users'"
-        :class="['px-4 py-2 border-b-2 font-semibold transition', activeTab === 'users' ? 'border-blue-500 text-blue-400' : 'border-transparent text-gray-400 hover:text-white']"
+        :class="['flex-none snap-start whitespace-nowrap border-b-2 px-3 py-2 font-semibold transition sm:px-4', activeTab === 'users' ? 'border-blue-500 text-blue-400' : 'border-transparent text-gray-400 hover:text-white']"
       >
-        👥 Users
+        {{ t('admin.tabs.users') }}
       </button>
       <button
         @click="activeTab = 'channels'"
-        :class="['px-4 py-2 border-b-2 font-semibold transition', activeTab === 'channels' ? 'border-blue-500 text-blue-400' : 'border-transparent text-gray-400 hover:text-white']"
+        :class="['flex-none snap-start whitespace-nowrap border-b-2 px-3 py-2 font-semibold transition sm:px-4', activeTab === 'channels' ? 'border-blue-500 text-blue-400' : 'border-transparent text-gray-400 hover:text-white']"
       >
-        📺 Channels
+        {{ t('admin.tabs.channels') }}
       </button>
       <button
         @click="activeTab = 'videos'"
-        :class="['px-4 py-2 border-b-2 font-semibold transition', activeTab === 'videos' ? 'border-blue-500 text-blue-400' : 'border-transparent text-gray-400 hover:text-white']"
+        :class="['flex-none snap-start whitespace-nowrap border-b-2 px-3 py-2 font-semibold transition sm:px-4', activeTab === 'videos' ? 'border-blue-500 text-blue-400' : 'border-transparent text-gray-400 hover:text-white']"
       >
-        🎬 Videos
+        {{ t('admin.tabs.videos') }}
       </button>
       <button
         @click="activeTab = 'series'"
-        :class="['px-4 py-2 border-b-2 font-semibold transition', activeTab === 'series' ? 'border-blue-500 text-blue-400' : 'border-transparent text-gray-400 hover:text-white']"
+        :class="['flex-none snap-start whitespace-nowrap border-b-2 px-3 py-2 font-semibold transition sm:px-4', activeTab === 'series' ? 'border-blue-500 text-blue-400' : 'border-transparent text-gray-400 hover:text-white']"
       >
-        Series
+        {{ t('admin.tabs.series') }}
       </button>
       <button
         @click="activeTab = 'movies'"
-        :class="['px-4 py-2 border-b-2 font-semibold transition', activeTab === 'movies' ? 'border-blue-500 text-blue-400' : 'border-transparent text-gray-400 hover:text-white']"
+        :class="['flex-none snap-start whitespace-nowrap border-b-2 px-3 py-2 font-semibold transition sm:px-4', activeTab === 'movies' ? 'border-blue-500 text-blue-400' : 'border-transparent text-gray-400 hover:text-white']"
       >
-        Movies
+        {{ t('admin.tabs.movies') }}
       </button>
-    </div>
+      <button
+        @click="activeTab = 'youtube-mirrors'"
+        :class="['flex-none snap-start whitespace-nowrap border-b-2 px-3 py-2 font-semibold transition sm:px-4', activeTab === 'youtube-mirrors' ? 'border-blue-500 text-blue-400' : 'border-transparent text-gray-400 hover:text-white']"
+      >
+        {{ t('admin.tabs.youtubeMirrors') }}
+      </button>
+    </nav>
 
     <!-- Users Tab -->
     <div v-if="activeTab === 'users'" class="space-y-4">
-      <h2 class="text-2xl font-bold text-white mb-4">User Management</h2>
+      <div class="mb-4 flex items-center gap-3">
+        <h2 class="text-2xl font-bold text-white">{{ t('admin.users.title') }}</h2>
+        <AdminHelpButton :title="t('admin.users.helpTitle')" :body="t('admin.users.helpBody')" :close-label="t('common.close')" />
+      </div>
       
       <!-- Search/Filter -->
       <input
         v-model="searchQuery"
         type="text"
-        placeholder="Search users by name or email..."
+        :placeholder="t('admin.users.searchPlaceholder')"
         class="w-full px-4 py-2 bg-zinc-900 border border-zinc-700 rounded text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
       />
 
@@ -77,14 +92,14 @@
         <table class="w-full text-sm">
           <thead class="bg-zinc-900 border-b border-zinc-700">
             <tr>
-              <th class="px-4 py-3 text-left text-gray-400 font-semibold">Username</th>
-              <th class="px-4 py-3 text-left text-gray-400 font-semibold">Email</th>
-              <th class="px-4 py-3 text-left text-gray-400 font-semibold">Type</th>
-              <th class="px-4 py-3 text-left text-gray-400 font-semibold">Status</th>
-              <th class="px-4 py-3 text-left text-gray-400 font-semibold">Channels</th>
-              <th class="px-4 py-3 text-left text-gray-400 font-semibold">Videos</th>
-              <th class="px-4 py-3 text-left text-gray-400 font-semibold">Total Views</th>
-              <th class="px-4 py-3 text-left text-gray-400 font-semibold">Actions</th>
+              <th class="px-4 py-3 text-left text-gray-400 font-semibold">{{ t('admin.users.columns.username') }}</th>
+              <th class="px-4 py-3 text-left text-gray-400 font-semibold">{{ t('admin.users.columns.email') }}</th>
+              <th class="px-4 py-3 text-left text-gray-400 font-semibold">{{ t('admin.users.columns.type') }}</th>
+              <th class="px-4 py-3 text-left text-gray-400 font-semibold">{{ t('admin.users.columns.status') }}</th>
+              <th class="px-4 py-3 text-left text-gray-400 font-semibold">{{ t('admin.users.columns.channels') }}</th>
+              <th class="px-4 py-3 text-left text-gray-400 font-semibold">{{ t('admin.users.columns.videos') }}</th>
+              <th class="px-4 py-3 text-left text-gray-400 font-semibold">{{ t('admin.users.columns.totalViews') }}</th>
+              <th class="px-4 py-3 text-left text-gray-400 font-semibold">{{ t('admin.users.columns.actions') }}</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-zinc-700">
@@ -109,42 +124,46 @@
                   @click="toggleUserAdmin(user.id, user.user_type)"
                   :class="['px-2 py-1 rounded text-xs transition', user.user_type === 'admin' ? 'bg-yellow-900 hover:bg-yellow-800 text-yellow-200' : 'bg-purple-900 hover:bg-purple-800 text-purple-200']"
                 >
-                  {{ user.user_type === 'admin' ? 'Demote' : 'Promote' }}
+                  {{ user.user_type === 'admin' ? t('admin.actions.demote') : t('admin.actions.promote') }}
                 </button>
                 <button
-                  v-if="user.status !== 'suspended'"
+                  v-if="user.status !== 'suspended' && !isProtectedAdminUser(user)"
                   @click="suspendUser(user.id, user.username)"
                   class="px-2 py-1 bg-yellow-900 hover:bg-yellow-800 text-yellow-200 rounded text-xs transition"
                 >
-                  Suspend
+                  {{ t('admin.actions.suspend') }}
                 </button>
                 <button
                   v-if="user.status === 'suspended'"
                   @click="unsuspendUser(user.id, user.username)"
                   class="px-2 py-1 bg-green-900 hover:bg-green-800 text-green-200 rounded text-xs transition"
                 >
-                  Unsuspend
+                  {{ t('admin.actions.unsuspend') }}
                 </button>
                 <button
-                  v-if="user.status !== 'banned'"
+                  v-if="user.status !== 'banned' && !isProtectedAdminUser(user)"
                   @click="banUser(user.id, user.username)"
                   class="px-2 py-1 bg-red-900 hover:bg-red-800 text-red-200 rounded text-xs transition"
                 >
-                  Ban
+                  {{ t('admin.actions.ban') }}
                 </button>
                 <button
                   v-if="user.status === 'banned'"
                   @click="unbanUser(user.id, user.username)"
                   class="px-2 py-1 bg-green-900 hover:bg-green-800 text-green-200 rounded text-xs transition"
                 >
-                  Unban
+                  {{ t('admin.actions.unban') }}
                 </button>
                 <button
+                  v-if="!isProtectedAdminUser(user)"
                   @click="deleteUser(user.id, user.username)"
                   class="px-2 py-1 bg-gray-900 hover:bg-gray-800 text-gray-200 rounded text-xs transition"
                 >
-                  Delete
+                  {{ t('common.delete') }}
                 </button>
+                <span v-if="isProtectedAdminUser(user)" class="rounded bg-zinc-800 px-2 py-1 text-xs text-gray-400">
+                  {{ t('admin.users.adminProtected') }}
+                </span>
               </td>
             </tr>
           </tbody>
@@ -154,19 +173,22 @@
 
     <!-- Channels Tab -->
     <div v-if="activeTab === 'channels'" class="space-y-4">
-      <h2 class="text-2xl font-bold text-white mb-4">Channel Management</h2>
+      <div class="mb-4 flex items-center gap-3">
+        <h2 class="text-2xl font-bold text-white">{{ t('admin.channels.title') }}</h2>
+        <AdminHelpButton :title="t('admin.channels.helpTitle')" :body="t('admin.channels.helpBody')" :close-label="t('common.close')" />
+      </div>
       
       <div class="overflow-x-auto">
         <table class="w-full text-sm">
           <thead class="bg-zinc-900 border-b border-zinc-700">
             <tr>
-              <th class="px-4 py-3 text-left text-gray-400 font-semibold">Channel Name</th>
-              <th class="px-4 py-3 text-left text-gray-400 font-semibold">Owner</th>
-              <th class="px-4 py-3 text-left text-gray-400 font-semibold">Status</th>
-              <th class="px-4 py-3 text-left text-gray-400 font-semibold">Videos</th>
-              <th class="px-4 py-3 text-left text-gray-400 font-semibold">Total Views</th>
-              <th class="px-4 py-3 text-left text-gray-400 font-semibold">Created</th>
-              <th class="px-4 py-3 text-left text-gray-400 font-semibold">Actions</th>
+              <th class="px-4 py-3 text-left text-gray-400 font-semibold">{{ t('admin.channels.columns.name') }}</th>
+              <th class="px-4 py-3 text-left text-gray-400 font-semibold">{{ t('admin.channels.columns.owner') }}</th>
+              <th class="px-4 py-3 text-left text-gray-400 font-semibold">{{ t('admin.channels.columns.status') }}</th>
+              <th class="px-4 py-3 text-left text-gray-400 font-semibold">{{ t('admin.channels.columns.videos') }}</th>
+              <th class="px-4 py-3 text-left text-gray-400 font-semibold">{{ t('admin.channels.columns.totalViews') }}</th>
+              <th class="px-4 py-3 text-left text-gray-400 font-semibold">{{ t('admin.channels.columns.created') }}</th>
+              <th class="px-4 py-3 text-left text-gray-400 font-semibold">{{ t('admin.channels.columns.actions') }}</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-zinc-700">
@@ -183,33 +205,36 @@
               <td class="px-4 py-3 text-gray-400 text-xs">{{ new Date(channel.created_at).toLocaleDateString() }}</td>
               <td class="px-4 py-3 space-x-1 flex flex-wrap">
                 <button
-                  v-if="channel.status !== 'suspended'"
+                  v-if="channel.status !== 'suspended' && !isProtectedAdminChannel(channel)"
                   @click="suspendChannel(channel.id, channel.name)"
                   class="px-2 py-1 bg-yellow-900 hover:bg-yellow-800 text-yellow-200 rounded text-xs transition"
                 >
-                  ⏸️ Suspend
+                  {{ t('admin.actions.suspend') }}
                 </button>
                 <button
                   v-if="channel.status === 'suspended'"
                   @click="unsuspendChannel(channel.id, channel.name)"
                   class="px-2 py-1 bg-green-900 hover:bg-green-800 text-green-200 rounded text-xs transition"
                 >
-                  ✅ Unsuspend
+                  {{ t('admin.actions.unsuspend') }}
                 </button>
                 <button
-                  v-if="channel.status !== 'banned'"
+                  v-if="channel.status !== 'banned' && !isProtectedAdminChannel(channel)"
                   @click="banChannel(channel.id, channel.name)"
                   class="px-2 py-1 bg-red-900 hover:bg-red-800 text-red-200 rounded text-xs transition"
                 >
-                  🚫 Ban
+                  {{ t('admin.actions.ban') }}
                 </button>
                 <button
                   v-if="channel.status === 'banned'"
                   @click="unbanChannel(channel.id, channel.name)"
                   class="px-2 py-1 bg-green-900 hover:bg-green-800 text-green-200 rounded text-xs transition"
                 >
-                  ✅ Unban
+                  {{ t('admin.actions.unban') }}
                 </button>
+                <span v-if="isProtectedAdminChannel(channel)" class="rounded bg-zinc-800 px-2 py-1 text-xs text-gray-400">
+                  {{ t('admin.channels.adminProtected') }}
+                </span>
               </td>
             </tr>
           </tbody>
@@ -219,31 +244,35 @@
 
     <!-- Videos Tab -->
     <div v-if="activeTab === 'videos'" class="space-y-4">
-      <h2 class="text-2xl font-bold text-white mb-4">Video Statistics</h2>
-      <p class="text-gray-400">Total Videos: <span class="text-white font-bold">{{ stats.total_videos }}</span></p>
-      <p class="text-gray-400">Total Comments: <span class="text-white font-bold">{{ stats.total_comments }}</span></p>
+      <h2 class="text-2xl font-bold text-white mb-4">{{ t('admin.videos.title') }}</h2>
+      <p class="text-gray-400">{{ t('admin.stats.totalVideos') }}: <span class="text-white font-bold">{{ stats.total_videos }}</span></p>
+      <p class="text-gray-400">{{ t('admin.videos.totalComments') }}: <span class="text-white font-bold">{{ stats.total_comments }}</span></p>
     </div>
 
     <MovieAdminPanel v-if="activeTab === 'movies'" />
+    <YouTubeMirrorAdminPanel v-if="activeTab === 'youtube-mirrors'" :channels="channels" />
 
     <!-- Series Tab -->
     <div v-if="activeTab === 'series'" class="space-y-6">
       <div>
-        <h2 class="text-2xl font-bold text-white">Series Creator</h2>
-        <p class="mt-1 text-sm text-gray-400">Create metadata, upload a public trailer, and ingest hidden episode videos.</p>
+        <div class="flex items-center gap-3">
+          <h2 class="text-2xl font-bold text-white">{{ t('seriesAdmin.title') }}</h2>
+          <AdminHelpButton :title="t('seriesAdmin.help.title')" :body="t('seriesAdmin.help.body')" :close-label="t('common.close')" />
+        </div>
+        <p class="mt-1 text-sm text-gray-400">{{ t('seriesAdmin.subtitle') }}</p>
       </div>
 
       <div class="rounded-lg border border-zinc-700 bg-zinc-900 p-5">
-        <label class="mb-2 block text-sm font-medium text-gray-300">Resume existing series</label>
+        <label class="mb-2 block text-sm font-medium text-gray-300">{{ t('seriesAdmin.resumeExisting') }}</label>
         <div class="grid gap-3 md:grid-cols-[minmax(0,1fr)_9rem]">
           <select v-model="selectedSeriesId" class="rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-white focus:outline-none focus:border-blue-500" @change="selectExistingSeries">
-            <option value="">Create a new series</option>
+            <option value="">{{ t('seriesAdmin.createNewOption') }}</option>
             <option v-for="item in adminSeries" :key="item.id" :value="item.id">
-              {{ item.title }} · {{ item.episode_count || 0 }} episodes
+              {{ item.title }} · {{ t('seriesAdmin.episodeCount', { count: item.episode_count || 0 }) }}
             </option>
           </select>
           <button type="button" class="rounded bg-zinc-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-zinc-600" @click="startNewSeries">
-            New series
+            {{ t('seriesAdmin.newSeries') }}
           </button>
         </div>
       </div>
@@ -252,68 +281,68 @@
         <form class="space-y-5 rounded-lg border border-zinc-700 bg-zinc-900 p-5" @submit.prevent="handleSeriesSubmit">
           <div class="grid gap-4 md:grid-cols-2">
             <div>
-              <label class="mb-2 block text-sm font-medium text-gray-300">Title</label>
+              <label class="mb-2 block text-sm font-medium text-gray-300">{{ t('movieAdmin.fields.title') }}</label>
               <input v-model="seriesForm.title" required class="w-full rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-white focus:outline-none focus:border-blue-500" />
             </div>
             <div>
-              <label class="mb-2 block text-sm font-medium text-gray-300">Slug</label>
-              <input v-model="seriesForm.slug" placeholder="Auto-generated if blank" class="w-full rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500" />
+              <label class="mb-2 block text-sm font-medium text-gray-300">{{ t('movieAdmin.fields.slug') }}</label>
+              <input v-model="seriesForm.slug" :placeholder="t('movieAdmin.placeholders.slug')" class="w-full rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500" />
             </div>
             <div>
-              <label class="mb-2 block text-sm font-medium text-gray-300">Primary Genre</label>
+              <label class="mb-2 block text-sm font-medium text-gray-300">{{ t('movieAdmin.fields.primaryGenre') }}</label>
               <input v-model="seriesForm.genre" required class="w-full rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-white focus:outline-none focus:border-blue-500" />
             </div>
             <div>
-              <label class="mb-2 block text-sm font-medium text-gray-300">Seasons</label>
+              <label class="mb-2 block text-sm font-medium text-gray-300">{{ t('seriesAdmin.fields.seasons') }}</label>
               <input v-model.number="seriesForm.seasons" min="1" type="number" class="w-full rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-white focus:outline-none focus:border-blue-500" />
             </div>
           </div>
 
           <div>
-            <label class="mb-2 block text-sm font-medium text-gray-300">Synopsis</label>
+            <label class="mb-2 block text-sm font-medium text-gray-300">{{ t('movieAdmin.fields.synopsis') }}</label>
             <textarea v-model="seriesForm.synopsis" rows="4" class="w-full rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-white focus:outline-none focus:border-blue-500" />
           </div>
 
           <div class="grid gap-4 md:grid-cols-3">
             <div>
-              <label class="mb-2 block text-sm font-medium text-gray-300">Genres</label>
-              <input v-model="seriesForm.genres" placeholder="Drama, Mystery" class="w-full rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500" />
+              <label class="mb-2 block text-sm font-medium text-gray-300">{{ t('movieAdmin.fields.genres') }}</label>
+              <input v-model="seriesForm.genres" :placeholder="t('movieAdmin.placeholders.genres')" class="w-full rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500" />
             </div>
             <div>
-              <label class="mb-2 block text-sm font-medium text-gray-300">Directors</label>
-              <input v-model="seriesForm.directors" placeholder="Comma-separated" class="w-full rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500" />
+              <label class="mb-2 block text-sm font-medium text-gray-300">{{ t('movieAdmin.fields.directors') }}</label>
+              <input v-model="seriesForm.directors" :placeholder="t('movieAdmin.placeholders.commaSeparated')" class="w-full rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500" />
             </div>
             <div>
-              <label class="mb-2 block text-sm font-medium text-gray-300">Cast</label>
-              <input v-model="seriesForm.cast" placeholder="Comma-separated" class="w-full rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500" />
+              <label class="mb-2 block text-sm font-medium text-gray-300">{{ t('movieAdmin.fields.cast') }}</label>
+              <input v-model="seriesForm.cast" :placeholder="t('movieAdmin.placeholders.commaSeparated')" class="w-full rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500" />
             </div>
           </div>
 
           <div class="grid gap-4 md:grid-cols-2">
             <div>
-              <label class="mb-2 block text-sm font-medium text-gray-300">Poster Image</label>
+              <label class="mb-2 block text-sm font-medium text-gray-300">{{ t('movieAdmin.fields.posterImage') }}</label>
               <input type="file" accept="image/*" class="block w-full text-sm text-gray-300 file:mr-3 file:rounded file:border-0 file:bg-zinc-700 file:px-3 file:py-2 file:text-white" @change="onSeriesImageSelected($event, 'poster')" />
             </div>
             <div>
-              <label class="mb-2 block text-sm font-medium text-gray-300">Backdrop Image</label>
+              <label class="mb-2 block text-sm font-medium text-gray-300">{{ t('movieAdmin.fields.backdropImage') }}</label>
               <input type="file" accept="image/*" class="block w-full text-sm text-gray-300 file:mr-3 file:rounded file:border-0 file:bg-zinc-700 file:px-3 file:py-2 file:text-white" @change="onSeriesImageSelected($event, 'backdrop')" />
             </div>
           </div>
 
           <label class="flex items-center gap-3 rounded border border-zinc-700 bg-zinc-800 p-3 text-sm text-gray-300">
             <input v-model="seriesForm.isFeatured" type="checkbox" class="h-4 w-4 accent-red-600" />
-            Feature this series in the Series category hero
+            {{ t('seriesAdmin.featuredToggle') }}
           </label>
 
           <button type="submit" :disabled="seriesCreating || seriesSaving" class="rounded bg-red-600 px-5 py-2.5 font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50">
-            {{ createdSeriesId ? (seriesSaving ? 'Saving...' : 'Save series details') : (seriesCreating ? 'Creating...' : 'Create series') }}
+            {{ createdSeriesId ? (seriesSaving ? t('common.saving') : t('seriesAdmin.actions.saveSeriesDetails')) : (seriesCreating ? t('seriesAdmin.actions.creatingSeries') : t('seriesAdmin.actions.createSeries')) }}
           </button>
         </form>
 
         <aside class="rounded-lg border border-zinc-700 bg-zinc-900 p-5">
-          <h3 class="font-semibold text-white">Series Channel</h3>
+          <h3 class="font-semibold text-white">{{ t('seriesAdmin.channelCard.title') }}</h3>
           <p class="mt-2 break-all text-sm text-gray-400">{{ seriesChannelId }}</p>
-          <p class="mt-4 text-sm text-gray-400">Trailers are public videos. Episodes are uploaded as hidden videos, then attached to the series playback queue.</p>
+          <p class="mt-4 text-sm text-gray-400">{{ t('seriesAdmin.channelCard.body') }}</p>
           <div v-if="seriesProgressMessage" class="mt-4 rounded border border-blue-500/30 bg-blue-950/40 p-3 text-sm text-blue-100">{{ seriesProgressMessage }}</div>
           <div v-if="seriesError" class="mt-4 rounded border border-red-500/30 bg-red-950/40 p-3 text-sm text-red-100">{{ seriesError }}</div>
         </aside>
@@ -321,14 +350,14 @@
 
       <div v-if="createdSeriesId" class="space-y-5 rounded-lg border border-zinc-700 bg-zinc-900 p-5">
         <div>
-          <h3 class="text-lg font-semibold text-white">Trailer</h3>
-          <p class="mt-1 text-sm text-gray-400">This video stays visible in normal GilTube surfaces and links viewers into the series.</p>
+          <h3 class="text-lg font-semibold text-white">{{ t('seriesAdmin.trailer.title') }}</h3>
+          <p class="mt-1 text-sm text-gray-400">{{ t('seriesAdmin.trailer.body') }}</p>
         </div>
         <div class="grid gap-4 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_12rem]">
-          <input v-model="trailerForm.title" placeholder="Trailer title" class="rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500" />
+          <input v-model="trailerForm.title" :placeholder="t('movieAdmin.placeholders.trailerTitle')" class="rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500" />
           <input type="file" accept="video/*" class="block w-full text-sm text-gray-300 file:mr-3 file:rounded file:border-0 file:bg-zinc-700 file:px-3 file:py-2 file:text-white" @change="onTrailerFileSelected" />
           <button type="button" :disabled="!trailerFile || trailerUploading" class="rounded bg-red-600 px-4 py-2 font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50" @click="uploadTrailer">
-            {{ trailerUploading ? `${trailerProgress}%` : 'Upload trailer' }}
+            {{ trailerUploading ? `${trailerProgress}%` : t('movieAdmin.actions.uploadTrailer') }}
           </button>
         </div>
       </div>
@@ -336,10 +365,10 @@
       <div v-if="createdSeriesId" class="space-y-5 rounded-lg border border-zinc-700 bg-zinc-900 p-5">
         <div class="flex items-center justify-between gap-4">
           <div>
-            <h3 class="text-lg font-semibold text-white">Episodes</h3>
-            <p class="mt-1 text-sm text-gray-400">Episode videos are hidden from the main feeds after upload.</p>
+            <h3 class="text-lg font-semibold text-white">{{ t('seriesAdmin.episodes.title') }}</h3>
+            <p class="mt-1 text-sm text-gray-400">{{ t('seriesAdmin.episodes.body') }}</p>
           </div>
-          <button type="button" class="rounded bg-zinc-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-zinc-600" @click="addEpisodeRow">Add episode</button>
+          <button type="button" class="rounded bg-zinc-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-zinc-600" @click="addEpisodeRow">{{ t('seriesAdmin.actions.addEpisode') }}</button>
         </div>
 
         <div class="space-y-4">
@@ -347,35 +376,35 @@
             <div class="grid gap-3 md:grid-cols-[5rem_5rem_minmax(0,1fr)]">
               <input v-model.number="episode.seasonNumber" min="1" type="number" class="rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-white" />
               <input v-model.number="episode.episodeNumber" min="1" type="number" class="rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-white" />
-              <input v-model="episode.title" placeholder="Episode title" class="rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-white placeholder-gray-500" />
+              <input v-model="episode.title" :placeholder="t('seriesAdmin.placeholders.episodeTitle')" class="rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-white placeholder-gray-500" />
             </div>
             <div v-if="episode.episodeId || episode.videoId" class="mt-3 grid gap-2 rounded border border-zinc-800 bg-black/30 px-3 py-2 text-xs md:grid-cols-2">
               <div v-if="episode.episodeId" class="min-w-0">
-                <span class="font-semibold uppercase tracking-wide text-gray-500">Episode ID</span>
+                <span class="font-semibold uppercase tracking-wide text-gray-500">{{ t('seriesAdmin.ids.episode') }}</span>
                 <code class="mt-1 block select-all break-all font-mono text-gray-200">{{ episode.episodeId }}</code>
               </div>
               <div v-if="episode.videoId" class="min-w-0">
-                <span class="font-semibold uppercase tracking-wide text-gray-500">Video ID</span>
+                <span class="font-semibold uppercase tracking-wide text-gray-500">{{ t('seriesAdmin.ids.video') }}</span>
                 <code class="mt-1 block select-all break-all font-mono text-gray-200">{{ episode.videoId }}</code>
               </div>
             </div>
-            <textarea v-model="episode.synopsis" rows="2" placeholder="Episode synopsis" class="mt-3 w-full rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-white placeholder-gray-500" />
+            <textarea v-model="episode.synopsis" rows="2" :placeholder="t('seriesAdmin.placeholders.episodeSynopsis')" class="mt-3 w-full rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-white placeholder-gray-500" />
             <div class="mt-3 grid gap-3 md:grid-cols-[minmax(0,1fr)_7.5rem_7.5rem_8.5rem_26rem]">
               <input type="file" accept="video/*" class="block w-full text-sm text-gray-300 file:mr-3 file:rounded file:border-0 file:bg-zinc-700 file:px-3 file:py-2 file:text-white" @change="onEpisodeFileSelected($event, index)" />
-              <input v-model.number="episode.introStartSeconds" min="0" type="number" placeholder="Intro start" class="rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-white placeholder-gray-500" />
-              <input v-model.number="episode.introEndSeconds" min="0" type="number" placeholder="Intro end" class="rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-white placeholder-gray-500" />
+              <input v-model.number="episode.introStartSeconds" min="0" type="number" :placeholder="t('seriesAdmin.placeholders.introStart')" class="rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-white placeholder-gray-500" />
+              <input v-model.number="episode.introEndSeconds" min="0" type="number" :placeholder="t('seriesAdmin.placeholders.introEnd')" class="rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-white placeholder-gray-500" />
               <button type="button" :disabled="!episode.file" class="rounded bg-zinc-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-zinc-600 disabled:cursor-not-allowed disabled:opacity-50" @click="openIntroPicker(index)">
-                Pick intro
+                {{ t('seriesAdmin.actions.pickIntro') }}
               </button>
               <div class="grid grid-cols-3 gap-2">
                 <button type="button" :disabled="(!episode.file && !episode.videoId) || episode.uploading || episode.attached" class="rounded bg-red-600 px-4 py-2 font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50" @click="uploadEpisode(index)">
-                  {{ episode.attached ? 'Attached' : episode.uploading ? `${episode.progress}%` : episode.videoId ? 'Attach' : 'Upload' }}
+                  {{ episode.attached ? t('seriesAdmin.actions.attached') : episode.uploading ? `${episode.progress}%` : episode.videoId ? t('seriesAdmin.actions.attach') : t('movieAdmin.actions.upload') }}
                 </button>
                 <button type="button" :disabled="!episode.file || !!episode.videoId || episode.uploading || episode.attached" class="rounded bg-blue-600 px-4 py-2 font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50" @click="uploadEpisode(index, true)">
-                  Local upload
+                  {{ t('movieAdmin.actions.localUpload') }}
                 </button>
                 <button type="button" :disabled="!episode.attached || episode.saving" class="rounded bg-green-700 px-4 py-2 font-semibold text-white transition hover:bg-green-600 disabled:cursor-not-allowed disabled:opacity-50" @click="saveEpisode(index)">
-                  {{ episode.saving ? 'Saving...' : 'Save' }}
+                  {{ episode.saving ? t('common.saving') : t('common.save') }}
                 </button>
               </div>
             </div>
@@ -383,8 +412,8 @@
             <div v-if="episode.attached" class="mt-4 rounded border border-zinc-800 bg-black/30 p-4">
               <div class="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                  <h4 class="text-sm font-semibold text-white">Subtitles</h4>
-                  <p class="mt-1 text-xs text-gray-500">Upload .srt, .ass, or .vtt. Non-VTT files are converted automatically.</p>
+                  <h4 class="text-sm font-semibold text-white">{{ t('movieAdmin.subtitles.title') }}</h4>
+                  <p class="mt-1 text-xs text-gray-500">{{ t('movieAdmin.subtitles.body') }}</p>
                 </div>
                 <div class="flex flex-wrap gap-2">
                   <button
@@ -394,10 +423,10 @@
                     class="rounded bg-amber-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-amber-500 disabled:cursor-not-allowed disabled:opacity-50"
                     @click="fixSubtitleDefaults(index)"
                   >
-                    Fix defaults
+                    {{ t('movieAdmin.subtitles.fixDefaults') }}
                   </button>
                   <button type="button" class="rounded bg-zinc-800 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-zinc-700" @click="loadEpisodeSubtitles(episode)">
-                    Refresh tracks
+                    {{ t('common.refresh') }}
                   </button>
                 </div>
               </div>
@@ -406,33 +435,33 @@
                 <div v-for="track in episode.subtitles" :key="track.id" class="flex flex-wrap items-center justify-between gap-3 rounded bg-zinc-900 px-3 py-2">
                   <div class="min-w-0">
                     <p class="truncate text-sm font-medium text-white">{{ track.label || track.language || track.id }}</p>
-                    <p class="text-xs text-gray-500">{{ track.language || 'und' }} · {{ track.default ? 'Default' : 'Optional' }}</p>
+                    <p class="text-xs text-gray-500">{{ track.language || 'und' }} · {{ track.default ? t('movieAdmin.subtitles.default') : t('movieAdmin.subtitles.optional') }}</p>
                   </div>
                   <div class="flex flex-wrap gap-2">
-                    <input v-model.number="track.delay_ms" type="number" step="100" placeholder="Delay ms" class="w-28 rounded border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-xs text-white placeholder-gray-500" />
+                    <input v-model.number="track.delay_ms" type="number" step="100" :placeholder="t('movieAdmin.subtitles.delayMs')" class="w-28 rounded border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-xs text-white placeholder-gray-500" />
                     <button v-if="!track.default || hasDuplicateSubtitleDefaults(episode)" type="button" :disabled="episode.subtitleUploading" class="rounded bg-emerald-700 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-emerald-600 disabled:cursor-not-allowed disabled:opacity-50" @click="makeSubtitleDefault(index, track)">
-                      {{ track.default ? 'Keep as only default' : 'Make default' }}
+                      {{ track.default ? t('movieAdmin.subtitles.keepOnlyDefault') : t('movieAdmin.subtitles.makeDefault') }}
                     </button>
                     <button type="button" :disabled="episode.subtitleUploading" class="rounded bg-blue-700 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-blue-600 disabled:cursor-not-allowed disabled:opacity-50" @click="saveSubtitleDelay(index, track)">
-                      Save delay
+                      {{ t('movieAdmin.subtitles.saveDelay') }}
                     </button>
                     <a
                       :href="subtitleDownloadUrl(episode, track)"
                       :download="subtitleDownloadName(episode, track)"
                       class="rounded bg-zinc-700 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-zinc-600"
                     >
-                      Download
+                      {{ t('movieAdmin.subtitles.download') }}
                     </a>
                     <button type="button" :disabled="episode.subtitleUploading" class="rounded bg-zinc-700 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-zinc-600 disabled:cursor-not-allowed disabled:opacity-50" @click="startReplaceSubtitle(index, track)">
-                      Replace
+                      {{ t('movieAdmin.subtitles.replace') }}
                     </button>
                     <button type="button" :disabled="episode.subtitleUploading" class="rounded bg-red-900 px-3 py-1.5 text-xs font-semibold text-red-100 transition hover:bg-red-800 disabled:cursor-not-allowed disabled:opacity-50" @click="deleteSubtitle(index, track)">
-                      Delete
+                      {{ t('common.delete') }}
                     </button>
                   </div>
                 </div>
               </div>
-              <p v-else class="mt-3 text-sm text-gray-500">No subtitle tracks found in the master playlist.</p>
+              <p v-else class="mt-3 text-sm text-gray-500">{{ t('movieAdmin.subtitles.empty') }}</p>
 
               <div class="mt-4 grid gap-3 md:grid-cols-[minmax(0,1fr)_8rem_10rem_8rem_8rem]">
                 <input type="file" accept=".srt,.ass,.vtt,text/vtt" class="block w-full text-sm text-gray-300 file:mr-3 file:rounded file:border-0 file:bg-zinc-700 file:px-3 file:py-2 file:text-white" @change="onSubtitleFileSelected($event, index)" />
@@ -440,16 +469,16 @@
                 <input v-model="episode.subtitleLabel" placeholder="English" class="rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-white placeholder-gray-500" />
                 <label class="flex items-center gap-2 rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-xs text-gray-300">
                   <input v-model="episode.subtitleDefault" type="checkbox" class="h-4 w-4 accent-red-600" />
-                  Default
+                  {{ t('movieAdmin.subtitles.default') }}
                 </label>
-                <input v-model.number="episode.subtitleDelayMS" type="number" step="100" placeholder="Delay ms" class="rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-white placeholder-gray-500" />
+                <input v-model.number="episode.subtitleDelayMS" type="number" step="100" :placeholder="t('movieAdmin.subtitles.delayMs')" class="rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-white placeholder-gray-500" />
               </div>
               <div class="mt-3 flex flex-wrap gap-2">
                 <button type="button" :disabled="(!episode.subtitleFile && !episode.subtitleReplacingTrackId) || episode.subtitleUploading" class="rounded bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50" @click="uploadSubtitle(index, episode.subtitleReplacingTrackId)">
-                  {{ episode.subtitleUploading ? 'Saving...' : episode.subtitleReplacingTrackId ? 'Save subtitle' : 'Add subtitle' }}
+                  {{ episode.subtitleUploading ? t('common.saving') : episode.subtitleReplacingTrackId ? t('movieAdmin.subtitles.saveSubtitle') : t('movieAdmin.subtitles.addSubtitle') }}
                 </button>
                 <button v-if="episode.subtitleReplacingTrackId" type="button" class="rounded bg-zinc-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-zinc-600" @click="cancelReplaceSubtitle(index)">
-                  Cancel replace
+                  {{ t('common.cancel') }}
                 </button>
               </div>
             </div>
@@ -462,11 +491,11 @@
       <div class="w-full max-w-4xl rounded-lg border border-zinc-700 bg-zinc-950 shadow-2xl">
         <div class="flex items-start justify-between gap-4 border-b border-zinc-800 p-4">
           <div>
-            <h3 class="text-lg font-semibold text-white">Pick Intro Times</h3>
-            <p class="mt-1 text-sm text-gray-400">{{ activeIntroEpisode?.title || activeIntroEpisode?.file?.name || 'Episode preview' }}</p>
+            <h3 class="text-lg font-semibold text-white">{{ t('seriesAdmin.introPicker.title') }}</h3>
+            <p class="mt-1 text-sm text-gray-400">{{ activeIntroEpisode?.title || activeIntroEpisode?.file?.name || t('seriesAdmin.introPicker.previewFallback') }}</p>
           </div>
           <button type="button" class="rounded bg-zinc-800 px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-zinc-700" @click="closeIntroPicker">
-            Close
+            {{ t('common.close') }}
           </button>
         </div>
 
@@ -483,31 +512,31 @@
 
           <div class="grid gap-3 md:grid-cols-3">
             <div class="rounded border border-zinc-800 bg-black/30 p-3">
-              <p class="text-xs uppercase tracking-wide text-gray-500">Current time</p>
+              <p class="text-xs uppercase tracking-wide text-gray-500">{{ t('seriesAdmin.introPicker.currentTime') }}</p>
               <p class="mt-1 text-xl font-semibold text-white">{{ formatDuration(introPickerCurrentTime) }}</p>
             </div>
             <div class="rounded border border-zinc-800 bg-black/30 p-3">
-              <p class="text-xs uppercase tracking-wide text-gray-500">Intro start</p>
+              <p class="text-xs uppercase tracking-wide text-gray-500">{{ t('seriesAdmin.introPicker.introStart') }}</p>
               <p class="mt-1 text-xl font-semibold text-white">{{ formatDuration(activeIntroEpisode?.introStartSeconds || 0) }}</p>
             </div>
             <div class="rounded border border-zinc-800 bg-black/30 p-3">
-              <p class="text-xs uppercase tracking-wide text-gray-500">Intro end</p>
+              <p class="text-xs uppercase tracking-wide text-gray-500">{{ t('seriesAdmin.introPicker.introEnd') }}</p>
               <p class="mt-1 text-xl font-semibold text-white">{{ formatDuration(activeIntroEpisode?.introEndSeconds || 0) }}</p>
             </div>
           </div>
 
           <div class="flex flex-wrap gap-2">
             <button type="button" class="rounded bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700" @click="setIntroPickerPoint('start')">
-              Set start here
+              {{ t('seriesAdmin.introPicker.setStart') }}
             </button>
             <button type="button" class="rounded bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700" @click="setIntroPickerPoint('end')">
-              Set end here
+              {{ t('seriesAdmin.introPicker.setEnd') }}
             </button>
             <button type="button" :disabled="!canPreviewIntroRange" class="rounded bg-zinc-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-zinc-600 disabled:cursor-not-allowed disabled:opacity-50" @click="previewIntroRange">
-              Preview range
+              {{ t('seriesAdmin.introPicker.previewRange') }}
             </button>
             <button type="button" class="ml-auto rounded bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-700" @click="closeIntroPicker">
-              Done
+              {{ t('common.done') }}
             </button>
           </div>
         </div>
@@ -516,7 +545,7 @@
 
     <!-- Loading State -->
     <div v-if="loading" class="text-center text-gray-400 py-8">
-      Loading admin data...
+      {{ t('admin.loading') }}
     </div>
 
     <!-- Error Message -->
@@ -530,7 +559,10 @@
 import { ref, computed, nextTick, onBeforeUnmount, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useLocalePath } from '#i18n'
+import { useI18n } from 'vue-i18n'
 import MovieAdminPanel from '~/app/components/admin/MovieAdminPanel.vue'
+import YouTubeMirrorAdminPanel from '~/app/components/admin/YouTubeMirrorAdminPanel.vue'
+import AdminHelpButton from '~/app/components/admin/AdminHelpButton.vue'
 import { uploadVideo } from '~/app/service/upload'
 import {
   addSeriesEpisode,
@@ -548,6 +580,7 @@ import {
 
 const router = useRouter()
 const localePath = useLocalePath()
+const { t } = useI18n()
 const activeTab = ref('users')
 const searchQuery = ref('')
 const loading = ref(true)
@@ -746,6 +779,9 @@ const filteredUsers = computed(() => {
     u.email.toLowerCase().includes(query)
   )
 })
+
+const isProtectedAdminUser = (user: any) => user?.user_type === 'admin'
+const isProtectedAdminChannel = (channel: any) => channel?.user_type === 'admin'
 
 const formatNumber = (num: number) => {
   if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M'
@@ -951,11 +987,11 @@ const unbanUser = async (userIdToBan: string, username: string) => {
   }
 }
 
-const deleteUser = async (userId: string, username: string) => {
+const deleteUser = async (userIdToDelete: string, username: string) => {
   if (!confirm(`Are you sure you want to DELETE user "${username}" and all their data? This cannot be undone.`)) return
 
   try {
-    const res = await fetch(`/api/v1/admin/users/${userId}?user_id=${userId}`, {
+    const res = await fetch(`/api/v1/admin/users/${userIdToDelete}?user_id=${userId}`, {
       method: 'DELETE',
       headers: {
         'X-User-ID': userId
@@ -978,7 +1014,7 @@ const suspendUser = async (userIdToSuspend: string, username: string) => {
   if (!confirm(`Suspend user "${username}"? They can still login and use the site but cannot upload videos.`)) return
 
   try {
-    const res = await fetch(`/api/v1/admin/users/${userIdToSuspend}/suspend?user_id=${userIdToSuspend}`, {
+    const res = await fetch(`/api/v1/admin/users/${userIdToSuspend}/suspend?user_id=${userId}`, {
       method: 'POST',
       headers: {
         'X-User-ID': userId
@@ -1022,7 +1058,7 @@ const banUser = async (userIdToBan: string, username: string) => {
 
 const unsuspendUser = async (userIdToUnsuspend: string, username: string) => {
   try {
-    const res = await fetch(`/api/v1/admin/users/${userIdToUnsuspend}/unsuspend?user_id=${userIdToUnsuspend}`, {
+    const res = await fetch(`/api/v1/admin/users/${userIdToUnsuspend}/unsuspend?user_id=${userId}`, {
       method: 'POST',
       headers: {
         'X-User-ID': userId
@@ -1580,4 +1616,23 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
+.admin-tabs {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(82 82 91) transparent;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.admin-tabs::-webkit-scrollbar {
+  height: 4px;
+}
+
+.admin-tabs::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.admin-tabs::-webkit-scrollbar-thumb {
+  background: rgb(82 82 91);
+  border-radius: 999px;
+}
 </style>

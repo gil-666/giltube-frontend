@@ -32,7 +32,49 @@
         </div>
 
         <h1 class="text-2xl font-bold">{{ video.title }}</h1>
-        <p class="text-gray-400 mt-2">{{ video.description }}</p>
+        <div v-if="descriptionBlocks.length" class="mt-3 rounded-lg border border-zinc-800 bg-zinc-950/70 p-4 text-sm leading-6 text-gray-300">
+          <div
+            class="relative space-y-3"
+            :class="{
+              'max-h-32 overflow-hidden': !isDescriptionExpanded && descriptionIsLong
+            }"
+          >
+            <p
+              v-for="(block, blockIndex) in descriptionBlocks"
+              :key="blockIndex"
+              class="whitespace-pre-wrap break-words"
+            >
+              <template
+                v-for="(part, partIndex) in block"
+                :key="`${blockIndex}-${partIndex}`"
+              >
+                <a
+                  v-if="part.href"
+                  :href="part.href"
+                  target="_blank"
+                  rel="noopener noreferrer nofollow"
+                  class="text-blue-400 hover:text-blue-300 hover:underline"
+                >
+                  {{ part.text }}
+                </a>
+                <span v-else>{{ part.text }}</span>
+              </template>
+            </p>
+
+            <div
+              v-if="!isDescriptionExpanded && descriptionIsLong"
+              class="pointer-events-none absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-zinc-950/95 to-transparent"
+            />
+          </div>
+          <button
+            v-if="descriptionIsLong"
+            type="button"
+            class="mt-3 text-sm font-semibold text-blue-400 transition hover:text-blue-300"
+            @click="isDescriptionExpanded = !isDescriptionExpanded"
+          >
+            {{ isDescriptionExpanded ? t('video.showLess') : t('video.showMore') }}
+          </button>
+        </div>
         
         <!-- Badges Container - Horizontally Scrollable -->
         <div v-if="video.explicit || is4K || is8K || (video.categories && video.categories.length > 0)" class="mt-3 flex gap-2 overflow-x-auto pb-2">
@@ -890,6 +932,10 @@ const userChannels = ref<any[]>([])
 const personalAccountSelectedChannel = ref('')
 const selectedChannelName = ref('')
 const failedCommentAvatars = ref({})
+type DescriptionPart = {
+  text: string
+  href?: string
+}
 
 const comments = ref<any[]>([])
 const newCommentText = ref('')
@@ -935,7 +981,51 @@ const playlistVideos = ref<any[]>([])
 const currentVideoIndex = ref(0)
 const isPlaylistQueueExpanded = ref(false)
 const resumeStartSeconds = ref(0)
+const isDescriptionExpanded = ref(false)
 let lastWatchProgressSaveAt = 0
+
+const normalizeVideoDescription = (value: unknown) => String(value || '')
+  .replace(/\r\n/g, '\n')
+  .replace(/\r/g, '\n')
+  .trim()
+
+const linkifyDescriptionText = (text: string): DescriptionPart[] => {
+  const parts: DescriptionPart[] = []
+  const urlPattern = /((?:https?:\/\/|www\.)[^\s<>"']+)/gi
+  let lastIndex = 0
+  let match: RegExpExecArray | null
+
+  while ((match = urlPattern.exec(text)) !== null) {
+    if (match.index > lastIndex) {
+      parts.push({ text: text.slice(lastIndex, match.index) })
+    }
+
+    let urlText = match[0]
+    let trailingText = ''
+    while (/[.,!?;:)\]}]$/.test(urlText)) {
+      trailingText = urlText.slice(-1) + trailingText
+      urlText = urlText.slice(0, -1)
+    }
+
+    if (urlText) {
+      parts.push({
+        text: urlText,
+        href: /^https?:\/\//i.test(urlText) ? urlText : `https://${urlText}`
+      })
+    }
+    if (trailingText) {
+      parts.push({ text: trailingText })
+    }
+
+    lastIndex = match.index + match[0].length
+  }
+
+  if (lastIndex < text.length) {
+    parts.push({ text: text.slice(lastIndex) })
+  }
+
+  return parts.length ? parts : [{ text }]
+}
 
 const playlistQueueVideos = computed(() => {
   if (!playlistVideos.value.length) return []
@@ -1103,6 +1193,18 @@ const { data: video } = await useAsyncData(`video-${id}`, () =>
   getVideo(id)
 )
 
+const videoDescriptionText = computed(() => normalizeVideoDescription(video.value?.description))
+const descriptionBlocks = computed(() => videoDescriptionText.value
+  .split(/\n{2,}/)
+  .map((block) => block.trim())
+  .filter(Boolean)
+  .map((block) => linkifyDescriptionText(block))
+)
+const descriptionIsLong = computed(() => {
+  const description = videoDescriptionText.value
+  return description.length > 320 || description.split('\n').length > 5
+})
+
 if (video.value) {
   const siteUrl = import.meta.server
     ? (() => { const headers = useRequestHeaders(['host', 'x-forwarded-proto']); return `${headers['x-forwarded-proto'] || 'http'}://${headers.host || 'localhost:3000'}`; })()
@@ -1115,6 +1217,10 @@ if (video.value) {
     url: `${siteUrl}/video/${id}`
   })
 }
+
+watch(() => video.value?.id, () => {
+  isDescriptionExpanded.value = false
+})
 
 watch(() => video.value, (newVideo) => {
   if (newVideo && newVideo.likes !== undefined) {

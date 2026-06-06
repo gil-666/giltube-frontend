@@ -1,7 +1,14 @@
 <template>
   <div class="space-y-6">
     <div>
-      <h2 class="text-2xl font-bold text-white">{{ t('movieAdmin.title') }}</h2>
+      <div class="flex items-center gap-3">
+        <h2 class="text-2xl font-bold text-white">{{ t('movieAdmin.title') }}</h2>
+        <AdminHelpButton
+          :title="t('movieAdmin.help.title')"
+          :body="t('movieAdmin.help.body')"
+          :close-label="t('common.close')"
+        />
+      </div>
       <p class="mt-1 text-sm text-gray-400">{{ t('movieAdmin.subtitle') }}</p>
     </div>
 
@@ -117,7 +124,14 @@
 
     <div v-if="createdMovieId" class="space-y-5 rounded-lg border border-zinc-700 bg-zinc-900 p-5">
       <div>
-        <h3 class="text-lg font-semibold text-white">{{ t('movieAdmin.fullMovie.title') }}</h3>
+        <div class="flex items-center gap-3">
+          <h3 class="text-lg font-semibold text-white">{{ t('movieAdmin.fullMovie.title') }}</h3>
+          <AdminHelpButton
+            :title="t('movieAdmin.fullMovie.helpTitle')"
+            :body="t('movieAdmin.fullMovie.helpBody')"
+            :close-label="t('common.close')"
+          />
+        </div>
         <p class="mt-1 text-sm text-gray-400">{{ t('movieAdmin.fullMovie.body') }}</p>
       </div>
       <div class="grid gap-4 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_repeat(3,minmax(0,10rem))]">
@@ -131,6 +145,87 @@
         </button>
         <button type="button" :disabled="!movieVideoId || movieAttaching" class="rounded bg-green-700 px-4 py-2 font-semibold text-white transition hover:bg-green-600 disabled:cursor-not-allowed disabled:opacity-50" @click="attachMovieVideo">
           {{ movieAttaching ? t('movieAdmin.actions.attaching') : t('movieAdmin.actions.attachMovie') }}
+        </button>
+      </div>
+    </div>
+
+    <div v-if="createdMovieId && movieVideoId" class="space-y-5 rounded-lg border border-zinc-700 bg-zinc-900 p-5">
+      <div class="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <div class="flex items-center gap-3">
+            <h3 class="text-lg font-semibold text-white">{{ t('movieAdmin.subtitles.title') }}</h3>
+            <AdminHelpButton
+              :title="t('movieAdmin.subtitles.helpTitle')"
+              :body="t('movieAdmin.subtitles.helpBody')"
+              :close-label="t('common.close')"
+            />
+          </div>
+          <p class="mt-1 text-sm text-gray-400">{{ t('movieAdmin.subtitles.body') }}</p>
+        </div>
+        <div class="flex flex-wrap gap-2">
+          <button
+            v-if="needsSubtitleDefaultFix"
+            type="button"
+            :disabled="subtitleSaving"
+            class="rounded bg-amber-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-amber-500 disabled:cursor-not-allowed disabled:opacity-50"
+            @click="fixSubtitleDefaults"
+          >
+            {{ t('movieAdmin.subtitles.fixDefaults') }}
+          </button>
+          <button type="button" class="rounded bg-zinc-700 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-zinc-600" @click="loadMovieSubtitles">
+            {{ t('common.refresh') }}
+          </button>
+        </div>
+      </div>
+
+      <div v-if="movieSubtitles.length" class="space-y-2">
+        <div v-for="track in movieSubtitles" :key="track.id" class="flex flex-wrap items-center justify-between gap-3 rounded bg-zinc-950 px-3 py-2">
+          <div class="min-w-0">
+            <p class="truncate text-sm font-medium text-white">{{ track.label || track.language || track.id }}</p>
+            <p class="text-xs text-gray-500">{{ track.language || 'und' }} · {{ track.default ? t('movieAdmin.subtitles.default') : t('movieAdmin.subtitles.optional') }}</p>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <input v-model.number="track.delay_ms" type="number" step="100" :placeholder="t('movieAdmin.subtitles.delayMs')" class="w-28 rounded border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-xs text-white placeholder-gray-500" />
+            <button v-if="!track.default || hasDuplicateSubtitleDefaults" type="button" :disabled="subtitleSaving" class="rounded bg-emerald-700 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-emerald-600 disabled:cursor-not-allowed disabled:opacity-50" @click="makeSubtitleDefault(track)">
+              {{ track.default ? t('movieAdmin.subtitles.keepOnlyDefault') : t('movieAdmin.subtitles.makeDefault') }}
+            </button>
+            <button type="button" :disabled="subtitleSaving" class="rounded bg-blue-700 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-blue-600 disabled:cursor-not-allowed disabled:opacity-50" @click="saveSubtitleDelay(track)">
+              {{ t('movieAdmin.subtitles.saveDelay') }}
+            </button>
+            <a
+              :href="subtitleDownloadUrl(track)"
+              :download="subtitleDownloadName(track)"
+              class="rounded bg-zinc-700 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-zinc-600"
+            >
+              {{ t('movieAdmin.subtitles.download') }}
+            </a>
+            <button type="button" :disabled="subtitleSaving" class="rounded bg-zinc-700 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-zinc-600 disabled:cursor-not-allowed disabled:opacity-50" @click="startReplaceSubtitle(track)">
+              {{ t('movieAdmin.subtitles.replace') }}
+            </button>
+            <button type="button" :disabled="subtitleSaving" class="rounded bg-red-900 px-3 py-1.5 text-xs font-semibold text-red-100 transition hover:bg-red-800 disabled:cursor-not-allowed disabled:opacity-50" @click="removeSubtitle(track)">
+              {{ t('common.delete') }}
+            </button>
+          </div>
+        </div>
+      </div>
+      <p v-else class="rounded border border-zinc-800 bg-black/30 px-4 py-6 text-sm text-gray-500">{{ t('movieAdmin.subtitles.empty') }}</p>
+
+      <div class="grid gap-3 md:grid-cols-[minmax(0,1fr)_8rem_10rem_8rem_8rem]">
+        <input type="file" accept=".srt,.ass,.vtt,text/vtt" class="block w-full text-sm text-gray-300 file:mr-3 file:rounded file:border-0 file:bg-zinc-700 file:px-3 file:py-2 file:text-white" @change="onSubtitleFileSelected" />
+        <input v-model="subtitleForm.language" placeholder="en" class="rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-white placeholder-gray-500" />
+        <input v-model="subtitleForm.label" placeholder="English" class="rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-white placeholder-gray-500" />
+        <label class="flex items-center gap-2 rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-xs text-gray-300">
+          <input v-model="subtitleForm.isDefault" type="checkbox" class="h-4 w-4 accent-red-600" />
+          {{ t('movieAdmin.subtitles.default') }}
+        </label>
+        <input v-model.number="subtitleForm.delayMs" type="number" step="100" :placeholder="t('movieAdmin.subtitles.delayMs')" class="rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-white placeholder-gray-500" />
+      </div>
+      <div class="flex flex-wrap gap-2">
+        <button type="button" :disabled="(!subtitleForm.file && !subtitleForm.trackId) || subtitleSaving" class="rounded bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50" @click="saveSubtitle">
+          {{ subtitleSaving ? t('common.saving') : subtitleForm.trackId ? t('movieAdmin.subtitles.saveSubtitle') : t('movieAdmin.subtitles.addSubtitle') }}
+        </button>
+        <button v-if="subtitleForm.trackId" type="button" class="rounded bg-zinc-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-zinc-600" @click="cancelReplaceSubtitle">
+          {{ t('common.cancel') }}
         </button>
       </div>
     </div>
@@ -205,11 +300,21 @@ import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { getChannelVideos } from '~/app/service/channels'
 import { uploadVideo } from '~/app/service/upload'
-import { createMovie, getMovie, GILTUBE_MOVIES_CHANNEL_ID, listMovies, setMovieTrailer, setMovieVideo, updateMovie } from '~/app/service/movies'
+import { createMovie, deleteMovieSubtitle, getMovie, GILTUBE_MOVIES_CHANNEL_ID, listMovieSubtitles, listMovies, setMovieTrailer, setMovieVideo, updateMovie, uploadMovieSubtitle } from '~/app/service/movies'
+import AdminHelpButton from './AdminHelpButton.vue'
 
 const localUploadBaseURL = 'http://localhost:8080/api/v1'
 const moviesChannelId = GILTUBE_MOVIES_CHANNEL_ID
 const { t } = useI18n()
+
+type SubtitleTrack = {
+  id: string
+  label: string
+  language: string
+  uri: string
+  default: boolean
+  delay_ms: number
+}
 
 const adminMovies = ref<any[]>([])
 const selectedMovieId = ref('')
@@ -232,6 +337,16 @@ const movieVideoTitle = ref('')
 const existingMovieVideos = ref<any[]>([])
 const existingVideosLoading = ref(false)
 const existingVideosQuery = ref('')
+const movieSubtitles = ref<SubtitleTrack[]>([])
+const subtitleSaving = ref(false)
+const subtitleForm = ref({
+  file: null as File | null,
+  trackId: '',
+  label: '',
+  language: 'en',
+  isDefault: false,
+  delayMs: 0,
+})
 
 const trailerForm = ref({
   title: '',
@@ -277,6 +392,8 @@ const filteredExistingMovieVideos = computed(() => {
     String(video.id || '').toLowerCase().includes(query)
   )
 })
+const hasDuplicateSubtitleDefaults = computed(() => movieSubtitles.value.filter(track => track.default).length > 1)
+const needsSubtitleDefaultFix = computed(() => hasDuplicateSubtitleDefaults.value || movieSubtitles.value.filter(track => track.default).length === 0)
 
 const getMoviesCategoryId = () => {
   if (typeof window === 'undefined') return ''
@@ -319,6 +436,15 @@ const resetMovieWorkspace = () => {
   }
   movieError.value = ''
   movieProgressMessage.value = ''
+  movieSubtitles.value = []
+  subtitleForm.value = {
+    file: null,
+    trackId: '',
+    label: '',
+    language: 'en',
+    isDefault: false,
+    delayMs: 0,
+  }
 }
 
 const loadMoviesAdminData = async () => {
@@ -373,6 +499,7 @@ const hydrateMovieWorkspace = async (movieId: string) => {
     movieFile.value = null
     trailerProgress.value = 0
     movieUploadProgress.value = 0
+    await loadMovieSubtitles()
     movieProgressMessage.value = t('movieAdmin.messages.loaded', { title: movieForm.value.title })
   } catch (err: any) {
     movieError.value = err?.response?.data?.error || err?.message || t('movieAdmin.errors.loadMovie')
@@ -575,6 +702,7 @@ const attachMovieVideo = async () => {
     await loadMoviesAdminData()
     await loadExistingMovieVideos()
     await hydrateMovieWorkspace(createdMovieId.value)
+    await loadMovieSubtitles()
     movieProgressMessage.value = t('movieAdmin.messages.movieLinked')
   } catch (err: any) {
     movieError.value = err?.response?.data?.error || err?.message || t('movieAdmin.errors.attachMovie')
@@ -608,6 +736,150 @@ const linkExistingMovie = async (video: any) => {
   movieVideoId.value = video.id
   movieVideoTitle.value = video.title || movieForm.value.title
   await attachMovieVideo()
+}
+
+const loadMovieSubtitles = async () => {
+  if (!createdMovieId.value || !movieVideoId.value) {
+    movieSubtitles.value = []
+    return
+  }
+  try {
+    const data = await listMovieSubtitles(createdMovieId.value)
+    movieSubtitles.value = data.subtitles || []
+  } catch (err: any) {
+    movieSubtitles.value = []
+    movieError.value = err?.response?.data?.error || err?.message || t('movieAdmin.subtitles.errors.load')
+  }
+}
+
+const onSubtitleFileSelected = (event: Event) => {
+  const input = event.target as HTMLInputElement
+  subtitleForm.value.file = input.files?.[0] || null
+}
+
+const resetSubtitleForm = () => {
+  subtitleForm.value = {
+    file: null,
+    trackId: '',
+    label: '',
+    language: 'en',
+    isDefault: false,
+    delayMs: 0,
+  }
+}
+
+const saveSubtitle = async () => {
+  if (!createdMovieId.value) return
+  subtitleSaving.value = true
+  movieError.value = ''
+  try {
+    const data = await uploadMovieSubtitle(createdMovieId.value, {
+      file: subtitleForm.value.file,
+      label: subtitleForm.value.label,
+      language: subtitleForm.value.language,
+      isDefault: subtitleForm.value.isDefault,
+      delayMs: subtitleForm.value.delayMs,
+      trackId: subtitleForm.value.trackId || undefined,
+    })
+    movieSubtitles.value = data.subtitles || []
+    resetSubtitleForm()
+    movieProgressMessage.value = t('movieAdmin.subtitles.messages.saved')
+  } catch (err: any) {
+    movieError.value = err?.response?.data?.error || err?.message || t('movieAdmin.subtitles.errors.save')
+  } finally {
+    subtitleSaving.value = false
+  }
+}
+
+const startReplaceSubtitle = (track: SubtitleTrack) => {
+  subtitleForm.value = {
+    file: null,
+    trackId: track.id,
+    label: track.label || '',
+    language: track.language || 'en',
+    isDefault: !!track.default,
+    delayMs: track.delay_ms || 0,
+  }
+}
+
+const cancelReplaceSubtitle = () => {
+  resetSubtitleForm()
+}
+
+const saveSubtitleDelay = async (track: SubtitleTrack) => {
+  if (!createdMovieId.value) return
+  subtitleSaving.value = true
+  movieError.value = ''
+  try {
+    const data = await uploadMovieSubtitle(createdMovieId.value, {
+      label: track.label,
+      language: track.language,
+      isDefault: track.default,
+      delayMs: Number(track.delay_ms || 0),
+      trackId: track.id,
+    })
+    movieSubtitles.value = data.subtitles || []
+    movieProgressMessage.value = t('movieAdmin.subtitles.messages.delaySaved')
+  } catch (err: any) {
+    movieError.value = err?.response?.data?.error || err?.message || t('movieAdmin.subtitles.errors.saveDelay')
+  } finally {
+    subtitleSaving.value = false
+  }
+}
+
+const makeSubtitleDefault = async (track: SubtitleTrack) => {
+  if (!createdMovieId.value) return
+  subtitleSaving.value = true
+  movieError.value = ''
+  try {
+    const data = await uploadMovieSubtitle(createdMovieId.value, {
+      label: track.label,
+      language: track.language,
+      isDefault: true,
+      delayMs: Number(track.delay_ms || 0),
+      trackId: track.id,
+    })
+    movieSubtitles.value = data.subtitles || []
+    movieProgressMessage.value = t('movieAdmin.subtitles.messages.defaultSaved')
+  } catch (err: any) {
+    movieError.value = err?.response?.data?.error || err?.message || t('movieAdmin.subtitles.errors.default')
+  } finally {
+    subtitleSaving.value = false
+  }
+}
+
+const fixSubtitleDefaults = async () => {
+  const preferred = movieSubtitles.value.find(track => track.default) || movieSubtitles.value[0]
+  if (preferred) await makeSubtitleDefault(preferred)
+}
+
+const removeSubtitle = async (track: SubtitleTrack) => {
+  if (!createdMovieId.value || !confirm(t('movieAdmin.subtitles.confirmDelete', { label: track.label || track.language || track.id }))) return
+  subtitleSaving.value = true
+  movieError.value = ''
+  try {
+    const data = await deleteMovieSubtitle(createdMovieId.value, track.id)
+    movieSubtitles.value = data.subtitles || []
+    movieProgressMessage.value = t('movieAdmin.subtitles.messages.deleted')
+  } catch (err: any) {
+    movieError.value = err?.response?.data?.error || err?.message || t('movieAdmin.subtitles.errors.delete')
+  } finally {
+    subtitleSaving.value = false
+  }
+}
+
+const subtitleDownloadUrl = (track: SubtitleTrack) => {
+  if (!movieVideoId.value || !track.uri) return '#'
+  const subtitlePath = track.uri.replace(/playlist\.m3u8(?:\?.*)?$/i, 'captions.vtt')
+  return `${import.meta.env.VITE_API_BASE_URL || ''}/videos/${movieVideoId.value}/${subtitlePath.startsWith('/') ? subtitlePath.slice(1) : subtitlePath}`
+}
+
+const subtitleDownloadName = (track: SubtitleTrack) => {
+  const label = (track.label || track.language || track.id || 'subtitle')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+  return `${movieForm.value.slug || createdMovieId.value}-${label || 'subtitle'}.vtt`
 }
 
 onMounted(async () => {

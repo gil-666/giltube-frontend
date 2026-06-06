@@ -101,3 +101,37 @@ export const setMovieVideo = async (movieId: string, videoId: string) => {
   const res = await api.post(`/admin/movies/${movieId}/video`, { video_id: videoId })
   return res.data
 }
+
+export const listMovieSubtitles = async (movieId: string) => {
+  const res = await api.get(`/admin/movies/${movieId}/subtitles`)
+  return res.data
+}
+
+export const uploadMovieSubtitle = async (movieId: string, data: {
+  file?: File | null
+  label?: string
+  language?: string
+  isDefault?: boolean
+  delayMs?: number
+  trackId?: string
+}) => {
+  const formData = new FormData()
+  if (data.file) formData.append('subtitle', data.file)
+  if (data.label) formData.append('label', data.label)
+  if (data.language) formData.append('language', data.language)
+  if (data.isDefault) formData.append('default', 'true')
+  if (typeof data.delayMs === 'number') formData.append('delay_ms', String(data.delayMs))
+
+  const url = data.trackId
+    ? `/admin/movies/${movieId}/subtitles/${data.trackId}`
+    : `/admin/movies/${movieId}/subtitles`
+  const res = data.trackId
+    ? await api.put(url, formData, { timeout: 0 })
+    : await api.post(url, formData, { timeout: 0 })
+  return res.data
+}
+
+export const deleteMovieSubtitle = async (movieId: string, trackId: string) => {
+  const res = await api.delete(`/admin/movies/${movieId}/subtitles/${trackId}`)
+  return res.data
+}
