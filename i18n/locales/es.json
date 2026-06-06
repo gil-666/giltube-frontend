@@ -760,7 +760,7 @@
       "title": "Importar video",
       "body": "Pega una URL de YouTube. Si su canal ya está mapeado, GilTube usará ese canal espejo automáticamente.",
       "helpTitle": "Importar videos de YouTube",
-      "helpBody": "El backend lee metadatos con yt-dlp, crea un video en GilTube, descarga el archivo y lo manda al transcodificador normal. Si no existe mapeo, elige un canal GilTube existente o crea un canal espejo nuevo.",
+      "helpBody": "El backend lee metadatos con yt-dlp, descarga el video y los subtítulos disponibles, y manda todo al transcodificador normal. Los canales espejo nuevos también importan la descripción y foto de perfil del canal de YouTube. Si no existe mapeo, elige un canal GilTube existente o crea un canal espejo nuevo.",
       "useMappedChannel": "Usar canal mapeado",
       "explicit": "Explícito",
       "hidden": "Oculto",
@@ -788,6 +788,7 @@
     },
     "messages": {
       "alreadyMirrored": "Ya está espejado como video {id}.",
+      "retryStarted": "Reintentando la importación fallida como video {id}.",
       "importStarted": "Importación iniciada como video {id}. La transcodificación empieza cuando termine la descarga de YouTube."
     },
     "errors": {

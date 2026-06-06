@@ -273,9 +273,11 @@ const startImport = async () => {
       hidden: importForm.value.hidden,
       createNewChannel: importForm.value.createNewChannel,
     })
-    importMessage.value = data.existing
-      ? t('youtubeMirrorAdmin.messages.alreadyMirrored', { id: data.video_id })
-      : t('youtubeMirrorAdmin.messages.importStarted', { id: data.video_id })
+    importMessage.value = data.retried
+      ? t('youtubeMirrorAdmin.messages.retryStarted', { id: data.video_id })
+      : data.existing
+        ? t('youtubeMirrorAdmin.messages.alreadyMirrored', { id: data.video_id })
+        : t('youtubeMirrorAdmin.messages.importStarted', { id: data.video_id })
     importForm.value.url = ''
     importForm.value.createNewChannel = false
     await loadMappings()

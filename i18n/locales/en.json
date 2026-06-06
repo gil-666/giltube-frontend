@@ -760,7 +760,7 @@
       "title": "Import video",
       "body": "Paste a YouTube video URL. If its channel is already mapped, GilTube will use that mirror channel automatically.",
       "helpTitle": "Importing YouTube videos",
-      "helpBody": "The backend reads metadata with yt-dlp, creates a GilTube video record, downloads the video, then queues it for the normal transcoder. If no mapping exists, choose an existing GilTube channel or create a new mirror channel.",
+      "helpBody": "The backend reads metadata with yt-dlp, downloads the video and available captions, then queues everything for the normal transcoder. New mirror channels also import the YouTube channel description and profile picture. If no mapping exists, choose an existing GilTube channel or create a new mirror channel.",
       "useMappedChannel": "Use mapped channel",
       "explicit": "Explicit",
       "hidden": "Hidden",
@@ -788,6 +788,7 @@
     },
     "messages": {
       "alreadyMirrored": "Already mirrored as video {id}.",
+      "retryStarted": "Retrying failed import as video {id}.",
       "importStarted": "Import started as video {id}. Transcoding starts after the YouTube download finishes."
     },
     "errors": {
