@@ -5,7 +5,7 @@ let fullBaseURL = '/api/v1'
 
 // For SSR (server-side), use the direct backend URL
 if (process.server) {
-  fullBaseURL = 'http://localhost:8080/api/v1'
+  fullBaseURL = process.env.NUXT_API_INTERNAL_URL || 'http://localhost:8080/api/v1'
 }
 
 console.log('API Base URL:', fullBaseURL, 'Server?', process.server)

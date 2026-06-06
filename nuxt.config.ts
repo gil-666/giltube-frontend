@@ -29,6 +29,7 @@ const config = {
     }
   },
   runtimeConfig: {
+    apiInternalUrl: 'http://localhost:8080/api/v1',
     public: {
       siteUrl: 'http://localhost:3000'
     }
