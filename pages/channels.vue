@@ -35,18 +35,11 @@
         <div class="flex items-start gap-4 flex-1">
           <!-- Avatar -->
           <div class="flex-shrink-0">
-            <img
-              v-if="channel.avatar_url && channel.avatar_url.trim()"
+            <AvatarFallback
               :src="channel.avatar_url"
-              :alt="channel.name"
-              class="w-20 h-20 rounded-full object-cover border-2 border-zinc-700"
+              :name="channel.name"
+              class="h-20 w-20 border-2 border-zinc-700 text-2xl"
             />
-            <div
-              v-else
-              class="w-20 h-20 rounded-full bg-zinc-700 flex items-center justify-center text-2xl font-bold border-2 border-zinc-700"
-            >
-              {{ channel.name.charAt(0).toUpperCase() }}
-            </div>
           </div>
 
           <!-- Channel Details -->
@@ -81,7 +74,7 @@
       class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
       @click.self="editingId = null"
     >
-      <div class="bg-zinc-900 rounded p-8 max-w-md w-full mx-4">
+      <div class="bg-zinc-900 rounded p-8 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
         <h3 class="text-2xl font-bold mb-6">{{ t('channels.editModal') }}</h3>
 
         <form @submit.prevent="saveEdit" class="space-y-4">
@@ -116,12 +109,55 @@
               class="w-full bg-zinc-800 border border-zinc-700 rounded px-4 py-2 text-white"
             />
             <p class="text-xs text-gray-400 mt-1">{{ t('channels.avatarHelper') }}</p>
+            <button
+              v-if="editingChannelHasAvatar && !editRemoveAvatar"
+              type="button"
+              @click="markEditAvatarForRemoval"
+              class="mt-2 text-sm text-red-400 hover:text-red-300"
+            >
+              {{ t('channels.removeAvatar') }}
+            </button>
+            <p v-if="editRemoveAvatar" class="mt-2 rounded bg-red-950/60 p-2 text-sm text-red-100">{{ t('channels.avatarWillBeRemoved') }}</p>
             <!-- Avatar Preview -->
             <div v-if="editAvatarPreview" class="mt-3 flex items-center gap-3">
               <img :src="editAvatarPreview" alt="Avatar preview" class="w-12 h-12 rounded-full object-cover border border-zinc-700" />
               <button
                 type="button"
-                @click="editAvatarPreview = ''; editForm.avatar = null"
+                @click="clearEditAvatarSelection"
+                class="text-sm text-red-400 hover:text-red-300"
+              >
+                {{ t('channels.remove') }}
+              </button>
+            </div>
+          </div>
+
+          <!-- Background Image -->
+          <div>
+            <label class="block text-sm font-medium mb-2">{{ t('channels.backgroundImage') }}</label>
+            <input
+              type="file"
+              accept="image/*"
+              @change="onEditBackgroundSelected"
+              class="w-full bg-zinc-800 border border-zinc-700 rounded px-4 py-2 text-white"
+            />
+            <p class="text-xs text-gray-400 mt-1">{{ t('channels.backgroundHelper') }}</p>
+            <button
+              v-if="editingChannelHasBackground && !editRemoveBackground"
+              type="button"
+              @click="markEditBackgroundForRemoval"
+              class="mt-2 text-sm text-red-400 hover:text-red-300"
+            >
+              {{ t('channels.removeBackground') }}
+            </button>
+            <p v-if="editRemoveBackground" class="mt-2 rounded bg-red-950/60 p-2 text-sm text-red-100">{{ t('channels.backgroundWillBeRemoved') }}</p>
+            <div v-if="editBackgroundPreview" class="mt-3 space-y-2">
+              <div class="relative h-28 overflow-hidden rounded-lg border border-zinc-700 bg-zinc-800">
+                <img :src="editBackgroundPreview" alt="Background preview" class="h-full w-full object-cover" />
+                <div class="absolute inset-0 bg-black/55" />
+              </div>
+              <button
+                type="button"
+                @click="clearEditBackgroundSelection"
                 class="text-sm text-red-400 hover:text-red-300"
               >
                 {{ t('channels.remove') }}
@@ -189,6 +225,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import AvatarFallback from '~/app/components/AvatarFallback.vue'
 import { fetchUserChannels, updateChannel, deleteChannel } from '~/app/service/upload'
 import { useMetaTags } from '~/app/composables/useMetaTags'
 import { useI18n } from 'vue-i18n'
@@ -210,8 +247,13 @@ const userId = ref('')
 
 // Edit state
 const editingId = ref(null)
-const editForm = ref({ name: '', description: '', avatar: null as File | null })
+const editForm = ref({ name: '', description: '', avatar: null as File | null, background: null as File | null })
 const editAvatarPreview = ref('')
+const editBackgroundPreview = ref('')
+const editRemoveAvatar = ref(false)
+const editRemoveBackground = ref(false)
+const editingChannelHasAvatar = ref(false)
+const editingChannelHasBackground = ref(false)
 const isSaving = ref(false)
 const editError = ref('')
 
@@ -236,7 +278,7 @@ const loadChannels = async () => {
   error.value = ''
 
   try {
-    channels.value = await fetchUserChannels(userId.value)
+    channels.value = (await fetchUserChannels(userId.value)).channels
   } catch (err) {
     error.value = typeof err === 'string' ? err : t('channels.loadError')
     console.error('Channel loading error:', err)
@@ -250,19 +292,59 @@ const initEditChannel = (channel: any) => {
   editForm.value.name = channel.name
   editForm.value.description = channel.description
   editForm.value.avatar = null
+  editForm.value.background = null
   editAvatarPreview.value = ''
+  editBackgroundPreview.value = ''
+  editRemoveAvatar.value = false
+  editRemoveBackground.value = false
+  editingChannelHasAvatar.value = Boolean(channel.avatar_url)
+  editingChannelHasBackground.value = Boolean(channel.background_url)
 }
 
 const onEditAvatarSelected = (event: any) => {
   const file = event.target.files?.[0]
   if (file) {
     editForm.value.avatar = file
+    editRemoveAvatar.value = false
     const reader = new FileReader()
     reader.onload = (e) => {
       editAvatarPreview.value = e.target?.result as string
     }
     reader.readAsDataURL(file)
   }
+}
+
+const onEditBackgroundSelected = (event: any) => {
+  const file = event.target.files?.[0]
+  if (file) {
+    editForm.value.background = file
+    editRemoveBackground.value = false
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      editBackgroundPreview.value = e.target?.result as string
+    }
+    reader.readAsDataURL(file)
+  }
+}
+
+const clearEditAvatarSelection = () => {
+  editAvatarPreview.value = ''
+  editForm.value.avatar = null
+}
+
+const clearEditBackgroundSelection = () => {
+  editBackgroundPreview.value = ''
+  editForm.value.background = null
+}
+
+const markEditAvatarForRemoval = () => {
+  clearEditAvatarSelection()
+  editRemoveAvatar.value = true
+}
+
+const markEditBackgroundForRemoval = () => {
+  clearEditBackgroundSelection()
+  editRemoveBackground.value = true
 }
 
 const saveEdit = async () => {
@@ -275,10 +357,13 @@ const saveEdit = async () => {
   editError.value = ''
 
   try {
-    await updateChannel(editingId.value, {
+    const updatedChannel = await updateChannel(editingId.value, {
       name: editForm.value.name,
       description: editForm.value.description,
       avatar: editForm.value.avatar,
+      background: editForm.value.background,
+      removeAvatar: editRemoveAvatar.value,
+      removeBackground: editRemoveBackground.value,
     })
 
     // Update local state
@@ -286,8 +371,10 @@ const saveEdit = async () => {
     if (channelIndex !== -1) {
       channels.value[channelIndex].name = editForm.value.name
       channels.value[channelIndex].description = editForm.value.description
-      // If avatar was uploaded, reload the channel data to get new avatar_url path
-      if (editForm.value.avatar) {
+      channels.value[channelIndex].avatar_url = updatedChannel?.avatar_url || ''
+      channels.value[channelIndex].background_url = updatedChannel?.background_url || ''
+      // If media was uploaded, reload the channel data to get fresh public paths.
+      if (editForm.value.avatar || editForm.value.background || editRemoveAvatar.value || editRemoveBackground.value) {
         await loadChannels()
       }
     }

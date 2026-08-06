@@ -31,11 +31,14 @@ const config = {
   runtimeConfig: {
     apiInternalUrl: 'http://localhost:8080/api/v1',
     public: {
-      siteUrl: 'http://localhost:3000'
+      siteUrl: 'http://localhost:3000',
+      localUploadBaseUrl: 'http://localhost:8080/api/v1'
     }
   },
 
   app: {
+    pageTransition: { name: 'page-shift' },
+    layoutTransition: { name: 'layout-shift' },
     head: {
       link: [
         { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' },

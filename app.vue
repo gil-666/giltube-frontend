@@ -68,12 +68,27 @@
     </div>
 
     <!-- Header -->
-    <header v-if="!shouldHideHeaderSidebar"
-      class="h-16 flex items-center justify-between px-4 border-b fixed left-0 right-0 transition-all duration-300"
-      :class="headerScrolled ? 'bg-zinc-950/50 backdrop-blur-md border-zinc-700 shadow-[0_8px_24px_rgba(0,0,0,0.35)]' : 'bg-zinc-950 border-zinc-800'"
+    <header v-if="!shouldHideTopBar"
+      class="flex items-center justify-between border-b fixed left-0 right-0 transition-all duration-300"
+      :class="[
+        headerScrolled ? 'bg-zinc-950/50 backdrop-blur-md border-zinc-700 shadow-[0_8px_24px_rgba(0,0,0,0.35)]' : 'bg-zinc-950 border-zinc-800',
+        isCompactMobileWatchTopBar ? 'h-10 px-3' : 'h-16 px-4'
+      ]"
       :style="{ top: notificationBarHeight + 'px', zIndex: 60 }">
       <div class="flex items-center gap-3">
-        <button @click="isSidebarOpen = !isSidebarOpen" class="md:hidden p-2 hover:bg-zinc-800 rounded transition">
+        <NuxtLink
+          v-if="isMusicRoute"
+          :to="localePath('/')"
+          class="music-return-link flex h-9 shrink-0 items-center gap-1.5 rounded-full px-2 text-sm font-semibold text-zinc-300 hover:bg-zinc-800 hover:text-white"
+          :class="{ 'music-return-link-desktop': !isMobileDevice }"
+          aria-label="Return to GilTube"
+        >
+          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 18-6-6 6-6" />
+          </svg>
+          <span v-if="!isMobileDevice" class="music-return-label">GilTube</span>
+        </NuxtLink>
+        <button v-else-if="!isMobileDevice" @click="isSidebarOpen = !isSidebarOpen" class="p-2 hover:bg-zinc-800 rounded transition" :class="{ 'md:hidden': !useCollapsibleDesktopSidebar }">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
           </svg>
@@ -85,40 +100,162 @@
             class="inline-flex cursor-pointer items-center justify-center"
             :aria-label="t('app.home')"
           >
-            <img src="./assets/logowhsmall.png" class="h-8 object-contain md:h-14" />
+            <img
+              v-if="isMusicRoute"
+              :src="isMobileDevice ? musicLogoSymbol : musicLogoFull"
+              alt="GilTube Music"
+              class="music-brand-logo"
+              :class="isMobileDevice ? 'music-brand-logo-symbol' : 'music-brand-logo-full'"
+            />
+            <img v-else src="./assets/logowhsmall.png" alt="GilTube" :class="isCompactMobileWatchTopBar ? 'h-6 object-contain' : 'h-8 object-contain md:h-14'" />
           </button>
           <!-- <span
             class="absolute -top-1.5 -right-1 md:top-0 md:-right-2 bg-red-600 text-white text-[10px] md:text-xs font-bold px-0.5 md:px-1.5 py-0 rounded">BETA</span> -->
         </div>
       </div>
 
-      <input v-model="searchQuery" type="text" :placeholder="t('app.searchPlaceholder')"
-        @keydown.enter="handleDesktopSearch()"
-        class="hidden md:block bg-zinc-900 px-4 py-2 rounded-full w-1/3 focus:outline-none text-white placeholder-gray-500" />
+      <div v-if="!isMobileDevice" ref="desktopSearchRef" class="relative hidden w-1/3 md:block">
+        <input v-model="searchQuery" type="text" :placeholder="isMusicRoute ? 'Search music' : t('app.searchPlaceholder')"
+          @focus="openSearchSuggestions"
+          @keydown.enter="handleDesktopSearch()"
+          class="w-full bg-zinc-900 px-4 py-2 rounded-full focus:outline-none text-white placeholder-gray-500" />
+        <div
+          v-if="!isMusicRoute && shouldShowSearchSuggestions"
+          class="search-suggestions-scrollbar absolute left-0 right-0 top-11 max-h-[28rem] overflow-y-auto rounded-2xl border border-zinc-700 bg-zinc-950 shadow-2xl shadow-black/60"
+          :style="{ zIndex: 9999 }"
+        >
+          <button
+            v-for="item in searchSuggestions"
+            :key="`${item.type}-${item.id}`"
+            type="button"
+            class="flex w-full items-center gap-3 px-4 py-3 text-left transition hover:bg-zinc-800"
+            @mousedown.prevent="goToSearchSuggestion(item)"
+          >
+            <div class="h-10 w-14 shrink-0 overflow-hidden rounded bg-zinc-800">
+              <img v-if="suggestionImage(item)" :src="suggestionImage(item)" :alt="suggestionTitle(item)" class="h-full w-full object-cover" />
+              <div v-else class="flex h-full w-full items-center justify-center text-xs text-zinc-500">{{ suggestionIcon(item) }}</div>
+            </div>
+            <div class="min-w-0 flex-1">
+              <p class="truncate text-sm font-semibold text-white">{{ suggestionTitle(item) }}</p>
+              <p class="truncate text-xs text-zinc-400">{{ suggestionMeta(item) }}</p>
+            </div>
+            <span class="rounded-full bg-zinc-800 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-zinc-300">
+              {{ suggestionTypeLabel(item.type) }}
+            </span>
+          </button>
+          <button
+            v-if="searchQuery.trim()"
+            type="button"
+            class="flex w-full items-center gap-3 border-t border-zinc-800 px-4 py-3 text-left text-sm font-semibold text-zinc-200 transition hover:bg-zinc-800"
+            @mousedown.prevent="handleDesktopSearch()"
+          >
+            <span>⌕</span>
+            <span>{{ t('app.searchAllFor', { query: searchQuery.trim() }) }}</span>
+          </button>
+        </div>
+      </div>
 
       <div class="flex items-center gap-2">
+        <nav v-if="!isMobileDevice && isMusicRoute" class="mr-2 flex items-center gap-1" aria-label="Music navigation">
+          <NuxtLink
+            :to="localePath('/music')"
+            class="rounded-md px-3 py-2 text-sm font-semibold text-zinc-400 transition hover:bg-zinc-800 hover:text-white"
+            :class="{ 'bg-zinc-800 text-white': normalizedRoutePath === '/music' }"
+          >
+            {{ t('app.musicHome') }}
+          </NuxtLink>
+          <NuxtLink
+            :to="localePath('/music/library')"
+            class="rounded-md px-3 py-2 text-sm font-semibold text-zinc-400 transition hover:bg-zinc-800 hover:text-white"
+            :class="{ 'bg-zinc-800 text-white': normalizedRoutePath.startsWith('/music/library') }"
+          >
+            {{ t('app.library') }}
+          </NuxtLink>
+        </nav>
+
         <!-- Mobile Search Button -->
-        <button @click="showSearchBar = !showSearchBar" class="md:hidden p-2 hover:bg-zinc-800 rounded transition">
+        <button
+          v-if="isMobileDevice"
+          type="button"
+          class="flex items-center justify-center rounded-full text-zinc-200 transition hover:bg-zinc-800 hover:text-white"
+          :class="isCompactMobileWatchTopBar ? 'h-8 w-8' : 'h-10 w-10'"
+          :aria-label="t('app.search')"
+          @click="openMobileSearch"
+        >
+          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z" />
+          </svg>
+        </button>
+
+        <button v-else @click="showSearchBar = !showSearchBar" class="md:hidden p-2 hover:bg-zinc-800 rounded transition">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
               d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>
         </button>
 
-        <!-- Upload Button (when logged in) -->
-        <NuxtLink v-if="isLoggedIn && userStatus === 'active'" :to="localePath('/upload')"
-          class="px-2 py-1 bg-red-600 hover:bg-red-700 rounded-full transition text-md">
-          {{ t('app.upload') }}
-        </NuxtLink>
+        <!-- Create Menu (when logged in) -->
+        <div v-if="isLoggedIn && userStatus === 'active' && !isMobileDevice && !isMusicRoute" ref="uploadDropdownRef" class="relative">
+          <button
+            type="button"
+            @click="toggleUploadDropdown"
+            class="flex h-9 w-9 items-center justify-center rounded-full bg-red-600 text-white transition hover:bg-red-700"
+            :aria-label="t('app.create')"
+            :aria-expanded="uploadDropdownOpen"
+          >
+            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 5v14M5 12h14" />
+            </svg>
+          </button>
+
+          <Transition name="menu-pop">
+            <div
+              v-if="uploadDropdownOpen"
+              class="absolute right-0 top-11 w-56 origin-top-right overflow-hidden rounded-xl border border-zinc-700 bg-zinc-950 shadow-2xl shadow-black/50"
+              :style="{ zIndex: 9999 }"
+            >
+              <NuxtLink
+                :to="localePath('/upload')"
+                class="flex items-center gap-3 px-4 py-3 text-sm text-gray-100 transition hover:bg-zinc-800"
+                @click="uploadDropdownOpen = false"
+              >
+                <span class="flex h-9 w-9 items-center justify-center rounded-lg bg-zinc-800 text-zinc-200">
+                  <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 4h7l5 5v11a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1Z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 4v5h5M12 17V11m0 0-2.5 2.5M12 11l2.5 2.5" />
+                  </svg>
+                </span>
+                <span class="font-semibold">{{ t('app.uploadVideo') }}</span>
+              </NuxtLink>
+
+              <NuxtLink
+                :to="localePath('/go-live')"
+                class="flex items-center gap-3 border-t border-zinc-800 px-4 py-3 text-sm text-gray-100 transition hover:bg-zinc-800"
+                @click="uploadDropdownOpen = false"
+              >
+                <span class="flex h-9 w-9 items-center justify-center rounded-lg bg-zinc-800 text-zinc-200">
+                  <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.5-2.5A1 1 0 0 1 21 8.38v7.24a1 1 0 0 1-1.5.88L15 14" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7h9a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2Z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12h.01M10 12h.01" />
+                  </svg>
+                </span>
+                <span class="font-semibold">{{ t('app.goLive') }}</span>
+              </NuxtLink>
+            </div>
+          </Transition>
+        </div>
 
         <!-- Upload Button Disabled (suspended/banned) -->
-        <button v-if="isLoggedIn && userStatus !== 'active'" disabled
+        <button v-if="isLoggedIn && userStatus !== 'active' && !isMobileDevice && !isMusicRoute" disabled
           :title="userStatus === 'suspended' ? 'Your account is suspended - you cannot upload' : 'Your account is banned - you cannot upload'"
-          class="px-2 py-1 bg-gray-700 cursor-not-allowed rounded-full transition text-md opacity-50">
-          {{ t('app.upload') }}
+          class="flex h-9 w-9 cursor-not-allowed items-center justify-center rounded-full bg-gray-700 opacity-50 transition">
+          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 5v14M5 12h14" />
+          </svg>
         </button>
 
-        <div v-if="isLoggedIn" class="relative" ref="notificationDropdownRef">
+        <div v-if="isLoggedIn && !isMobileDevice" class="relative" ref="notificationDropdownRef">
           <button
             @click="toggleNotificationsDropdown"
             class="relative p-2 hover:bg-zinc-800 rounded transition"
@@ -135,11 +272,12 @@
             </span>
           </button>
 
-          <div
-            v-if="notificationsDropdownOpen"
-            class="fixed top-14 right-2 left-2 sm:absolute sm:left-auto sm:right-0 sm:w-96 w-auto max-w-none bg-zinc-900 border border-zinc-700 rounded-lg shadow-xl overflow-hidden"
-            :style="{ zIndex: 9999 }"
-          >
+          <Transition name="menu-pop">
+            <div
+              v-if="notificationsDropdownOpen"
+              class="fixed top-14 right-2 left-2 w-auto max-w-none origin-top-right overflow-hidden rounded-lg border border-zinc-700 bg-zinc-900 shadow-xl sm:absolute sm:left-auto sm:right-0 sm:w-96"
+              :style="{ zIndex: 9999 }"
+            >
             <div class="px-4 py-3 border-b border-zinc-700 flex items-center justify-between">
               <p class="text-sm font-semibold">{{ t('app.notifications') }}</p>
               <button
@@ -176,7 +314,8 @@
                 {{ t('app.viewAllNotifications') }}
               </NuxtLink>
             </div>
-          </div>
+            </div>
+          </Transition>
         </div>
 
         <!-- Install App Button -->
@@ -192,8 +331,8 @@
         </button> -->
 
         <!-- User Menu -->
-        <div v-if="isLoggedIn" class="relative">
-          <button @click="dropdownOpen = !dropdownOpen"
+        <div v-if="isLoggedIn && !isMobileDevice" class="relative">
+          <button @click="toggleAccountDropdown"
             class="flex items-center gap-2 px-3 py-2 hover:bg-zinc-800 rounded transition">
             <!-- Profile Picture Circle -->
             <div
@@ -209,76 +348,166 @@
           </button>
         </div>
 
+        <button
+          v-else-if="isLoggedIn && isMobileDevice && !isCompactMobileWatchTopBar"
+          type="button"
+          class="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border border-zinc-700 bg-zinc-800 text-sm font-bold text-zinc-200 transition hover:border-zinc-500 hover:bg-zinc-700"
+          :aria-label="t('app.currentAccount')"
+          @click="toggleAccountDropdown"
+        >
+          <img
+            v-if="activeChannelAvatar && !avatarLoadFailed"
+            :src="activeChannelAvatar"
+            :alt="displayName"
+            class="h-full w-full object-cover"
+            @error="avatarLoadFailed = true"
+          />
+          <span v-else>{{ displayName.charAt(0).toUpperCase() }}</span>
+        </button>
+
         <!-- Login Link (when not logged in) -->
-        <NuxtLink v-else :to="localePath('/login')" class="px-4 py-2 bg-red-600 hover:bg-red-700 rounded transition">
+        <NuxtLink v-else-if="!isMobileDevice" :to="localePath('/login')" class="px-4 py-2 bg-red-600 hover:bg-red-700 rounded transition">
           {{ t('app.login') }}
         </NuxtLink>
       </div>
     </header>
 
     <!-- Mobile Expanded Search Bar -->
-    <div v-if="!shouldHideHeaderSidebar" v-show="showSearchBar"
-      class="md:hidden bg-zinc-900 border-b border-zinc-800 fixed top-16 left-0 right-0" :style="{ zIndex: 61 }">
-      <div class="flex items-center gap-2 px-4 py-3">
-        <input v-model="searchQuery" type="text" :placeholder="t('app.searchPlaceholder')"
-          @keydown.enter="handleMobileSearch()" @keyup.enter="handleMobileSearch()" autofocus
-          class="flex-1 px-0 bg-transparent focus:outline-none text-white placeholder-gray-500" />
-        <button @click="handleMobileSearch()" class="p-2 hover:bg-zinc-800 rounded">
-          <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <div v-if="!shouldHideHeader && isMobileDevice" v-show="showSearchBar"
+      class="fixed left-0 right-0 border-b border-zinc-800 bg-zinc-950/95 shadow-2xl shadow-black/40 backdrop-blur-xl" :style="{ zIndex: 61, top: `${mobileSearchTopOffset}px` }">
+      <div ref="mobileSearchRef" class="px-3 py-3">
+        <div class="flex items-center gap-2 rounded-2xl border border-zinc-700 bg-zinc-900/90 px-3 py-2.5 shadow-inner shadow-black/30">
+          <svg class="h-5 w-5 shrink-0 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>
-        </button>
+          <input v-model="searchQuery" type="text" :placeholder="t('app.searchPlaceholder')"
+            @focus="openSearchSuggestions"
+            @keydown.enter="handleMobileSearch()" @keyup.enter="handleMobileSearch()" @keydown.esc="closeMobileSearch" autofocus
+            class="min-w-0 flex-1 bg-transparent text-base text-white placeholder-zinc-500 focus:outline-none" />
+          <button
+            v-if="searchQuery"
+            type="button"
+            class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-lg leading-none text-zinc-400 transition hover:bg-zinc-800 hover:text-white"
+            aria-label="Clear search"
+            @click="searchQuery = ''"
+          >
+            &times;
+          </button>
+          <button @click="handleMobileSearch()" class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-red-600 text-white transition hover:bg-red-500">
+            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 12h14m-6-6 6 6-6 6" />
+            </svg>
+          </button>
+          <button
+            type="button"
+            class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-lg leading-none text-zinc-400 transition hover:bg-zinc-800 hover:text-white"
+            aria-label="Close search"
+            @click="closeMobileSearch"
+          >
+            &times;
+          </button>
+        </div>
+        <div
+          v-if="shouldShowSearchSuggestions"
+          class="search-suggestions-scrollbar mt-2 max-h-[min(62vh,28rem)] overflow-y-auto rounded-2xl border border-zinc-800 bg-black/90 p-1 shadow-2xl shadow-black/70"
+          :style="{ zIndex: 9999 }"
+        >
+          <button
+            v-for="item in searchSuggestions"
+            :key="`mobile-${item.type}-${item.id}`"
+            type="button"
+            class="flex w-full items-center gap-3 rounded-xl px-2.5 py-2.5 text-left transition hover:bg-zinc-900"
+            @mousedown.prevent="goToSearchSuggestion(item)"
+          >
+            <div class="h-11 w-11 shrink-0 overflow-hidden rounded-xl bg-zinc-900 ring-1 ring-white/5">
+              <img v-if="suggestionImage(item)" :src="suggestionImage(item)" :alt="suggestionTitle(item)" class="h-full w-full object-cover" />
+              <div v-else class="flex h-full w-full items-center justify-center text-xs text-zinc-500">{{ suggestionIcon(item) }}</div>
+            </div>
+            <div class="min-w-0 flex-1">
+              <p class="truncate text-sm font-semibold text-white">{{ suggestionTitle(item) }}</p>
+              <p class="truncate text-xs text-zinc-400">{{ suggestionMeta(item) }}</p>
+            </div>
+            <span class="shrink-0 rounded-full bg-zinc-800/90 px-2 py-1 text-[9px] font-bold uppercase tracking-wide text-zinc-300">
+              {{ suggestionTypeLabel(item.type) }}
+            </span>
+          </button>
+          <button
+            v-if="searchQuery.trim()"
+            type="button"
+            class="mt-1 flex w-full items-center gap-3 border-t border-zinc-800 px-3 py-3 text-left text-sm font-semibold text-zinc-200 transition hover:bg-zinc-900"
+            @mousedown.prevent="handleMobileSearch()"
+          >
+            <span>⌕</span>
+            <span>{{ t('app.searchAllFor', { query: searchQuery.trim() }) }}</span>
+          </button>
+        </div>
       </div>
     </div>
 
     <!-- Main Content Wrapper with padding for fixed header -->
     <div ref="mainScrollRef" class="flex-1 min-w-0 overflow-auto overflow-x-hidden"
       @scroll.passive="handleMainContentScroll"
-      :style="shouldHideHeaderSidebar ? {} : { paddingTop: (notificationBarHeight + 64) + 'px' }">
+      :style="mainScrollStyle">
       <!-- CONTENT AREA -->
       <div class="flex flex-1 min-h-0 min-w-0 relative">
         <!-- Mobile Overlay Backdrop -->
-        <div v-if="isSidebarOpen" class="fixed inset-0 bg-black bg-opacity-50 md:hidden" :style="{ zIndex: 40 }"
+        <div
+          v-if="isSidebarOpen && !shouldHideSidebar"
+          class="fixed inset-0 bg-black bg-opacity-50"
+          :class="{ 'md:hidden': !useCollapsibleDesktopSidebar }"
+          :style="{ zIndex: 40 }"
           @click="isSidebarOpen = false" />
 
         <!-- Sidebar -->
-        <aside v-if="!shouldHideHeaderSidebar"
-          class="giltube-sidebar-scrollbar w-60 border-r transition-transform duration-300 fixed left-0 bottom-0 md:bottom-auto md:transform-none md:transition-none overflow-y-auto h-full"
+        <aside v-if="!shouldHideSidebar"
+          class="w-60 border-r transition-transform duration-300 fixed left-0 overflow-hidden"
           :class="{
             '-translate-x-full': !isSidebarOpen,
             'translate-x-0': isSidebarOpen,
-            'md:translate-x-0': true,
+            'md:-translate-x-full': useCollapsibleDesktopSidebar && !isSidebarOpen,
+            'md:translate-x-0': !useCollapsibleDesktopSidebar || isSidebarOpen,
+            'md:transition-none': !useCollapsibleDesktopSidebar,
             'bg-zinc-950/50 backdrop-blur-md border-zinc-700 shadow-[0_8px_24px_rgba(0,0,0,0.35)]': headerScrolled,
             'bg-zinc-950 border-zinc-800': !headerScrolled
           }"
-          :style="{ top: (notificationBarHeight + 64) + 'px', maxHeight: `calc(100vh - ${notificationBarHeight + 64}px)`, zIndex: 50 }">
-          <nav class="p-4 space-y-3">
-            <NuxtLink :to="localePath('/')" class="hover:bg-zinc-800 p-2 rounded cursor-pointer block">{{ t('app.home') }}</NuxtLink>
-            <!-- Dashboard (only when logged in) -->
-            <NuxtLink v-if="isLoggedIn" :to="localePath('/dashboard')"
-              class="hover:bg-zinc-800 p-2 rounded cursor-pointer block text-blue-400 font-semibold">{{ t('app.dashboard') }}
-            </NuxtLink>
-            <NuxtLink v-if="isLoggedIn" :to="localePath('/notifications')"
-              class="hover:bg-zinc-800 p-2 rounded cursor-pointer block text-indigo-300 font-semibold">{{ t('app.notifications') }}
-            </NuxtLink>
-            <NuxtLink v-if="isLoggedIn" :to="localePath('/go-live')"
-              class="hover:bg-zinc-800 p-2 rounded cursor-pointer block text-red-400 font-semibold">{{ t('app.goLive') }}
-            </NuxtLink>
-            <NuxtLink v-if="isLoggedIn" :to="localePath('/playlists')"
-              class="hover:bg-zinc-800 p-2 rounded cursor-pointer block text-purple-400 font-semibold">{{ t('playlists.myPlaylists') }}
-            </NuxtLink>
-            <!-- <NuxtLink to="/subscriptions" class="hover:bg-zinc-800 p-2 rounded cursor-pointer block">Subscriptions
-            </NuxtLink> -->
-            <!-- My Channel (only when signed into a channel, not personal) -->
-            <NuxtLink v-if="activeAccount !== 'personal' && activeAccount !== userId && isLoggedIn"
-              :to="localePath(`/channel/${activeAccount}`)"
-              class="hover:bg-zinc-800 p-2 rounded cursor-pointer block text-yellow-400 font-semibold">{{ t('app.myChannel') }}
-            </NuxtLink>
+          :style="{ top: (notificationBarHeight + 64) + 'px', bottom: 0, height: `calc(100dvh - ${notificationBarHeight + 64}px)`, zIndex: 50 }">
+          <nav class="flex h-full min-h-0 flex-col p-4">
+            <div class="shrink-0 space-y-3">
+              <NuxtLink :to="localePath('/')" class="hover:bg-zinc-800 p-2 rounded cursor-pointer block">{{ t('app.home') }}</NuxtLink>
+              <NuxtLink
+                :to="localePath('/music')"
+                class="flex items-center gap-2 rounded p-2 font-semibold text-rose-300 transition hover:bg-zinc-800 hover:text-white"
+                :class="{ 'bg-zinc-800 text-white': normalizedRoutePath.startsWith('/music') }"
+              >
+                <svg class="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 18V5l10-2v13M9 18a3 3 0 1 1-3-3h3v3Zm10-2a3 3 0 1 1-3-3h3v3Z" />
+                </svg>
+                <span class="min-w-0 flex-1 truncate">{{ t('app.giltubeMusic') }}</span>
+                <span class="shrink-0 rounded bg-rose-500 px-1.5 py-0.5 text-[9px] font-black leading-none text-white">NEW</span>
+              </NuxtLink>
+              <!-- Dashboard (only when logged in) -->
+              <NuxtLink v-if="isLoggedIn" :to="localePath('/dashboard')"
+                class="hover:bg-zinc-800 p-2 rounded cursor-pointer block text-blue-400 font-semibold">{{ t('app.dashboard') }}
+              </NuxtLink>
+              <NuxtLink v-if="isLoggedIn" :to="localePath('/notifications')"
+                class="hover:bg-zinc-800 p-2 rounded cursor-pointer block text-indigo-300 font-semibold">{{ t('app.notifications') }}
+              </NuxtLink>
+              <NuxtLink v-if="isLoggedIn" :to="localePath('/playlists')"
+                class="hover:bg-zinc-800 p-2 rounded cursor-pointer block text-purple-400 font-semibold">{{ t('playlists.myPlaylists') }}
+              </NuxtLink>
+              <!-- <NuxtLink to="/subscriptions" class="hover:bg-zinc-800 p-2 rounded cursor-pointer block">Subscriptions
+              </NuxtLink> -->
+              <!-- My Channel (only when signed into a channel, not personal) -->
+              <NuxtLink v-if="activeAccount !== 'personal' && activeAccount !== userId && isLoggedIn"
+                :to="localePath(`/channel/${activeAccount}`)"
+                class="hover:bg-zinc-800 p-2 rounded cursor-pointer block text-yellow-400 font-semibold">{{ t('app.myChannel') }}
+              </NuxtLink>
+            </div>
 
             <!-- Categories Divider -->
-            <div class="border-t border-zinc-700 pt-3 mt-3">
+            <div class="mt-3 flex min-h-0 flex-1 flex-col border-t border-zinc-700 pt-3">
               <p class="text-xs text-gray-500 font-semibold px-2 mb-2">{{ t('app.categories') }}</p>
-              <div class="space-y-1">
+              <div class="giltube-sidebar-category-scroll min-h-0 flex-1 space-y-1 overflow-y-auto">
                 <NuxtLink :to="localePath('/')"
                   class="w-full text-left px-2 py-1.5 rounded text-sm transition hover:bg-zinc-800 text-gray-300 block"
                   :class="{ 'bg-blue-600 text-white': route.path === '/' && !route.params.slug }">
@@ -293,7 +522,7 @@
             </div>
 
             <!-- Language Selector at Bottom -->
-            <div class="border-t border-zinc-700 pt-3 mt-3">
+            <div class="mt-3 shrink-0 border-t border-zinc-700 pt-3">
               <p class="text-xs text-gray-500 font-semibold px-2 mb-2">{{ t('app.language') }}</p>
               <select
                 :value="locale"
@@ -310,12 +539,402 @@
         </aside>
 
         <!-- Page content -->
-        <div ref="contentScrollRef" class="flex-1 min-w-0" :class="!shouldHideHeaderSidebar ? 'md:ml-60' : ''">
-          <NuxtPage />
+        <div ref="contentScrollRef" class="route-page-shell flex-1 min-w-0" :class="!shouldHideSidebar && !useCollapsibleDesktopSidebar ? 'md:ml-60' : ''">
+          <NuxtPage :page-key="pageTransitionKey" />
         </div>
 
       </div>
     </div>
+
+    <GlobalMusicPlayer />
+
+    <nav
+      v-if="isMobileDevice && !shouldHideHeader"
+      class="fixed inset-x-0 bottom-0 z-[70] border-t border-zinc-800 bg-zinc-950/95 px-2 pt-1.5 shadow-[0_-10px_30px_rgba(0,0,0,0.45)] backdrop-blur-xl"
+      style="padding-bottom: max(env(safe-area-inset-bottom), 0.4rem);"
+      aria-label="Mobile navigation"
+    >
+      <div class="grid grid-cols-5 gap-1">
+        <template v-if="isMusicRoute">
+          <NuxtLink :to="localePath('/music')" class="mobile-bottom-nav-item" :class="{ 'text-white': normalizedRoutePath === '/music' }">
+            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10.75 12 4l9 6.75V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1v-9.25Z" />
+            </svg>
+            <span>{{ t('app.home') }}</span>
+          </NuxtLink>
+
+          <NuxtLink :to="localePath('/music/search')" class="mobile-bottom-nav-item" :class="{ 'text-white': normalizedRoutePath.startsWith('/music/search') }">
+            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m21 21-4.35-4.35m1.35-5.15a6.5 6.5 0 1 1-13 0 6.5 6.5 0 0 1 13 0Z" />
+            </svg>
+            <span>{{ t('app.search') }}</span>
+          </NuxtLink>
+
+          <button type="button" class="mobile-bottom-nav-item music-now-playing-nav" :class="{ 'text-white': shellMusicTrack }" :disabled="!shellMusicTrack" @click="openShellMusicPlayer">
+            <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 18V5l10-2v13M9 18a3 3 0 1 1-3-3h3v3Zm10-2a3 3 0 1 1-3-3h3v3Z" />
+            </svg>
+            <span>{{ t('app.nowPlaying') }}</span>
+          </button>
+
+          <NuxtLink :to="localePath('/music/library')" class="mobile-bottom-nav-item" :class="{ 'text-white': normalizedRoutePath.startsWith('/music/library') }">
+            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 4h14a1 1 0 0 1 1 1v15H4V5a1 1 0 0 1 1-1Zm3 0v16m4-16v16" />
+            </svg>
+            <span>{{ t('app.library') }}</span>
+          </NuxtLink>
+
+          <button type="button" class="mobile-bottom-nav-item" :class="{ 'text-white': mobileMoreOpen }" @click="openMobileMore">
+            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7h16M4 12h16M4 17h16" />
+            </svg>
+            <span>{{ t('app.menu') }}</span>
+          </button>
+        </template>
+
+        <template v-else>
+        <NuxtLink :to="localePath('/')" class="mobile-bottom-nav-item" :class="{ 'text-white': normalizedRoutePath === '/' }">
+          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10.75 12 4l9 6.75V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1v-9.25Z" />
+          </svg>
+          <span>{{ t('app.home') }}</span>
+        </NuxtLink>
+
+        <NuxtLink
+          :to="localePath(isLoggedIn ? '/dashboard' : '/login')"
+          class="mobile-bottom-nav-item"
+          :class="{ 'text-white': normalizedRoutePath.startsWith('/dashboard') }"
+        >
+          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 0 1 1-1h5a1 1 0 0 1 1 1v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5Zm9 0a1 1 0 0 1 1-1h5a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-5a1 1 0 0 1-1-1V5ZM4 15a1 1 0 0 1 1-1h5a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-4Zm9-3a1 1 0 0 1 1-1h5a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1h-5a1 1 0 0 1-1-1v-7Z" />
+          </svg>
+          <span>{{ t('app.dashboard') }}</span>
+        </NuxtLink>
+
+        <button
+          type="button"
+          class="mobile-bottom-nav-item mobile-bottom-nav-create"
+          :class="{ 'text-white': mobileCreateOpen }"
+          @click="toggleMobileCreate"
+        >
+          <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 5v14M5 12h14" />
+          </svg>
+          <span>{{ t('app.create') }}</span>
+        </button>
+
+        <NuxtLink
+          :to="localePath(mobileMyChannelPath)"
+          class="mobile-bottom-nav-item"
+          :class="{ 'text-white': normalizedRoutePath.startsWith('/channel/') || normalizedRoutePath.startsWith('/my-channels') }"
+        >
+          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 6h14a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2Z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 21h6M12 18v3" />
+          </svg>
+          <span>{{ t('app.myChannel') }}</span>
+        </NuxtLink>
+
+        <button type="button" class="mobile-bottom-nav-item" :class="{ 'text-white': mobileMoreOpen }" @click="openMobileMore">
+          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7h16M4 12h16M4 17h16" />
+          </svg>
+          <span>{{ t('app.menu') }}</span>
+        </button>
+        </template>
+      </div>
+    </nav>
+
+    <Transition name="fade-soft">
+      <div
+        v-if="isMobileDevice && mobileCreateOpen && !shouldHideHeader"
+        class="fixed inset-0 z-[68]"
+        @click="mobileCreateOpen = false"
+      />
+    </Transition>
+
+    <Transition name="menu-pop">
+      <div
+        v-if="isMobileDevice && mobileCreateOpen && !shouldHideHeader"
+        class="fixed inset-x-3 z-[72] overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-950 shadow-2xl shadow-black/60"
+        style="bottom: calc(5.1rem + env(safe-area-inset-bottom, 0px));"
+      >
+        <NuxtLink
+          :to="localePath('/upload')"
+          class="flex items-center gap-3 px-4 py-3 text-sm font-semibold text-zinc-100 transition hover:bg-zinc-900"
+          @click="mobileCreateOpen = false"
+        >
+          <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-zinc-900 text-zinc-200">
+            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 4h7l5 5v11a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1Z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 4v5h5M12 17V11m0 0-2.5 2.5M12 11l2.5 2.5" />
+            </svg>
+          </span>
+          {{ t('app.uploadVideo') }}
+        </NuxtLink>
+        <NuxtLink
+          :to="localePath('/go-live')"
+          class="flex items-center gap-3 border-t border-zinc-800 px-4 py-3 text-sm font-semibold text-zinc-100 transition hover:bg-zinc-900"
+          @click="mobileCreateOpen = false"
+        >
+          <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-zinc-900 text-zinc-200">
+            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.5-2.5A1 1 0 0 1 21 8.38v7.24a1 1 0 0 1-1.5.88L15 14" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7h9a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2Z" />
+            </svg>
+          </span>
+          {{ t('app.goLive') }}
+        </NuxtLink>
+      </div>
+    </Transition>
+
+    <Transition name="fade-soft">
+      <div
+        v-if="isMobileDevice && mobileMoreOpen && !shouldHideHeader"
+        class="fixed inset-0 z-[94] bg-black/60 backdrop-blur-[2px]"
+        @click="mobileMoreOpen = false"
+      />
+    </Transition>
+
+    <Transition name="mobile-sheet">
+      <section
+        v-if="isMobileDevice && mobileMoreOpen && !shouldHideHeader"
+        class="fixed inset-x-0 bottom-0 z-[95] flex max-h-[84dvh] flex-col rounded-t-2xl border border-zinc-800 bg-zinc-950 text-white shadow-2xl"
+        style="padding-bottom: max(env(safe-area-inset-bottom), 0.75rem);"
+        aria-label="Mobile menu"
+      >
+        <div class="shrink-0 px-4 pt-3">
+          <div class="mx-auto h-1 w-11 rounded-full bg-zinc-700" />
+          <div class="mt-3 flex items-center justify-between">
+            <button
+              type="button"
+              class="flex min-w-0 items-center gap-3 rounded-2xl p-1.5 text-left transition hover:bg-zinc-900"
+              :disabled="!isLoggedIn"
+              :aria-label="t('app.switchProfile')"
+              @click="openMobileAccountPanel"
+            >
+              <div
+                class="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full border border-zinc-700 bg-zinc-800 text-sm font-bold text-zinc-200"
+              >
+                <img
+                  v-if="isLoggedIn && activeChannelAvatar && !avatarLoadFailed"
+                  :src="activeChannelAvatar"
+                  :alt="displayName"
+                  class="h-full w-full object-cover"
+                  @error="avatarLoadFailed = true"
+                />
+                <span v-else>{{ (isLoggedIn ? displayName : t('app.menu')).charAt(0).toUpperCase() }}</span>
+              </div>
+              <div class="min-w-0">
+                <p class="truncate text-sm font-semibold text-white">{{ isLoggedIn ? displayName : t('app.menu') }}</p>
+                <p class="truncate text-xs text-zinc-500">{{ isLoggedIn ? username : t('app.login') }}</p>
+              </div>
+            </button>
+            <button
+              type="button"
+              class="flex h-10 w-10 items-center justify-center rounded-full bg-zinc-900 text-zinc-300 transition hover:bg-zinc-800 hover:text-white"
+              aria-label="Close menu"
+              @click="mobileMoreOpen = false"
+            >
+              X
+            </button>
+          </div>
+        </div>
+
+        <div class="mt-4 min-h-0 flex-1 overflow-y-auto px-4 pb-4">
+          <template v-if="isMusicRoute">
+            <NuxtLink
+              :to="localePath('/')"
+              class="mobile-sheet-action mobile-sheet-action-wide mb-2 text-rose-300"
+              @click="mobileMoreOpen = false"
+            >
+              <svg class="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m11 5-7 7 7 7M4 12h16" />
+              </svg>
+              <span>{{ t('app.returnToGilTube') }}</span>
+            </NuxtLink>
+
+            <div class="grid grid-cols-3 gap-2">
+              <NuxtLink :to="localePath('/music')" class="mobile-sheet-action text-red-300" @click="mobileMoreOpen = false">
+                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10.75 12 4l9 6.75V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1v-9.25Z" /></svg>
+                <span>{{ t('app.musicHome') }}</span>
+              </NuxtLink>
+              <NuxtLink :to="localePath('/music/search')" class="mobile-sheet-action text-blue-300" @click="mobileMoreOpen = false">
+                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m21 21-4.35-4.35m1.35-5.15a6.5 6.5 0 1 1-13 0 6.5 6.5 0 0 1 13 0Z" /></svg>
+                <span>{{ t('app.search') }}</span>
+              </NuxtLink>
+              <NuxtLink :to="localePath('/music/library')" class="mobile-sheet-action text-purple-300" @click="mobileMoreOpen = false">
+                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 4h14a1 1 0 0 1 1 1v15H4V5a1 1 0 0 1 1-1Zm3 0v16m4-16v16" /></svg>
+                <span>{{ t('app.library') }}</span>
+              </NuxtLink>
+              <button type="button" class="mobile-sheet-action text-green-300" :disabled="!shellMusicTrack" @click="openShellMusicPlayer">
+                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 18V5l10-2v13M9 18a3 3 0 1 1-3-3h3v3Zm10-2a3 3 0 1 1-3-3h3v3Z" /></svg>
+                <span>{{ t('app.nowPlaying') }}</span>
+              </button>
+              <NuxtLink v-if="isLoggedIn" :to="localePath('/account-settings')" class="mobile-sheet-action text-cyan-300" @click="mobileMoreOpen = false">
+                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.3 4.3h3.4l.6 2.2c.5.2 1 .5 1.4.8l2.2-.6 1.7 3-1.6 1.6a6 6 0 0 1 0 1.4l1.6 1.6-1.7 3-2.2-.6c-.4.3-.9.6-1.4.8l-.6 2.2h-3.4l-.6-2.2c-.5-.2-1-.5-1.4-.8l-2.2.6-1.7-3L6 12.7a6 6 0 0 1 0-1.4L4.4 9.7l1.7-3 2.2.6c.4-.3.9-.6 1.4-.8l.6-2.2Z" /></svg>
+                <span>{{ t('app.accountSettings') }}</span>
+              </NuxtLink>
+              <NuxtLink v-if="userType === 'admin'" to="/admin/music" class="mobile-sheet-action text-yellow-300" @click="mobileMoreOpen = false">
+                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 19V9m5 10V5m5 14v-7m5 7V3" /></svg>
+                <span>{{ t('app.musicAdmin') }}</span>
+              </NuxtLink>
+            </div>
+          </template>
+
+          <template v-else>
+          <NuxtLink
+            :to="localePath('/music')"
+            class="mobile-sheet-action mobile-sheet-action-wide mb-2 text-rose-300"
+            :class="{ 'bg-zinc-800 text-white': normalizedRoutePath.startsWith('/music') }"
+            @click="mobileMoreOpen = false"
+          >
+            <svg class="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 18V5l10-2v13M9 18a3 3 0 1 1-3-3h3v3Zm10-2a3 3 0 1 1-3-3h3v3Z" />
+            </svg>
+            <span>{{ t('app.giltubeMusic') }}</span>
+            <span class="rounded bg-rose-500 px-1.5 py-0.5 text-[9px] font-black leading-none text-white">NEW</span>
+          </NuxtLink>
+
+          <div class="grid grid-cols-3 gap-2">
+            <NuxtLink v-if="isLoggedIn" :to="localePath('/dashboard')" class="mobile-sheet-action text-blue-300" @click="mobileMoreOpen = false">
+              <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 0 1 1-1h5a1 1 0 0 1 1 1v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5Zm9 0a1 1 0 0 1 1-1h5a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-5a1 1 0 0 1-1-1V5ZM4 15a1 1 0 0 1 1-1h5a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-4Zm9-3a1 1 0 0 1 1-1h5a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1h-5a1 1 0 0 1-1-1v-7Z" />
+              </svg>
+              <span>{{ t('app.dashboard') }}</span>
+            </NuxtLink>
+            <NuxtLink v-if="isLoggedIn" :to="localePath('/notifications')" class="mobile-sheet-action text-indigo-300" @click="mobileMoreOpen = false">
+              <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.4-1.4A2 2 0 0 1 18 14.2V11a6 6 0 1 0-12 0v3.2c0 .53-.21 1.04-.59 1.42L4 17h5m6 0v1a3 3 0 1 1-6 0v-1m6 0H9" />
+              </svg>
+              <span>{{ t('app.notifications') }}</span>
+              <span v-if="unreadNotificationCount > 0" class="ml-2 rounded-full bg-red-600 px-2 py-0.5 text-xs text-white">
+                {{ unreadNotificationCount > 99 ? '99+' : unreadNotificationCount }}
+              </span>
+            </NuxtLink>
+            <NuxtLink v-if="isLoggedIn" :to="localePath('/playlists')" class="mobile-sheet-action text-purple-300" @click="mobileMoreOpen = false">
+              <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" />
+              </svg>
+              <span>{{ t('playlists.myPlaylists') }}</span>
+            </NuxtLink>
+            <NuxtLink v-if="activeAccount !== 'personal' && activeAccount !== userId && isLoggedIn" :to="localePath(`/channel/${activeAccount}`)" class="mobile-sheet-action text-yellow-300" @click="mobileMoreOpen = false">
+              <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 6h14a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2Z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 21h6M12 18v3" />
+              </svg>
+              <span>{{ t('app.myChannel') }}</span>
+            </NuxtLink>
+            <NuxtLink v-if="userType === 'admin'" to="/admin" class="mobile-sheet-action text-purple-300" @click="mobileMoreOpen = false">
+              <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3 4 6v6c0 5 3.4 7.5 8 9 4.6-1.5 8-4 8-9V6l-8-3Z" />
+              </svg>
+              <span>{{ t('app.adminPanel') }}</span>
+            </NuxtLink>
+            <NuxtLink v-if="isLoggedIn" :to="localePath('/account-settings')" class="mobile-sheet-action text-cyan-300" @click="mobileMoreOpen = false">
+              <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.3 4.3h3.4l.6 2.2c.5.2 1 .5 1.4.8l2.2-.6 1.7 3-1.6 1.6a6 6 0 0 1 0 1.4l1.6 1.6-1.7 3-2.2-.6c-.4.3-.9.6-1.4.8l-.6 2.2h-3.4l-.6-2.2c-.5-.2-1-.5-1.4-.8l-2.2.6-1.7-3L6 12.7a6 6 0 0 1 0-1.4L4.4 9.7l1.7-3 2.2.6c.4-.3.9-.6 1.4-.8l.6-2.2Z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z" />
+              </svg>
+              <span>{{ t('app.accountSettings') }}</span>
+            </NuxtLink>
+            <NuxtLink v-if="isLoggedIn" :to="localePath('/my-channels')" class="mobile-sheet-action text-yellow-300" @click="mobileMoreOpen = false">
+              <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 20v-2a5 5 0 0 1 10 0v2" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 8v4m2-2h-4" />
+              </svg>
+              <span>{{ t('app.manageChannels') }}</span>
+            </NuxtLink>
+            <NuxtLink v-if="!isLoggedIn" :to="localePath('/login')" class="mobile-sheet-action text-red-300" @click="mobileMoreOpen = false">
+              <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3" />
+              </svg>
+              <span>{{ t('app.login') }}</span>
+            </NuxtLink>
+            <button type="button" class="mobile-sheet-action mobile-sheet-action-wide text-blue-300" @click="openMobileCategories">
+              <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5h7v7H4V5Zm9 0h7v7h-7V5ZM4 14h7v5H4v-5Zm9 0h7v5h-7v-5Z" />
+              </svg>
+              <span>{{ t('app.browseByCategory') }}</span>
+            </button>
+          </div>
+          </template>
+
+          <div class="mt-5 border-t border-zinc-800 pt-4">
+            <p class="px-1 text-xs font-semibold uppercase text-zinc-500">{{ t('app.language') }}</p>
+            <select
+              :value="locale"
+              @change="onLocaleChange"
+              class="mt-2 w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white focus:border-blue-500 focus:outline-none"
+              :aria-label="t('app.language')"
+            >
+              <option v-for="item in locales" :key="item.code" :value="item.code">
+                {{ item.code === 'en' ? '🇺🇸 English (US)' : '🇲🇽 Español (México)' }}
+              </option>
+            </select>
+          </div>
+
+          <button
+            v-if="isLoggedIn"
+            type="button"
+            class="mt-5 w-full rounded-lg border border-red-900/70 px-3 py-2.5 text-left text-sm font-semibold text-red-300 transition hover:bg-red-950/40"
+            @click="handleMobileLogout"
+          >
+            {{ t('app.logout') }}
+          </button>
+        </div>
+      </section>
+    </Transition>
+
+    <Transition name="mobile-sheet">
+      <section
+        v-if="isMobileDevice && mobileCategoriesOpen && !shouldHideHeader"
+        class="fixed inset-0 z-[100] flex flex-col bg-zinc-950 text-white"
+        aria-label="Browse by category"
+      >
+        <div
+          class="shrink-0 border-b border-zinc-800 bg-zinc-950/95 px-4 pb-3 pt-4 backdrop-blur-xl"
+          :style="{ paddingTop: `calc(${notificationBarHeight}px + env(safe-area-inset-top, 0px) + 0.75rem)` }"
+        >
+          <div class="flex items-center justify-between gap-3">
+            <div>
+              <p class="text-xs font-semibold uppercase text-zinc-500">{{ t('app.categories') }}</p>
+              <h2 class="text-xl font-bold">{{ t('app.browseByCategory') }}</h2>
+            </div>
+            <button
+              type="button"
+              class="flex h-10 w-10 items-center justify-center rounded-full bg-zinc-900 text-zinc-300 transition hover:bg-zinc-800 hover:text-white"
+              aria-label="Close categories"
+              @click="mobileCategoriesOpen = false"
+            >
+              X
+            </button>
+          </div>
+        </div>
+
+        <div class="min-h-0 flex-1 overflow-y-auto px-4 py-3" style="padding-bottom: max(env(safe-area-inset-bottom), 1rem);">
+          <NuxtLink
+            :to="localePath('/')"
+            class="mb-1 block rounded-xl px-4 py-3 text-base font-semibold text-zinc-200 transition hover:bg-zinc-900"
+            :class="{ 'bg-blue-600 text-white': route.path === '/' && !route.params.slug }"
+            @click="mobileCategoriesOpen = false"
+          >
+            {{ t('app.allVideos') }}
+          </NuxtLink>
+          <NuxtLink
+            v-for="category in categoriesWithVideos"
+            :key="category.id"
+            :to="localePath(`/category/${category.slug}`)"
+            class="mb-1 block rounded-xl px-4 py-3 text-base font-semibold text-zinc-200 transition hover:bg-zinc-900"
+            :class="{ 'bg-blue-600 text-white': route.params.slug === category.slug }"
+            @click="mobileCategoriesOpen = false"
+          >
+            {{ category.name }}
+          </NuxtLink>
+        </div>
+      </section>
+    </Transition>
 
   </div>
 
@@ -411,84 +1030,155 @@
     </div>
   </div>
   <!-- Profile Dropdown Portal (outside header for z-index independence) -->
-  <!-- Overlay for click outside -->
-  <div v-if="dropdownOpen" class="fixed inset-0 pointer-events-auto" :style="{ zIndex: 9998 }"
-    @click="dropdownOpen = false" />
+  <Transition name="fade-soft">
+    <div
+      v-if="dropdownOpen"
+      class="fixed inset-0 pointer-events-auto bg-black/60 backdrop-blur-[2px]"
+      :class="{ 'bg-black/35': !isMobileDevice }"
+      :style="{ zIndex: 9998 }"
+      @click="dropdownOpen = false"
+    />
+  </Transition>
 
-  <!-- Dropdown Menu -->
-  <div v-if="dropdownOpen"
-    class="fixed bg-zinc-900 border border-zinc-700 rounded shadow-lg max-h-96 overflow-y-auto pointer-events-auto"
-    :style="{ zIndex: 9999, top: notificationBarHeight + 70 + 'px', right: '20px', width: '224px' }">
-    <!-- Current Account -->
-    <div class="px-4 py-2 text-xs text-gray-500 border-b border-zinc-700 font-semibold">
-      {{ t('app.currentAccount') }}
+  <Transition name="menu-pop">
+    <div
+      v-if="dropdownOpen"
+      class="fixed pointer-events-auto"
+      :class="isMobileDevice ? 'inset-0 flex items-center justify-center px-4' : 'origin-top-right'"
+      :style="accountDropdownStyle"
+    >
+      <section
+        class="flex min-h-0 w-full max-w-md flex-col overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-950 text-white shadow-2xl shadow-black/70"
+        :class="isMobileDevice ? 'max-h-[min(82dvh,42rem)]' : 'max-h-[min(34rem,calc(100dvh-5rem))]'"
+        @click.stop
+      >
+        <div class="shrink-0 border-b border-zinc-800 p-4">
+          <div class="flex items-start justify-between gap-3">
+            <div class="flex min-w-0 items-center gap-3">
+              <div class="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full border border-zinc-700 bg-zinc-800 text-lg font-black text-zinc-200">
+                <img
+                  v-if="activeChannelAvatar && !avatarLoadFailed"
+                  :src="activeChannelAvatar"
+                  :alt="displayName"
+                  class="h-full w-full object-cover"
+                  @error="avatarLoadFailed = true"
+                />
+                <span v-else>{{ displayName.charAt(0).toUpperCase() }}</span>
+              </div>
+              <div class="min-w-0">
+                <h2 class="mt-1 truncate text-xl font-black">{{ displayName }}</h2>
+                <p v-if="displayName !== username" class="mt-1 truncate text-xs text-zinc-500">{{ username }}</p>
+              </div>
+            </div>
+            <button
+              type="button"
+              class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-zinc-900 text-zinc-300 transition hover:bg-zinc-800 hover:text-white"
+              aria-label="Close account menu"
+              @click="dropdownOpen = false"
+            >
+              X
+            </button>
+          </div>
+        </div>
+
+        <div class="giltube-account-panel-scroll min-h-0 flex-1 overflow-y-auto p-2">
+          <button
+            type="button"
+            class="account-panel-row"
+            :class="activeAccount === 'personal' || activeAccount === userId ? 'account-panel-row-active' : ''"
+            @click="switchAccount(userId, username)"
+          >
+            <span class="account-panel-avatar bg-zinc-800 text-zinc-200">{{ username.charAt(0).toUpperCase() }}</span>
+            <span class="min-w-0 flex-1">
+              <span class="block truncate text-sm font-bold">{{ username }}</span>
+              <span class="block text-xs text-zinc-500">{{ t('app.personal') }}</span>
+            </span>
+            <span v-if="activeAccount === 'personal' || activeAccount === userId" class="account-panel-check">
+              <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="m5 13 4 4L19 7" />
+              </svg>
+            </span>
+          </button>
+
+          <template v-if="channels.length > 0">
+            <p class="mt-2 px-3 py-2 text-xs font-bold uppercase tracking-[0.14em] text-zinc-500">{{ t('app.yourChannels') }}</p>
+            <button
+              v-for="channel in channels"
+              :key="channel.id"
+              type="button"
+              class="account-panel-row"
+              :disabled="channel.status === 'banned'"
+              :title="channel.status === 'banned' ? 'This channel has been banned' : channel.status === 'suspended' ? 'This channel is suspended' : ''"
+              :class="[
+                activeAccount === channel.id ? 'account-panel-row-active' : '',
+                channel.status === 'banned' ? 'cursor-not-allowed opacity-45' : ''
+              ]"
+              @click="switchAccount(channel.id, channel.name)"
+            >
+              <span class="account-panel-avatar">
+                <img
+                  v-if="getChannelAvatarUrl(channel) && !failedChannelAvatars[channel.id]"
+                  :src="getChannelAvatarUrl(channel)"
+                  :alt="channel.name"
+                  class="h-full w-full object-cover"
+                  @error="failedChannelAvatars[channel.id] = true"
+                />
+                <span v-else>{{ channel.name.charAt(0).toUpperCase() }}</span>
+              </span>
+              <span class="min-w-0 flex-1">
+                <span class="block truncate text-sm font-bold">{{ channel.name }}</span>
+                <span class="block text-xs text-zinc-500">{{ channel.is_default ? 'Default channel' : 'Channel' }}</span>
+              </span>
+              <span v-if="channel.status === 'suspended'" class="rounded-full border border-yellow-900 bg-yellow-950/70 px-2 py-0.5 text-[10px] font-bold uppercase text-yellow-200">Suspended</span>
+              <span v-else-if="channel.status === 'banned'" class="rounded-full border border-red-900 bg-red-950/70 px-2 py-0.5 text-[10px] font-bold uppercase text-red-200">Banned</span>
+              <span v-else-if="activeAccount === channel.id" class="account-panel-check">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="m5 13 4 4L19 7" />
+                </svg>
+              </span>
+            </button>
+          </template>
+        </div>
+
+        <div v-if="!isMobileDevice" class="grid shrink-0 gap-2 border-t border-zinc-800 p-3">
+          <NuxtLink
+            v-if="userType === 'admin'"
+            to="/admin"
+            class="account-panel-action text-purple-300"
+            @click="dropdownOpen = false"
+          >
+            {{ t('app.adminPanel') }}
+          </NuxtLink>
+          <div class="grid gap-2 sm:grid-cols-2">
+            <NuxtLink :to="localePath('/my-channels')" class="account-panel-action text-yellow-300" @click="dropdownOpen = false">
+              {{ t('app.manageChannels') }}
+            </NuxtLink>
+            <NuxtLink :to="localePath('/account-settings')" class="account-panel-action text-cyan-300" @click="dropdownOpen = false">
+              {{ t('app.accountSettings') }}
+            </NuxtLink>
+          </div>
+          <div class="grid gap-2 sm:grid-cols-2">
+            <NuxtLink :to="localePath('/create-channel')" class="account-panel-action text-green-300" @click="dropdownOpen = false">
+              {{ t('app.createChannel') }}
+            </NuxtLink>
+            <button type="button" class="account-panel-action text-red-300" @click="handleLogout">
+              {{ t('app.logout') }}
+            </button>
+          </div>
+        </div>
+      </section>
     </div>
-
-    <!-- Personal Account -->
-    <button @click="switchAccount(userId, username)"
-      :class="['w-full text-left px-4 py-2 hover:bg-zinc-800', activeAccount === 'personal' ? 'bg-zinc-800 text-blue-400' : 'text-gray-300']">
-      👤 {{ username }} {{ t('app.personal') }}
-    </button>
-
-    <!-- Channels Divider -->
-    <div v-if="channels.length > 0" class="px-4 py-2 text-xs text-gray-500 border-t border-zinc-700 font-semibold">
-      {{ t('app.yourChannels') }}
-    </div>
-
-    <!-- User Channels -->
-    <button v-for="channel in channels" :key="channel.id" @click="switchAccount(channel.id, channel.name)"
-      :disabled="channel.status === 'banned'"
-      :title="channel.status === 'banned' ? 'This channel has been banned' : channel.status === 'suspended' ? 'This channel is suspended' : ''"
-      :class="['w-full text-left px-4 py-2 hover:bg-zinc-800 flex items-center gap-3 transition', activeAccount === channel.id ? 'bg-zinc-800 text-blue-400' : channel.status === 'banned' ? 'text-gray-600 cursor-not-allowed opacity-50' : 'text-gray-300']">
-      <!-- Channel Avatar -->
-      <div v-if="getChannelAvatarUrl(channel) && !failedChannelAvatars[channel.id]"
-        class="w-6 h-6 rounded-full bg-zinc-700 flex items-center justify-center text-xs font-bold overflow-hidden">
-        <img :src="getChannelAvatarUrl(channel)" :alt="channel.name" class="w-full h-full object-cover"
-          @error="failedChannelAvatars[channel.id] = true" />
-      </div>
-      <span v-else class="w-6 h-6 rounded-full bg-zinc-700 flex items-center justify-center text-xs font-bold">
-        {{ channel.name.charAt(0).toUpperCase() }}
-      </span>
-      <span class="flex-1">{{ channel.name }}</span>
-      <span v-if="channel.status === 'suspended'"
-        class="text-xs bg-yellow-900 text-yellow-200 px-2 py-0.5 rounded">Suspended</span>
-      <span v-if="channel.status === 'banned'" class="text-xs bg-red-900 text-red-200 px-2 py-0.5 rounded">Banned</span>
-    </button>
-
-    <!-- Actions -->
-    <div class="border-t border-zinc-700 mt-2 pt-2">
-        <div class="px-4 py-2 text-xs text-gray-500 border-zinc-700 font-semibold">
-        {{ t('app.settings') }}
-      </div>
-      <!-- Admin Panel -->
-      <NuxtLink v-if="userType === 'admin'" to="/admin"
-        class="block px-4 py-2 hover:bg-zinc-800 text-purple-400 font-semibold" @click="dropdownOpen = false">
-        {{ t('app.adminPanel') }}
-      </NuxtLink>
-        <NuxtLink :to="localePath('/my-channels')" class="block px-4 py-2 hover:bg-zinc-800 text-yellow-400"
-        @click="dropdownOpen = false">
-        {{ t('app.manageChannels') }}
-      </NuxtLink>
-      <NuxtLink :to="localePath('/account-settings')" class="block px-4 py-2 hover:bg-zinc-800 text-cyan-400"
-        @click="dropdownOpen = false">
-        {{ t('app.accountSettings') }}
-      </NuxtLink>
-      <NuxtLink :to="localePath('/create-channel')" class="block px-4 py-2 hover:bg-zinc-800 text-green-400"
-        @click="dropdownOpen = false">
-        {{ t('app.createChannel') }}
-      </NuxtLink>
-      <button @click="handleLogout"
-        class="w-full text-left mt-2 px-4 py-2 hover:bg-zinc-800 text-red-400 rounded-b border-t border-zinc-700">
-        {{ t('app.logout') }}
-      </button>
-    </div>
-  </div>
+  </Transition>
 </template>
 
 <script setup>
 import { ref, onMounted, onUnmounted, computed, watch, nextTick } from 'vue'
+import GlobalMusicPlayer from '~/app/components/music/GlobalMusicPlayer.vue'
+import { useMusicPlayer } from '~/app/composables/useMusicPlayer'
+import musicLogoFull from '~/assets/giltube-music-logo-full.png'
+import musicLogoSymbol from '~/assets/giltube-music-logo-symbol.png'
 import { beginGilIDAuth, getMyAccount } from '~/app/service/auth'
-import { fetchUserChannels } from '~/app/service/upload'
+import { fetchUserChannels, setDefaultChannel } from '~/app/service/upload'
 import {
   listNotifications,
   getUnreadNotificationCount,
@@ -503,33 +1193,192 @@ const router = useRouter()
 const route = useRoute()
 const { t, locale, locales, setLocale } = useI18n()
 const localePath = useLocalePath()
+const requestHeaders = process.server ? useRequestHeaders(['user-agent']) : {}
+const pageTransitionKey = (routeLocation) => routeLocation.fullPath
+const isLikelyMobileUserAgent = (userAgent = '', maxTouchPoints = 0) => {
+  const ua = String(userAgent || '')
+  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile/i.test(ua) ||
+    (/Macintosh/i.test(ua) && maxTouchPoints > 1)
+}
 const isLoggedIn = ref(false)
 const username = ref('')
 const userId = ref('')
 const userType = ref('user')
 const userStatus = ref('active')
+const isMobileDevice = ref(isLikelyMobileUserAgent(process.server ? requestHeaders['user-agent'] : ''))
 const isSidebarOpen = ref(false)
 const showSearchBar = ref(false)
+const mobileMoreOpen = ref(false)
+const mobileCreateOpen = ref(false)
+const mobileCategoriesOpen = ref(false)
 const searchQuery = ref('')
+const searchSuggestions = ref([])
+const searchSuggestionsOpen = ref(false)
+const searchSuggestionsLoading = ref(false)
+const desktopSearchRef = ref(null)
+const mobileSearchRef = ref(null)
+const { currentTrack: shellMusicTrack, openPlayer: openMusicPlayerPanel } = useMusicPlayer()
 const activeWatchParty = ref(null)
 const watchPartyWidgetDismissed = ref(false)
 const isInsideWatchPartyRoute = computed(() => route.path.includes('/watch-party/'))
+const isVideoWatchRoute = computed(() => normalizedRoutePath.value.startsWith('/video/'))
+const useCollapsibleDesktopSidebar = computed(() => isInsideWatchPartyRoute.value || isVideoWatchRoute.value)
 let watchPartyStatusInterval = null
+let searchSuggestTimer = null
+let searchSuggestRequestID = 0
+
+const shouldShowSearchSuggestions = computed(() =>
+  !isMusicRoute.value &&
+  searchSuggestionsOpen.value &&
+  searchQuery.value.trim().length >= 2 &&
+  searchSuggestions.value.length > 0
+)
 
 const handleDesktopSearch = async () => {
   if (searchQuery.value.trim()) {
-    const path = localePath(`/search?q=${encodeURIComponent(searchQuery.value)}`)
+    const base = isMusicRoute.value ? '/music/search' : '/search'
+    const path = localePath(`${base}?q=${encodeURIComponent(searchQuery.value)}`)
+    searchSuggestionsOpen.value = false
     await router.push(path)
   }
 }
 
 const handleMobileSearch = async () => {
   if (searchQuery.value.trim()) {
-    const path = localePath(`/search?q=${encodeURIComponent(searchQuery.value)}`)
+    const base = isMusicRoute.value ? '/music/search' : '/search'
+    const path = localePath(`${base}?q=${encodeURIComponent(searchQuery.value)}`)
+    searchSuggestionsOpen.value = false
     await router.push(path)
     showSearchBar.value = false
   }
 }
+
+const openMobileSearch = async () => {
+  mobileMoreOpen.value = false
+  mobileCreateOpen.value = false
+  mobileCategoriesOpen.value = false
+  showSearchBar.value = true
+  searchSuggestionsOpen.value = true
+  await nextTick()
+  mobileSearchRef.value?.querySelector?.('input')?.focus?.()
+}
+
+const closeMobileSearch = () => {
+  showSearchBar.value = false
+  searchSuggestionsOpen.value = false
+}
+
+const toggleMobileCreate = async () => {
+  mobileMoreOpen.value = false
+  mobileCategoriesOpen.value = false
+  showSearchBar.value = false
+  if (!isLoggedIn.value || userStatus.value !== 'active') {
+    await router.push(localePath('/login'))
+    return
+  }
+  mobileCreateOpen.value = !mobileCreateOpen.value
+}
+
+const openMobileCategories = () => {
+  mobileMoreOpen.value = false
+  mobileCreateOpen.value = false
+  showSearchBar.value = false
+  mobileCategoriesOpen.value = true
+}
+
+const openMobileMore = () => {
+  mobileCreateOpen.value = false
+  mobileCategoriesOpen.value = false
+  showSearchBar.value = false
+  mobileMoreOpen.value = true
+}
+
+const openSearchSuggestions = () => {
+  if (isMusicRoute.value) {
+    searchSuggestionsOpen.value = false
+    return
+  }
+  searchSuggestionsOpen.value = true
+  fetchSearchSuggestionsDebounced()
+}
+
+const fetchSearchSuggestionsDebounced = () => {
+  if (searchSuggestTimer) clearTimeout(searchSuggestTimer)
+  const query = searchQuery.value.trim()
+  if (query.length < 2) {
+    searchSuggestions.value = []
+    searchSuggestionsLoading.value = false
+    return
+  }
+  searchSuggestTimer = setTimeout(fetchSearchSuggestions, 180)
+}
+
+const fetchSearchSuggestions = async () => {
+  const query = searchQuery.value.trim()
+  if (query.length < 2) return
+  const requestID = ++searchSuggestRequestID
+  searchSuggestionsLoading.value = true
+  try {
+    const response = await fetch(`/api/v1/search/suggest?q=${encodeURIComponent(query)}&limit=8`)
+    if (!response.ok) throw new Error('suggest failed')
+    const data = await response.json()
+    if (requestID === searchSuggestRequestID) {
+      searchSuggestions.value = data.suggestions || []
+    }
+  } catch (err) {
+    if (requestID === searchSuggestRequestID) {
+      searchSuggestions.value = []
+    }
+  } finally {
+    if (requestID === searchSuggestRequestID) {
+      searchSuggestionsLoading.value = false
+    }
+  }
+}
+
+const suggestionTitle = (item) => item?.type === 'channel' ? item?.name || item?.title : item?.title || item?.name || ''
+const suggestionImage = (item) => item?.thumbnail || item?.backdrop_url || item?.poster_url || item?.avatar || ''
+const suggestionIcon = (item) => {
+  if (item?.type === 'term') return '⌕'
+  if (item?.type === 'movie') return 'MOV'
+  if (item?.type === 'series') return 'SER'
+  if (item?.type === 'channel') return 'CH'
+  return 'VID'
+}
+const suggestionTypeLabel = (type) => {
+  if (type === 'term') return t('app.searchSuggestion')
+  if (type === 'movie') return t('searchPage.movie')
+  if (type === 'series') return t('searchPage.seriesOne')
+  if (type === 'channel') return t('searchPage.channels')
+  return t('searchPage.videos')
+}
+const suggestionMeta = (item) => {
+  if (item?.type === 'term') return t('app.peopleSearchFor')
+  if (item?.type === 'movie') return [t('searchPage.movie'), item?.year || ''].filter(Boolean).join(' · ')
+  if (item?.type === 'series') return t('searchPage.seriesMeta', { seasons: item?.seasons || 1, episodes: item?.episodes || 0 })
+  if (item?.type === 'channel') return item?.description || t('searchPage.channels')
+  return item?.channel || t('searchPage.videos')
+}
+const suggestionPath = (item) => {
+  if (item?.type === 'term') return `/search?q=${encodeURIComponent(item.title || item.id || searchQuery.value.trim())}`
+  if (item?.type === 'movie') return `/category/movies?movie_id=${encodeURIComponent(item.id)}`
+  if (item?.type === 'series') return `/category/series?series_id=${encodeURIComponent(item.id)}`
+  if (item?.type === 'channel') return `/channel/${item.id}`
+  return `/video/${item.id}`
+}
+const goToSearchSuggestion = async (item) => {
+  if (!item?.id) return
+  searchSuggestionsOpen.value = false
+  showSearchBar.value = false
+  await router.push(localePath(suggestionPath(item)))
+}
+const handleSearchSuggestionClickOutside = (event) => {
+  const target = event.target
+  if (desktopSearchRef.value?.contains?.(target) || mobileSearchRef.value?.contains?.(target)) return
+  searchSuggestionsOpen.value = false
+}
+const uploadDropdownOpen = ref(false)
+const uploadDropdownRef = ref(null)
 const dropdownOpen = ref(false)
 const channels = ref([])
 const activeAccount = ref('personal')
@@ -595,6 +1444,10 @@ const normalizedRoutePath = computed(() => {
   return path.replace(/^\/[a-z]{2}(?=\/|$)/, '') || '/'
 })
 
+const isMusicRoute = computed(() =>
+  normalizedRoutePath.value === '/music' || normalizedRoutePath.value.startsWith('/music/')
+)
+
 const notificationBarHeight = computed(() => {
   let height = 0
   if (offlineRef.value) height += offlineRef.value.offsetHeight
@@ -604,9 +1457,54 @@ const notificationBarHeight = computed(() => {
   return height
 })
 
-const shouldHideHeaderSidebar = computed(() => {
+const shouldHideHeader = computed(() => {
   return hideHeaderSidebarRoutes.some(route_path => normalizedRoutePath.value.startsWith(route_path))
 })
+
+const isCompactMobileWatchTopBar = computed(() => isMobileDevice.value && isVideoWatchRoute.value)
+
+const shouldHideTopBar = computed(() => shouldHideHeader.value)
+
+const shouldHideSidebar = computed(() => {
+  return shouldHideHeader.value || isMobileDevice.value || isMusicRoute.value
+})
+
+const mobileMyChannelPath = computed(() => {
+  if (!isLoggedIn.value) return '/login'
+  if (activeAccount.value !== 'personal' && activeAccount.value !== userId.value) {
+    return `/channel/${activeAccount.value}`
+  }
+  return '/my-channels'
+})
+
+const accountDropdownStyle = computed(() => {
+  const top = notificationBarHeight.value + 70
+  if (isMobileDevice.value) {
+    return {
+      zIndex: 9999,
+      paddingTop: `calc(${notificationBarHeight.value}px + env(safe-area-inset-top, 0px))`,
+      paddingBottom: 'calc(5.4rem + env(safe-area-inset-bottom, 0px))'
+    }
+  }
+  return {
+    zIndex: 9999,
+    top: `${top}px`,
+    right: '20px',
+    width: '24rem'
+  }
+})
+
+const mainScrollStyle = computed(() => {
+  if (shouldHideHeader.value) return {}
+  const headerOffset = notificationBarHeight.value + (isCompactMobileWatchTopBar.value ? 40 : 64)
+  const mobileBottomOffset = isMobileDevice.value ? 76 : 0
+  return {
+    paddingTop: `${headerOffset}px`,
+    paddingBottom: mobileBottomOffset ? `calc(${mobileBottomOffset}px + env(safe-area-inset-bottom, 0px))` : '0px'
+  }
+})
+
+const mobileSearchTopOffset = computed(() => notificationBarHeight.value + (isCompactMobileWatchTopBar.value ? 40 : 64))
 
 const displayName = computed(() => {
   if (!process.client || typeof window === 'undefined') return username.value || 'User'
@@ -630,6 +1528,38 @@ const getChannelAvatarUrl = (channel) => {
   return `/avatars/${channel.avatar_url}`
 }
 
+const saveActiveAccount = (accountId, accountName) => {
+  activeAccount.value = accountId
+  avatarLoadFailed.value = false
+  failedChannelAvatars.value = {}
+  localStorage.setItem('active_account', accountId)
+  localStorage.setItem('active_account_name', accountName)
+}
+
+const applyDefaultChannelSelection = (channelList = [], defaultChannelID = '') => {
+  if (!process.client || !isLoggedIn.value || !userId.value) return
+  if (!Array.isArray(channelList) || channelList.length === 0) {
+    saveActiveAccount('personal', username.value || 'Personal')
+    localStorage.removeItem('default_channel_id')
+    return
+  }
+
+  const selectableChannels = channelList.filter(channel => channel.status !== 'banned')
+  if (selectableChannels.length === 0) {
+    saveActiveAccount('personal', username.value || 'Personal')
+    localStorage.removeItem('default_channel_id')
+    return
+  }
+
+  const defaultChannel = selectableChannels.find(channel => channel.id === defaultChannelID) ||
+    selectableChannels.find(channel => channel.is_default) ||
+    selectableChannels[0]
+  if (!defaultChannel?.id) return
+
+  localStorage.setItem('default_channel_id', defaultChannel.id)
+  saveActiveAccount(defaultChannel.id, defaultChannel.name)
+}
+
 const categoriesWithVideos = computed(() => {
   return categories.value.filter(cat => ['series', 'movies'].includes(cat.slug) || (cat.video_count || 0) > 0)
 })
@@ -651,6 +1581,10 @@ const syncCategoriesFromStorage = () => {
 
 const handleSidebarResize = () => {
   if (!process.client) return
+  if (isMobileDevice.value) {
+    isSidebarOpen.value = false
+    return
+  }
   if (window.innerWidth >= 768) return
   isSidebarOpen.value = false
 }
@@ -742,8 +1676,40 @@ const loadNotificationPreview = async () => {
 const toggleNotificationsDropdown = async () => {
   notificationsDropdownOpen.value = !notificationsDropdownOpen.value
   if (notificationsDropdownOpen.value) {
+    uploadDropdownOpen.value = false
     await Promise.all([refreshNotificationCount(), loadNotificationPreview()])
   }
+}
+
+const toggleUploadDropdown = () => {
+  uploadDropdownOpen.value = !uploadDropdownOpen.value
+  if (uploadDropdownOpen.value) {
+    notificationsDropdownOpen.value = false
+    dropdownOpen.value = false
+  }
+}
+
+const toggleAccountDropdown = () => {
+  dropdownOpen.value = !dropdownOpen.value
+  if (dropdownOpen.value) {
+    uploadDropdownOpen.value = false
+    notificationsDropdownOpen.value = false
+    mobileMoreOpen.value = false
+    mobileCreateOpen.value = false
+    mobileCategoriesOpen.value = false
+    showSearchBar.value = false
+  }
+}
+
+const openMobileAccountPanel = () => {
+  if (!isLoggedIn.value) return
+  mobileMoreOpen.value = false
+  mobileCreateOpen.value = false
+  mobileCategoriesOpen.value = false
+  showSearchBar.value = false
+  uploadDropdownOpen.value = false
+  notificationsDropdownOpen.value = false
+  dropdownOpen.value = true
 }
 
 const handleNotificationClick = async (id) => {
@@ -774,6 +1740,13 @@ const handleNotificationClickOutside = (event) => {
   if (!notificationsDropdownOpen.value || !notificationDropdownRef.value) return
   if (!notificationDropdownRef.value.contains(event.target)) {
     notificationsDropdownOpen.value = false
+  }
+}
+
+const handleUploadDropdownClickOutside = (event) => {
+  if (!uploadDropdownOpen.value || !uploadDropdownRef.value) return
+  if (!uploadDropdownRef.value.contains(event.target)) {
+    uploadDropdownOpen.value = false
   }
 }
 
@@ -850,10 +1823,17 @@ const scrollToTop = async () => {
 }
 
 const handleLogoClick = async () => {
-  if (route.path !== localePath('/')) {
-    await router.push(localePath('/'))
+  const destination = isMusicRoute.value ? '/music' : '/'
+  if (route.path !== localePath(destination)) {
+    await router.push(localePath(destination))
   }
   await scrollToTop()
+}
+
+const openShellMusicPlayer = () => {
+  if (!shellMusicTrack.value) return
+  mobileMoreOpen.value = false
+  openMusicPlayerPanel('player')
 }
 
 const verifyActiveWatchParty = async () => {
@@ -940,11 +1920,47 @@ const leaveActiveWatchParty = async () => {
 
 const isWatchPartyWidgetDismissed = computed(() => watchPartyWidgetDismissed.value)
 
-watch(isInsideWatchPartyRoute, () => {
+watch(isInsideWatchPartyRoute, (insideWatchParty) => {
   syncWatchPartyStatusPolling()
+  if (insideWatchParty) {
+    isSidebarOpen.value = false
+  }
+})
+
+watch(useCollapsibleDesktopSidebar, (isCollapsible) => {
+  if (isCollapsible) {
+    isSidebarOpen.value = false
+  }
+})
+
+watch(isMobileDevice, (isMobile) => {
+  if (!isMobile) return
+  isSidebarOpen.value = false
+  uploadDropdownOpen.value = false
+  notificationsDropdownOpen.value = false
+  dropdownOpen.value = false
+})
+
+watch(searchQuery, () => {
+  searchSuggestionsOpen.value = true
+  fetchSearchSuggestionsDebounced()
+})
+
+watch(() => route.fullPath, () => {
+  searchSuggestionsOpen.value = false
+  mobileMoreOpen.value = false
+  mobileCreateOpen.value = false
+  mobileCategoriesOpen.value = false
+  if (isMobileDevice.value) {
+    showSearchBar.value = false
+  }
 })
 
 onMounted(async () => {
+  isMobileDevice.value = isLikelyMobileUserAgent(navigator.userAgent, navigator.maxTouchPoints || 0)
+  if (isMobileDevice.value) {
+    isSidebarOpen.value = false
+  }
   loadActiveWatchParty()
   checkAuthStatus()
   await loadCategories()
@@ -968,6 +1984,8 @@ onMounted(async () => {
   window.addEventListener('storage', loadActiveWatchParty)
   window.addEventListener('giltube:watch-party-updated', loadActiveWatchParty)
   document.addEventListener('click', handleNotificationClickOutside)
+  document.addEventListener('click', handleUploadDropdownClickOutside)
+  document.addEventListener('click', handleSearchSuggestionClickOutside)
   document.addEventListener('visibilitychange', handleNotificationVisibilityChange)
   offlineMode.value = !navigator.onLine
 
@@ -1076,7 +2094,13 @@ onUnmounted(() => {
   window.removeEventListener('offline', handleOffline)
   window.removeEventListener('scroll', handleMainContentScroll)
   document.removeEventListener('click', handleNotificationClickOutside)
+  document.removeEventListener('click', handleUploadDropdownClickOutside)
+  document.removeEventListener('click', handleSearchSuggestionClickOutside)
   document.removeEventListener('visibilitychange', handleNotificationVisibilityChange)
+  if (searchSuggestTimer) {
+    clearTimeout(searchSuggestTimer)
+    searchSuggestTimer = null
+  }
   stopNotificationPolling()
   if (statusRefreshInterval.value) {
     clearInterval(statusRefreshInterval.value)
@@ -1103,6 +2127,7 @@ watch(isLoggedIn, (newValue) => {
     showPasskeyPrompt.value = false
     showGilIDLinkModal.value = false
     hideGilIDPromptPermanently.value = false
+    uploadDropdownOpen.value = false
     notificationsDropdownOpen.value = false
     notificationPreview.value = []
     unreadNotificationCount.value = 0
@@ -1122,6 +2147,7 @@ watch(activeChannelAvatar, () => {
 })
 
 watch(() => route.fullPath, async () => {
+  uploadDropdownOpen.value = false
   await nextTick()
   handleMainContentScroll()
   if (isLoggedIn.value) {
@@ -1180,11 +2206,9 @@ const loadChannels = async () => {
     }
   }
   try {
-    await fetchUserChannels(userId.value)
-    const updatedChannels = localStorage.getItem('user_channels')
-    if (updatedChannels) {
-      channels.value = JSON.parse(updatedChannels)
-    }
+    const result = await fetchUserChannels(userId.value)
+    channels.value = result.channels || []
+    applyDefaultChannelSelection(channels.value, result.default_channel_id || '')
   } catch (err) {
     console.error('Failed to fetch channels:', err)
   }
@@ -1304,11 +2328,11 @@ const dismissUpdate = () => {
   showUpdatePrompt.value = false
 }
 
-const switchAccount = (accountId, accountName) => {
+const switchAccount = async (accountId, accountName) => {
   if (!process.client) return
 
   // If switching to a channel (not personal), check if it's banned
-  if (accountId !== userId.value) {
+  if (accountId !== userId.value && accountId !== 'personal') {
     const targetChannel = channels.value.find(ch => ch.id === accountId)
     if (targetChannel && targetChannel.status === 'banned') {
       alert('This channel has been banned and cannot be accessed.')
@@ -1316,12 +2340,21 @@ const switchAccount = (accountId, accountName) => {
     }
   }
 
-  activeAccount.value = accountId
-  avatarLoadFailed.value = false
-  failedChannelAvatars.value = {}
-  localStorage.setItem('active_account', accountId)
-  localStorage.setItem('active_account_name', accountName)
+  saveActiveAccount(accountId, accountName)
   dropdownOpen.value = false
+  mobileMoreOpen.value = false
+  mobileCreateOpen.value = false
+  mobileCategoriesOpen.value = false
+  showSearchBar.value = false
+
+  if (accountId !== userId.value && accountId !== 'personal') {
+    try {
+      await setDefaultChannel(accountId)
+    } catch (err) {
+      console.error('Failed to save default channel:', err)
+    }
+  }
+
   window.location.reload()
 }
 
@@ -1335,10 +2368,18 @@ const handleLogout = async () => {
   localStorage.removeItem('user_channels')
   localStorage.removeItem('active_account')
   localStorage.removeItem('active_account_name')
+  localStorage.removeItem('default_channel_id')
   isLoggedIn.value = false
   dropdownOpen.value = false
   router.push('/')
   window.location.reload()
+}
+
+const handleMobileLogout = async () => {
+  mobileMoreOpen.value = false
+  mobileCreateOpen.value = false
+  mobileCategoriesOpen.value = false
+  await handleLogout()
 }
 
 const dismissAccountStatus = () => {
@@ -1362,6 +2403,409 @@ if (process.client) {
 </script>
 
 <style global>
+.search-suggestions-scrollbar {
+  scrollbar-color: rgba(113, 113, 122, 0.85) transparent;
+  scrollbar-width: thin;
+}
+
+.search-suggestions-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.search-suggestions-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.search-suggestions-scrollbar::-webkit-scrollbar-thumb {
+  border: 2px solid rgba(9, 9, 11, 0.9);
+  border-radius: 999px;
+  background: rgba(113, 113, 122, 0.85);
+}
+
+.search-suggestions-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(161, 161, 170, 0.95);
+}
+
+.giltube-account-panel-scroll {
+  scrollbar-color: rgba(113, 113, 122, 0.75) transparent;
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+}
+
+.giltube-account-panel-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.giltube-account-panel-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.giltube-account-panel-scroll::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgba(113, 113, 122, 0.72);
+}
+
+.account-panel-row {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 0.75rem;
+  border-radius: 0.75rem;
+  padding: 0.75rem;
+  text-align: left;
+  color: rgb(212 212 216);
+  transition:
+    background-color 150ms ease,
+    color 150ms ease,
+    border-color 150ms ease;
+}
+
+.account-panel-row:hover {
+  background: rgb(24 24 27);
+  color: white;
+}
+
+.account-panel-row-active {
+  background: rgba(37, 99, 235, 0.18);
+  color: white;
+}
+
+.account-panel-avatar {
+  display: flex;
+  height: 2.5rem;
+  width: 2.5rem;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border-radius: 999px;
+  border: 1px solid rgb(63 63 70);
+  background: rgb(39 39 42);
+  font-size: 0.875rem;
+  font-weight: 900;
+  color: rgb(228 228 231);
+}
+
+.account-panel-check {
+  display: flex;
+  height: 1.75rem;
+  width: 1.75rem;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: rgb(37 99 235);
+  color: white;
+}
+
+.account-panel-action {
+  display: flex;
+  min-height: 2.75rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.75rem;
+  border: 1px solid rgb(39 39 42);
+  background: rgb(24 24 27);
+  padding: 0.65rem 0.85rem;
+  text-align: center;
+  font-size: 0.875rem;
+  font-weight: 800;
+  transition:
+    background-color 150ms ease,
+    border-color 150ms ease,
+    color 150ms ease;
+}
+
+.account-panel-action:hover {
+  border-color: rgb(82 82 91);
+  background: rgb(39 39 42);
+}
+
+.page-shift-enter-active,
+.page-shift-leave-active,
+.layout-shift-enter-active,
+.layout-shift-leave-active {
+  transition:
+    opacity 180ms ease,
+    transform 220ms cubic-bezier(0.22, 1, 0.36, 1),
+    filter 220ms ease;
+}
+
+.page-shift-enter-from,
+.layout-shift-enter-from {
+  opacity: 0;
+  filter: blur(6px);
+  transform: translateY(10px) scale(0.992);
+}
+
+.page-shift-leave-to,
+.layout-shift-leave-to {
+  opacity: 0;
+  filter: blur(4px);
+  transform: translateY(-6px) scale(0.996);
+}
+
+.route-page-shell {
+  isolation: isolate;
+}
+
+.fade-soft-enter-active,
+.fade-soft-leave-active {
+  transition: opacity 140ms ease;
+}
+
+.fade-soft-enter-from,
+.fade-soft-leave-to {
+  opacity: 0;
+}
+
+.menu-pop-enter-active,
+.menu-pop-leave-active {
+  transition:
+    opacity 150ms ease,
+    transform 180ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.menu-pop-enter-from,
+.menu-pop-leave-to {
+  opacity: 0;
+  transform: translateY(-6px) scale(0.96);
+}
+
+.mobile-sheet-enter-active,
+.mobile-sheet-leave-active {
+  transition:
+    opacity 180ms ease,
+    transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.mobile-sheet-enter-from,
+.mobile-sheet-leave-to {
+  opacity: 0;
+  transform: translateY(100%);
+}
+
+.mobile-bottom-nav-item {
+  display: flex;
+  min-width: 0;
+  height: 3.45rem;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.2rem;
+  border-radius: 0.75rem;
+  color: rgb(161 161 170);
+  font-size: 0.68rem;
+  font-weight: 700;
+  line-height: 1;
+  transition:
+    background-color 150ms ease,
+    color 150ms ease,
+    transform 150ms ease;
+}
+
+.mobile-bottom-nav-item:active {
+  transform: scale(0.96);
+}
+
+.mobile-bottom-nav-item:hover,
+.mobile-bottom-nav-item:focus-visible {
+  background: rgb(39 39 42 / 0.82);
+  color: white;
+  outline: none;
+}
+
+.mobile-bottom-nav-item span {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.music-now-playing-nav:not(:disabled) svg {
+  box-sizing: content-box;
+  border-radius: 999px;
+  background: rgb(220 38 38);
+  padding: 0.32rem;
+  color: white;
+}
+
+.music-now-playing-nav:disabled {
+  opacity: 0.45;
+}
+
+.music-brand-logo {
+  display: block;
+  width: auto;
+  object-fit: contain;
+}
+
+.music-brand-logo-full {
+  height: 3rem;
+  max-width: 13rem;
+}
+
+.music-brand-logo-symbol {
+  height: 2.55rem;
+  max-width: 3.5rem;
+}
+
+.music-return-link {
+  transition: width 220ms cubic-bezier(0.22, 1, 0.36, 1), background-color 150ms ease, color 150ms ease;
+}
+
+.music-return-link-desktop {
+  width: 2.25rem;
+  overflow: hidden;
+}
+
+.music-return-link-desktop:hover,
+.music-return-link-desktop:focus-visible {
+  width: 6.15rem;
+}
+
+.music-return-label {
+  flex: none;
+  opacity: 0;
+  transform: translateX(-0.25rem);
+  transition: opacity 140ms ease 35ms, transform 180ms ease 20ms;
+  white-space: nowrap;
+}
+
+.music-return-link-desktop:hover .music-return-label,
+.music-return-link-desktop:focus-visible .music-return-label {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.mobile-bottom-nav-create {
+  color: white;
+}
+
+.mobile-bottom-nav-create svg {
+  border-radius: 999px;
+  background: rgb(220 38 38);
+  padding: 0.35rem;
+  box-sizing: content-box;
+}
+
+.mobile-sheet-action {
+  position: relative;
+  display: flex;
+  min-height: 4.65rem;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  border-radius: 0.75rem;
+  background: rgb(24 24 27);
+  padding: 0.65rem 0.45rem;
+  text-align: center;
+  font-size: 0.72rem;
+  line-height: 1.05rem;
+  font-weight: 800;
+  transition:
+    background-color 150ms ease,
+    color 150ms ease;
+}
+
+.mobile-sheet-action > span:not(.ml-2) {
+  display: -webkit-box;
+  max-width: 100%;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.mobile-sheet-action .ml-2 {
+  position: absolute;
+  right: 0.45rem;
+  top: 0.45rem;
+  margin-left: 0;
+}
+
+.mobile-sheet-action-wide {
+  grid-column: 1 / -1;
+  min-height: 3.25rem;
+  flex-direction: row;
+  gap: 0.6rem;
+  padding-inline: 0.9rem;
+  font-size: 0.86rem;
+}
+
+.mobile-sheet-action:hover,
+.mobile-sheet-action:focus-visible {
+  background: rgb(39 39 42);
+  color: white;
+  outline: none;
+}
+
+.motion-card {
+  animation: motionCardIn 360ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  transform-origin: center bottom;
+  transition:
+    border-color 180ms ease,
+    box-shadow 180ms ease,
+    transform 180ms ease,
+    background-color 180ms ease,
+    opacity 180ms ease;
+}
+
+.motion-card:hover {
+  transform: translateY(-2px);
+}
+
+.motion-row {
+  animation: motionRowIn 280ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.motion-grid > .motion-card:nth-child(1),
+.motion-row:nth-child(1) {
+  animation-delay: 0ms;
+}
+
+.motion-grid > .motion-card:nth-child(2),
+.motion-row:nth-child(2) {
+  animation-delay: 35ms;
+}
+
+.motion-grid > .motion-card:nth-child(3),
+.motion-row:nth-child(3) {
+  animation-delay: 70ms;
+}
+
+.motion-grid > .motion-card:nth-child(4),
+.motion-row:nth-child(4) {
+  animation-delay: 105ms;
+}
+
+.motion-grid > .motion-card:nth-child(n+5),
+.motion-row:nth-child(n+5) {
+  animation-delay: 130ms;
+}
+
+@keyframes motionCardIn {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes motionRowIn {
+  from {
+    opacity: 0;
+    transform: translateX(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
 .giltube-modal-overlay {
   position: fixed !important;
   top: 0; left: 0; right: 0; bottom: 0;
@@ -1391,5 +2835,80 @@ if (process.client) {
 
 .giltube-sidebar-scrollbar::-webkit-scrollbar-thumb:hover {
   background: linear-gradient(180deg, rgba(212, 212, 216, 0.86), rgba(113, 113, 122, 0.9));
+}
+
+.giltube-sidebar-category-scroll {
+  -webkit-overflow-scrolling: touch;
+  scrollbar-color: transparent transparent;
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  transition: scrollbar-color 160ms ease;
+}
+
+.giltube-sidebar-category-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+
+.giltube-sidebar-category-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.giltube-sidebar-category-scroll::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: transparent;
+}
+
+.giltube-sidebar-category-scroll:hover,
+.giltube-sidebar-category-scroll:focus,
+.giltube-sidebar-category-scroll:focus-within {
+  scrollbar-color: rgba(161, 161, 170, 0.55) transparent;
+}
+
+.giltube-sidebar-category-scroll:hover::-webkit-scrollbar-thumb,
+.giltube-sidebar-category-scroll:focus::-webkit-scrollbar-thumb,
+.giltube-sidebar-category-scroll:focus-within::-webkit-scrollbar-thumb {
+  background: rgba(161, 161, 170, 0.55);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+  }
+
+  .page-shift-enter-active,
+  .page-shift-leave-active,
+  .layout-shift-enter-active,
+  .layout-shift-leave-active,
+  .fade-soft-enter-active,
+  .fade-soft-leave-active,
+  .menu-pop-enter-active,
+  .menu-pop-leave-active,
+  .mobile-sheet-enter-active,
+  .mobile-sheet-leave-active {
+    transition: opacity 1ms linear !important;
+  }
+
+  .page-shift-enter-from,
+  .page-shift-leave-to,
+  .layout-shift-enter-from,
+  .layout-shift-leave-to,
+  .menu-pop-enter-from,
+  .menu-pop-leave-to,
+  .mobile-sheet-enter-from,
+  .mobile-sheet-leave-to {
+    filter: none !important;
+    transform: none !important;
+  }
+
+  .motion-card,
+  .motion-row {
+    animation: none !important;
+  }
+
+  .motion-card:hover {
+    transform: none !important;
+  }
 }
 </style>

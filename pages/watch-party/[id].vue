@@ -2,10 +2,11 @@
   <main class="min-h-full bg-black text-white">
     <div v-if="inviteMode" class="flex min-h-full items-center justify-center p-4">
       <section class="w-full max-w-xl rounded-2xl border border-white/10 bg-zinc-950 p-6 text-center shadow-2xl">
-        <div class="mx-auto flex h-20 w-20 items-center justify-center overflow-hidden rounded-full bg-zinc-800 text-2xl font-bold">
-          <img v-if="hostAvatar" :src="hostAvatar" :alt="hostName" class="h-full w-full object-cover" />
-          <span v-else>{{ hostName.charAt(0).toUpperCase() }}</span>
-        </div>
+        <AvatarFallback
+          :src="hostAvatar"
+          :name="hostName"
+          class="mx-auto h-20 w-20 bg-zinc-800 text-2xl"
+        />
         <p class="mt-5 text-sm font-semibold uppercase tracking-[0.18em] text-red-300">Watch party invite</p>
         <h1 class="mt-3 text-3xl font-bold">You were invited to {{ hostName }}'s watch party</h1>
         <p class="mt-4 text-base text-zinc-300">
@@ -32,73 +33,82 @@
       </section>
     </div>
 
-    <div v-else class="grid gap-6 p-4 lg:grid-cols-[minmax(0,1fr)_24rem] lg:p-6">
-      <section class="flex min-w-0 flex-col">
-        <div class="relative">
-          <VideoPlayer
-            ref="videoPlayerRef"
-            :src="videoSrc"
-            :status="partyData?.video?.status || 'ready'"
-            :start-time-seconds="playbackStartTimeSeconds"
-            :controls-locked="!canControlPlayback"
-            @play="sendPlayback('play')"
-            @pause="sendPlayback('pause')"
-            @seeked="sendPlayback('seek', $event.currentTime)"
-            @progress="sendPlaybackProgress"
-            @ended="playNextQueueItem"
-          />
-          <div v-if="playbackOverlay" class="absolute right-4 top-4 z-20 rounded bg-black/80 px-4 py-2 text-sm font-semibold text-white shadow-lg">
-            {{ playbackOverlay }}
-          </div>
-        </div>
-
-        <div class="mt-5 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <p class="text-xs font-semibold uppercase tracking-[0.2em] text-red-300">Watch party</p>
-            <h1 class="mt-2 text-2xl font-bold">{{ currentWatchingTitle }}</h1>
-            <p class="mt-2 text-sm text-zinc-400">{{ partyData?.video?.description }}</p>
-            <p v-if="isHost" class="mt-2 text-xs font-semibold uppercase tracking-wide text-red-300">You are the host</p>
-            <div v-if="isHost" class="mt-4 inline-flex rounded-lg border border-white/10 bg-zinc-900 p-1">
-              <button
-                type="button"
-                class="rounded-md px-3 py-1.5 text-xs font-semibold transition"
-                :class="syncMode === 'host-only' ? 'bg-red-600 text-white' : 'text-zinc-400 hover:text-white'"
-                @click="changeSyncMode('host-only')"
-              >
-                Host-only
-              </button>
-              <button
-                type="button"
-                class="rounded-md px-3 py-1.5 text-xs font-semibold transition"
-                :class="syncMode === 'open' ? 'bg-red-600 text-white' : 'text-zinc-400 hover:text-white'"
-                @click="changeSyncMode('open')"
-              >
-                Open
-              </button>
+    <div v-else class="grid gap-6 p-4 lg:grid-cols-[minmax(0,1fr)_24rem] lg:items-start lg:p-6">
+      <section class="flex min-w-0 flex-col lg:min-h-[calc(100dvh-7rem)]">
+        <div class="flex min-h-0 flex-1 flex-col">
+          <div class="relative">
+            <VideoPlayer
+              ref="videoPlayerRef"
+              class="watch-party-player"
+              :class="watchPartyPlayerClass"
+              :src="videoSrc"
+              :status="partyData?.video?.status || 'ready'"
+              :start-time-seconds="playbackStartTimeSeconds"
+              :controls-locked="!canControlPlayback"
+              @play="sendPlayback('play')"
+              @pause="sendPlayback('pause')"
+              @seeked="sendPlayback('seek', $event.currentTime)"
+              @progress="sendPlaybackProgress"
+              @ended="playNextQueueItem"
+            />
+            <div v-if="playbackOverlay" class="absolute right-4 top-4 z-20 rounded bg-black/80 px-4 py-2 text-sm font-semibold text-white shadow-lg">
+              {{ playbackOverlay }}
             </div>
           </div>
-          <div class="flex flex-wrap gap-2">
-            <button class="rounded bg-zinc-800 px-4 py-2 text-sm font-semibold hover:bg-zinc-700" @click="copyPartyLink">
-              {{ linkCopied ? 'Copied' : 'Copy link' }}
-            </button>
-            <button class="rounded bg-red-600 px-4 py-2 text-sm font-semibold hover:bg-red-700" @click="leaveParty">
-              Leave
-            </button>
-          </div>
-        </div>
 
-        <div v-if="showShareLinkPreview" class="mt-3 rounded-lg border border-white/10 bg-zinc-950/80 p-3">
-          <p class="mb-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-zinc-500">Share link</p>
-          <input
-            :value="partyShareUrl"
-            readonly
-            class="w-full rounded bg-zinc-900 px-3 py-2 text-sm text-zinc-300 outline-none ring-1 ring-white/10"
-            @focus="$event.target.select()"
-          />
+          <div :class="watchPartyDetailsClass">
+            <div class="flex h-full flex-col gap-4">
+              <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <p class="text-xs font-semibold uppercase tracking-[0.2em] text-red-300">Watch party</p>
+                  <h1 class="mt-2 text-2xl font-bold">{{ currentWatchingTitle }}</h1>
+                  <p class="mt-2 text-sm text-zinc-400">{{ partyData?.video?.description }}</p>
+                  <p v-if="isHost" class="mt-2 text-xs font-semibold uppercase tracking-wide text-red-300">You are the host</p>
+                  <div v-if="isHost" class="mt-4 inline-flex rounded-lg border border-white/10 bg-zinc-900 p-1">
+                    <button
+                      type="button"
+                      class="rounded-md px-3 py-1.5 text-xs font-semibold transition"
+                      :class="syncMode === 'host-only' ? 'bg-red-600 text-white' : 'text-zinc-400 hover:text-white'"
+                      @click="changeSyncMode('host-only')"
+                    >
+                      Host-only
+                    </button>
+                    <button
+                      type="button"
+                      class="rounded-md px-3 py-1.5 text-xs font-semibold transition"
+                      :class="syncMode === 'open' ? 'bg-red-600 text-white' : 'text-zinc-400 hover:text-white'"
+                      @click="changeSyncMode('open')"
+                    >
+                      Open
+                    </button>
+                  </div>
+                </div>
+                <div class="flex flex-wrap gap-2">
+                  <button class="rounded bg-zinc-800 px-4 py-2 text-sm font-semibold hover:bg-zinc-700" @click="copyPartyLink">
+                    {{ linkCopied ? 'Copied' : 'Copy link' }}
+                  </button>
+                  <button class="rounded bg-red-600 px-4 py-2 text-sm font-semibold hover:bg-red-700" @click="leaveParty">
+                    Leave
+                  </button>
+                </div>
+              </div>
+
+              <div v-if="showShareLinkPreview" class="rounded-lg border border-white/10 bg-zinc-950/80 p-3">
+                <p class="mb-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-zinc-500">Share link</p>
+                <input
+                  :value="partyShareUrl"
+                  readonly
+                  class="w-full rounded bg-zinc-900 px-3 py-2 text-sm text-zinc-300 outline-none ring-1 ring-white/10"
+                  @focus="$event.target.select()"
+                />
+              </div>
+            </div>
+          </div>
         </div>
 
         <WatchPartyQueue
-          v-if="partyData?.party?.party_type !== 'single'"
+          v-if="hasQueueParty"
+          :class="watchPartyQueueClass"
           :queue-items="queueItems"
           :queue-error="queueError"
           :is-host="isHost"
@@ -110,7 +120,7 @@
         />
       </section>
 
-      <aside class="flex min-h-[32rem] flex-col rounded border border-white/10 bg-zinc-950">
+      <aside class="flex h-[28rem] max-h-[65vh] min-h-0 flex-col rounded border border-white/10 bg-zinc-950 sm:h-[32rem] lg:sticky lg:top-6 lg:h-[calc(100dvh-7rem)] lg:max-h-[calc(100dvh-7rem)]">
         <div class="border-b border-white/10 p-4">
           <div class="flex items-center justify-between gap-3">
             <div>
@@ -121,7 +131,7 @@
               Participants
             </button>
           </div>
-          <div v-if="showParticipants" class="mt-3 space-y-2">
+          <div v-if="showParticipants" class="mt-3 max-h-40 space-y-2 overflow-y-auto pr-1">
             <component
               :is="person.channel_id ? 'NuxtLink' : 'div'"
               v-for="person in participants"
@@ -130,8 +140,11 @@
               class="flex items-center gap-2 rounded bg-white/5 px-2 py-2 transition"
               :class="person.channel_id ? 'hover:bg-white/10' : ''"
             >
-              <img v-if="person.avatar_url" :src="avatarUrl(person.avatar_url)" :alt="person.name" class="h-7 w-7 rounded-full object-cover" />
-              <div v-else class="flex h-7 w-7 items-center justify-center rounded-full bg-zinc-700 text-xs font-bold">{{ person.name?.charAt(0)?.toUpperCase() || 'U' }}</div>
+              <AvatarFallback
+                :src="person.avatar_url"
+                :name="person.name || 'User'"
+                class="h-7 w-7 text-xs"
+              />
               <span class="text-sm">{{ person.name }}</span>
               <span v-if="person.is_host" class="ml-auto rounded bg-red-600 px-2 py-0.5 text-[10px] font-bold uppercase">Host</span>
               <div v-if="isHost && !person.is_host" class="ml-auto flex gap-1">
@@ -146,19 +159,31 @@
           </div>
         </div>
 
-        <div ref="chatListRef" class="flex-1 space-y-3 p-4">
-          <div v-for="item in timeline" :key="item.id || `${item.type}-${item.at}`">
-            <div v-if="item.type === 'system'" class="text-center text-xs text-zinc-500">{{ item.text }}</div>
-            <div v-else class="rounded bg-white/5 p-3">
-              <div class="mb-1 flex items-center gap-2 text-xs text-zinc-400">
-                <span class="font-semibold text-zinc-200">{{ item.actor?.name || 'User' }}</span>
-                <span>{{ formatMessageTime(item.created_at) }}</span>
+        <div class="relative min-h-0 flex-1">
+          <div ref="chatListRef" class="h-full space-y-3 overflow-y-auto p-4" @scroll="handleChatScroll">
+            <div v-for="item in timeline" :key="item.id || item.type + '-' + item.at">
+              <div v-if="item.type === 'system'" class="text-center text-xs text-zinc-500">{{ item.text }}</div>
+              <div v-else class="rounded bg-white/5 p-3">
+                <div class="mb-1 flex items-center gap-2 text-xs text-zinc-400">
+                  <span class="font-semibold text-zinc-200">{{ item.actor?.name || 'User' }}</span>
+                  <span>{{ formatMessageTime(item.created_at) }}</span>
+                </div>
+                <p v-if="item.message" class="text-sm text-zinc-100">{{ item.message }}</p>
+                <p v-if="item.reaction" class="text-xl">{{ item.reaction }}</p>
+                <img v-if="item.gif_url" :src="item.gif_url" alt="GIF" class="mt-2 max-h-40 rounded object-contain" />
               </div>
-              <p v-if="item.message" class="text-sm text-zinc-100">{{ item.message }}</p>
-              <p v-if="item.reaction" class="text-xl">{{ item.reaction }}</p>
-              <img v-if="item.gif_url" :src="item.gif_url" alt="GIF" class="mt-2 max-h-40 rounded object-contain" />
             </div>
           </div>
+
+          <button
+            v-if="showNewMessagesIndicator"
+            type="button"
+            class="absolute bottom-3 right-3 rounded-full bg-red-600 px-3 py-2 text-sm font-bold text-white shadow-lg transition hover:bg-red-700"
+            aria-label="Jump to latest chat messages"
+            @click="jumpToLatestMessages"
+          >
+            ↓
+          </button>
         </div>
 
         <div class="border-t border-white/10 p-3">
@@ -188,6 +213,7 @@
 
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import AvatarFallback from '~/app/components/AvatarFallback.vue'
 import GiphyPicker from '~/app/components/GiphyPicker.vue'
 import VideoPlayer from '~/app/components/videoplayer/VideoPlayer.vue'
 import WatchPartyQueue from '~/app/components/watchparty/WatchPartyQueue.vue'
@@ -209,17 +235,18 @@ import {
   watchPartyEventURL,
 } from '~/app/service/watchParties'
 import type { GiphyGif } from '~/app/utils/giphy'
+import { resolveAvatarUrl, resolveMediaUrl } from '~/app/utils/media'
 
 const route = useRoute()
 const router = useRouter()
 const localePath = useLocalePath()
-const baseUrl = import.meta.env.VITE_API_BASE_URL || ''
 const partyId = String(route.params.id || '')
 const partyData = ref<any>(null)
 const participants = ref<any[]>([])
 const queueItems = ref<any[]>([])
 const timeline = ref<any[]>([])
 const chatInput = ref('')
+const showNewMessagesIndicator = ref(false)
 const queueError = ref('')
 const showGiphyPicker = ref(false)
 const showParticipants = ref(false)
@@ -237,11 +264,12 @@ let overlayTimer: ReturnType<typeof setTimeout> | null = null
 let playbackRestoreTimer: ReturnType<typeof setTimeout> | null = null
 let lastPlaybackProgressSyncAt = 0
 let applyingRemotePlayback = false
+const REMOTE_PLAYBACK_TOLERANCE_SECONDS = 2
+const CHAT_BOTTOM_THRESHOLD_PX = 48
 
 const videoSrc = computed(() => {
   const path = partyData.value?.video?.hls_path || ''
-  if (!path) return ''
-  return /^https?:\/\//i.test(path) ? path : `${baseUrl}${path.startsWith('/') ? '' : '/'}${path}`
+  return resolveMediaUrl(path)
 })
 
 const hostName = computed(() => partyData.value?.host?.name || 'Someone')
@@ -253,6 +281,28 @@ const isHost = computed(() => !!currentUserId.value && partyData.value?.party?.h
 const syncMode = computed(() => partyData.value?.party?.sync_mode || 'host-only')
 const canControlPlayback = computed(() => isHost.value || syncMode.value === 'open')
 const inviteMode = computed(() => !hasJoined.value || partyEnded.value)
+const hasQueueParty = computed(() => partyData.value?.party?.party_type !== 'single')
+const isLibraryParty = computed(() => {
+  const mediaType = String(partyData.value?.party?.media_type || '')
+  return mediaType === 'movie' || mediaType === 'series'
+})
+const watchPartyPlayerClass = computed(() => {
+  if (!hasQueueParty.value) return 'watch-party-player--single'
+  return isLibraryParty.value ? 'watch-party-player--library-queue' : 'watch-party-player--video-queue'
+})
+const watchPartyDetailsClass = computed(() => {
+  const base = 'mt-5 rounded-2xl border border-white/10 bg-zinc-950/70 p-5'
+  if (!hasQueueParty.value) return base + ' lg:mt-4 lg:flex-1 lg:min-h-[8rem]'
+  return isLibraryParty.value
+    ? base + ' lg:mt-4 lg:flex-1 lg:min-h-[9rem]'
+    : base + ' lg:mt-4 lg:flex-1 lg:min-h-[8rem]'
+})
+const watchPartyQueueClass = computed(() => {
+  if (!hasQueueParty.value) return ''
+  return isLibraryParty.value
+    ? 'lg:mt-6 lg:border-t lg:border-white/10 lg:pt-5'
+    : 'lg:mt-5 lg:border-t lg:border-white/10 lg:pt-4'
+})
 const playbackStartTimeSeconds = computed(() => {
   if (!hasJoined.value || !partyData.value?.party) return 0
   const seconds = Number(partyData.value.party.current_time || 0)
@@ -270,15 +320,11 @@ const partyShareUrl = computed(() => {
 
 const avatarUrl = (url: string) => {
   if (!url) return ''
-  if (/^https?:\/\//i.test(url)) return url
-  const normalized = url.startsWith('/avatars/') ? url : `/avatars/${url.replace(/^\/+/, '')}`
-  return `${baseUrl}${normalized}`
+  return resolveAvatarUrl(url)
 }
 
 const thumbnailUrl = (url: string) => {
-  if (!url) return `${baseUrl}/videos/placeholder-thumbnail.jpg`
-  if (/^https?:\/\//i.test(url)) return url
-  return `${baseUrl}${url.startsWith('/') ? '' : '/'}${url}`
+  return resolveMediaUrl(url, '/videos/placeholder-thumbnail.jpg')
 }
 
 const formatMessageTime = (value: string) => {
@@ -286,9 +332,39 @@ const formatMessageTime = (value: string) => {
   return new Date(value).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
 }
 
-const scrollChat = async () => {
+const isChatNearBottom = () => {
+  const chatList = chatListRef.value
+  if (!chatList) return true
+  return chatList.scrollHeight - chatList.scrollTop - chatList.clientHeight <= CHAT_BOTTOM_THRESHOLD_PX
+}
+
+const handleChatScroll = () => {
+  if (isChatNearBottom()) {
+    showNewMessagesIndicator.value = false
+  }
+}
+
+const scrollChat = async (force = false) => {
   await nextTick()
-  if (chatListRef.value) chatListRef.value.scrollTop = chatListRef.value.scrollHeight
+  if (!chatListRef.value) return
+  if (force || isChatNearBottom()) {
+    chatListRef.value.scrollTop = chatListRef.value.scrollHeight
+    showNewMessagesIndicator.value = false
+  }
+}
+
+const jumpToLatestMessages = async () => {
+  await scrollChat(true)
+}
+
+const appendTimelineItem = async (item: any) => {
+  const shouldAutoScroll = isChatNearBottom()
+  timeline.value.push(item)
+  if (shouldAutoScroll) {
+    await scrollChat(true)
+  } else {
+    showNewMessagesIndicator.value = true
+  }
 }
 
 const showPlaybackOverlay = (text: string) => {
@@ -312,18 +388,15 @@ const connectEvents = (userId: string) => {
   events.onmessage = async (event) => {
     const payload = JSON.parse(event.data)
     if (payload.type === 'chat') {
-      timeline.value.push({ ...payload.message, type: 'chat' })
-      await scrollChat()
+      await appendTimelineItem({ ...payload.message, type: 'chat' })
     } else if (payload.type === 'join') {
-      timeline.value.push({ type: 'system', text: `${payload.actor?.name || 'Someone'} joined`, at: payload.at })
+      await appendTimelineItem({ type: 'system', text: (payload.actor?.name || 'Someone') + ' joined', at: payload.at })
       await refreshParty(false)
-      await scrollChat()
     } else if (payload.type === 'leave') {
-      timeline.value.push({ type: 'system', text: `${payload.actor?.name || 'Someone'} left`, at: payload.at })
+      await appendTimelineItem({ type: 'system', text: (payload.actor?.name || 'Someone') + ' left', at: payload.at })
       await refreshParty(false)
-      await scrollChat()
     } else if (payload.type === 'ended') {
-      timeline.value.push({ type: 'system', text: 'The host ended the watch party', at: payload.at })
+      await appendTimelineItem({ type: 'system', text: 'The host ended the watch party', at: payload.at })
       await refreshParty(false)
       hasJoined.value = false
       if (typeof window !== 'undefined') {
@@ -355,7 +428,7 @@ const refreshParty = async (replaceMessages = true) => {
   queueItems.value = partyData.value.queue || []
   if (replaceMessages) {
     timeline.value = (partyData.value.messages || []).map((item: any) => ({ ...item, type: 'chat' }))
-    await scrollChat()
+    await scrollChat(true)
   }
   useMetaTags({
     title: `${partyData.value.video?.title || 'Watch party'} - Watch Party`,
@@ -416,17 +489,27 @@ const schedulePlaybackRestore = (attempt = 0) => {
   }, attempt === 0 ? 0 : 250)
 }
 
-const applyRemotePlayback = async (action: string, seconds: number, state = '') => {
+const applyRemotePlayback = async (action: string, seconds: number, state = "") => {
   const controls = videoPlayerRef.value
   if (!controls) return
+
+  const playerState = controls.getPlaybackState?.()
+  const currentTime = Number(playerState?.currentTime || 0)
+  const isPaused = Boolean(playerState?.paused ?? true)
+  const drift = Math.abs(currentTime - seconds)
+
   applyingRemotePlayback = true
   try {
-    if (action === 'pause' || state === 'paused') {
-      controls.pauseAt?.(seconds)
-    } else if (action === 'seek') {
+    if (action === "pause" || state === "paused") {
+      if (!isPaused || drift > REMOTE_PLAYBACK_TOLERANCE_SECONDS) {
+        controls.pauseAt?.(seconds)
+      }
+    } else if (action === "seek") {
       controls.setPlaybackTime?.(seconds)
-    } else if (action === 'play' || action === 'progress' || state === 'playing') {
-      await controls.playFrom?.(seconds)
+    } else if (action === "play" || action === "progress" || state === "playing") {
+      if (isPaused || drift > REMOTE_PLAYBACK_TOLERANCE_SECONDS) {
+        await controls.playFrom?.(seconds)
+      }
     }
   } finally {
     setTimeout(() => {
@@ -588,3 +671,23 @@ onBeforeUnmount(() => {
   clearPlaybackRestoreTimer()
 })
 </script>
+
+<style scoped>
+@media (min-width: 1024px) {
+  :deep(.watch-party-player .video-player-container) {
+    min-height: 420px;
+  }
+
+  :deep(.watch-party-player--single .video-player-container) {
+    height: clamp(360px, calc(100dvh - 26rem), 760px);
+  }
+
+  :deep(.watch-party-player--library-queue .video-player-container) {
+    height: clamp(300px, calc(100dvh - 37rem), 620px);
+  }
+
+  :deep(.watch-party-player--video-queue .video-player-container) {
+    height: clamp(320px, calc(100dvh - 34rem), 680px);
+  }
+}
+</style>

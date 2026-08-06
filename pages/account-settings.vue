@@ -19,6 +19,33 @@
         </div>
       </div>
 
+      <section v-if="!isLoading" class="bg-zinc-900 rounded-lg p-6 border border-zinc-800">
+        <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <h2 class="text-xl font-semibold">{{ t('accountSettings.musicQuality') }}</h2>
+            <p class="mt-1 text-sm text-gray-400">{{ t('accountSettings.musicQualityBody') }}</p>
+          </div>
+          <div class="w-full sm:w-64">
+            <select
+              v-model="musicQuality"
+              :disabled="musicQualitySaving"
+              class="w-full rounded bg-zinc-800 border border-zinc-700 px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-cyan-500 disabled:opacity-60"
+              @change="saveMusicQuality"
+            >
+              <option value="auto">{{ t('accountSettings.qualityAuto') }}</option>
+              <option value="low">{{ t('accountSettings.qualityLow') }}</option>
+              <option value="medium">{{ t('accountSettings.qualityMedium') }}</option>
+              <option value="high">{{ t('accountSettings.qualityHigh') }}</option>
+              <option value="maximum">{{ t('accountSettings.qualityMaximum') }}</option>
+            </select>
+            <p class="mt-2 text-xs leading-5 text-gray-400">{{ musicQualityDescription }}</p>
+            <p v-if="musicQualityMessage" class="mt-1 text-xs" :class="musicQualityError ? 'text-red-400' : 'text-green-400'">
+              {{ musicQualityMessage }}
+            </p>
+          </div>
+        </div>
+      </section>
+
       <div class="bg-zinc-900 rounded-lg p-6 border border-cyan-800 space-y-4">
         <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
@@ -217,7 +244,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useLocalePath } from '#i18n'
@@ -230,8 +257,10 @@ import {
   getMyAccount,
   listMyPasskeys,
   updateMyEmail,
+  updateMyMusicQuality,
   updateMyPassword
 } from '~/app/service/auth'
+import type { MusicQuality } from '~/app/service/auth'
 import { useMetaTags } from '~/app/composables/useMetaTags'
 import { prepareCredentialCreationOptions, serializeRegistrationCredential, supportsWebAuthn } from '~/app/service/webauthn'
 
@@ -280,6 +309,11 @@ const passkeyDeletingId = ref('')
 const passkeyMessage = ref('')
 const passkeyError = ref(false)
 const gilidLinking = ref(false)
+const musicQuality = ref<MusicQuality>('auto')
+const musicQualitySaving = ref(false)
+const musicQualityMessage = ref('')
+const musicQualityError = ref(false)
+const musicQualityDescription = computed(() => t(`accountSettings.qualityHelp.${musicQuality.value}`))
 
 onMounted(async () => {
   const userId = localStorage.getItem('user_id')
@@ -312,6 +346,8 @@ const loadProfile = async () => {
       gilid_email: data.gilid_email || ''
     }
     newEmail.value = data.email
+    musicQuality.value = data.music_quality || 'auto'
+    localStorage.setItem('giltube_music_quality', musicQuality.value)
   } catch (error: any) {
     const status = error?.response?.status
     if (status === 401) {
@@ -322,6 +358,26 @@ const loadProfile = async () => {
     emailError.value = true
   } finally {
     isLoading.value = false
+  }
+}
+
+const saveMusicQuality = async () => {
+  musicQualitySaving.value = true
+  musicQualityMessage.value = ''
+  musicQualityError.value = false
+  try {
+    const response = await updateMyMusicQuality(musicQuality.value)
+    musicQuality.value = response.music_quality
+    localStorage.setItem('giltube_music_quality', response.music_quality)
+    window.dispatchEvent(new CustomEvent('giltube-music-quality-changed', {
+      detail: response.music_quality,
+    }))
+    musicQualityMessage.value = t('accountSettings.musicQualitySaved')
+  } catch (error: any) {
+    musicQualityMessage.value = error?.response?.data?.error || t('accountSettings.musicQualityError')
+    musicQualityError.value = true
+  } finally {
+    musicQualitySaving.value = false
   }
 }
 
@@ -492,6 +548,7 @@ const submitDeleteAccount = async () => {
     localStorage.removeItem('user_channels')
     localStorage.removeItem('active_account')
     localStorage.removeItem('active_account_name')
+    localStorage.removeItem('default_channel_id')
 
     router.push(localePath('/'))
     window.location.reload()

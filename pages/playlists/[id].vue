@@ -67,13 +67,11 @@
 
                     <!-- Creator Card -->
                     <div class="flex items-center gap-3 mt-6 pt-4 border-t border-zinc-700">
-                        <div class="w-10 h-10 rounded-full overflow-hidden bg-zinc-700 flex-shrink-0">
-                            <img v-if="creatorAvatarUrl" :src="creatorAvatarUrl" class="w-full h-full object-cover" />
-                            <span v-else
-                                class="text-xs font-semibold text-gray-300 w-full h-full flex items-center justify-center">
-                                {{ creatorInitial }}
-                            </span>
-                        </div>
+                        <AvatarFallback
+                            :src="creatorAvatarUrl"
+                            :name="creatorName || creatorInitial"
+                            class="h-10 w-10 flex-shrink-0 text-xs"
+                        />
                         <div>
                             <p class="text-sm font-medium text-gray-200">{{ isOwner ? t('common.you') : creatorName }}</p>
                             <p class="text-xs text-gray-500">{{ t('playlists.createdLabel') }} {{
@@ -187,6 +185,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from '#app'
 const localePath = useLocalePath()
+import AvatarFallback from '~/app/components/AvatarFallback.vue'
 import { useI18n } from 'vue-i18n'
 import PlaylistManager from '~/app/components/PlaylistManager.vue'
 import { useMetaTags } from '~/app/composables/useMetaTags'

@@ -19,6 +19,9 @@ export const useMetaTags = (options: {
   title?: string
   description?: string
   image?: string
+  imageAlt?: string
+  imageWidth?: number
+  imageHeight?: number
   url?: string
   type?: string
   twitterCard?: 'summary' | 'summary_large_image' | 'app' | 'player'
@@ -35,9 +38,13 @@ export const useMetaTags = (options: {
     : siteUrl
   const type = options.type || 'website'
   const twitterCard = options.twitterCard || 'summary_large_image'
+  const imageAlt = options.imageAlt || title
 
   useHead({
     title: title,
+    link: [
+      { rel: 'canonical', href: url },
+    ],
     meta: [
       { name: 'description', content: description },
       // Open Graph tags
@@ -46,12 +53,16 @@ export const useMetaTags = (options: {
       { property: 'og:type', content: type },
       { property: 'og:url', content: url },
       { property: 'og:image', content: image },
+      { property: 'og:image:alt', content: imageAlt },
+      ...(options.imageWidth ? [{ property: 'og:image:width', content: String(options.imageWidth) }] : []),
+      ...(options.imageHeight ? [{ property: 'og:image:height', content: String(options.imageHeight) }] : []),
       { property: 'og:site_name', content: 'GilTube' },
       // Twitter Card tags
       { name: 'twitter:card', content: twitterCard },
       { name: 'twitter:title', content: title },
       { name: 'twitter:description', content: description },
       { name: 'twitter:image', content: image },
+      { name: 'twitter:image:alt', content: imageAlt },
     ]
   })
 }

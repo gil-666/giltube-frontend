@@ -1,5 +1,5 @@
 <template>
-  <div class="fixed inset-0 bg-zinc-950 text-white p-6">
+  <div class="fixed inset-0 overflow-y-auto bg-zinc-950 p-6 text-white">
     <div class="max-w-2xl mx-auto">
       <h1 class="text-4xl font-bold mb-8">{{ t('createChannelPage.title') }}</h1>
 
@@ -55,6 +55,31 @@
           </div>
         </div>
 
+        <!-- Background File Upload -->
+        <div>
+          <label class="block text-sm font-medium mb-2">{{ t('createChannelPage.backgroundImage') }}</label>
+          <input
+            type="file"
+            accept="image/*"
+            @change="onBackgroundSelected"
+            class="w-full bg-zinc-900 border border-zinc-700 rounded px-4 py-2 text-white"
+          />
+          <p class="text-xs text-gray-400 mt-1">{{ t('createChannelPage.backgroundHelper') }}</p>
+          <div v-if="backgroundPreview" class="mt-3 space-y-2">
+            <div class="relative h-32 overflow-hidden rounded-lg border border-zinc-700 bg-zinc-800">
+              <img :src="backgroundPreview" alt="Background preview" class="h-full w-full object-cover" />
+              <div class="absolute inset-0 bg-black/55" />
+            </div>
+            <button
+              type="button"
+              @click="clearBackground"
+              class="text-sm text-red-400 hover:text-red-300"
+            >
+              {{ t('createChannelPage.removeBackground') }}
+            </button>
+          </div>
+        </div>
+
         <!-- Error Message -->
         <div v-if="error" class="bg-red-900 text-white p-4 rounded">
           {{ error }}
@@ -88,7 +113,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { createChannel } from '~/app/service/upload'
+import { createChannel, setDefaultChannel } from '~/app/service/upload'
 import { useI18n } from 'vue-i18n'
 import { useLocalePath } from '#i18n'
 
@@ -100,9 +125,11 @@ const userId = ref('')
 const form = ref({
   name: '',
   description: '',
-  avatar: null,
+  avatar: null as File | null,
+  background: null as File | null,
 })
 const avatarPreview = ref('')
+const backgroundPreview = ref('')
 const isCreating = ref(false)
 const error = ref('')
 const successMessage = ref('')
@@ -133,12 +160,29 @@ const onAvatarSelected = (event: any) => {
   }
 }
 
+const onBackgroundSelected = (event: any) => {
+  const file = event.target.files?.[0]
+  if (file) {
+    form.value.background = file
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      backgroundPreview.value = e.target?.result as string
+    }
+    reader.readAsDataURL(file)
+  }
+}
+
 const clearAvatar = () => {
   form.value.avatar = null
   avatarPreview.value = ''
   // Reset file input
   const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement
   if (fileInput) fileInput.value = ''
+}
+
+const clearBackground = () => {
+  form.value.background = null
+  backgroundPreview.value = ''
 }
 
 const handleCreateChannel = async () => {
@@ -158,6 +202,7 @@ const handleCreateChannel = async () => {
       name: form.value.name,
       description: form.value.description,
       avatar: form.value.avatar,
+      background: form.value.background,
     })
 
     // Store the new channel in localStorage
@@ -167,12 +212,18 @@ const handleCreateChannel = async () => {
       name: newChannel.name,
       description: newChannel.description,
       avatar_url: newChannel.avatar_url,
+      background_url: newChannel.background_url,
     })
     localStorage.setItem('user_channels', JSON.stringify(existingChannels))
 
     // Set the new channel as active
     localStorage.setItem('active_account', newChannel.id)
     localStorage.setItem('active_account_name', newChannel.name)
+    try {
+      await setDefaultChannel(newChannel.id)
+    } catch (err) {
+      console.error('Failed to set new channel as default:', err)
+    }
 
     successMessage.value = t('createChannelPage.success')
     

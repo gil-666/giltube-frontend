@@ -52,6 +52,18 @@
               <dt>{{ t('moviesCategory.meta.runtime') }}</dt>
               <dd>{{ item.durationLabel }}</dd>
             </div>
+            <div>
+              <dt>{{ t('streaming.media.maxQuality') }}</dt>
+              <dd>{{ item.media_capabilities?.max_quality || t('streaming.media.notAvailable') }}</dd>
+            </div>
+            <div>
+              <dt>{{ t('streaming.media.audioLanguages') }}</dt>
+              <dd>{{ mediaLanguages(item.media_capabilities?.audio_languages) }}</dd>
+            </div>
+            <div>
+              <dt>{{ t('streaming.media.captions') }}</dt>
+              <dd>{{ mediaLanguages(item.media_capabilities?.caption_languages) }}</dd>
+            </div>
           </dl>
 
           <div class="movie-related-section">
@@ -121,14 +133,13 @@ import { createWatchParty, getWatchPartySavedProgress } from '~/app/service/watc
 import { GILTUBE_MOVIES_CHANNEL_ID, getMovie, listMovies } from '~/app/service/movies'
 import { getTimeAgo } from '~/app/utils/time'
 import { formatViews } from '~/app/utils/format'
+import { resolveMediaUrl } from '~/app/utils/media'
 import { useMetaTags } from '~/app/composables/useMetaTags'
 
 const route = useRoute()
 const router = useRouter()
 const localePath = useLocalePath()
 const { t } = useI18n()
-const baseUrl = import.meta.env.VITE_API_BASE_URL || ''
-
 const loading = ref(false)
 const error = ref('')
 const movies = ref([])
@@ -144,10 +155,19 @@ const moviePartySavedProgress = ref(null)
 const useSavedMovieProgress = ref(false)
 let featuredHeroTimer = null
 
+const updateModalQueryParam = (key, value = '') => {
+  if (typeof window === 'undefined') return
+  const url = new URL(window.location.href)
+  if (value) {
+    url.searchParams.set(key, value)
+  } else {
+    url.searchParams.delete(key)
+  }
+  window.history.pushState(window.history.state, '', `${url.pathname}${url.search}${url.hash}`)
+}
+
 const withBaseUrl = (url) => {
-  if (!url) return `${baseUrl}/videos/placeholder-thumbnail.jpg`
-  if (/^https?:\/\//i.test(url)) return url
-  return `${baseUrl}${url.startsWith('/') ? '' : '/'}${url}`
+  return resolveMediaUrl(url, '/videos/placeholder-thumbnail.jpg')
 }
 
 const normalizeMovieDetail = (data) => {
@@ -164,6 +184,10 @@ const durationLabel = (video) => {
   const remainder = minutes % 60
   return hours > 0 ? `${hours}h ${remainder}m` : `${minutes}m`
 }
+
+const mediaLanguages = (languages) => languages?.length
+  ? languages.join(', ')
+  : t('streaming.media.notAvailable')
 
 const primaryGenre = (movie) => movie?.genre || movie?.video?.genre || t('moviesCategory.fallbackGenre')
 
@@ -296,7 +320,7 @@ const startMovieWatchParty = async () => {
 const openMovieModal = async (movie, updateRoute = true) => {
   if (!movie?.id) return
   let detail = movie
-  if (!movie.video && !movie.video_id) {
+  if (!movie.media_capabilities) {
     try {
       detail = normalizeMovieDetail(await getMovie(movie.id)) || movie
     } catch {
@@ -308,15 +332,14 @@ const openMovieModal = async (movie, updateRoute = true) => {
   if (loaded >= 0) {
     movies.value[loaded] = { ...movies.value[loaded], ...detail }
   }
-  if (updateRoute && detail.id && route.query.movie_id !== detail.id) {
-    await router.push({ query: { ...route.query, movie_id: detail.id } })
+  if (updateRoute && detail.id) {
+    updateModalQueryParam('movie_id', detail.id)
   }
 }
 
 const closeMovieModal = async () => {
   selectedMovieId.value = ''
-  const { movie_id: _movieId, ...query } = route.query
-  await router.push({ query })
+  updateModalQueryParam('movie_id')
 }
 
 const setFeaturedIndex = (index) => {
@@ -388,8 +411,7 @@ const loadMoviesCategory = async () => {
 
 watch(selectedMovie, updateMetaTags)
 
-watch(() => route.query.movie_id, async (movieId) => {
-  const id = typeof movieId === 'string' ? movieId : ''
+const syncMovieModalFromId = async (id) => {
   if (!id) {
     selectedMovieId.value = ''
     updateMetaTags()
@@ -414,10 +436,30 @@ watch(() => route.query.movie_id, async (movieId) => {
   } catch (err) {
     console.error('Failed to load movie detail:', err)
   }
+}
+
+const syncMovieModalFromUrl = async () => {
+  if (typeof window === 'undefined') return
+  await syncMovieModalFromId(new URL(window.location.href).searchParams.get('movie_id') || '')
+}
+
+watch(() => route.query.movie_id, async (movieId) => {
+  const id = typeof movieId === 'string' ? movieId : ''
+  await syncMovieModalFromId(id)
 })
 
-onMounted(loadMoviesCategory)
-onUnmounted(stopFeaturedHeroTimer)
+onMounted(() => {
+  if (typeof window !== 'undefined') {
+    window.addEventListener('popstate', syncMovieModalFromUrl)
+  }
+  loadMoviesCategory()
+})
+onUnmounted(() => {
+  stopFeaturedHeroTimer()
+  if (typeof window !== 'undefined') {
+    window.removeEventListener('popstate', syncMovieModalFromUrl)
+  }
+})
 </script>
 
 <style scoped>

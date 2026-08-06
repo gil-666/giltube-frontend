@@ -95,7 +95,7 @@ interface Props {
   placement: string
   type?: string
   size?: string
-  variant?: 'banner' | 'square'
+  variant?: 'banner' | 'square' | 'feed'
   context?: Record<string, any>
   fallbackTitle?: string
 }
@@ -115,37 +115,47 @@ const showSponsorInfo = ref(false)
 let observer: IntersectionObserver | null = null
 
 const containerClass = computed(() => (
-  props.variant === 'square'
+  props.variant === 'feed'
+    ? 'motion-card group overflow-hidden rounded-2xl border border-white/10 bg-white/5'
+    : props.variant === 'square'
     ? 'overflow-hidden rounded-3xl border border-cyan-400/20 bg-gradient-to-br from-cyan-950/60 via-zinc-950 to-zinc-900 shadow-[0_20px_80px_rgba(6,182,212,0.12)]'
     : 'mx-auto overflow-hidden rounded-[18px] border border-cyan-400/20 bg-gradient-to-r from-cyan-950/60 via-zinc-950 to-zinc-900 shadow-[0_12px_36px_rgba(6,182,212,0.10)]'
 ))
 
 const mediaWrapperClass = computed(() => (
-  props.variant === 'square'
+  props.variant === 'feed'
+    ? 'aspect-video overflow-hidden bg-black'
+    : props.variant === 'square'
     ? 'aspect-square overflow-hidden bg-black/40'
     : 'flex items-center justify-center overflow-hidden bg-black/40'
 ))
 
 const viewportClass = computed(() => (
-  props.variant === 'square'
+  props.variant === 'feed'
+    ? 'h-full w-full'
+    : props.variant === 'square'
     ? 'h-full w-full'
     : 'flex items-center justify-center overflow-hidden rounded-lg bg-black/20'
 ))
 
 const imageClass = computed(() => (
-  props.variant === 'square'
+  props.variant === 'feed'
+    ? 'h-full w-full object-cover transition duration-200 group-hover:scale-[1.02]'
+    : props.variant === 'square'
     ? 'h-full w-full object-cover'
     : 'block h-full w-full object-contain'
 ))
 
 const copyClass = computed(() => (
-  props.variant === 'square'
+  props.variant === 'feed'
+    ? 'flex items-start gap-3 p-4'
+    : props.variant === 'square'
     ? 'space-y-1 p-4'
     : 'flex items-center gap-3 px-3 py-2'
 ))
 
 const containerStyle = computed(() => (
-  props.variant === 'square'
+  props.variant === 'square' || props.variant === 'feed'
     ? undefined
     : {
         width: 'min(100%, 760px)',
@@ -154,7 +164,7 @@ const containerStyle = computed(() => (
 ))
 
 const linkStyle = computed(() => (
-  props.variant === 'square'
+  props.variant === 'square' || props.variant === 'feed'
     ? undefined
     : {
         display: 'block',
@@ -163,7 +173,7 @@ const linkStyle = computed(() => (
 ))
 
 const mediaWrapperStyle = computed(() => (
-  props.variant === 'square'
+  props.variant === 'square' || props.variant === 'feed'
     ? undefined
     : {
         width: '100%',
@@ -175,7 +185,7 @@ const mediaWrapperStyle = computed(() => (
 ))
 
 const viewportStyle = computed(() => (
-  props.variant === 'square'
+  props.variant === 'square' || props.variant === 'feed'
     ? undefined
     : {
         width: '100%',
@@ -186,7 +196,7 @@ const viewportStyle = computed(() => (
 ))
 
 const imageStyle = computed(() => (
-  props.variant === 'square'
+  props.variant === 'square' || props.variant === 'feed'
     ? undefined
     : {
         display: 'block',

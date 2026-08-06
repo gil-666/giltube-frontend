@@ -50,7 +50,18 @@ const persistLogin = async (response: any) => {
   localStorage.setItem('username', response.username || ((response.email || '').split('@')[0] || ''))
 
   try {
-    await fetchUserChannels(response.user_id)
+    const channelResult = await fetchUserChannels(response.user_id)
+    const defaultChannel = channelResult.channels.find((channel: any) => channel.id === channelResult.default_channel_id) ||
+      channelResult.channels.find((channel: any) => channel.is_default) ||
+      channelResult.channels[0]
+    if (defaultChannel?.id) {
+      localStorage.setItem('active_account', defaultChannel.id)
+      localStorage.setItem('active_account_name', defaultChannel.name)
+    } else {
+      localStorage.setItem('active_account', 'personal')
+      localStorage.setItem('active_account_name', response.username || 'Personal')
+      localStorage.removeItem('default_channel_id')
+    }
   } catch (err) {
     console.error('Failed to fetch channels:', err)
   }

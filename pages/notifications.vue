@@ -88,18 +88,11 @@
         >
           <div class="p-4 flex items-start justify-between gap-4">
             <div class="flex items-start gap-3 min-w-0">
-              <img
-                v-if="item.actor_channel?.avatar_url"
-                :src="item.actor_channel.avatar_url"
-                :alt="item.actor_channel?.name || t('notifications.channelAvatar')"
-                class="w-10 h-10 rounded-full object-cover border border-zinc-700 shrink-0"
+              <AvatarFallback
+                :src="item.actor_channel?.avatar_url"
+                :name="item.actor_channel?.name || actorInitial(item)"
+                class="h-10 w-10 shrink-0 border border-zinc-600 text-sm"
               />
-              <div
-                v-else
-                class="w-10 h-10 rounded-full bg-zinc-700 text-gray-200 border border-zinc-600 shrink-0 flex items-center justify-center text-sm font-semibold"
-              >
-                {{ actorInitial(item) }}
-              </div>
               <div class="min-w-0">
                 <p class="text-sm" :class="item.is_read ? 'text-gray-300' : 'text-white font-semibold'">
                   {{ notificationSummary(item) }}
@@ -135,6 +128,7 @@
 
 <script setup lang="ts">
 import { computed, ref, onMounted, onUnmounted } from 'vue'
+import AvatarFallback from '~/app/components/AvatarFallback.vue'
 import { useI18n } from 'vue-i18n'
 import {
   listNotifications,

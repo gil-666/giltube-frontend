@@ -39,7 +39,12 @@ interface AccountProfile {
   gilid_email: string
   gilid_username: string
   gilid_linked_at: string | null
+  music_quality: MusicQuality
+  audio_language: string
+  caption_language: string
 }
+
+export type MusicQuality = 'auto' | 'low' | 'medium' | 'high' | 'maximum'
 
 interface GilIDStartResponse {
   authorize_url: string
@@ -101,6 +106,22 @@ export const register = async (userData: RegisterRequest): Promise<RegisterRespo
 
 export const getMyAccount = async (): Promise<AccountProfile> => {
   const res = await api.get<AccountProfile>('/account/me')
+  return res.data
+}
+
+export const updateMyMusicQuality = async (quality: MusicQuality): Promise<{ music_quality: MusicQuality }> => {
+  const res = await api.put<{ music_quality: MusicQuality }>('/account/music-quality', { quality })
+  return res.data
+}
+
+export const updateMyPlaybackLanguages = async (audioLanguage: string, captionLanguage: string): Promise<{
+  audio_language: string
+  caption_language: string
+}> => {
+  const res = await api.put('/account/playback-languages', {
+    audio_language: audioLanguage,
+    caption_language: captionLanguage,
+  })
   return res.data
 }
 

@@ -3,11 +3,21 @@ export const getTimeAgo = (dateString: string): string => {
   
   // Parse the ISO string and convert to milliseconds
   const date = new Date(dateString).getTime()
+  if (Number.isNaN(date)) return 'Unknown'
+
   const now = new Date().getTime()
-  
   const secondsAgo = Math.floor((now - date) / 1000)
-  
-  if (secondsAgo < 0) return 'just now' // Handle future dates
+
+  // Small future values are usually client/server clock skew. Larger future
+  // values should not stay pinned to "just now" forever.
+  if (secondsAgo < -120) {
+    return new Intl.DateTimeFormat(undefined, {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    }).format(new Date(date))
+  }
+  if (secondsAgo < 0) return 'just now'
   if (secondsAgo < 60) return 'just now'
   if (secondsAgo < 3600) return `${Math.floor(secondsAgo / 60)}m ago`
   if (secondsAgo < 86400) return `${Math.floor(secondsAgo / 3600)}h ago`

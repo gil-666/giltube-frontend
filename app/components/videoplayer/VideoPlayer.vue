@@ -1,8 +1,17 @@
 <template>
   <div class="w-full flex items-center justify-center relative">
     <div class="video-player-container w-full bg-black rounded-lg overflow-hidden flex items-center justify-center relative">
-      <video ref="videoElement" class="video-js vjs-default-skin" controls
+      <video ref="videoElement" class="video-js vjs-default-skin" :class="{ 'giltube-clip-mode': props.clipMode, 'giltube-clip-range': hasClipRange }" controls
         preload="auto"></video>
+
+      <div
+        v-if="shortcutOverlayVisible"
+        class="player-shortcut-overlay"
+        :class="`player-shortcut-overlay-${shortcutOverlaySide}`"
+        aria-hidden="true"
+      >
+        <span>{{ shortcutOverlaySymbol }}</span>
+      </div>
 
       <!-- <button
         v-if="isPictureInPictureSupported"
@@ -27,34 +36,58 @@
         @touchstart="handleProgressBarInteraction"
         @mousemove="handleProgressBarHover"
         @touchmove="handleProgressBarHover"
+        @mouseleave="clearProgressBarHover"
+        @touchend="clearProgressBarHover"
+        @touchcancel="clearProgressBarHover"
       >
-        <!-- Buffered amount -->
         <div
           v-if="bufferedEnd > 0"
           class="buffered-amount"
           style="position: absolute; left: 0; top: 0; height: 100%; background-color: rgb(107, 114, 128); opacity: 0.6;"
-          :style="{ width: `${(bufferedEnd / duration) * 100}%` }"
+          :style="{ width: `${displayBufferedPercent}%` }"
         />
-        <!-- Played amount -->
         <div
           class="played-amount"
           style="position: absolute; left: 0; top: 0; height: 100%; background-color: rgb(239, 68, 68); transition: width 75ms ease;"
-          :style="{ width: `${(currentTime / duration) * 100}%` }"
+          :style="{ width: `${displayProgressPercent}%` }"
         />
-        <!-- Seek circle indicator -->
         <div
           class="seek-indicator"
           style="position: absolute; top: 50%; width: 12px; height: 12px; background-color: rgb(239, 68, 68); border-radius: 50%; box-shadow: 0 4px 6px rgba(0,0,0,0.5); opacity: 0; transition: opacity 150ms ease; pointer-events: none;"
-          :style="{ left: `${(seekPreviewTime / duration) * 100}%`, transform: 'translate(-50%, -50%)' }"
+          :style="{ left: `${displaySeekPreviewPercent}%`, transform: 'translate(-50%, -50%)' }"
         />
+        <div
+          v-if="showSeekPreviewLabel"
+          class="seek-preview-label"
+          :style="{ left: `${displaySeekPreviewPercent}%` }"
+        >
+          {{ seekPreviewLabel }}
+        </div>
+      </div>
+
+      <div
+        v-if="hasClipRange"
+        class="pointer-events-none absolute left-3 top-3 z-20 rounded-full border border-red-300/30 bg-red-950/80 px-3 py-1 text-xs font-bold uppercase tracking-[0.16em] text-red-100 shadow-lg"
+      >
+        Clip · {{ formatDisplayTime(displayDuration) }}
+      </div>
+
+      <div
+        v-if="hasClipRange"
+        class="clip-relative-time-display pointer-events-none absolute bottom-3 left-16 z-40 font-mono text-xs font-semibold text-white"
+      >
+        {{ formatDisplayTime(displayCurrentTime) }} / {{ formatDisplayTime(displayDuration) }}
       </div>
 
       <!-- Presence overlay (live only) -->
       <div v-if="isLive && (viewers.length > 0 || anonymousCount > 0)" class="presence-overlay absolute left-3 top-3 bg-black/60 text-white rounded-md p-2 flex items-center gap-3">
         <div class="avatars flex items-center gap-2">
           <div v-for="v in visibleViewers" :key="v.id" class="viewer flex items-center gap-2">
-            <img v-if="v.avatarUrl" :src="v.avatarUrl" alt="avatar" class="w-6 h-6 rounded-full object-cover" />
-            <div v-else class="w-6 h-6 rounded-full bg-gray-500" />
+            <AvatarFallback
+              :src="v.avatarUrl"
+              name="Viewer"
+              class="h-6 w-6 bg-gray-500 text-[10px]"
+            />
           </div>
         </div>
         <div class="text-sm">
@@ -92,20 +125,33 @@
 
 <script setup lang="ts">
 import { computed, ref, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
+import AvatarFallback from '~/app/components/AvatarFallback.vue'
 import videojs from 'video.js'
 import 'video.js/dist/video-js.css'
 import 'videojs-contrib-quality-levels'
+import { getMyAccount, updateMyPlaybackLanguages } from '~/app/service/auth'
+
+const AUDIO_LANGUAGE_STORAGE_KEY = 'giltube_audio_language'
+const CAPTION_LANGUAGE_STORAGE_KEY = 'giltube_caption_language'
 
 interface Props {
   src?: string
   status?: 'processing' | 'ready' | 'failed' | string
+  autoplay?: boolean
   episodeLabel?: string
   introStartSeconds?: number
   introEndSeconds?: number
   hasNextEpisode?: boolean
   nextEpisodeLabel?: string
   startTimeSeconds?: number
+  exactStartTime?: boolean
+  progressEmitIntervalMs?: number
   controlsLocked?: boolean
+  clipMode?: boolean
+  clipStartSeconds?: number
+  clipEndSeconds?: number
+  disablePictureInPictureToggle?: boolean
+  disableFullscreenToggle?: boolean
 }
 
 const emit = defineEmits<{
@@ -119,13 +165,21 @@ const emit = defineEmits<{
 
 const props = withDefaults(defineProps<Props>(), {
   status: 'ready',
+  autoplay: true,
   episodeLabel: '',
   introStartSeconds: 0,
   introEndSeconds: 0,
   hasNextEpisode: false,
   nextEpisodeLabel: 'Next episode',
   startTimeSeconds: 0,
-  controlsLocked: false
+  exactStartTime: false,
+  progressEmitIntervalMs: 5000,
+  controlsLocked: false,
+  clipMode: false,
+  clipStartSeconds: 0,
+  clipEndSeconds: 0,
+  disablePictureInPictureToggle: false,
+  disableFullscreenToggle: false
 })
 
 type PresenceViewer = {
@@ -148,10 +202,53 @@ const duration = ref(0)
 const bufferedEnd = ref(0)
 const seekPreviewTime = ref(0)
 const isSeekingProgress = ref(false)
+const isHoveringProgress = ref(false)
+const shortcutOverlayVisible = ref(false)
+const shortcutOverlaySymbol = ref('')
+const shortcutOverlaySide = ref<'center' | 'left' | 'right'>('center')
 const progressBarOverlay = ref<HTMLElement | null>(null)
 const seriesActionsOverlay = ref<HTMLElement | null>(null)
 const mobilePiPOverlay = ref<HTMLElement | null>(null)
 const isPictureInPictureSupported = ref(false)
+const hasClipRange = computed(() => {
+  const start = Number(props.clipStartSeconds || 0)
+  const end = Number(props.clipEndSeconds || 0)
+  return Number.isFinite(start) && Number.isFinite(end) && end > start
+})
+const clipDisplayStart = computed(() => hasClipRange.value ? Math.max(0, Number(props.clipStartSeconds || 0)) : 0)
+const displayDuration = computed(() => {
+  if (!hasClipRange.value) return Math.max(0, Number(duration.value || 0))
+  return Math.max(0, Number(props.clipEndSeconds || 0) - clipDisplayStart.value)
+})
+const displayCurrentTime = computed(() => {
+  const current = Number(currentTime.value || 0)
+  if (!hasClipRange.value) return Math.max(0, current)
+  return Math.min(displayDuration.value, Math.max(0, current - clipDisplayStart.value))
+})
+const displayBufferedEnd = computed(() => {
+  const buffered = Number(bufferedEnd.value || 0)
+  if (!hasClipRange.value) return Math.max(0, buffered)
+  return Math.min(displayDuration.value, Math.max(0, buffered - clipDisplayStart.value))
+})
+const displaySeekPreviewTime = computed(() => {
+  const preview = Number(seekPreviewTime.value || 0)
+  if (!hasClipRange.value) return Math.max(0, preview)
+  return Math.min(displayDuration.value, Math.max(0, preview - clipDisplayStart.value))
+})
+const displayProgressPercent = computed(() => {
+  const total = Math.max(1, displayDuration.value)
+  return Math.min(100, Math.max(0, (displayCurrentTime.value / total) * 100))
+})
+const displayBufferedPercent = computed(() => {
+  const total = Math.max(1, displayDuration.value)
+  return Math.min(100, Math.max(0, (displayBufferedEnd.value / total) * 100))
+})
+const displaySeekPreviewPercent = computed(() => {
+  const total = Math.max(1, displayDuration.value)
+  return Math.min(100, Math.max(0, (displaySeekPreviewTime.value / total) * 100))
+})
+const showSeekPreviewLabel = computed(() => !props.controlsLocked && displayDuration.value > 0 && (isHoveringProgress.value || isSeekingProgress.value))
+const seekPreviewLabel = computed(() => formatDisplayTime(displaySeekPreviewTime.value))
 const showSkipIntroButton = computed(() =>
   props.introEndSeconds > props.introStartSeconds &&
   currentTime.value >= props.introStartSeconds &&
@@ -178,6 +275,13 @@ let applyingProgrammaticPlayback = false
 let restoringLockedPlayback = false
 let lockedExpectedTime = 0
 let lockedExpectedPaused = true
+let shortcutOverlayTimer: ReturnType<typeof setTimeout> | null = null
+let lastTapAt = 0
+let lastTapSide: 'left' | 'right' | '' = ''
+let lastTapX = 0
+let lastTapY = 0
+const PLAYER_VOLUME_STORAGE_KEY = 'giltube:player-volume'
+const PLAYER_MUTED_STORAGE_KEY = 'giltube:player-muted'
 
 declare global {
   interface Window {
@@ -188,16 +292,295 @@ declare global {
   }
 }
 
+const getQualityLevelFrameRate = (level: any) => {
+  const candidates = [
+    level?.frameRate,
+    level?.framerate,
+    level?.fps,
+    level?.frame_rate,
+    level?.attributes?.['FRAME-RATE'],
+    level?.attributes?.FRAME_RATE,
+    level?.playlist?.attributes?.['FRAME-RATE'],
+    level?.playlist?.attributes?.FRAME_RATE
+  ]
+
+  if (level?.frameRateNumerator && level?.frameRateDenominator) {
+    candidates.push(Number(level.frameRateNumerator) / Number(level.frameRateDenominator))
+  }
+
+  for (const candidate of candidates) {
+    const fps = Number(candidate)
+    if (Number.isFinite(fps) && fps > 0) return fps
+  }
+
+  const label = String(level?.label || '')
+  const labelFrameRate =
+    label.match(/\d+p\s*(\d{2,3})(?:\s*fps)?/i) ||
+    label.match(/(\d{2,3})\s*fps/i)
+  if (labelFrameRate) {
+    const fps = Number(labelFrameRate[1])
+    if (Number.isFinite(fps) && fps > 0) return fps
+  }
+
+  return 0
+}
+
+const getQualityLevelLabel = (level: any, index: number) => {
+  let label = ''
+  if (level?.label) {
+    const match = String(level.label).match(/(\d+p)/)
+    label = match ? match[1] : String(level.label)
+  } else if (level?.height) {
+    label = `${level.height}p`
+  } else {
+    label = `Quality ${index + 1}`
+  }
+
+  const fps = getQualityLevelFrameRate(level)
+  if (fps >= 48) {
+    label = `${label}${Math.round(fps)}`
+  }
+
+  return label
+}
+
 const countUniqueQualityLevels = (levels: any) => {
   if (!levels || typeof levels.length !== 'number') return 0
 
   const seen = new Set<string>()
   for (let i = 0; i < levels.length; i++) {
     const level = levels[i]
-    const key = `${level?.height ?? ''}:${level?.width ?? ''}:${level?.bitrate ?? ''}:${level?.label ?? ''}`
+    const key = [
+      level?.height ?? '',
+      level?.width ?? '',
+      level?.bitrate ?? '',
+      level?.label ?? '',
+      getQualityLevelFrameRate(level) || ''
+    ].join(':')
     seen.add(key)
   }
   return seen.size
+}
+
+const clampVolume = (value: unknown) => {
+  const numeric = typeof value === 'number' ? value : Number(value)
+  if (!Number.isFinite(numeric)) return 1
+  return Math.max(0, Math.min(1, numeric))
+}
+
+const readSavedPlayerVolume = () => {
+  if (typeof window === 'undefined') {
+    return { volume: 1, muted: false }
+  }
+  try {
+    const savedVolume = window.localStorage.getItem(PLAYER_VOLUME_STORAGE_KEY)
+    const savedMuted = window.localStorage.getItem(PLAYER_MUTED_STORAGE_KEY)
+    return {
+      volume: clampVolume(savedVolume ?? 1),
+      muted: savedMuted === 'true',
+    }
+  } catch {
+    return { volume: 1, muted: false }
+  }
+}
+
+const persistPlayerVolume = () => {
+  if (!player || typeof window === 'undefined') return
+  try {
+    window.localStorage.setItem(PLAYER_VOLUME_STORAGE_KEY, String(clampVolume(player.volume?.() ?? 1)))
+    window.localStorage.setItem(PLAYER_MUTED_STORAGE_KEY, String(Boolean(player.muted?.())))
+  } catch {
+    // Ignore storage failures.
+  }
+}
+
+const isEditableTarget = (target: EventTarget | null) => {
+  if (!(target instanceof HTMLElement)) return false
+  if (target.isContentEditable) return true
+  const tagName = target.tagName?.toLowerCase()
+  return tagName === 'input' || tagName === 'textarea' || tagName === 'select'
+}
+
+const isPlayerShortcutTarget = (target: EventTarget | null) => {
+  const playerEl = player?.el?.() as HTMLElement | undefined
+  if (!playerEl) return false
+  if (target instanceof HTMLElement) {
+    return playerEl.contains(target) || target === document.body || target === document.documentElement
+  }
+  return true
+}
+
+const showShortcutOverlay = (symbol: string, side: 'center' | 'left' | 'right' = 'center') => {
+  shortcutOverlaySymbol.value = symbol
+  shortcutOverlaySide.value = side
+  shortcutOverlayVisible.value = false
+  if (shortcutOverlayTimer) clearTimeout(shortcutOverlayTimer)
+  requestAnimationFrame(() => {
+    shortcutOverlayVisible.value = true
+    shortcutOverlayTimer = setTimeout(() => {
+      shortcutOverlayVisible.value = false
+    }, 650)
+  })
+}
+
+const seekBy = (seconds: number) => {
+  if (!player || props.controlsLocked) return false
+  const current = Number(player.currentTime?.() || 0)
+  const total = Number(player.duration?.() || 0)
+  if (!Number.isFinite(current)) return false
+  const minTime = hasClipRange.value ? clipDisplayStart.value : 0
+  const maxTime = hasClipRange.value && props.clipEndSeconds > clipDisplayStart.value
+    ? Number(props.clipEndSeconds)
+    : total
+  const nextTime = total > 0
+    ? Math.max(minTime, Math.min(maxTime, current + seconds))
+    : Math.max(minTime, current + seconds)
+  player.currentTime(nextTime)
+  return true
+}
+
+const setVolumeByDelta = (delta: number) => {
+  if (!player) return null
+  const nextVolume = clampVolume(Number(player.volume?.() || 0) + delta)
+  player.volume(nextVolume)
+  if (nextVolume > 0 && player.muted?.()) {
+    player.muted(false)
+  }
+  return nextVolume
+}
+
+const formatVolumePercent = (volume: number | null | undefined) => {
+  const safeVolume = clampVolume(Number(volume || 0))
+  return `${Math.round(safeVolume * 100)}%`
+}
+
+const formatShortcutTimecode = (seconds: number) => {
+  const displaySeconds = hasClipRange.value
+    ? Math.max(0, seconds - clipDisplayStart.value)
+    : seconds
+  return formatDisplayTime(displaySeconds)
+}
+
+const toggleCaptions = () => {
+  if (!player || typeof player.textTracks !== 'function') return
+  const tracks = player.textTracks()
+  if (!tracks || typeof tracks.length !== 'number') return
+
+  const captionIndexes: number[] = []
+  let activeCaptionIndex = -1
+  for (let i = 0; i < tracks.length; i++) {
+    const track = tracks[i]
+    if (!isCaptionTrack(track)) continue
+    captionIndexes.push(i)
+    if (track.mode === 'showing') {
+      activeCaptionIndex = i
+    }
+  }
+
+  if (!captionIndexes.length) return
+
+  if (activeCaptionIndex >= 0) {
+    tracks[activeCaptionIndex].mode = 'disabled'
+    return
+  }
+
+  tracks[captionIndexes[0]].mode = 'showing'
+}
+
+const handleKeyboardShortcuts = (event: KeyboardEvent) => {
+  if (!player || isEditableTarget(event.target) || !isPlayerShortcutTarget(event.target)) return
+  if (event.metaKey || event.ctrlKey || event.altKey) return
+
+  const normalizedKey = event.key.toLowerCase()
+
+  if (normalizedKey === ' ' || normalizedKey === 'spacebar' || normalizedKey === 'k') {
+    event.preventDefault()
+    if (player.paused?.()) {
+      void player.play?.()
+      showShortcutOverlay('PLAY')
+    } else {
+      player.pause?.()
+      showShortcutOverlay('PAUSE')
+    }
+    return
+  }
+
+  if (normalizedKey === 'arrowleft') {
+    event.preventDefault()
+    if (seekBy(-5)) showShortcutOverlay('-5', 'left')
+    return
+  }
+
+  if (normalizedKey === 'arrowright') {
+    event.preventDefault()
+    if (seekBy(5)) showShortcutOverlay('+5', 'right')
+    return
+  }
+
+  if (normalizedKey === 'j') {
+    event.preventDefault()
+    if (seekBy(-10)) showShortcutOverlay('-10', 'left')
+    return
+  }
+
+  if (normalizedKey === 'l') {
+    event.preventDefault()
+    if (seekBy(10)) showShortcutOverlay('+10', 'right')
+    return
+  }
+
+  if (normalizedKey === 'arrowup') {
+    event.preventDefault()
+    const nextVolume = setVolumeByDelta(0.05)
+    showShortcutOverlay(formatVolumePercent(nextVolume))
+    return
+  }
+
+  if (normalizedKey === 'arrowdown') {
+    event.preventDefault()
+    const nextVolume = setVolumeByDelta(-0.05)
+    showShortcutOverlay(formatVolumePercent(nextVolume))
+    return
+  }
+
+  if (normalizedKey === 'm') {
+    event.preventDefault()
+    const nextMuted = !player.muted?.()
+    player.muted?.(nextMuted)
+    showShortcutOverlay(nextMuted ? 'MUTE' : 'SOUND')
+    return
+  }
+
+  if (normalizedKey === 'f' && !props.disableFullscreenToggle) {
+    event.preventDefault()
+    if (player.isFullscreen?.()) {
+      player.exitFullscreen?.()
+    } else {
+      player.requestFullscreen?.()
+    }
+    showShortcutOverlay('FULL')
+    return
+  }
+
+  if (normalizedKey === 'c') {
+    event.preventDefault()
+    toggleCaptions()
+    showShortcutOverlay('CC')
+    return
+  }
+
+  if (/^[0-9]$/.test(normalizedKey)) {
+    event.preventDefault()
+    if (props.controlsLocked) return
+    const total = Number(player.duration?.() || 0)
+    if (total <= 0) return
+    const percent = Number(normalizedKey) / 10
+    const minTime = hasClipRange.value ? clipDisplayStart.value : 0
+    const seekableDuration = hasClipRange.value ? displayDuration.value : total
+    const destination = minTime + seekableDuration * percent
+    player.currentTime(destination)
+    showShortcutOverlay(formatShortcutTimecode(destination))
+  }
 }
 
 const updateQualityButtonVisibility = () => {
@@ -620,6 +1003,31 @@ const reorderControlBar = () => {
   })
 }
 
+const formatDisplayTime = (seconds: number) => {
+  const total = Math.max(0, Math.floor(Number(seconds || 0)))
+  const hours = Math.floor(total / 3600)
+  const minutes = Math.floor((total % 3600) / 60)
+  const secs = total % 60
+  if (hours > 0) {
+    return `${hours}:${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`
+  }
+  return `${minutes}:${String(secs).padStart(2, '0')}`
+}
+
+const syncClipTimeDisplays = () => {
+  if (!hasClipRange.value) return
+  if (!player) return
+  const controlBarEl = player.controlBar?.el?.() as HTMLElement | undefined
+  if (!controlBarEl) return
+
+  const currentTimeDisplay = controlBarEl.querySelector('.vjs-current-time-display') as HTMLElement | null
+  const durationDisplay = controlBarEl.querySelector('.vjs-duration-display') as HTMLElement | null
+  if (!currentTimeDisplay || !durationDisplay) return
+
+  currentTimeDisplay.textContent = formatDisplayTime(displayCurrentTime.value)
+  durationDisplay.textContent = formatDisplayTime(displayDuration.value)
+}
+
 const skipIntro = () => {
   if (!player || props.introEndSeconds <= props.introStartSeconds) return
   player.currentTime(props.introEndSeconds)
@@ -727,6 +1135,7 @@ const createAudioButton = () => {
           for (let j = 0; j < this.audioTracks.length; j++) {
             this.audioTracks[j].enabled = j === selectedIndex
           }
+          persistSelectedAudioLanguage()
           this.updateMenuSelection()
           this.toggleMenu()
         })
@@ -785,6 +1194,129 @@ const getTextTrackLabel = (track: any, index: number) => {
 
 const isCaptionTrack = (track: any) => track?.kind === 'subtitles' || track?.kind === 'captions'
 
+const normalizeTrackLanguage = (value: unknown) => String(value || '').trim().toLowerCase().replaceAll('_', '-')
+
+const trackLanguage = (track: any) => normalizeTrackLanguage(track?.language || track?.srclang)
+
+const languageMatches = (candidate: string, preferred: string) => {
+  if (!candidate || !preferred) return false
+  if (candidate === preferred) return true
+  return candidate.split('-')[0] === preferred.split('-')[0]
+}
+
+let preferredAudioLanguage = process.client ? normalizeTrackLanguage(localStorage.getItem(AUDIO_LANGUAGE_STORAGE_KEY)) : ''
+let preferredCaptionLanguage = process.client ? normalizeTrackLanguage(localStorage.getItem(CAPTION_LANGUAGE_STORAGE_KEY)) : ''
+let applyingTrackPreferences = false
+let trackPreferencesReady = false
+let trackPreferenceApplyTimer: ReturnType<typeof setTimeout> | null = null
+let trackPreferenceSaveTimer: ReturnType<typeof setTimeout> | null = null
+
+const applyPreferredTrackLanguages = () => {
+  if (!player) return
+  applyingTrackPreferences = true
+
+  const audioTracks = player.audioTracks?.()
+  if (preferredAudioLanguage && audioTracks?.length) {
+    const candidates: any[] = []
+    for (let i = 0; i < audioTracks.length; i++) {
+      if (audioTracks[i]?.kind !== 'metadata') candidates.push(audioTracks[i])
+    }
+    const preferred = candidates.find(track => trackLanguage(track) === preferredAudioLanguage)
+      || candidates.find(track => languageMatches(trackLanguage(track), preferredAudioLanguage))
+    const fallback = candidates.find(track => Boolean(track?.default))
+      || candidates.find(track => Boolean(track?.enabled))
+      || candidates[0]
+    const selected = preferred || fallback
+    if (selected) {
+      candidates.forEach(track => { track.enabled = track === selected })
+    }
+  }
+
+  const textTracks = player.textTracks?.()
+  if (preferredCaptionLanguage && textTracks?.length) {
+    const captions: any[] = []
+    for (let i = 0; i < textTracks.length; i++) {
+      if (isCaptionTrack(textTracks[i])) captions.push(textTracks[i])
+    }
+    const preferred = captions.find(track => trackLanguage(track) === preferredCaptionLanguage)
+      || captions.find(track => languageMatches(trackLanguage(track), preferredCaptionLanguage))
+    const fallback = captions.find(track => Boolean(track?.default))
+      || captions.find(track => track?.mode === 'showing')
+      || captions[0]
+    const selected = preferred || fallback
+    if (selected) {
+      captions.forEach(track => { track.mode = track === selected ? 'showing' : 'disabled' })
+    }
+  }
+
+  applyingTrackPreferences = false
+  audioButton?.updateMenuSelection?.()
+  mobileSettingsButton?.buildMenu?.()
+}
+
+const scheduleTrackPreferenceApply = () => {
+  trackPreferencesReady = false
+  if (trackPreferenceApplyTimer) clearTimeout(trackPreferenceApplyTimer)
+  trackPreferenceApplyTimer = setTimeout(() => {
+    applyPreferredTrackLanguages()
+    trackPreferencesReady = true
+  }, 100)
+}
+
+const syncPlaybackLanguagesToAccount = () => {
+  if (!process.client || !localStorage.getItem('user_id')) return
+  if (trackPreferenceSaveTimer) clearTimeout(trackPreferenceSaveTimer)
+  trackPreferenceSaveTimer = setTimeout(() => {
+    void updateMyPlaybackLanguages(preferredAudioLanguage, preferredCaptionLanguage).catch(() => {})
+  }, 350)
+}
+
+const persistSelectedAudioLanguage = () => {
+  if (!player || applyingTrackPreferences || !trackPreferencesReady) return
+  const tracks = player.audioTracks?.()
+  if (!tracks?.length) return
+  for (let i = 0; i < tracks.length; i++) {
+    if (!tracks[i]?.enabled || tracks[i]?.kind === 'metadata') continue
+    const language = trackLanguage(tracks[i])
+    if (!language) return
+    preferredAudioLanguage = language
+    localStorage.setItem(AUDIO_LANGUAGE_STORAGE_KEY, language)
+    syncPlaybackLanguagesToAccount()
+    return
+  }
+}
+
+const persistSelectedCaptionLanguage = () => {
+  if (!player || applyingTrackPreferences || !trackPreferencesReady) return
+  const tracks = player.textTracks?.()
+  if (!tracks?.length) return
+  for (let i = 0; i < tracks.length; i++) {
+    if (!isCaptionTrack(tracks[i]) || tracks[i]?.mode !== 'showing') continue
+    const language = trackLanguage(tracks[i])
+    if (!language) return
+    preferredCaptionLanguage = language
+    localStorage.setItem(CAPTION_LANGUAGE_STORAGE_KEY, language)
+    syncPlaybackLanguagesToAccount()
+    return
+  }
+}
+
+const loadSyncedPlaybackLanguages = async () => {
+  if (!process.client || !localStorage.getItem('user_id')) return
+  try {
+    const account = await getMyAccount()
+    preferredAudioLanguage = normalizeTrackLanguage(account.audio_language)
+    preferredCaptionLanguage = normalizeTrackLanguage(account.caption_language)
+    if (preferredAudioLanguage) localStorage.setItem(AUDIO_LANGUAGE_STORAGE_KEY, preferredAudioLanguage)
+    else localStorage.removeItem(AUDIO_LANGUAGE_STORAGE_KEY)
+    if (preferredCaptionLanguage) localStorage.setItem(CAPTION_LANGUAGE_STORAGE_KEY, preferredCaptionLanguage)
+    else localStorage.removeItem(CAPTION_LANGUAGE_STORAGE_KEY)
+    scheduleTrackPreferenceApply()
+  } catch {
+    // Local preferences remain available when account sync cannot be reached.
+  }
+}
+
 const createMobileSettingsButton = () => {
   const Button = videojs.getComponent('Button')
 
@@ -827,9 +1359,9 @@ const createMobileSettingsButton = () => {
       if (!this.menu) return
       const item = videojs.dom.createEl('button', {
         className: `vjs-mobile-settings-item${selected ? ' vjs-selected' : ''}`,
-        innerHTML: label,
         type: 'button'
       }) as HTMLButtonElement
+      item.textContent = label
 
       this.bindPress(item, () => {
         handler()
@@ -936,7 +1468,7 @@ const createMobileSettingsButton = () => {
       const seenLabels = new Set<string>()
       for (let i = 0; i < levels.length; i++) {
         const level = levels[i]
-        const label = level?.label?.match?.(/(\d+p)/)?.[1] || (level?.height ? `${level.height}p` : `Quality ${i + 1}`)
+        const label = getQualityLevelLabel(level, i)
         if (seenLabels.has(label)) continue
         seenLabels.add(label)
         const selected = enabledIndexes.length === 1 && enabledIndexes[0] === i
@@ -969,6 +1501,7 @@ const createMobileSettingsButton = () => {
           for (let j = 0; j < tracks.length; j++) {
             tracks[j].enabled = j === i
           }
+          persistSelectedAudioLanguage()
           audioButton?.updateMenuSelection?.()
         })
       }
@@ -995,6 +1528,7 @@ const createMobileSettingsButton = () => {
           captionTracks.forEach(({ track: candidate }) => {
             candidate.mode = candidate === track ? 'showing' : 'disabled'
           })
+          persistSelectedCaptionLanguage()
         })
       })
       return true
@@ -1055,6 +1589,7 @@ const handleProgressBarInteraction = (event: MouseEvent | TouchEvent) => {
   }
 
   isSeekingProgress.value = true
+  isHoveringProgress.value = true
 
   const seekTime = getSeekTimeFromEvent(event)
   if (seekTime !== null) {
@@ -1073,6 +1608,7 @@ const handleProgressBarInteraction = (event: MouseEvent | TouchEvent) => {
 
   const handleEnd = () => {
     isSeekingProgress.value = false
+    isHoveringProgress.value = false
     document.removeEventListener('mousemove', handleMove as EventListener)
     document.removeEventListener('touchmove', handleMove as EventListener)
     document.removeEventListener('mouseup', handleEnd)
@@ -1087,6 +1623,8 @@ const handleProgressBarInteraction = (event: MouseEvent | TouchEvent) => {
 
 const handleProgressBarHover = (event: MouseEvent | TouchEvent) => {
   if (duration.value === 0) return
+  if (props.controlsLocked) return
+  isHoveringProgress.value = true
 
   const seekTime = getSeekTimeFromEvent(event)
   if (seekTime !== null) {
@@ -1094,8 +1632,90 @@ const handleProgressBarHover = (event: MouseEvent | TouchEvent) => {
   }
 }
 
+const clearProgressBarHover = () => {
+  if (isSeekingProgress.value) return
+  isHoveringProgress.value = false
+}
+
+const isPlayerGestureIgnoredTarget = (target: EventTarget | null) => {
+  if (!(target instanceof HTMLElement)) return false
+  return Boolean(target.closest([
+    '.vjs-control-bar',
+    '.vjs-menu',
+    '.vjs-big-play-button',
+    '.progress-bar-overlay',
+    '.series-player-actions',
+    'button',
+    'input',
+    'select',
+    'textarea'
+  ].join(',')))
+}
+
+const getGestureSide = (clientX: number): 'left' | 'right' | '' => {
+  const playerEl = player?.el?.() as HTMLElement | undefined
+  if (!playerEl || !Number.isFinite(clientX)) return ''
+  const rect = playerEl.getBoundingClientRect()
+  if (rect.width <= 0) return ''
+  return clientX < rect.left + rect.width / 2 ? 'left' : 'right'
+}
+
+const skipFromGestureSide = (side: 'left' | 'right') => {
+  const seconds = side === 'left' ? -10 : 10
+  if (seekBy(seconds)) {
+    showShortcutOverlay(side === 'left' ? '-10' : '+10', side)
+  }
+}
+
+const handlePlayerDoubleClick = (event: MouseEvent) => {
+  if (!player || props.controlsLocked || isPlayerGestureIgnoredTarget(event.target)) return
+  const side = getGestureSide(event.clientX)
+  if (!side) return
+  event.preventDefault()
+  event.stopPropagation()
+  skipFromGestureSide(side)
+}
+
+const handlePlayerTouchEnd = (event: TouchEvent) => {
+  if (!player || props.controlsLocked || isPlayerGestureIgnoredTarget(event.target)) return
+  const touch = event.changedTouches?.[0]
+  if (!touch) return
+
+  const side = getGestureSide(touch.clientX)
+  const now = Date.now()
+  const deltaX = Math.abs(touch.clientX - lastTapX)
+  const deltaY = Math.abs(touch.clientY - lastTapY)
+  const isDoubleTap = side && side === lastTapSide && now - lastTapAt <= 320 && deltaX <= 44 && deltaY <= 44
+
+  lastTapAt = now
+  lastTapSide = side
+  lastTapX = touch.clientX
+  lastTapY = touch.clientY
+
+  if (!isDoubleTap) return
+  event.preventDefault()
+  event.stopPropagation()
+  skipFromGestureSide(side)
+  lastTapAt = 0
+  lastTapSide = ''
+}
+
+const attachPlayerGestureListeners = () => {
+  const playerEl = player?.el?.() as HTMLElement | undefined
+  if (!playerEl) return
+  playerEl.addEventListener('dblclick', handlePlayerDoubleClick, true)
+  playerEl.addEventListener('touchend', handlePlayerTouchEnd, { passive: false, capture: true })
+}
+
+const detachPlayerGestureListeners = () => {
+  const playerEl = player?.el?.() as HTMLElement | undefined
+  if (!playerEl) return
+  playerEl.removeEventListener('dblclick', handlePlayerDoubleClick, true)
+  playerEl.removeEventListener('touchend', handlePlayerTouchEnd, true)
+}
+
 const getSeekTimeFromEvent = (event: MouseEvent | TouchEvent): number | null => {
-  const progressBar = event.currentTarget as HTMLElement | null
+  const progressBar = progressBarOverlay.value || (event.currentTarget as HTMLElement | null)
   if (!progressBar) return null
 
   const rect = progressBar.getBoundingClientRect()
@@ -1104,6 +1724,9 @@ const getSeekTimeFromEvent = (event: MouseEvent | TouchEvent): number | null => 
   if (clientX === undefined) return null
 
   const percentage = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width))
+  if (hasClipRange.value) {
+    return clipDisplayStart.value + percentage * displayDuration.value
+  }
   return percentage * duration.value
 }
 
@@ -1187,6 +1810,10 @@ const attachMobilePiPOverlay = () => {
 }
 
 const updatePictureInPictureSupport = () => {
+  if (props.disablePictureInPictureToggle) {
+    isPictureInPictureSupported.value = false
+    return
+  }
   const video = videoElement.value as (HTMLVideoElement & { requestPictureInPicture?: () => Promise<any> }) | null
   const doc = typeof document !== 'undefined'
     ? document as Document & { pictureInPictureEnabled?: boolean }
@@ -1198,6 +1825,7 @@ const updatePictureInPictureSupport = () => {
 }
 
 const togglePictureInPicture = async () => {
+  if (props.disablePictureInPictureToggle) return
   const video = videoElement.value as (HTMLVideoElement & { requestPictureInPicture?: () => Promise<any> }) | null
   if (!video) return
   const doc = document as Document & {
@@ -1225,9 +1853,12 @@ const togglePictureInPicture = async () => {
 
 const applyInitialStartTime = () => {
   if (!player || hasAppliedInitialStartTime) return
-  const startTime = Number(props.startTimeSeconds || 0)
+  const clipStartTime = Number(props.clipStartSeconds || 0)
+  const clipEndTime = Number(props.clipEndSeconds || 0)
+  const hasClipRange = Number.isFinite(clipStartTime) && Number.isFinite(clipEndTime) && clipEndTime > clipStartTime
+  const startTime = hasClipRange ? clipStartTime : Number(props.startTimeSeconds || 0)
   const playerDuration = Number(player.duration?.() || duration.value || 0)
-  if (!Number.isFinite(startTime) || startTime <= 5) {
+  if (!Number.isFinite(startTime) || (!hasClipRange && startTime <= 5)) {
     return
   }
   if (!Number.isFinite(playerDuration) || playerDuration <= 0) return
@@ -1235,15 +1866,36 @@ const applyInitialStartTime = () => {
     hasAppliedInitialStartTime = true
     return
   }
-  player.currentTime(Math.max(0, startTime - 2))
-  currentTime.value = Math.max(0, startTime - 2)
+  const targetStart = hasClipRange || props.exactStartTime ? Math.max(0, startTime) : Math.max(0, startTime - 2)
+  player.currentTime(targetStart)
+  currentTime.value = targetStart
   hasAppliedInitialStartTime = true
+}
+
+const enforceClipPlaybackBounds = () => {
+  if (!player) return
+  const start = Number(props.clipStartSeconds || 0)
+  const end = Number(props.clipEndSeconds || 0)
+  if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start) return
+  const current = Number(player.currentTime?.() || 0)
+  if (!Number.isFinite(current)) return
+  if (current < start - 0.35) {
+    player.currentTime(Math.max(0, start))
+    currentTime.value = Math.max(0, start)
+    return
+  }
+  if (current >= end) {
+    player.pause?.()
+    player.currentTime(Math.max(0, start))
+    currentTime.value = Math.max(0, start)
+  }
 }
 
 const emitWatchProgress = (force = false) => {
   if (!player) return
   const now = Date.now()
-  if (!force && now - lastProgressEmitAt < 5000) return
+  const interval = Math.max(0, Number(props.progressEmitIntervalMs ?? 5000))
+  if (!force && interval > 0 && now - lastProgressEmitAt < interval) return
   const playerDuration = Number(player.duration?.() || duration.value || 0)
   const playerCurrentTime = Number(player.currentTime?.() || currentTime.value || 0)
   if (!Number.isFinite(playerDuration) || playerDuration <= 0 || !Number.isFinite(playerCurrentTime)) return
@@ -1411,22 +2063,13 @@ const createQualityButton = (player: any) => {
       // ===== QUALITY LEVELS =====
       for (let i = 0; i < this.qualityLevels.length; i++) {
         const level = this.qualityLevels[i]
-
-        let label = ''
-        if (level.label) {
-          const match = level.label.match(/(\d+p)/)
-          label = match ? match[1] : level.label
-        } else if (level.height) {
-          label = `${level.height}p`
-        } else {
-          label = `Quality ${i}`
-        }
+        const label = getQualityLevelLabel(level, i)
 
         const item = videojs.dom.createEl('button', {
           className: 'vjs-quality-menu-item',
-          innerHTML: label,
           type: 'button'
         }) as HTMLButtonElement
+        item.textContent = label
 
         // 🔥 attach real index
         item.dataset.levelIndex = i.toString()
@@ -1536,6 +2179,7 @@ const createQualityButton = (player: any) => {
 
 onMounted(async () => {
   await nextTick()
+  void loadSyncedPlaybackLanguages()
   startMobileControlsWatcher()
 
   if (videoElement.value) {
@@ -1547,13 +2191,15 @@ onMounted(async () => {
 
     player = videojs(videoElement.value, {
       controls: true,
-      autoplay: true,
+      autoplay: props.autoplay,
       preload: 'auto',
       inactivityTimeout: DEFAULT_INACTIVITY_TIMEOUT,
       responsive: false,
       fluid: false,
       fill: false,
       html5: {
+        // PiP can only render captions owned by the native video element.
+        nativeTextTracks: true,
         hls: {
           overrideNative: true,
           enableLowInitialPlaylist: false
@@ -1567,8 +2213,8 @@ onMounted(async () => {
           inline: false,
           vertical: true
         },
-        pictureInPictureToggle: true,
-        fullscreenToggle: true,
+        pictureInPictureToggle: !props.disablePictureInPictureToggle,
+        fullscreenToggle: !props.disableFullscreenToggle,
         playbackRateMenuButton: false,
         chaptersButton: false,
         descriptionsButton: false,
@@ -1583,6 +2229,10 @@ onMounted(async () => {
     })
 
     player.ready(function () {
+      const savedAudioState = readSavedPlayerVolume()
+      player.volume(savedAudioState.volume)
+      player.muted(savedAudioState.muted)
+
       // Add quality button to control bar
       qualityButton = player.controlBar.addChild('QualityButton', {})
       qualityButton.hide()
@@ -1599,6 +2249,7 @@ onMounted(async () => {
 
       reorderControlBar()
       setTimeout(reorderControlBar, 0)
+      syncClipTimeDisplays()
       attachProgressBarOverlay()
       attachSeriesActionsOverlay()
       updatePictureInPictureSupport()
@@ -1645,6 +2296,8 @@ onMounted(async () => {
         if (!isSeekingProgress.value) {
           currentTime.value = player.currentTime() || 0
         }
+        enforceClipPlaybackBounds()
+        syncClipTimeDisplays()
         if (props.controlsLocked && !lockedExpectedPaused && !applyingProgrammaticPlayback && !restoringLockedPlayback) {
           lockedExpectedTime = Number(player.currentTime?.() || currentTime.value || 0)
         }
@@ -1654,6 +2307,7 @@ onMounted(async () => {
       player.on('durationchange', () => {
         duration.value = player.duration() || 0
         applyInitialStartTime()
+        syncClipTimeDisplays()
       })
 
       player.on('progress', () => {
@@ -1662,6 +2316,8 @@ onMounted(async () => {
           bufferedEnd.value = buffered.end(buffered.length - 1)
         }
       })
+
+      player.on('volumechange', persistPlayerVolume)
 
       const qualityLevels = player.qualityLevels?.()
       if (qualityLevels) {
@@ -1679,6 +2335,8 @@ onMounted(async () => {
         audioTracks.on?.('addtrack', updateMobileSettingsButtonVisibility)
         audioTracks.on?.('removetrack', updateMobileSettingsButtonVisibility)
         audioTracks.on?.('change', updateMobileSettingsButtonVisibility)
+        audioTracks.on?.('addtrack', scheduleTrackPreferenceApply)
+        audioTracks.on?.('change', persistSelectedAudioLanguage)
       }
 
       const textTracks = player.textTracks?.()
@@ -1686,6 +2344,8 @@ onMounted(async () => {
         textTracks.on?.('addtrack', updateResponsiveControls)
         textTracks.on?.('removetrack', updateResponsiveControls)
         textTracks.on?.('change', updateResponsiveControls)
+        textTracks.on?.('addtrack', scheduleTrackPreferenceApply)
+        textTracks.on?.('change', persistSelectedCaptionLanguage)
       }
 
       player.on('loadedmetadata', updateQualityButtonVisibility)
@@ -1697,6 +2357,7 @@ onMounted(async () => {
         updatePictureInPictureSupport()
         nextTick(attachMobilePiPOverlay)
         applyInitialStartTime()
+        scheduleTrackPreferenceApply()
       })
       player.on('fullscreenchange', updateQualityButtonVisibility)
       player.on('fullscreenchange', updateAudioButtonVisibility)
@@ -1723,6 +2384,9 @@ onMounted(async () => {
         dump: dumpPlayerDebugState
       }
 
+      document.addEventListener('keydown', handleKeyboardShortcuts)
+      attachPlayerGestureListeners()
+
       if (props.src && props.status === 'ready') {
         player.src({
           src: props.src,
@@ -1737,11 +2401,13 @@ onMounted(async () => {
 onBeforeUnmount(() => {
   stopMobileControlsWatcher()
   stopUltrawideControlsGuard()
+  document.removeEventListener('keydown', handleKeyboardShortcuts)
   if (window.giltubePlayerDebug?.getPlayer?.() === player) {
     delete window.giltubePlayerDebug
   }
   if (player) {
     emitWatchProgress(true)
+    detachPlayerGestureListeners()
     const playerEl = player.el?.() as HTMLElement | undefined
     if (playerEl) {
       playerEl.classList.remove('giltube-ultrawide-fullscreen')
@@ -1763,12 +2429,25 @@ onBeforeUnmount(() => {
     mobileSettingsButton = null
     nextEpisodeButton = null
   }
+  if (shortcutOverlayTimer) {
+    clearTimeout(shortcutOverlayTimer)
+    shortcutOverlayTimer = null
+  }
+  if (trackPreferenceApplyTimer) {
+    clearTimeout(trackPreferenceApplyTimer)
+    trackPreferenceApplyTimer = null
+  }
+  if (trackPreferenceSaveTimer) {
+    clearTimeout(trackPreferenceSaveTimer)
+    trackPreferenceSaveTimer = null
+  }
 })
 
 watch(
   () => props.src,
   (newSrc) => {
     if (player && newSrc && props.status === 'ready') {
+      trackPreferencesReady = false
       hasAppliedInitialStartTime = false
       lastProgressEmitAt = 0
       audioButton?.hide?.()
@@ -1835,7 +2514,7 @@ watch(
 
 @media (min-width: 768px) {
   .video-player-container {
-    height: 500px;
+    height: clamp(500px, 70vh, 780px);
   }
 }
 
@@ -1844,6 +2523,7 @@ watch(
   z-index: 50 !important;
   opacity: 1;
   visibility: visible;
+  overflow: visible !important;
   transition: opacity 0.25s ease, visibility 0.25s ease;
 }
 
@@ -1854,6 +2534,67 @@ watch(
 .progress-bar-overlay-locked {
   cursor: not-allowed !important;
   opacity: 0.7;
+}
+
+.player-shortcut-overlay {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  z-index: 85;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: shortcut-overlay-pop 650ms ease forwards;
+}
+
+.player-shortcut-overlay-left {
+  justify-content: flex-start;
+  padding-left: 18%;
+}
+
+.player-shortcut-overlay-right {
+  justify-content: flex-end;
+  padding-right: 18%;
+}
+
+.player-shortcut-overlay span {
+  display: inline-flex;
+  min-width: 3.25rem;
+  min-height: 3.25rem;
+  padding: 0 0.9rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(0, 0, 0, 0.42);
+  color: rgba(255, 255, 255, 0.96);
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-size: clamp(0.9rem, 2.8vw, 1.55rem);
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  line-height: 1;
+  text-shadow: 0 4px 18px rgba(0, 0, 0, 0.75);
+  box-shadow: 0 18px 55px rgba(0, 0, 0, 0.38);
+  backdrop-filter: blur(10px);
+}
+
+@keyframes shortcut-overlay-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.86);
+  }
+  15% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  72% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.08);
+  }
 }
 
 :deep(.video-js.giltube-controls-locked .vjs-tech),
@@ -1936,6 +2677,26 @@ watch(
 
 .progress-bar-overlay:hover .seek-indicator {
   opacity: 1 !important;
+}
+
+.seek-preview-label {
+  position: absolute;
+  bottom: 15px;
+  z-index: 2;
+  min-width: 3rem;
+  padding: 0.25rem 0.45rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.96);
+  color: #111;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-size: 0.75rem;
+  font-weight: 800;
+  line-height: 1;
+  text-align: center;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.42);
+  transform: translateX(-50%);
+  pointer-events: none;
+  white-space: nowrap;
 }
 
 .mobile-pip-overlay {
@@ -2152,16 +2913,21 @@ watch(
   align-items: center !important;
 }
 
-:deep(.vjs-current-time)::after {
-  content: ' / ';
-  white-space: nowrap;
-  display: inline;
-  margin: 0 2px;
-  line-height: inherit;
+:deep(.video-js.giltube-clip-range .vjs-current-time),
+:deep(.video-js.giltube-clip-range .vjs-time-divider),
+:deep(.video-js.giltube-clip-range .vjs-duration) {
+  display: none !important;
+}
+
+.clip-relative-time-display {
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);
 }
 
 :deep(.vjs-time-divider) {
-  display: none !important;
+  display: inline-flex !important;
+  min-width: auto !important;
+  width: auto !important;
+  padding: 0 2px !important;
 }
 
 :deep(.vjs-remaining-time) {

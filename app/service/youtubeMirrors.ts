@@ -43,6 +43,7 @@ export const importYouTubeMirrorVideo = async (data: {
   explicit?: boolean
   hidden?: boolean
   createNewChannel?: boolean
+  copyChannelInfo?: boolean
 }) => {
   const res = await api.post('/admin/youtube-mirrors/import', {
     url: data.url,
@@ -50,6 +51,7 @@ export const importYouTubeMirrorVideo = async (data: {
     explicit: !!data.explicit,
     hidden: !!data.hidden,
     create_new_channel: !!data.createNewChannel,
+    copy_channel_info: !!data.copyChannelInfo,
   }, { timeout: 0 })
   return res.data
 }

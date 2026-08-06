@@ -22,12 +22,14 @@ export interface LiveStreamState {
   ingest_url_lan?: string
   stream_name?: string
   playback_url: string
+  whip_url?: string
   thumbnail_url?: string
   watching_now?: number
   playback_url_public?: string
   is_live?: boolean
   use_publisher_presence?: boolean
   publisher_detected_live?: boolean
+  dvr_enabled?: boolean
   channel?: LiveChannelInfo
 }
 
@@ -51,11 +53,12 @@ export const rotateMyLiveStreamKey = async (channelID: string): Promise<{ messag
   return res.data
 }
 
-export const startMyLiveStream = async (channelID: string, title: string, description: string): Promise<{ message: string }> => {
+export const startMyLiveStream = async (channelID: string, title: string, description: string, dvrEnabled?: boolean): Promise<{ message: string }> => {
   const res = await api.post<{ message: string }>('/live/me/start', {
     channel_id: channelID,
     title,
-    description
+    description,
+    dvr_enabled: dvrEnabled
   })
   return res.data
 }
@@ -73,11 +76,12 @@ export const setMyPublisherPresence = async (channelID: string, enabled: boolean
   return res.data
 }
 
-export const saveMyLiveStreamSettings = async (channelID: string, title: string, description: string): Promise<{ message: string; title: string; description: string }> => {
-  const res = await api.put<{ message: string; title: string; description: string }>('/live/me/settings', {
+export const saveMyLiveStreamSettings = async (channelID: string, title: string, description: string, dvrEnabled?: boolean): Promise<{ message: string; title: string; description: string; dvr_enabled: boolean }> => {
+  const res = await api.put<{ message: string; title: string; description: string; dvr_enabled: boolean }>('/live/me/settings', {
     channel_id: channelID,
     title,
-    description
+    description,
+    dvr_enabled: dvrEnabled
   })
   return res.data
 }

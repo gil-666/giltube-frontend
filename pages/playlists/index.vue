@@ -57,10 +57,11 @@
           <p v-if="playlist.description" class="text-gray-400 text-sm line-clamp-2 mt-1">{{ playlist.description }}</p>
 
           <div class="flex items-center gap-3 mt-4 pt-4 border-t border-zinc-700">
-            <div class="w-8 h-8 rounded-full overflow-hidden bg-zinc-700 flex items-center justify-center shrink-0">
-              <img v-if="creatorAvatarUrl" :src="creatorAvatarUrl" alt="Creator avatar" class="w-full h-full object-cover" />
-              <span v-else class="text-xs font-semibold text-gray-300">Y</span>
-            </div>
+            <AvatarFallback
+              :src="creatorAvatarUrl"
+              name="You"
+              class="h-8 w-8 shrink-0 text-xs"
+            />
             <div class="min-w-0">
               <p class="text-sm font-medium text-gray-200 truncate">You</p>
               <p class="text-xs text-gray-500">Created {{ formatDate(playlist.created_at) }}</p>
@@ -87,6 +88,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
+import AvatarFallback from '~/app/components/AvatarFallback.vue'
 import { useI18n } from 'vue-i18n'
 import { useLocalePath } from '#i18n'
 import PlaylistManager from '~/app/components/PlaylistManager.vue'
@@ -285,4 +287,3 @@ if (typeof window !== 'undefined') {
   })
 }
 </script>
-

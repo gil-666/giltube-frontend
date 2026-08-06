@@ -1,12 +1,10 @@
-import axios from 'axios'
-
-const baseUrl = import.meta.env.VITE_API_BASE_URL
+import api from './client'
 
 export const getVideoComments = async (videoId: string, channelId?: string) => {
   try {
-  const response = await axios.get(`${baseUrl}/api/v1/videos/${videoId}/comments`, {
-    params: channelId ? { channel_id: channelId } : undefined,
-  })
+    const response = await api.get(`/videos/${videoId}/comments`, {
+      params: channelId ? { channel_id: channelId } : undefined,
+    })
     return response.data
   } catch (error) {
     console.error('Error fetching comments:', error)
@@ -23,13 +21,7 @@ export const postComment = async (videoId: string, channelId: string, text: stri
       formData.append('parent_comment_id', parentCommentId)
     }
     
-    const response = await axios.post(
-      `${baseUrl}/api/v1/videos/${videoId}/comments`,
-      formData,
-      {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      }
-    )
+    const response = await api.post(`/videos/${videoId}/comments`, formData)
     return response.data
   } catch (error) {
     console.error('Error posting comment:', error)
@@ -39,7 +31,7 @@ export const postComment = async (videoId: string, channelId: string, text: stri
 
 export const deleteComment = async (commentId: string) => {
   try {
-    const response = await axios.delete(`${baseUrl}/api/v1/comments/${commentId}`)
+    const response = await api.delete(`/comments/${commentId}`)
     return response.data
   } catch (error) {
     console.error('Error deleting comment:', error)
@@ -49,7 +41,9 @@ export const deleteComment = async (commentId: string) => {
 
 export const likeComment = async (commentId: string, channelId: string) => {
   try {
-    const response = await axios.post(`${baseUrl}/api/v1/comments/${commentId}/like?channel_id=${channelId}`)
+    const response = await api.post(`/comments/${commentId}/like`, null, {
+      params: { channel_id: channelId },
+    })
     return response.data
   } catch (error) {
     console.error('Error liking comment:', error)
@@ -59,7 +53,9 @@ export const likeComment = async (commentId: string, channelId: string) => {
 
 export const unlikeComment = async (commentId: string, channelId: string) => {
   try {
-    const response = await axios.delete(`${baseUrl}/api/v1/comments/${commentId}/like?channel_id=${channelId}`)
+    const response = await api.delete(`/comments/${commentId}/like`, {
+      params: { channel_id: channelId },
+    })
     return response.data
   } catch (error) {
     console.error('Error unliking comment:', error)
@@ -69,7 +65,9 @@ export const unlikeComment = async (commentId: string, channelId: string) => {
 
 export const checkIfCommentLiked = async (commentId: string, channelId: string) => {
   try {
-    const response = await axios.get(`${baseUrl}/api/v1/comments/${commentId}/liked?channel_id=${channelId}`)
+    const response = await api.get(`/comments/${commentId}/liked`, {
+      params: { channel_id: channelId },
+    })
     return response.data
   } catch (error) {
     console.error('Error checking comment like status:', error)

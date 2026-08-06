@@ -58,6 +58,10 @@
           <input v-model="importForm.createNewChannel" type="checkbox" class="h-4 w-4 accent-red-600" />
           {{ t('youtubeMirrorAdmin.import.createNewChannel') }}
         </label>
+        <label class="inline-flex items-center gap-2 rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-gray-300">
+          <input v-model="importForm.copyChannelInfo" type="checkbox" class="h-4 w-4 accent-red-600" />
+          {{ t('youtubeMirrorAdmin.import.copyChannelInfo') }}
+        </label>
         <button
           type="button"
           :disabled="importing || !importForm.url.trim()"
@@ -225,6 +229,7 @@ const importForm = ref({
   explicit: false,
   hidden: false,
   createNewChannel: false,
+  copyChannelInfo: false,
 })
 
 const mappingForm = ref({
@@ -272,6 +277,7 @@ const startImport = async () => {
       explicit: importForm.value.explicit,
       hidden: importForm.value.hidden,
       createNewChannel: importForm.value.createNewChannel,
+      copyChannelInfo: importForm.value.copyChannelInfo,
     })
     importMessage.value = data.retried
       ? t('youtubeMirrorAdmin.messages.retryStarted', { id: data.video_id })
@@ -280,6 +286,7 @@ const startImport = async () => {
         : t('youtubeMirrorAdmin.messages.importStarted', { id: data.video_id })
     importForm.value.url = ''
     importForm.value.createNewChannel = false
+    importForm.value.copyChannelInfo = false
     await loadMappings()
   } catch (err: any) {
     const data = err?.response?.data || {}

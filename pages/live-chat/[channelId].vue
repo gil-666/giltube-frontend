@@ -30,12 +30,11 @@
                 </div>
 
                 <div v-for="msg in chatMessages" :key="msg.id" class="flex gap-2 items-start">
-                    <div
-                        class="w-7 h-7 rounded-full bg-zinc-700 flex items-center justify-center overflow-hidden text-[10px] font-bold flex-shrink-0">
-                        <img v-if="msg.channel.avatar_url" :src="msg.channel.avatar_url" :alt="msg.channel.name"
-                            class="w-full h-full object-cover" />
-                        <span v-else>{{ msg.channel.name.charAt(0).toUpperCase() }}</span>
-                    </div>
+                    <AvatarFallback
+                        :src="msg.channel.avatar_url"
+                        :name="msg.channel.name"
+                        class="h-7 w-7 flex-shrink-0 text-[10px]"
+                    />
                     <div class="min-w-0">
                         <div class="flex items-center gap-1 text-xs">
                             <span class="font-semibold text-gray-200 truncate">{{ msg.channel.name }}</span>
@@ -86,6 +85,7 @@
 
 <script setup lang="ts">
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
+import AvatarFallback from '~/app/components/AvatarFallback.vue'
 import VerifiedBadge from '~/app/components/VerifiedBadge.vue'
 import {
     getChannelLiveStatus,

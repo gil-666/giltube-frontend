@@ -32,12 +32,11 @@
                         <div v-if="viewers.length > 0" class="mt-3 flex flex-wrap gap-2">
                             <div v-for="viewer in viewers" :key="viewer.id"
                                 class="inline-flex items-center gap-2 rounded-full border border-zinc-700 bg-zinc-800 px-2.5 py-1 text-xs text-zinc-100">
-                                <img v-if="viewer.avatarUrl" :src="viewer.avatarUrl" :alt="viewer.name || t('live.viewerFallback')"
-                                    class="h-5 w-5 rounded-full object-cover" />
-                                <div v-else
-                                    class="h-5 w-5 rounded-full bg-zinc-600 text-[10px] font-bold flex items-center justify-center">
-                                    {{ (viewer.name || '?').charAt(0).toUpperCase() }}
-                                </div>
+                                <AvatarFallback
+                                    :src="viewer.avatarUrl"
+                                    :name="viewer.name || t('live.viewerFallback')"
+                                    class="h-5 w-5 text-[10px]"
+                                />
                                 <span>{{ viewer.name || t('live.viewerFallback') }}</span>
                             </div>
                         </div>
@@ -48,12 +47,11 @@
                     <div class="flex items-center gap-3 flex-wrap">
                         <NuxtLink :to="localePath(`/channel/${channelId}`)"
                             class="inline-flex items-center gap-3 p-2 rounded hover:bg-zinc-900 transition">
-                            <div
-                                class="w-10 h-10 rounded-full bg-zinc-700 flex items-center justify-center overflow-hidden text-xs font-bold">
-                                <img v-if="channelAvatar && !channelAvatarFailed" :src="channelAvatar" :alt="channelName"
-                                    class="w-full h-full object-cover" @error="channelAvatarFailed = true" />
-                                <span v-else>{{ channelName.charAt(0).toUpperCase() }}</span>
-                            </div>
+                            <AvatarFallback
+                                :src="channelAvatar"
+                                :name="channelName"
+                                class="h-10 w-10 text-xs"
+                            />
                             <div class="flex items-center gap-2">
                                 <p class="font-semibold">{{ channelName }}</p>
                                 <VerifiedBadge :verified="channelVerified" size="sm" />
@@ -94,12 +92,11 @@
                     </div>
 
                     <div v-for="msg in chatMessages" :key="msg.id" class="flex gap-2 items-start">
-                        <div
-                            class="w-7 h-7 rounded-full bg-zinc-700 flex items-center justify-center overflow-hidden text-[10px] font-bold flex-shrink-0">
-                            <img v-if="msg.channel.avatar_url" :src="msg.channel.avatar_url" :alt="msg.channel.name"
-                                class="w-full h-full object-cover" />
-                            <span v-else>{{ msg.channel.name.charAt(0).toUpperCase() }}</span>
-                        </div>
+                        <AvatarFallback
+                            :src="msg.channel.avatar_url"
+                            :name="msg.channel.name"
+                            class="h-7 w-7 flex-shrink-0 text-[10px]"
+                        />
                         <div class="min-w-0">
                             <div class="flex items-center gap-1 text-xs">
                                 <span class="font-semibold text-gray-200 truncate">{{ msg.channel.name }}</span>
@@ -153,6 +150,7 @@
 
 <script setup lang="ts">
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
+import AvatarFallback from '~/app/components/AvatarFallback.vue'
 import VideoPlayer from '~/app/components/videoplayer/VideoPlayer.vue'
 import VerifiedBadge from '~/app/components/VerifiedBadge.vue'
 import {
@@ -165,7 +163,6 @@ import {
 import { useMetaTags } from '~/app/composables/useMetaTags'
 import { useI18n } from 'vue-i18n'
 import { useLocalePath } from '#i18n'
-import { useFetch } from '#app'
 
 const { t } = useI18n()
 const localePath = useLocalePath()
@@ -198,13 +195,12 @@ const channelAvatarFailed = ref(false)
 const chatListRef = ref<HTMLElement | null>(null)
 const shareCopied = ref(false)
 
-// Fetch live stream data during SSR
-const { data: fetchedLive } = useFetch(
-    () => `/api/v1/live/channels/${encodeURIComponent(channelId.value)}`,
-    {
-        watch: [channelId],
-        transform: (res: any) => res as LiveStreamState
-    }
+// Fetch live stream data during SSR through the API client so server-side
+// rendering uses the backend container URL instead of Nuxt's own /api route.
+const { data: fetchedLive } = await useAsyncData<LiveStreamState | null>(
+    () => `live-channel-${channelId.value}`,
+    () => channelId.value ? getChannelLiveStatus(channelId.value) : Promise.resolve(null),
+    { watch: [channelId] }
 )
 
 // Sync fetched data to live ref

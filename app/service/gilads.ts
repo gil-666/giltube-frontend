@@ -36,6 +36,7 @@ export interface GilAdsTrackEventRequest {
 
 export const GILADS_PLACEMENTS = {
   homeBanner: 'giltube_home_banner',
+  homeFeed: 'giltube_home_feed',
   videoPreroll: 'giltube_video_preroll',
   videoSidebarSquare: 'giltube_video_sidebar_square',
 } as const

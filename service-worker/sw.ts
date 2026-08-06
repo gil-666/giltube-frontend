@@ -4,7 +4,7 @@ import { NetworkFirst, CacheFirst, NetworkOnly } from 'workbox-strategies'
 import { CacheExpiration } from 'workbox-expiration'
 
 declare const self: ServiceWorkerGlobalScope & { __WB_MANIFEST: Array<any> }
-const SW_BUILD_ID = 'sw-no-precache-2026-04-27-v4'
+const SW_BUILD_ID = 'sw-no-precache-2026-06-13-v5'
 
 // Keep injectManifest happy by referencing __WB_MANIFEST, but do not precache
 // at install time. This avoids SW install failures on transient 404 chunk URLs.
@@ -46,16 +46,7 @@ registerRoute(
 
 registerRoute(
   ({ url }) => url.pathname.startsWith('/api/'),
-  new NetworkFirst({
-    cacheName: 'api-cache',
-    networkTimeoutSeconds: 5,
-    plugins: [
-      new CacheExpiration({
-        maxEntries: 100,
-        maxAgeSeconds: 5 * 60
-      })
-    ]
-  })
+  new NetworkOnly()
 )
 
 // Static assets

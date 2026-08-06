@@ -102,18 +102,24 @@
 
     <VideoPlayer
       v-if="!showPreroll || !prerollAd?.creative"
+      ref="videoPlayerRef"
       :src="src"
       :status="status"
+      :autoplay="autoplay"
       :episode-label="episodeLabel"
       :intro-start-seconds="introStartSeconds"
       :intro-end-seconds="introEndSeconds"
       :has-next-episode="hasNextEpisode"
       :next-episode-label="nextEpisodeLabel"
       :start-time-seconds="startTimeSeconds"
+      :clip-mode="clipMode"
+      :clip-start-seconds="clipStartSeconds"
+      :clip-end-seconds="clipEndSeconds"
       @play="$emit('play')"
       @ended="$emit('ended')"
       @next-episode="$emit('nextEpisode')"
       @progress="$emit('progress', $event)"
+      @seeked="$emit('seeked', $event)"
     />
   </div>
 </template>
@@ -141,6 +147,10 @@ interface Props {
   hasNextEpisode?: boolean
   nextEpisodeLabel?: string
   startTimeSeconds?: number
+  clipMode?: boolean
+  clipStartSeconds?: number
+  clipEndSeconds?: number
+  autoplay?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -154,6 +164,10 @@ const props = withDefaults(defineProps<Props>(), {
   hasNextEpisode: false,
   nextEpisodeLabel: 'Next episode',
   startTimeSeconds: 0,
+  clipMode: false,
+  clipStartSeconds: 0,
+  clipEndSeconds: 0,
+  autoplay: true,
 })
 
 defineEmits<{
@@ -161,6 +175,7 @@ defineEmits<{
   ended: []
   nextEpisode: []
   progress: [payload: { currentTime: number, duration: number }]
+  seeked: [payload: { currentTime: number }]
 }>()
 
 const PREROLL_COOLDOWN_VIDEOS = 3
@@ -181,6 +196,7 @@ const videoViewTracked = ref(false)
 const skipCountdown = ref(5)
 const adVideoElement = ref<HTMLVideoElement | null>(null)
 const showSponsorInfo = ref(false)
+const videoPlayerRef = ref<any>(null)
 let adPlayer: any = null
 
 const adContext = computed(() => ({
@@ -219,6 +235,16 @@ const writePrerollCapState = (state: PrerollCapState) => {
 }
 
 const currentVideoKey = () => props.videoId || props.src || 'unknown-video'
+
+defineExpose({
+  setPlaybackTime: (seconds: number) => videoPlayerRef.value?.setPlaybackTime?.(seconds),
+  playFrom: (seconds?: number) => videoPlayerRef.value?.playFrom?.(seconds),
+  pauseAt: (seconds?: number) => {
+    adPlayer?.pause?.()
+    videoPlayerRef.value?.pauseAt?.(seconds)
+  },
+  getPlaybackState: () => videoPlayerRef.value?.getPlaybackState?.() || { currentTime: 0, duration: 0, paused: true },
+})
 
 const shouldRequestPrerollAd = () => {
   const state = readPrerollCapState()
@@ -288,6 +314,41 @@ const inferSourceType = (src: string) => {
   return 'application/x-mpegURL'
 }
 
+const PLAYER_VOLUME_STORAGE_KEY = 'giltube:player-volume'
+const PLAYER_MUTED_STORAGE_KEY = 'giltube:player-muted'
+
+const clampVolume = (value: unknown) => {
+  const numeric = typeof value === 'number' ? value : Number(value)
+  if (!Number.isFinite(numeric)) return 1
+  return Math.max(0, Math.min(1, numeric))
+}
+
+const readSavedPlayerVolume = () => {
+  if (typeof window === 'undefined') {
+    return { volume: 1, muted: false }
+  }
+  try {
+    const savedVolume = window.localStorage.getItem(PLAYER_VOLUME_STORAGE_KEY)
+    const savedMuted = window.localStorage.getItem(PLAYER_MUTED_STORAGE_KEY)
+    return {
+      volume: clampVolume(savedVolume ?? 1),
+      muted: savedMuted === 'true',
+    }
+  } catch {
+    return { volume: 1, muted: false }
+  }
+}
+
+const persistPlayerVolume = () => {
+  if (!adPlayer || typeof window === 'undefined') return
+  try {
+    window.localStorage.setItem(PLAYER_VOLUME_STORAGE_KEY, String(clampVolume(adPlayer.volume?.() ?? 1)))
+    window.localStorage.setItem(PLAYER_MUTED_STORAGE_KEY, String(Boolean(adPlayer.muted?.())))
+  } catch {
+    // Ignore storage failures.
+  }
+}
+
 const disposeAdPlayer = () => {
   if (adPlayer) {
     adPlayer.dispose()
@@ -297,7 +358,7 @@ const disposeAdPlayer = () => {
 
 const createAdPlayer = async () => {
   await nextTick()
-  if (!adVideoElement.value || !isPlayableVideoAd(prerollAd.value)) return
+  if (!props.autoplay || !adVideoElement.value || !isPlayableVideoAd(prerollAd.value)) return
 
   disposeAdPlayer()
 
@@ -346,6 +407,10 @@ const createAdPlayer = async () => {
       return
     }
 
+    const savedAudioState = readSavedPlayerVolume()
+    adPlayer.volume(savedAudioState.volume)
+    adPlayer.muted(savedAudioState.muted)
+
     adPlayer.src({
       src: prerollAd.value?.creative?.assetUrl || '',
       type: inferSourceType(prerollAd.value?.creative?.assetUrl || ''),
@@ -354,6 +419,7 @@ const createAdPlayer = async () => {
     adPlayer.on('play', handleAdPlay)
     adPlayer.on('timeupdate', handleAdTimeUpdate)
     adPlayer.on('ended', finishPreroll)
+    adPlayer.on('volumechange', persistPlayerVolume)
     adPlayer.play()?.catch?.(() => {})
   })
 }
@@ -406,6 +472,10 @@ const handleAdClick = () => {
 }
 
 onMounted(async () => {
+  if (!props.autoplay) {
+    return
+  }
+
   if (!shouldRequestPrerollAd()) {
     return
   }
@@ -440,7 +510,7 @@ onBeforeUnmount(() => {
 
 @media (min-width: 768px) {
   .gilads-preroll-container {
-    height: 500px;
+    height: clamp(500px, 70vh, 780px);
   }
 }
 

@@ -37,9 +37,9 @@
             <!-- Videos Section -->
             <div v-if="videos.length > 0" class="mb-12">
                 <h2 class="text-2xl font-bold mb-6">{{ t('searchPage.videos') }}</h2>
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div class="motion-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     <NuxtLink v-for="video in videos" :key="`video-${video.id}`" :to="localePath(`/video/${video.id}`)"
-                        class="group cursor-pointer">
+                        class="motion-card group cursor-pointer">
                         <div class="bg-zinc-800 rounded-lg overflow-hidden h-40 mb-3 relative">
                             <img class="w-full h-full object-cover group-hover:opacity-75 transition"
                                 :src="video.thumbnail" :alt="video.title" />
@@ -57,19 +57,90 @@
                 </div>
             </div>
 
+            <!-- Movies Section -->
+            <div v-if="movies.length > 0" class="mb-12">
+                <h2 class="text-2xl font-bold mb-6">{{ t('searchPage.movies') }}</h2>
+                <div class="motion-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <NuxtLink
+                        v-for="movie in movies"
+                        :key="`movie-${movie.id}`"
+                        :to="localePath(`/category/movies?movie_id=${movie.id}`)"
+                        class="motion-card group overflow-hidden rounded-2xl border border-red-500/20 bg-zinc-950 transition hover:border-red-400/60 hover:bg-zinc-900"
+                    >
+                        <div class="relative aspect-video overflow-hidden bg-zinc-800">
+                            <img
+                                v-if="mediaImage(movie)"
+                                class="h-full w-full object-cover transition duration-300 group-hover:scale-105 group-hover:opacity-80"
+                                :src="mediaImage(movie)"
+                                :alt="movie.title"
+                            />
+                            <div v-else class="flex h-full w-full items-center justify-center text-sm text-zinc-500">
+                                {{ t('searchPage.movie') }}
+                            </div>
+                            <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
+                            <span class="absolute left-3 top-3 rounded-full bg-red-600 px-2.5 py-1 text-xs font-black uppercase tracking-wide text-white">
+                                {{ t('searchPage.movie') }}
+                            </span>
+                            <span v-if="movie.year" class="absolute bottom-3 right-3 rounded bg-black/75 px-2 py-1 text-xs font-bold text-zinc-100">
+                                {{ movie.year }}
+                            </span>
+                        </div>
+                        <div class="p-4">
+                            <p class="line-clamp-2 text-lg font-bold text-white transition group-hover:text-red-300">{{ movie.title }}</p>
+                            <p class="mt-2 line-clamp-2 text-sm leading-6 text-zinc-400">{{ movie.description }}</p>
+                        </div>
+                    </NuxtLink>
+                </div>
+            </div>
+
+            <!-- Series Section -->
+            <div v-if="seriesResults.length > 0" class="mb-12">
+                <h2 class="text-2xl font-bold mb-6">{{ t('searchPage.series') }}</h2>
+                <div class="motion-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <NuxtLink
+                        v-for="series in seriesResults"
+                        :key="`series-${series.id}`"
+                        :to="localePath(`/category/series?series_id=${series.id}`)"
+                        class="motion-card group overflow-hidden rounded-2xl border border-blue-500/20 bg-zinc-950 transition hover:border-blue-400/60 hover:bg-zinc-900"
+                    >
+                        <div class="relative aspect-video overflow-hidden bg-zinc-800">
+                            <img
+                                v-if="mediaImage(series)"
+                                class="h-full w-full object-cover transition duration-300 group-hover:scale-105 group-hover:opacity-80"
+                                :src="mediaImage(series)"
+                                :alt="series.title"
+                            />
+                            <div v-else class="flex h-full w-full items-center justify-center text-sm text-zinc-500">
+                                {{ t('searchPage.seriesOne') }}
+                            </div>
+                            <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
+                            <span class="absolute left-3 top-3 rounded-full bg-blue-600 px-2.5 py-1 text-xs font-black uppercase tracking-wide text-white">
+                                {{ t('searchPage.seriesOne') }}
+                            </span>
+                            <span class="absolute bottom-3 right-3 rounded bg-black/75 px-2 py-1 text-xs font-bold text-zinc-100">
+                                {{ t('searchPage.seriesMeta', { seasons: series.seasons || 1, episodes: series.episodes || 0 }) }}
+                            </span>
+                        </div>
+                        <div class="p-4">
+                            <p class="line-clamp-2 text-lg font-bold text-white transition group-hover:text-blue-300">{{ series.title }}</p>
+                            <p class="mt-2 line-clamp-2 text-sm leading-6 text-zinc-400">{{ series.description }}</p>
+                        </div>
+                    </NuxtLink>
+                </div>
+            </div>
+
             <!-- Channels Section -->
             <div v-if="channels.length > 0">
                 <h2 class="text-2xl font-bold mb-6">{{ t('searchPage.channels') }}</h2>
-                <div class="space-y-4">
+                <div class="motion-grid space-y-4">
                     <NuxtLink v-for="channel in channels" :key="`channel-${channel.id}`" :to="localePath(`/channel/${channel.id}`)"
-                        class="flex items-center gap-4 p-4 bg-zinc-900 rounded-lg hover:bg-zinc-800 transition group">
+                        class="motion-card flex items-center gap-4 p-4 bg-zinc-900 rounded-lg hover:bg-zinc-800 transition group">
                         <!-- Channel Avatar -->
-                        <div
-                            class="w-16 h-16 bg-zinc-700 rounded-full flex-shrink-0 flex items-center justify-center text-lg font-bold overflow-hidden">
-                            <img v-if="channel.avatar" :src="channel.avatar" :alt="channel.name"
-                                class="w-full h-full object-cover" />
-                            <span v-else class="text-white">{{ channel.name}}</span>
-                        </div>
+                        <AvatarFallback
+                            :src="channel.avatar"
+                            :name="channel.name"
+                            class="h-16 w-16 flex-shrink-0 text-lg"
+                        />
 
                         <!-- Channel Info -->
                         <div class="flex-1 min-w-0">
@@ -110,12 +181,13 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import AvatarFallback from '~/app/components/AvatarFallback.vue'
 import VerifiedBadge from '~/app/components/VerifiedBadge.vue'
 import { useI18n } from 'vue-i18n'
 import { useLocalePath } from '#i18n'
 
 interface SearchResult {
-    type: 'video' | 'channel'
+    type: 'video' | 'channel' | 'movie' | 'series'
     id: string
     title: string
     name?: string
@@ -124,6 +196,11 @@ interface SearchResult {
     channel_id?: string
     avatar?: string
     thumbnail?: string
+    poster_url?: string
+    backdrop_url?: string
+    year?: number
+    seasons?: number
+    episodes?: number
     views?: number
     verified?: boolean
 }
@@ -147,6 +224,14 @@ const videos = computed(() =>
 
 const channels = computed(() =>
     results.value.filter(r => r.type === 'channel')
+)
+
+const movies = computed(() =>
+    results.value.filter(r => r.type === 'movie')
+)
+
+const seriesResults = computed(() =>
+    results.value.filter(r => r.type === 'series')
 )
 
 const totalPages = computed(() =>
@@ -173,6 +258,10 @@ const formatViews = (views: number) => {
     if (views >= 1000000) return (views / 1000000).toFixed(1) + 'M'
     if (views >= 1000) return (views / 1000).toFixed(1) + 'K'
     return views.toString()
+}
+
+const mediaImage = (item: SearchResult) => {
+    return item.backdrop_url || item.poster_url || item.thumbnail || ''
 }
 
 const performSearch = async () => {

@@ -1,310 +1,247 @@
 <template>
-  <div class="fixed inset-0 bg-zinc-950 text-white p-6 overflow-y-auto flex flex-col items-center justify-start" :style="{zIndex: 100}">
-    <!-- Loading State -->
-    <div v-if="!isReady" class="flex items-center justify-center min-h-screen">
-      <div class="text-center">
-        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-        <p>{{ t('upload.checkingChannels') }}</p>
-      </div>
-    </div>
-
-    <!-- Upload Stages -->
-    <div v-else class="max-w-2xl mx-auto w-full py-8">
-      <!-- Stage 1: File Upload -->
-      <div v-if="stage === 'select'">
-        <h1 class="text-4xl font-bold mb-8">{{ t('upload.title') }}</h1>
-        <div
-          class="bg-zinc-900 border-2 border-dashed rounded-lg p-12 text-center transition cursor-pointer"
-          :class="isDraggingFile ? 'border-blue-500 bg-blue-950/20' : 'border-zinc-700 hover:border-blue-500'"
-          @click="triggerFileInput"
-          @dragenter.prevent="isDraggingFile = true"
-          @dragover.prevent="isDraggingFile = true"
-          @dragleave.prevent="handleFileDragLeave"
-          @drop.prevent="handleFileDrop"
-        >
-          <svg class="w-16 h-16 mx-auto mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-          </svg>
-          <p class="text-xl mb-2">{{ t('upload.clickToSelect') }}</p>
-          <p class="text-gray-400 text-sm">{{ t('upload.dragAndDrop') }}</p>
-          <input
-            ref="fileInput"
-            type="file"
-            accept="video/*"
-            class="hidden"
-            @change="handleFileSelect"
-          />
+  <div class="fixed inset-0 z-[100] overflow-y-auto bg-zinc-950 text-white">
+    <div class="mx-auto flex min-h-dvh w-full max-w-6xl flex-col px-4 pb-8 pt-4 sm:px-6 lg:px-8">
+      <header class="flex shrink-0 items-center justify-between gap-4 border-b border-zinc-800 pb-4">
+        <NuxtLink :to="localePath('/')" class="flex items-center gap-3 rounded-lg text-zinc-300 transition hover:text-white">
+          <span class="flex h-10 w-10 items-center justify-center rounded-full bg-zinc-900">
+            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19 8 12l7-7" />
+            </svg>
+          </span>
+          <span class="hidden text-sm font-bold sm:inline">{{ t('upload.cancel') }}</span>
+        </NuxtLink>
+        <div class="min-w-0 text-center">
+          <p class="text-xs font-bold uppercase tracking-[0.18em] text-red-300">{{ t('upload.title') }}</p>
+          <h1 class="mt-1 truncate text-2xl font-black sm:text-3xl">
+            {{ currentStageTitle }}
+          </h1>
         </div>
-        <div class="mt-4">
-          <NuxtLink
-            :to="localePath('/')"
-            class="inline-block px-6 py-2 bg-zinc-700 hover:bg-zinc-600 rounded font-medium transition"
-          >
-            {{ t('upload.cancel') }}
-          </NuxtLink>
+        <div class="h-10 w-10" aria-hidden="true"></div>
+      </header>
+
+      <div v-if="!isReady" class="flex min-h-[70dvh] items-center justify-center">
+        <div class="text-center">
+          <div class="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-2 border-zinc-700 border-b-blue-500"></div>
+          <p class="text-sm font-semibold text-zinc-300">{{ t('upload.checkingChannels') }}</p>
         </div>
       </div>
 
-      <!-- Stage 2: Fill in Details -->
-      <div v-if="stage === 'details'">
-        <h1 class="text-4xl font-bold mb-8">{{ t('upload.videoDetails') }}</h1>
-        
-        <div class="bg-zinc-900 rounded-lg p-8 space-y-6">
-          <!-- Selected File -->
-          <div class="bg-zinc-800 rounded p-4">
-            <p class="text-sm text-gray-400 mb-2">{{ t('upload.selectedFile') }}</p>
-            <p class="font-medium">{{ selectedFileName }}</p>
-          </div>
-
-          <!-- Form Fields -->
-          <form @submit.prevent="handleStartUpload" class="space-y-4">
-            <!-- Channel -->
-            <div>
-              <label class="block text-sm font-medium mb-2">{{ t('upload.channel') }}</label>
-              <select
-                v-model="form.channelId"
-                required
-                class="w-full bg-zinc-800 border border-zinc-700 rounded px-4 py-2 text-white focus:outline-none focus:border-blue-500"
-              >
-                <option value="">{{ t('upload.selectChannel') }}</option>
-                <option v-for="channel in channels" :key="channel.id" :value="channel.id">
-                  {{ channel.name }}
-                </option>
-              </select>
-            </div>
-
-            <!-- Title -->
-            <div>
-              <label class="block text-sm font-medium mb-2">{{ t('upload.videoTitle') }}</label>
-              <input
-                v-model="form.title"
-                type="text"
-                :placeholder="t('upload.videoTitlePlaceholder')"
-                required
-                class="w-full bg-zinc-800 border border-zinc-700 rounded px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
-              />
-            </div>
-
-            <!-- Description -->
-            <div>
-              <label class="block text-sm font-medium mb-2">{{ t('upload.description') }}</label>
-              <textarea
-                v-model="form.description"
-                :placeholder="t('upload.descriptionPlaceholder')"
-                rows="4"
-                class="w-full bg-zinc-800 border border-zinc-700 rounded px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
-              />
-            </div>
-
-            <!-- Categories -->
-            <div>
-              <label class="block text-sm font-medium mb-2">{{ t('upload.category') }}</label>
-              <select
-                v-model="form.categoryId"
-                class="w-full bg-zinc-800 border border-zinc-700 rounded px-4 py-2 text-white focus:outline-none focus:border-blue-500"
-              >
-                <option value="">{{ t('upload.selectCategory') }}</option>
-                <option v-for="category in categories" :key="category.id" :value="category.id">
-                  {{ category.name }}
-                </option>
-              </select>
-            </div>
-
-            <!-- Explicit Content Warning -->
-            <div class="flex items-center gap-3 bg-zinc-800 border border-zinc-700 rounded p-4">
-              <input
-                v-model="form.explicit"
-                type="checkbox"
-                id="explicit-toggle"
-                class="w-4 h-4 rounded cursor-pointer accent-red-500"
-              />
-              <label for="explicit-toggle" class="flex-1 cursor-pointer">
-                <span class="text-sm font-medium">{{ t('upload.explicit') }}</span>
-                <p class="text-xs text-gray-400 mt-1">{{ t('upload.explicitHelper') }}</p>
-              </label>
-              <svg v-if="form.explicit" class="w-5 h-5 text-red-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
-              </svg>
-            </div>
-
-            <!-- Admin Local Upload -->
-            <div v-if="isAdmin" class="flex items-center gap-3 bg-zinc-800 border border-zinc-700 rounded p-4">
-              <input
-                id="local-upload-toggle"
-                v-model="useLocalUpload"
-                type="checkbox"
-                class="w-4 h-4 rounded cursor-pointer accent-blue-500"
-              />
-              <label for="local-upload-toggle" class="flex-1 cursor-pointer">
-                <span class="text-sm font-medium">Local upload</span>
-                <p class="text-xs text-gray-400 mt-1">Upload directly to the local backend on port 8080.</p>
-              </label>
-            </div>
-
-            <!-- Thumbnail Upload -->
-            <div>
-              <label class="block text-sm font-medium mb-4">{{ t('upload.customThumbnail') }}</label>
-              <div class="bg-zinc-800 border-2 border-dashed border-zinc-700 rounded-lg p-6 text-center hover:border-blue-500 transition cursor-pointer" @click="triggerThumbnailInput">
-                <svg class="w-12 h-12 mx-auto mb-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-                <p class="text-sm text-gray-300">{{ t('upload.thumbnailClick') }}</p>
-                <p class="text-xs text-gray-500 mt-1">{{ t('upload.thumbnailFormat') }}</p>
-                <input
-                  ref="thumbnailInput"
-                  type="file"
-                  accept="image/*"
-                  class="hidden"
-                  @change="onThumbnailSelected"
-                />
-              </div>
-              <p class="text-xs text-gray-400 mt-2">{{ t('upload.maxSize') }}</p>
-            </div>
-
-            <!-- Thumbnail Preview -->
-            <div v-if="thumbnailPreview">
-              <label class="block text-sm font-medium mb-2">{{ t('upload.thumbnailPreview') }}</label>
-              <div class="relative bg-zinc-800 rounded overflow-hidden aspect-video max-w-xs border border-blue-500 border-2">
-                <img :src="thumbnailPreview" :alt="form.title" class="w-full h-full object-cover" />
-              </div>
-              <button
-                type="button"
-                @click="clearThumbnail"
-                class="mt-2 text-sm text-red-400 hover:text-red-300 transition"
-              >
-                {{ t('upload.removeThumbnail') }}
-              </button>
-            </div>
-
-            <!-- Error Message -->
-            <div v-if="error" class="bg-red-900 text-white p-4 rounded">
-              {{ error }}
-            </div>
-
-            <!-- Buttons -->
-            <div class="flex gap-4">
-              <button
-                type="submit"
-                :disabled="isUploading"
-                class="flex-1 px-6 py-3 bg-red-600 hover:bg-red-700 rounded font-bold text-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {{ t('upload.startUpload') }}
-              </button>
-              <button
-                type="button"
-                @click="stage = 'select'"
-                :disabled="isUploading"
-                class="px-6 py-3 bg-zinc-700 hover:bg-zinc-600 rounded font-medium transition disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {{ t('upload.changeFile') }}
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
-
-      <!-- Stage 3: Uploading Progress -->
-      <div v-if="stage === 'uploading'">
-        <h1 class="text-4xl font-bold mb-8">{{ t('upload.uploading') }}</h1>
-        
-        <div class="bg-zinc-900 rounded-lg p-8 space-y-6">
-          <!-- Upload Progress -->
-          <div>
-            <div class="flex justify-between items-center mb-2">
-              <p class="font-medium">{{ t('upload.selectedFile') }} {{ selectedFileName }}</p>
-              <p class="text-blue-400 font-bold">{{ t('upload.uploadProgress', { percent: uploadProgress }) }}</p>
-            </div>
-            <div class="w-full bg-zinc-800 rounded-full h-3 overflow-hidden">
-              <div
-                class="bg-blue-600 h-full transition-all duration-300"
-                :style="{ width: uploadProgress + '%' }"
-              />
+      <main v-else class="grid flex-1 gap-6 py-6 lg:grid-cols-[17rem_minmax(0,1fr)]">
+        <aside class="hidden lg:block">
+          <div class="sticky top-6 space-y-3 rounded-xl border border-zinc-800 bg-zinc-950 p-4 shadow-2xl shadow-black/20">
+            <div
+              v-for="item in stageItems"
+              :key="item.key"
+              class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm"
+              :class="stage === item.key ? 'bg-blue-600 text-white' : 'text-zinc-500'"
+            >
+              <span class="h-2.5 w-2.5 rounded-full" :class="stage === item.key ? 'bg-white' : 'bg-zinc-700'"></span>
+              <span class="font-bold">{{ item.label }}</span>
             </div>
           </div>
+        </aside>
 
-          <!-- Info -->
-          <div class="bg-blue-900/30 border border-blue-700 rounded p-4">
-            <p class="text-sm text-blue-200">{{ t('upload.dontCloseWarning') }}</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- Stage 4: Upload Complete -->
-      <div v-if="stage === 'complete'">
-        <h1 class="text-4xl font-bold mb-8">{{ t('upload.readyToPublish') }}</h1>
-        
-        <div class="bg-zinc-900 rounded-lg p-8 space-y-6">
-          <!-- Success Icon -->
-          <div class="text-center">
-            <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-900 mb-4">
-              <svg class="w-8 h-8 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-              </svg>
-            </div>
-            <p class="text-2xl font-bold mb-2">{{ t('upload.uploadComplete') }}</p>
-            <p class="text-gray-400">{{ t('upload.uploadSuccess') }}</p>
-          </div>
-
-          <!-- Video Summary -->
-          <div class="bg-zinc-800 rounded p-6 space-y-3">
-            <div>
-              <p class="text-gray-400 text-sm">{{ t('upload.channel') }}</p>
-              <p class="text-lg font-medium">{{ getChannelName(form.channelId) }}</p>
-            </div>
-            <div>
-              <p class="text-gray-400 text-sm">{{ t('upload.videoTitle') }}</p>
-              <p class="text-lg font-medium">{{ form.title }}</p>
-            </div>
-            <div v-if="form.description">
-              <p class="text-gray-400 text-sm">{{ t('upload.description') }}</p>
-              <p class="text-sm">{{ form.description }}</p>
-            </div>
-          </div>
-
-          <!-- Info -->
-          <div class="bg-blue-900/30 border border-blue-700 rounded p-4">
-            <p class="text-sm text-blue-200">
-              {{ t('upload.publishMessage') }}
-            </p>
-          </div>
-
-          <!-- Error Message -->
-          <div v-if="error" class="bg-red-900 text-white p-4 rounded">
+        <section class="min-w-0">
+          <div v-if="error" class="mb-4 rounded-lg border border-red-900/70 bg-red-950/60 px-4 py-3 text-sm font-semibold text-red-100">
             {{ error }}
           </div>
 
-          <!-- Buttons -->
-          <div class="flex gap-4">
+          <div v-if="stage === 'select'" class="mx-auto max-w-3xl">
             <button
-              @click="handlePublish"
-              :disabled="isPublishing"
-              class="flex-1 px-6 py-3 bg-green-600 hover:bg-green-700 rounded font-bold text-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
+              type="button"
+              class="group flex min-h-[22rem] w-full flex-col items-center justify-center rounded-2xl border-2 border-dashed p-6 text-center transition sm:min-h-[28rem] sm:p-10"
+              :class="isDraggingFile ? 'border-blue-500 bg-blue-950/20' : 'border-zinc-700 bg-zinc-950 hover:border-blue-500 hover:bg-zinc-900/40'"
+              @click="triggerFileInput"
+              @dragenter.prevent="isDraggingFile = true"
+              @dragover.prevent="isDraggingFile = true"
+              @dragleave.prevent="handleFileDragLeave"
+              @drop.prevent="handleFileDrop"
             >
-              {{ isPublishing ? t('upload.publishing') : t('upload.publish') }}
+              <span class="mb-5 flex h-20 w-20 items-center justify-center rounded-full bg-zinc-900 text-zinc-300 transition group-hover:bg-blue-600 group-hover:text-white">
+                <svg class="h-10 w-10" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 0 1-.88-7.9A5 5 0 0 1 15.9 6H16a5 5 0 0 1 1 9.9M15 13l-3-3m0 0-3 3m3-3v11" />
+                </svg>
+              </span>
+              <span class="text-2xl font-black">{{ t('upload.clickToSelect') }}</span>
+              <span class="mt-2 max-w-sm text-sm leading-6 text-zinc-400">{{ t('upload.dragAndDrop') }}</span>
+              <span class="mt-6 rounded-full border border-zinc-800 px-4 py-2 text-xs font-bold uppercase tracking-[0.12em] text-zinc-500">MP4, WebM, MOV</span>
             </button>
-            <button
-              @click="startOver"
-              :disabled="isPublishing"
-              class="px-6 py-3 bg-zinc-700 hover:bg-zinc-600 rounded font-medium transition disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {{ t('upload.uploadAnother') }}
-            </button>
-            <NuxtLink
-              :to="localePath('/')"
-              class="px-6 py-3 bg-zinc-700 hover:bg-zinc-600 rounded font-medium transition text-center"
-            >
-              {{ t('upload.goHome') }}
-            </NuxtLink>
+            <input ref="fileInput" type="file" accept="video/*" class="hidden" @change="handleFileSelect" />
           </div>
-        </div>
-      </div>
+
+          <form v-if="stage === 'details'" class="grid gap-5 xl:grid-cols-[minmax(0,1fr)_22rem]" @submit.prevent="handleStartUpload">
+            <div class="space-y-5">
+              <section class="rounded-xl border border-zinc-800 bg-zinc-950 p-4 shadow-2xl shadow-black/20 sm:p-5">
+                <div class="flex items-center gap-4">
+                  <div class="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-zinc-900 text-blue-300">
+                    <svg class="h-7 w-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 10 4.55-2.28A1 1 0 0 1 21 8.62v6.76a1 1 0 0 1-1.45.9L15 14M5 18h8a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2Z" />
+                    </svg>
+                  </div>
+                  <div class="min-w-0 flex-1">
+                    <p class="text-xs font-bold uppercase tracking-[0.16em] text-zinc-500">{{ t('upload.selectedFile') }}</p>
+                    <p class="mt-1 truncate text-base font-black">{{ selectedFileName }}</p>
+                    <p v-if="selectedFile" class="mt-1 text-xs text-zinc-500">{{ formatFileSize(selectedFile.size) }}</p>
+                  </div>
+                  <button type="button" class="rounded-lg border border-zinc-700 px-3 py-2 text-xs font-bold text-zinc-300 transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-50" :disabled="isUploading" @click="stage = 'select'">
+                    {{ t('upload.changeFile') }}
+                  </button>
+                </div>
+              </section>
+
+              <section class="rounded-xl border border-zinc-800 bg-zinc-950 p-4 shadow-2xl shadow-black/20 sm:p-5">
+                <div class="grid gap-4 sm:grid-cols-2">
+                  <div>
+                    <label class="mb-2 block text-sm font-bold">{{ t('upload.channel') }}</label>
+                    <select v-model="form.channelId" required class="field-control">
+                      <option value="">{{ t('upload.selectChannel') }}</option>
+                      <option v-for="channel in channels" :key="channel.id" :value="channel.id">{{ channel.name }}</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="mb-2 block text-sm font-bold">{{ t('upload.category') }}</label>
+                    <select v-model="form.categoryId" class="field-control">
+                      <option value="">{{ t('upload.selectCategory') }}</option>
+                      <option v-for="category in categories" :key="category.id" :value="category.id">{{ category.name }}</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="mt-4">
+                  <label class="mb-2 block text-sm font-bold">{{ t('upload.videoTitle') }}</label>
+                  <input v-model="form.title" type="text" :placeholder="t('upload.videoTitlePlaceholder')" required class="field-control" />
+                </div>
+
+                <div class="mt-4">
+                  <label class="mb-2 block text-sm font-bold">{{ t('upload.description') }}</label>
+                  <textarea v-model="form.description" :placeholder="t('upload.descriptionPlaceholder')" rows="6" class="field-control resize-none" />
+                </div>
+              </section>
+            </div>
+
+            <aside class="space-y-5">
+              <section class="rounded-xl border border-zinc-800 bg-zinc-950 p-4 shadow-2xl shadow-black/20">
+                <label class="flex cursor-pointer items-start gap-3">
+                  <input id="explicit-toggle" v-model="form.explicit" type="checkbox" class="mt-1 h-4 w-4 rounded accent-red-500" />
+                  <span class="min-w-0">
+                    <span class="block text-sm font-black">{{ t('upload.explicit') }}</span>
+                    <span class="mt-1 block text-xs leading-5 text-zinc-500">{{ t('upload.explicitHelper') }}</span>
+                  </span>
+                </label>
+              </section>
+
+              <section v-if="isAdmin" class="rounded-xl border border-zinc-800 bg-zinc-950 p-4 shadow-2xl shadow-black/20">
+                <label class="flex cursor-pointer items-start gap-3">
+                  <input id="local-upload-toggle" v-model="useLocalUpload" type="checkbox" class="mt-1 h-4 w-4 rounded accent-blue-500" />
+                  <span>
+                    <span class="block text-sm font-black">Local upload</span>
+                    <span class="mt-1 block text-xs leading-5 text-zinc-500">Direct to port 8080.</span>
+                  </span>
+                </label>
+              </section>
+
+              <section class="rounded-xl border border-zinc-800 bg-zinc-950 p-4 shadow-2xl shadow-black/20">
+                <div class="mb-3 flex items-center justify-between gap-3">
+                  <label class="text-sm font-black">{{ t('upload.customThumbnail') }}</label>
+                  <button v-if="thumbnailPreview" type="button" class="text-xs font-bold text-red-300 transition hover:text-red-200" @click="clearThumbnail">
+                    {{ t('upload.removeThumbnail') }}
+                  </button>
+                </div>
+                <button type="button" class="relative flex aspect-video w-full items-center justify-center overflow-hidden rounded-lg border border-dashed border-zinc-700 bg-zinc-900 transition hover:border-blue-500" @click="triggerThumbnailInput">
+                  <img v-if="thumbnailPreview" :src="thumbnailPreview" :alt="form.title" class="h-full w-full object-cover" />
+                  <span v-else class="flex flex-col items-center px-4 text-center">
+                    <svg class="mb-2 h-8 w-8 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m4 16 4.6-4.6a2 2 0 0 1 2.8 0L16 16m-2-2 1.6-1.6a2 2 0 0 1 2.8 0L20 14m-6-6h.01M6 20h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2Z" />
+                    </svg>
+                    <span class="text-sm font-bold text-zinc-300">{{ t('upload.thumbnailClick') }}</span>
+                    <span class="mt-1 text-xs text-zinc-500">{{ t('upload.thumbnailFormat') }}</span>
+                  </span>
+                </button>
+                <input ref="thumbnailInput" type="file" accept="image/*" class="hidden" @change="onThumbnailSelected" />
+                <p class="mt-2 text-xs text-zinc-500">{{ t('upload.maxSize') }}</p>
+              </section>
+
+              <div class="sticky bottom-0 -mx-4 border-t border-zinc-800 bg-zinc-950/95 p-4 backdrop-blur sm:static sm:mx-0 sm:border-0 sm:bg-transparent sm:p-0">
+                <button type="submit" :disabled="isUploading" class="w-full rounded-lg bg-red-600 px-5 py-3 text-sm font-black text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50">
+                  {{ t('upload.startUpload') }}
+                </button>
+              </div>
+            </aside>
+          </form>
+
+          <div v-if="stage === 'uploading'" class="mx-auto max-w-3xl rounded-xl border border-zinc-800 bg-zinc-950 p-5 shadow-2xl shadow-black/20 sm:p-8">
+            <div class="mb-6 flex items-center gap-4">
+              <div class="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-blue-950 text-blue-300">
+                <svg class="h-7 w-7 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 16V4m0 0 4 4m-4-4-4 4M4 20h16" />
+                </svg>
+              </div>
+              <div class="min-w-0">
+                <p class="truncate text-lg font-black">{{ selectedFileName }}</p>
+                <p class="text-sm text-zinc-500">{{ t('upload.dontCloseWarning') }}</p>
+              </div>
+            </div>
+            <div class="mb-3 flex items-center justify-between gap-4 text-sm">
+              <span class="font-bold text-zinc-300">{{ t('upload.uploading') }}</span>
+              <span class="font-black text-blue-300">{{ t('upload.uploadProgress', { percent: uploadProgress }) }}</span>
+            </div>
+            <div class="h-3 overflow-hidden rounded-full bg-zinc-900">
+              <div class="h-full rounded-full bg-blue-600 transition-all duration-300" :style="{ width: uploadProgress + '%' }"></div>
+            </div>
+          </div>
+
+          <div v-if="stage === 'complete'" class="mx-auto max-w-3xl rounded-xl border border-zinc-800 bg-zinc-950 p-5 shadow-2xl shadow-black/20 sm:p-8">
+            <div class="text-center">
+              <div class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-950 text-green-300">
+                <svg class="h-9 w-9" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="m5 13 4 4L19 7" />
+                </svg>
+              </div>
+              <h2 class="text-2xl font-black">{{ t('upload.uploadComplete') }}</h2>
+              <p class="mt-2 text-sm text-zinc-400">{{ t('upload.uploadSuccess') }}</p>
+            </div>
+
+            <div class="mt-6 grid gap-3 rounded-xl border border-zinc-800 bg-zinc-900/40 p-4 sm:grid-cols-2">
+              <div>
+                <p class="text-xs font-bold uppercase tracking-[0.14em] text-zinc-500">{{ t('upload.channel') }}</p>
+                <p class="mt-1 font-bold">{{ getChannelName(form.channelId) }}</p>
+              </div>
+              <div>
+                <p class="text-xs font-bold uppercase tracking-[0.14em] text-zinc-500">{{ t('upload.videoTitle') }}</p>
+                <p class="mt-1 font-bold">{{ form.title }}</p>
+              </div>
+              <div v-if="form.description" class="sm:col-span-2">
+                <p class="text-xs font-bold uppercase tracking-[0.14em] text-zinc-500">{{ t('upload.description') }}</p>
+                <p class="mt-1 text-sm leading-6 text-zinc-300">{{ form.description }}</p>
+              </div>
+            </div>
+
+            <p class="mt-4 rounded-lg border border-blue-900/70 bg-blue-950/40 px-4 py-3 text-sm text-blue-100">
+              {{ t('upload.publishMessage') }}
+            </p>
+
+            <div class="mt-5 grid gap-3 sm:grid-cols-[1fr_auto_auto]">
+              <button type="button" :disabled="isPublishing" class="rounded-lg bg-green-600 px-5 py-3 text-sm font-black text-white transition hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50" @click="handlePublish">
+                {{ isPublishing ? t('upload.publishing') : t('upload.publish') }}
+              </button>
+              <button type="button" :disabled="isPublishing" class="rounded-lg bg-zinc-800 px-5 py-3 text-sm font-bold text-zinc-100 transition hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-50" @click="startOver">
+                {{ t('upload.uploadAnother') }}
+              </button>
+              <NuxtLink :to="localePath('/')" class="rounded-lg bg-zinc-800 px-5 py-3 text-center text-sm font-bold text-zinc-100 transition hover:bg-zinc-700">
+                {{ t('upload.goHome') }}
+              </NuxtLink>
+            </div>
+          </div>
+        </section>
+      </main>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import { uploadVideo, fetchUserChannels } from '~/app/service/upload'
+import { useLocalUploadBaseURL } from '~/app/composables/useLocalUploadBaseURL'
 import { useMetaTags } from '~/app/composables/useMetaTags'
 import { useI18n } from 'vue-i18n'
 import { useLocalePath } from '#i18n'
@@ -320,9 +257,9 @@ useMetaTags({
 const router = useRouter()
 const isReady = ref(false)
 const userId = ref('')
-const fileInput = ref(null)
-const thumbnailInput = ref(null)
-const localUploadBaseURL = 'http://localhost:8080/api/v1'
+const fileInput = ref<HTMLInputElement | null>(null)
+const thumbnailInput = ref<HTMLInputElement | null>(null)
+const localUploadBaseURL = useLocalUploadBaseURL()
 
 const form = ref({
   title: '',
@@ -344,8 +281,22 @@ const useLocalUpload = ref(false)
 const stage = ref('select')
 const isUploading = ref(false)
 const isPublishing = ref(false)
-const channels = ref([])
-const categories = ref([])
+const channels = ref<any[]>([])
+const categories = ref<any[]>([])
+
+const stageItems = computed(() => [
+  { key: 'select', label: t('upload.selectedFile') },
+  { key: 'details', label: t('upload.videoDetails') },
+  { key: 'uploading', label: t('upload.uploading') },
+  { key: 'complete', label: t('upload.readyToPublish') },
+])
+
+const currentStageTitle = computed(() => {
+  if (stage.value === 'details') return t('upload.videoDetails')
+  if (stage.value === 'uploading') return t('upload.uploading')
+  if (stage.value === 'complete') return t('upload.readyToPublish')
+  return t('upload.title')
+})
 
 onMounted(async () => {
   await checkAuthStatus()
@@ -371,15 +322,14 @@ const checkAuthStatus = async () => {
   }
 
   userId.value = storedUserId
-  
-  // Check user status - block banned users, warn suspended users
+
   try {
     const userRes = await fetch(`/api/v1/user/${storedUserId}`, {
       headers: {
         'X-User-ID': storedUserId
       }
     })
-    
+
     if (userRes.ok) {
       const user = await userRes.json()
       isAdmin.value = user.user_type === 'admin'
@@ -392,29 +342,30 @@ const checkAuthStatus = async () => {
   } catch (err) {
     console.error('Failed to check user status:', err)
   }
-  
+
   await loadChannels()
 }
 
 const loadChannels = async () => {
   if (!userId.value) return
-  
+
   try {
-    channels.value = await fetchUserChannels(userId.value)
-    
-    // Filter out banned channels
+    const channelResult = await fetchUserChannels(userId.value)
+    channels.value = channelResult.channels
+
     channels.value = channels.value.filter(ch => ch.status !== 'banned')
-    
+
     if (channels.value.length === 0) {
       error.value = t('upload.noChannelsError')
       await router.push(localePath('/create-channel'))
       return
     }
-    
+
     const activeAccount = localStorage.getItem('active_account')
-    
+    const defaultChannelId = channelResult.default_channel_id || localStorage.getItem('default_channel_id')
+
     if (!activeAccount || activeAccount === 'personal') {
-      form.value.channelId = channels.value[0].id
+      form.value.channelId = channels.value.find(ch => ch.id === defaultChannelId)?.id || channels.value[0].id
     } else {
       const activeChannelId = channels.value.find(ch => ch.id === activeAccount)?.id
       if (activeChannelId) {
@@ -423,7 +374,7 @@ const loadChannels = async () => {
         form.value.channelId = channels.value[0].id
       }
     }
-    
+
     isReady.value = true
   } catch (err) {
     error.value = t('upload.channelsLoadError')
@@ -432,15 +383,22 @@ const loadChannels = async () => {
 }
 
 const triggerFileInput = () => {
+  if (fileInput.value) {
+    fileInput.value.value = ''
+  }
   fileInput.value?.click()
 }
 
 const triggerThumbnailInput = () => {
+  if (thumbnailInput.value) {
+    thumbnailInput.value.value = ''
+  }
   thumbnailInput.value?.click()
 }
 
-const handleFileSelect = (event) => {
-  const file = event.target.files?.[0]
+const handleFileSelect = (event: Event) => {
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0]
   setSelectedVideoFile(file)
 }
 
@@ -470,8 +428,9 @@ const handleFileDragLeave = (event: DragEvent) => {
   }
 }
 
-const onThumbnailSelected = (event: any) => {
-  const file = event.target.files?.[0]
+const onThumbnailSelected = (event: Event) => {
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0]
   if (!file) return
 
   if (file.size > 5 * 1024 * 1024) {
@@ -504,7 +463,7 @@ const clearThumbnail = () => {
 
 const handleStartUpload = async () => {
   error.value = ''
-  
+
   if (!form.value.channelId) {
     error.value = t('upload.selectChannelError')
     return
@@ -533,7 +492,7 @@ const handleStartUpload = async () => {
       explicit: form.value.explicit,
       categoryId: form.value.categoryId,
       uploadBaseURL: isAdmin.value && useLocalUpload.value ? localUploadBaseURL : undefined,
-      onProgress: (progress) => {
+      onProgress: (progress: number) => {
         uploadProgress.value = progress
       },
     }
@@ -586,8 +545,16 @@ const startOver = () => {
   error.value = ''
 }
 
-const getChannelName = (channelId) => {
+const getChannelName = (channelId: string) => {
   return channels.value.find(ch => ch.id === channelId)?.name || '-'
+}
+
+const formatFileSize = (bytes: number) => {
+  if (!bytes) return '0 B'
+  const units = ['B', 'KB', 'MB', 'GB', 'TB']
+  const index = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1)
+  const value = bytes / Math.pow(1024, index)
+  return `${value >= 10 || index === 0 ? value.toFixed(0) : value.toFixed(1)} ${units[index]}`
 }
 
 definePageMeta({
@@ -596,6 +563,22 @@ definePageMeta({
 </script>
 
 <style scoped>
+.field-control {
+  width: 100%;
+  border-radius: 0.5rem;
+  border: 1px solid rgb(63 63 70);
+  background: rgb(24 24 27);
+  padding: 0.75rem 1rem;
+  color: white;
+  outline: none;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.field-control:focus {
+  border-color: rgb(59 130 246);
+  background: rgb(9 9 11);
+}
+
 input,
 textarea,
 select {
@@ -611,9 +594,8 @@ input:autofill,
 input:autofill:hover,
 input:autofill:focus,
 input:autofill:active {
-  -webkit-box-shadow: 0 0 0 30px #27272a inset !important;
-  box-shadow: 0 0 0 30px #27272a inset !important;
+  -webkit-box-shadow: 0 0 0 30px #18181b inset !important;
+  box-shadow: 0 0 0 30px #18181b inset !important;
   -webkit-text-fill-color: white !important;
 }
-
 </style>

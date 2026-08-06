@@ -44,6 +44,18 @@
               <dt>{{ t('seriesCategory.meta.cast') }}</dt>
               <dd>{{ selectedSeries.cast.join(', ') }}</dd>
             </div>
+            <div>
+              <dt>{{ t('streaming.media.maxQuality') }}</dt>
+              <dd>{{ selectedSeries.media_capabilities?.max_quality || t('streaming.media.notAvailable') }}</dd>
+            </div>
+            <div>
+              <dt>{{ t('streaming.media.audioLanguages') }}</dt>
+              <dd>{{ mediaLanguages(selectedSeries.media_capabilities?.audio_languages) }}</dd>
+            </div>
+            <div>
+              <dt>{{ t('streaming.media.captions') }}</dt>
+              <dd>{{ mediaLanguages(selectedSeries.media_capabilities?.caption_languages) }}</dd>
+            </div>
           </dl>
 
           <div class="series-season-tabs">
@@ -184,6 +196,7 @@ import { useI18n } from 'vue-i18n'
 import StreamingCategory from './StreamingCategory.vue'
 import { listSeries, getSeries, getSeriesWatchProgress } from '~/app/service/series'
 import { getWatchProgressMap } from '~/app/service/videos'
+import { resolveMediaUrl } from '~/app/utils/media'
 import { createWatchParty, getWatchPartySavedProgress } from '~/app/service/watchParties'
 import { useMetaTags } from '~/app/composables/useMetaTags'
 
@@ -191,8 +204,6 @@ const route = useRoute()
 const router = useRouter()
 const localePath = useLocalePath()
 const { t } = useI18n()
-const baseUrl = import.meta.env.VITE_API_BASE_URL || ''
-
 const loading = ref(false)
 const error = ref('')
 const allSeries = ref([])
@@ -215,10 +226,19 @@ const seriesPartyStartMode = ref('first')
 const seriesPartyStartVideoId = ref('')
 let featuredHeroTimer = null
 
+const updateModalQueryParam = (key, value = '') => {
+  if (typeof window === 'undefined') return
+  const url = new URL(window.location.href)
+  if (value) {
+    url.searchParams.set(key, value)
+  } else {
+    url.searchParams.delete(key)
+  }
+  window.history.pushState(window.history.state, '', `${url.pathname}${url.search}${url.hash}`)
+}
+
 const withBaseUrl = (url) => {
-  if (!url) return ''
-  if (/^https?:\/\//i.test(url)) return url
-  return `${baseUrl}${url.startsWith('/') ? '' : '/'}${url}`
+  return resolveMediaUrl(url)
 }
 
 const getThumbnailUrl = (video) => withBaseUrl(video?.thumbnail_url || '/videos/placeholder-thumbnail.jpg')
@@ -229,6 +249,10 @@ const normalizeSeriesDetail = (data) => {
   if (!data.series) return data
   return { ...data.series, episodes: data.episodes || data.series.episodes || [] }
 }
+
+const mediaLanguages = (languages) => languages?.length
+  ? languages.join(', ')
+  : t('streaming.media.notAvailable')
 
 const getSeriesImage = (series, type) => {
   const preferred = type === 'backdrop' ? series?.backdrop_url : series?.poster_url
@@ -416,7 +440,7 @@ const findLoadedSeries = (id) => allSeries.value.find((series) => series.id === 
 const openSeriesModal = async (series, updateRoute = true) => {
   if (!series) return
   let detail = series
-  if (!series.episodes) {
+  if (!series.episodes || !series.media_capabilities) {
     try {
       detail = normalizeSeriesDetail(await getSeries(series.id || series.slug)) || series
     } catch {
@@ -424,15 +448,14 @@ const openSeriesModal = async (series, updateRoute = true) => {
     }
   }
   selectedSeries.value = detail
-  if (updateRoute && route.query.series_id !== detail.id) {
-    await router.push({ query: { ...route.query, series_id: detail.id } })
+  if (updateRoute && detail.id) {
+    updateModalQueryParam('series_id', detail.id)
   }
 }
 
 const closeSeriesModal = async () => {
   selectedSeries.value = null
-  const { series_id: _seriesId, ...query } = route.query
-  await router.push({ query })
+  updateModalQueryParam('series_id')
 }
 
 const setFeaturedIndex = (index) => {
@@ -525,8 +548,7 @@ watch(selectedSeries, async (series) => {
   updateMetaTags()
 })
 
-watch(() => route.query.series_id, async (seriesId) => {
-  const id = typeof seriesId === 'string' ? seriesId : ''
+const syncSeriesModalFromId = async (id) => {
   if (!id) {
     selectedSeries.value = null
     updateMetaTags()
@@ -534,14 +556,32 @@ watch(() => route.query.series_id, async (seriesId) => {
   }
   if (selectedSeries.value?.id === id) return
   await openSeriesModal(findLoadedSeries(id) || normalizeSeriesDetail(await getSeries(id)), false)
+}
+
+const syncSeriesModalFromUrl = async () => {
+  if (typeof window === 'undefined') return
+  await syncSeriesModalFromId(new URL(window.location.href).searchParams.get('series_id') || '')
+}
+
+watch(() => route.query.series_id, async (seriesId) => {
+  const id = typeof seriesId === 'string' ? seriesId : ''
+  await syncSeriesModalFromId(id)
 })
 
 onMounted(async () => {
+  if (typeof window !== 'undefined') {
+    window.addEventListener('popstate', syncSeriesModalFromUrl)
+  }
   await loadSeriesCategory()
   await nextTick()
 })
 
-onUnmounted(stopFeaturedHeroTimer)
+onUnmounted(() => {
+  stopFeaturedHeroTimer()
+  if (typeof window !== 'undefined') {
+    window.removeEventListener('popstate', syncSeriesModalFromUrl)
+  }
+})
 
 const EpisodeThumb = defineComponent({
   props: {

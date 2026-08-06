@@ -17,23 +17,17 @@
             </div>
           </NuxtLink>
           <div class="mt-3 flex gap-3">
-            <div class="flex h-9 w-9 items-center justify-center rounded-full bg-zinc-700">
-              <img
-                v-if="video.channel?.avatar_url && typeof video.channel.avatar_url === 'string' && video.channel.avatar_url.trim()"
-                class="h-9 w-9 rounded-full object-cover"
-                :src="getAvatarUrl(video.channel.avatar_url)"
-                :alt="video.channel.name"
-              />
-              <span v-else class="text-xs font-bold text-white">
-                {{ video.channel?.name?.charAt(0).toUpperCase() ?? 'C' }}
-              </span>
-            </div>
+            <AvatarFallback
+              :src="video.channel?.avatar_url"
+              :name="video.channel?.name || 'Channel'"
+              class="h-9 w-9 text-xs"
+            />
             <div class="min-w-0">
               <NuxtLink :to="localePath(`/video/${video.id}`)">
                 <div class="flex items-center gap-1">
                   <h3 class="line-clamp-2 text-sm font-semibold">{{ video.title }}</h3>
-                  <span v-if="video.width == 7680" class="shrink-0 border border-gray-500 bg-gray-900 p-0.5 text-xs font-semibold text-gray-200">8K</span>
-                  <span v-if="video.width == 3840" class="shrink-0 border border-gray-500 bg-gray-900 p-0.5 text-xs font-semibold text-gray-200">4K</span>
+                  <span v-if="isVideo8K(video.width)" class="shrink-0 border border-gray-500 bg-gray-900 p-0.5 text-xs font-semibold text-gray-200">8K</span>
+                  <span v-if="isVideo4K(video.width)" class="shrink-0 border border-gray-500 bg-gray-900 p-0.5 text-xs font-semibold text-gray-200">4K</span>
                 </div>
               </NuxtLink>
               <NuxtLink :to="localePath(`/channel/${video.channel.id}`)" class="flex items-center gap-1 text-xs text-zinc-400 transition hover:text-yellow-400">
@@ -63,8 +57,10 @@
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import StreamingSeriesCategory from '~/app/components/streaming/StreamingSeriesCategory.vue'
 import StreamingMoviesCategory from '~/app/components/streaming/StreamingMoviesCategory.vue'
+import AvatarFallback from '~/app/components/AvatarFallback.vue'
 import { getTimeAgo } from '~/app/utils/time'
 import { formatViews } from '~/app/utils/format'
+import { isVideo4K, isVideo8K, resolveMediaUrl } from '~/app/utils/media'
 import { useMetaTags } from '~/app/composables/useMetaTags'
 import VerifiedBadge from '~/app/components/VerifiedBadge.vue'
 import { getWatchProgressMap } from '~/app/service/videos'
@@ -74,7 +70,6 @@ import { useI18n } from 'vue-i18n'
 import { useLocalePath } from '#i18n'
 
 const route = useRoute()
-const baseUrl = import.meta.env.VITE_API_BASE_URL || ''
 const { t } = useI18n()
 const localePath = useLocalePath()
 
@@ -102,13 +97,10 @@ const normalizeSeriesDetail = (data) => {
 }
 
 const withBaseUrl = (url) => {
-  if (!url) return ''
-  if (/^https?:\/\//i.test(url)) return url
-  return `${baseUrl}${url.startsWith('/') ? '' : '/'}${url}`
+  return resolveMediaUrl(url)
 }
 
 const getThumbnailUrl = (video) => withBaseUrl(video?.thumbnail_url || '/videos/placeholder-thumbnail.jpg')
-const getAvatarUrl = (url) => withBaseUrl(url?.startsWith('/avatars/') ? url : `/avatars/${url}`)
 
 const getSeriesImage = (series, type = 'backdrop') => {
   const preferred = type === 'backdrop' ? series?.backdrop_url : series?.poster_url
