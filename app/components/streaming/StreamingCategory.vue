@@ -134,6 +134,13 @@
               <div class="streaming-modal-copy">
                 <p class="streaming-modal-eyebrow">{{ selectedItem.genre }}</p>
                 <h2 class="streaming-modal-title">{{ selectedItem.title }}</h2>
+                <span
+                  v-if="selectedItem.maxQuality"
+                  :class="qualityBadgeClass(selectedItem.maxQuality)"
+                  :aria-label="`${t('streaming.media.maxQuality')}: ${selectedItem.maxQuality}`"
+                >
+                  {{ selectedItem.maxQuality }}
+                </span>
                 <div class="streaming-modal-actions">
                   <NuxtLink
                     v-if="selectedItem.resumeLink"
@@ -201,6 +208,11 @@ const progressPercent = (item) => {
   const value = Number(item?.progressPercent || 0)
   if (!Number.isFinite(value) || value <= 0) return 0
   return Math.min(100, Math.max(0, value))
+}
+
+const qualityBadgeClass = (quality) => {
+  const modifier = String(quality || '').toLowerCase().replace(/\s+/g, '-')
+  return ['streaming-quality-badge', modifier ? `is-${modifier}` : '']
 }
 
 const lockPageScroll = (locked) => {
@@ -585,6 +597,41 @@ onBeforeUnmount(() => {
   font-size: clamp(1.875rem, 5vw, 3rem);
   font-weight: 800;
   line-height: 1.05;
+}
+
+.streaming-quality-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.5rem;
+  margin-top: 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 0.25rem;
+  background: rgba(24, 24, 27, 0.8);
+  padding: 0.2rem 0.5rem;
+  color: rgb(244 244 245);
+  font-size: 0.7rem;
+  font-weight: 900;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.streaming-quality-badge.is-hd {
+  border-color: rgba(96, 165, 250, 0.65);
+  background: rgba(30, 64, 175, 0.72);
+  color: rgb(219 234 254);
+}
+
+.streaming-quality-badge.is-full-hd {
+  border-color: rgba(34, 211, 238, 0.65);
+  background: rgba(21, 94, 117, 0.76);
+  color: rgb(207 250 254);
+}
+
+.streaming-quality-badge.is-4k,
+.streaming-quality-badge.is-8k {
+  border-color: rgba(74, 222, 128, 0.65);
+  background: rgba(20, 83, 45, 0.78);
+  color: rgb(220 252 231);
 }
 
 .streaming-modal-body {

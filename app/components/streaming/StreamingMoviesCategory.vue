@@ -53,10 +53,6 @@
               <dd>{{ item.durationLabel }}</dd>
             </div>
             <div>
-              <dt>{{ t('streaming.media.maxQuality') }}</dt>
-              <dd>{{ item.media_capabilities?.max_quality || t('streaming.media.notAvailable') }}</dd>
-            </div>
-            <div>
               <dt>{{ t('streaming.media.audioLanguages') }}</dt>
               <dd>{{ mediaLanguages(item.media_capabilities?.audio_languages) }}</dd>
             </div>
@@ -228,6 +224,7 @@ const toDisplayMovie = (movie) => {
     primaryLabel: t('streaming.actions.play'),
     resumeLink: progress && percent > 0 && linkedVideoId ? localePath(`/video/${linkedVideoId}?movie_id=${movie.id}`) : '',
     durationLabel: durationLabel(movie.video),
+    maxQuality: movie.media_capabilities?.max_quality || '',
     progressPercent: percent,
   }
 }

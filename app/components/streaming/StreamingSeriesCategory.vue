@@ -45,10 +45,6 @@
               <dd>{{ selectedSeries.cast.join(', ') }}</dd>
             </div>
             <div>
-              <dt>{{ t('streaming.media.maxQuality') }}</dt>
-              <dd>{{ selectedSeries.media_capabilities?.max_quality || t('streaming.media.notAvailable') }}</dd>
-            </div>
-            <div>
               <dt>{{ t('streaming.media.audioLanguages') }}</dt>
               <dd>{{ mediaLanguages(selectedSeries.media_capabilities?.audio_languages) }}</dd>
             </div>
@@ -294,6 +290,7 @@ const toDisplaySeries = (series) => {
     startOverLink: primaryEpisode ? localePath(`/video/${primaryEpisode.video_id}?series_id=${series.id}&index=${primaryIndex}&start_over=1`) : '',
     primaryLabel: t('streaming.actions.play'),
     resumeLink: series === selectedSeries.value ? selectedSeriesResumeLink.value : '',
+    maxQuality: series.media_capabilities?.max_quality || '',
   }
 }
 
