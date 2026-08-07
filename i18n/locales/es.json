@@ -735,7 +735,9 @@
       "play": "Reproducir",
       "playNow": "Reproducir ahora",
       "resume": "Continuar",
-      "startOver": "Empezar de nuevo"
+      "startOver": "Empezar de nuevo",
+      "readMore": "Leer más",
+      "showLess": "Mostrar menos"
     },
     "media": {
       "maxQuality": "Calidad máxima",

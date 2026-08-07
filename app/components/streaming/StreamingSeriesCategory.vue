@@ -34,7 +34,7 @@
           </div>
         </div>
         <div class="series-details-main">
-          <p class="series-synopsis">{{ selectedSeries.synopsis }}</p>
+          <StreamingSynopsis :text="selectedSeries.synopsis" />
           <dl class="series-meta-grid">
             <div v-if="selectedSeries.directors?.length">
               <dt>{{ t('seriesCategory.meta.directors') }}</dt>
@@ -190,6 +190,7 @@
 import { computed, defineComponent, h, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import StreamingCategory from './StreamingCategory.vue'
+import StreamingSynopsis from './StreamingSynopsis.vue'
 import { listSeries, getSeries, getSeriesWatchProgress } from '~/app/service/series'
 import { getWatchProgressMap } from '~/app/service/videos'
 import { resolveMediaUrl } from '~/app/utils/media'
@@ -631,13 +632,6 @@ const EpisodeThumb = defineComponent({
 
 .series-details-main {
   min-width: 0;
-}
-
-.series-synopsis {
-  max-width: 48rem;
-  color: rgb(212 212 216);
-  font-size: 0.875rem;
-  line-height: 1.65;
 }
 
 .series-meta-grid {

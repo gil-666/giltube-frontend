@@ -735,7 +735,9 @@
       "play": "Play",
       "playNow": "Play now",
       "resume": "Resume",
-      "startOver": "Start over"
+      "startOver": "Start over",
+      "readMore": "Read more",
+      "showLess": "Show less"
     },
     "media": {
       "maxQuality": "Maximum quality",

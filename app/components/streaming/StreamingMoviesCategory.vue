@@ -34,7 +34,7 @@
           </div>
         </div>
         <div class="movie-details-main">
-          <p class="movie-synopsis">{{ item.synopsis }}</p>
+          <StreamingSynopsis :text="item.synopsis" />
           <dl class="movie-meta-grid">
             <div>
               <dt>{{ t('moviesCategory.meta.channel') }}</dt>
@@ -124,6 +124,7 @@
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import StreamingCategory from './StreamingCategory.vue'
+import StreamingSynopsis from './StreamingSynopsis.vue'
 import { getWatchProgressMap } from '~/app/service/videos'
 import { createWatchParty, getWatchPartySavedProgress } from '~/app/service/watchParties'
 import { GILTUBE_MOVIES_CHANNEL_ID, getMovie, listMovies } from '~/app/service/movies'
@@ -485,13 +486,6 @@ onUnmounted(() => {
 
 .movie-details-main {
   min-width: 0;
-}
-
-.movie-synopsis {
-  max-width: 48rem;
-  color: rgb(212 212 216);
-  font-size: 0.875rem;
-  line-height: 1.65;
 }
 
 .movie-meta-grid {
