@@ -83,7 +83,7 @@
           <input
             v-model="videoFilter"
             type="search"
-            placeholder="Filter videos"
+            :placeholder="t('dashboard.filter')"
             class="w-full bg-transparent text-sm text-white placeholder-zinc-500 outline-none"
           />
         </div>
@@ -93,15 +93,15 @@
             <thead class="sticky top-0 z-10 border-b border-zinc-800 bg-zinc-950 text-xs font-semibold text-zinc-400">
               <tr>
                 <th class="w-10 px-4 py-3">
-                  <input type="checkbox" class="h-4 w-4 rounded border-zinc-600 bg-zinc-900 accent-red-600" aria-label="Select all videos" />
+                  <input type="checkbox" class="h-4 w-4 rounded border-zinc-600 bg-zinc-900 accent-red-600" :aria-label="t('dashboard.selectAll')" />
                 </th>
-                <th class="w-[34rem] px-2 py-3">Video</th>
-                <th class="w-40 px-4 py-3">Visibility</th>
-                <th class="w-40 px-4 py-3">Restrictions</th>
-                <th class="w-44 px-4 py-3">Date</th>
-                <th class="w-28 px-4 py-3 text-right">Views</th>
-                <th class="w-32 px-4 py-3 text-right">Comments</th>
-                <th class="w-32 px-4 py-3 text-right">Likes</th>
+                <th class="w-[34rem] px-2 py-3">{{ t('dashboard.columns.video') }}</th>
+                <th class="w-40 px-4 py-3">{{ t('dashboard.columns.visibility') }}</th>
+                <th class="w-40 px-4 py-3">{{ t('dashboard.columns.restrictions') }}</th>
+                <th class="w-44 px-4 py-3">{{ t('dashboard.columns.date') }}</th>
+                <th class="w-28 px-4 py-3 text-right">{{ t('dashboard.columns.views') }}</th>
+                <th class="w-32 px-4 py-3 text-right">{{ t('dashboard.columns.comments') }}</th>
+                <th class="w-32 px-4 py-3 text-right">{{ t('dashboard.columns.likes') }}</th>
                 <th class="sticky right-0 w-16 bg-zinc-950 px-4 py-3 text-right shadow-[-12px_0_18px_-18px_rgba(0,0,0,0.9)]"></th>
               </tr>
             </thead>
@@ -181,7 +181,7 @@
                   <button
                     type="button"
                     class="mt-4 inline-flex h-9 w-9 items-center justify-center rounded-full text-zinc-300 transition hover:bg-zinc-800 hover:text-white"
-                    aria-label="Video actions"
+                    :aria-label="t('dashboard.videoActions')"
                     :aria-expanded="openActionsMenuId === video.id"
                     @click.stop="toggleActionsMenu(video, $event)"
                   >
@@ -207,7 +207,7 @@
                 type="button"
                 :disabled="currentPage <= 1"
                 class="rounded-full p-2 text-zinc-300 transition hover:bg-zinc-800 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
-                aria-label="Previous page"
+                :aria-label="t('dashboard.previousPage')"
                 @click="currentPage--"
               >
                 <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -219,7 +219,7 @@
                 type="button"
                 :disabled="currentPage >= totalPages"
                 class="rounded-full p-2 text-zinc-300 transition hover:bg-zinc-800 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
-                aria-label="Next page"
+                :aria-label="t('dashboard.nextPage')"
                 @click="currentPage++"
               >
                 <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">

@@ -5,7 +5,7 @@
       :src="resolvedSrc"
       :srcset="resolvedSrcset || undefined"
       sizes="48px"
-      :alt="name || 'Avatar'"
+      :alt="name || t('common.avatar')"
       :class="imageClass"
       @error="failed = true"
     />
@@ -16,6 +16,8 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { imageVariantSrcset, imageVariantUrl, resolveAvatarUrl } from '~/app/utils/media'
+
+const { t } = useI18n()
 
 const props = withDefaults(defineProps<{
   src?: string | null

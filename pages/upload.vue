@@ -134,8 +134,8 @@
                 <label class="flex cursor-pointer items-start gap-3">
                   <input id="local-upload-toggle" v-model="useLocalUpload" type="checkbox" class="mt-1 h-4 w-4 rounded accent-blue-500" />
                   <span>
-                    <span class="block text-sm font-black">Local upload</span>
-                    <span class="mt-1 block text-xs leading-5 text-zinc-500">Direct to port 8080.</span>
+                    <span class="block text-sm font-black">{{ t('upload.localUpload') }}</span>
+                    <span class="mt-1 block text-xs leading-5 text-zinc-500">{{ t('upload.localUploadHelper') }}</span>
                   </span>
                 </label>
               </section>

@@ -2,30 +2,30 @@
   <main class="mx-auto max-w-[96rem] px-3 py-5 sm:px-6 sm:py-8">
     <header class="mb-7 flex flex-col gap-4 border-b border-zinc-800 pb-6 sm:flex-row sm:items-end sm:justify-between">
       <div>
-        <NuxtLink :to="localePath('/admin')" class="text-sm text-zinc-400 hover:text-white">Back to Admin</NuxtLink>
-        <h1 class="mt-2 text-3xl font-bold text-white">Music catalog</h1>
-        <p class="mt-1 text-sm text-zinc-400">Manage artists, releases, audio, and publishing rights.</p>
+        <NuxtLink :to="localePath('/admin')" class="text-sm text-zinc-400 hover:text-white">{{ t('musicAdmin.back') }}</NuxtLink>
+        <h1 class="mt-2 text-3xl font-bold text-white">{{ t('musicAdmin.title') }}</h1>
+        <p class="mt-1 text-sm text-zinc-400">{{ t('musicAdmin.subtitle') }}</p>
       </div>
       <NuxtLink :to="localePath('/music')" class="rounded-md border border-zinc-700 px-4 py-2 text-center text-sm font-semibold text-white hover:bg-zinc-800">
-        Open GilTube Music
+        {{ t('musicAdmin.openMusic') }}
       </NuxtLink>
     </header>
 
-    <div v-if="loading" class="py-24 text-center text-zinc-400">Loading catalog...</div>
+    <div v-if="loading" class="py-24 text-center text-zinc-400">{{ t('musicAdmin.loading') }}</div>
     <div v-else-if="accessError" class="border border-red-900 bg-red-950/30 p-5 text-red-200">{{ accessError }}</div>
     <template v-else>
       <section class="stats-grid mb-7">
-        <div><span>Artists</span><strong>{{ overview.artists }}</strong></div>
-        <div><span>Releases</span><strong>{{ overview.releases }}</strong></div>
-        <div><span>Tracks</span><strong>{{ overview.tracks }}</strong></div>
-        <div><span>Published</span><strong class="text-emerald-400">{{ overview.published }}</strong></div>
-        <div><span>Blocked</span><strong :class="overview.blocked ? 'text-amber-400' : 'text-zinc-100'">{{ overview.blocked }}</strong></div>
+        <div><span>{{ t('musicAdmin.artists') }}</span><strong>{{ overview.artists }}</strong></div>
+        <div><span>{{ t('musicAdmin.releases') }}</span><strong>{{ overview.releases }}</strong></div>
+        <div><span>{{ t('musicAdmin.tracks') }}</span><strong>{{ overview.tracks }}</strong></div>
+        <div><span>{{ t('musicAdmin.published') }}</span><strong class="text-emerald-400">{{ overview.published }}</strong></div>
+        <div><span>{{ t('musicAdmin.blocked') }}</span><strong :class="overview.blocked ? 'text-amber-400' : 'text-zinc-100'">{{ overview.blocked }}</strong></div>
       </section>
 
       <div v-if="notice" class="mb-5 border border-emerald-900 bg-emerald-950/30 px-4 py-3 text-sm text-emerald-200">{{ notice }}</div>
       <div v-if="actionError" class="mb-5 border border-red-900 bg-red-950/30 px-4 py-3 text-sm text-red-200">{{ actionError }}</div>
 
-      <nav class="mb-5 flex border-b border-zinc-800" aria-label="Music catalog sections">
+      <nav class="mb-5 flex border-b border-zinc-800" :aria-label="t('musicAdmin.sections')">
         <button v-for="item in tabs" :key="item.id" type="button" :class="{ active: tab === item.id }" @click="tab = item.id">
           {{ item.label }} <span>{{ item.count }}</span>
         </button>
@@ -34,26 +34,26 @@
       <section v-if="tab === 'artists'">
         <div class="section-toolbar">
           <div>
-            <h2>Artists</h2>
-            <p>Artists can stay music-only or link one primary GilTube channel.</p>
+            <h2>{{ t('musicAdmin.artists') }}</h2>
+            <p>{{ t('musicAdmin.artist.help') }}</p>
           </div>
-          <button type="button" class="primary-action" @click="openArtist()">New artist</button>
+          <button type="button" class="primary-action" @click="openArtist()">{{ t('musicAdmin.artist.new') }}</button>
         </div>
         <div class="catalog-table">
           <table>
-            <thead><tr><th>Artist</th><th>Primary channel</th><th>Slug</th><th>State</th><th><span class="sr-only">Actions</span></th></tr></thead>
+            <thead><tr><th>{{ t('music.common.artist') }}</th><th>{{ t('musicAdmin.artist.primaryChannel') }}</th><th>{{ t('musicAdmin.artist.slug') }}</th><th>{{ t('musicAdmin.state') }}</th><th><span class="sr-only">{{ t('musicAdmin.actions') }}</span></th></tr></thead>
             <tbody>
               <tr v-for="artist in artists" :key="artist.id">
-                <td><strong>{{ artist.name }}</strong><small>{{ artist.bio || 'No bio' }}</small></td>
-                <td>{{ artist.channel_name || 'Music only' }}</td>
+                <td><strong>{{ artist.name }}</strong><small>{{ artist.bio || t('musicAdmin.artist.noBio') }}</small></td>
+                <td>{{ artist.channel_name || t('musicAdmin.artist.musicOnly') }}</td>
                 <td class="muted">{{ artist.slug }}</td>
-                <td><span class="status">{{ artist.verified ? 'Verified' : 'Standard' }}</span></td>
+                <td><span class="status">{{ artist.verified ? t('musicAdmin.artist.verified') : t('musicAdmin.artist.standard') }}</span></td>
                 <td class="actions">
-                  <button type="button" @click="openArtist(artist)">Edit</button>
-                  <button type="button" class="danger" @click="removeArtist(artist)">Delete</button>
+                  <button type="button" @click="openArtist(artist)">{{ t('musicAdmin.edit') }}</button>
+                  <button type="button" class="danger" @click="removeArtist(artist)">{{ t('musicAdmin.delete') }}</button>
                 </td>
               </tr>
-              <tr v-if="!artists.length"><td colspan="5" class="empty">Create an artist to begin.</td></tr>
+              <tr v-if="!artists.length"><td colspan="5" class="empty">{{ t('musicAdmin.artist.empty') }}</td></tr>
             </tbody>
           </table>
         </div>
@@ -62,34 +62,34 @@
       <section v-if="tab === 'releases'">
         <div class="section-toolbar">
           <div>
-            <h2>Releases</h2>
-            <p>Publishing a release publishes all of its ready tracks.</p>
+            <h2>{{ t('musicAdmin.releases') }}</h2>
+            <p>{{ t('musicAdmin.release.help') }}</p>
           </div>
-          <button type="button" class="primary-action" :disabled="!artists.length" @click="openRelease()">New release</button>
+          <button type="button" class="primary-action" :disabled="!artists.length" @click="openRelease()">{{ t('musicAdmin.release.new') }}</button>
         </div>
         <div class="catalog-table">
           <table>
-            <thead><tr><th>Release</th><th>Artist</th><th>Type</th><th>Tracks</th><th>Rights</th><th>Status</th><th><span class="sr-only">Actions</span></th></tr></thead>
+            <thead><tr><th>{{ t('musicAdmin.release.release') }}</th><th>{{ t('musicAdmin.release.artist') }}</th><th>{{ t('musicAdmin.release.type') }}</th><th>{{ t('musicAdmin.tracks') }}</th><th>{{ t('musicAdmin.release.rights') }}</th><th>{{ t('musicAdmin.status') }}</th><th><span class="sr-only">{{ t('musicAdmin.actions') }}</span></th></tr></thead>
             <tbody>
               <tr v-for="release in releases" :key="release.id">
                 <td class="release-cell">
                   <img v-if="release.cover_url" :src="imageVariantUrl(release.cover_url, 'sm')" alt="">
                   <div v-else class="cover-empty" />
-                  <span><strong>{{ release.title }}</strong><small>{{ release.release_date ? formatDate(release.release_date) : 'Date not set' }}</small></span>
+                  <span><strong>{{ release.title }}</strong><small>{{ release.release_date ? formatDate(release.release_date) : t('musicAdmin.release.dateNotSet') }}</small></span>
                 </td>
                 <td>{{ release.artist_name }}</td>
-                <td class="capitalize">{{ release.release_type }}</td>
+                <td class="capitalize">{{ releaseTypeLabel(release.release_type) }}</td>
                 <td>{{ release.track_count }}</td>
-                <td><span :class="releaseRightsReady(release) ? 'text-emerald-400' : 'text-amber-400'">{{ releaseRightsReady(release) ? 'Complete' : 'Incomplete' }}</span></td>
-                <td><span class="status" :class="release.status">{{ release.status }}</span></td>
+                <td><span :class="releaseRightsReady(release) ? 'text-emerald-400' : 'text-amber-400'">{{ releaseRightsReady(release) ? t('musicAdmin.release.complete') : t('musicAdmin.release.incomplete') }}</span></td>
+                <td><span class="status" :class="release.status">{{ statusLabel(release.status) }}</span></td>
                 <td class="actions">
-                  <button type="button" @click="openRelease(release)">Edit</button>
-                  <button v-if="release.status === 'draft'" type="button" @click="setReleasePublished(release, true)">Publish</button>
-                  <button v-else type="button" @click="setReleasePublished(release, false)">Unpublish</button>
-                  <button type="button" class="danger" @click="removeRelease(release)">Delete</button>
+                  <button type="button" @click="openRelease(release)">{{ t('musicAdmin.edit') }}</button>
+                  <button v-if="release.status === 'draft'" type="button" @click="setReleasePublished(release, true)">{{ t('musicAdmin.publish') }}</button>
+                  <button v-else type="button" @click="setReleasePublished(release, false)">{{ t('musicAdmin.unpublish') }}</button>
+                  <button type="button" class="danger" @click="removeRelease(release)">{{ t('musicAdmin.delete') }}</button>
                 </td>
               </tr>
-              <tr v-if="!releases.length"><td colspan="7" class="empty">No releases yet.</td></tr>
+              <tr v-if="!releases.length"><td colspan="7" class="empty">{{ t('musicAdmin.release.empty') }}</td></tr>
             </tbody>
           </table>
         </div>
@@ -98,13 +98,13 @@
       <section v-if="tab === 'tracks'">
         <div class="section-toolbar">
           <div>
-            <h2>Tracks</h2>
-            <p>Audio is required. Copyright and territories come from the release.</p>
+            <h2>{{ t('musicAdmin.tracks') }}</h2>
+            <p>{{ t('musicAdmin.track.help') }}</p>
           </div>
           <div class="toolbar-actions">
-            <button type="button" @click="openQuickUpload">Quick upload</button>
-            <button type="button" :disabled="!releases.length" @click="openBulkImport">Import tracks</button>
-            <button type="button" class="primary-action" :disabled="!releases.length" @click="openTrack()">New track</button>
+            <button type="button" @click="openQuickUpload">{{ t('musicAdmin.track.quickUpload') }}</button>
+            <button type="button" :disabled="!releases.length" @click="openBulkImport">{{ t('musicAdmin.track.import') }}</button>
+            <button type="button" class="primary-action" :disabled="!releases.length" @click="openTrack()">{{ t('musicAdmin.track.new') }}</button>
           </div>
         </div>
         <div v-if="trackGroups.length" class="track-groups">
@@ -119,33 +119,33 @@
                 </span>
               </span>
               <span class="group-summary-meta">
-                <span>{{ group.readyCount }}/{{ group.tracks.length }} ready</span>
-                <span class="status" :class="group.release.status">{{ group.release.status }}</span>
+                <span>{{ t('musicAdmin.track.ready', { ready: group.readyCount, total: group.tracks.length }) }}</span>
+                <span class="status" :class="group.release.status">{{ statusLabel(group.release.status) }}</span>
                 <svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6" /></svg>
               </span>
             </summary>
 
             <div class="track-group-toolbar">
-              <span>Ordered by disc and track number</span>
+              <span>{{ t('musicAdmin.track.ordered') }}</span>
               <div>
-                <button type="button" @click="openRelease(group.release)">Edit release</button>
+                <button type="button" @click="openRelease(group.release)">{{ t('musicAdmin.track.editRelease') }}</button>
                 <button type="button" :disabled="syncingReleaseLyricsID === group.release.id" @click="syncReleaseLyrics(group)">
-                  {{ syncingReleaseLyricsID === group.release.id ? 'Syncing lyrics...' : 'Sync release lyrics' }}
+                  {{ syncingReleaseLyricsID === group.release.id ? t('musicAdmin.track.syncingLyrics') : t('musicAdmin.track.syncReleaseLyrics') }}
                 </button>
-                <button v-if="group.release.status === 'draft'" type="button" @click="setReleasePublished(group.release, true)">Publish release</button>
-                <button v-else type="button" @click="setReleasePublished(group.release, false)">Unpublish release</button>
+                <button v-if="group.release.status === 'draft'" type="button" @click="setReleasePublished(group.release, true)">{{ t('musicAdmin.publishRelease') }}</button>
+                <button v-else type="button" @click="setReleasePublished(group.release, false)">{{ t('musicAdmin.unpublishRelease') }}</button>
               </div>
             </div>
 
             <div class="catalog-table grouped-track-table">
               <table>
-                <thead><tr><th>Position</th><th>Track</th><th>Audio</th><th>Lyrics</th><th>Video</th><th>State</th><th><span class="sr-only">Actions</span></th></tr></thead>
+                <thead><tr><th>{{ t('musicAdmin.track.position') }}</th><th>{{ t('musicAdmin.track.track') }}</th><th>{{ t('musicAdmin.track.audio') }}</th><th>{{ t('musicAdmin.track.lyrics') }}</th><th>{{ t('musicAdmin.track.video') }}</th><th>{{ t('musicAdmin.state') }}</th><th><span class="sr-only">{{ t('musicAdmin.actions') }}</span></th></tr></thead>
                 <tbody>
                   <tr v-for="track in group.tracks" :key="track.id">
                     <td class="track-position">{{ track.disc_number }}.{{ track.track_number }}</td>
                     <td><strong>{{ track.title }}</strong><small>{{ track.artist_name }}</small></td>
                     <td>
-                      <span :class="track.audio_url ? 'text-emerald-400' : 'text-amber-400'">{{ track.audio_url ? track.audio_original_name : 'Missing audio' }}</span>
+                      <span :class="track.audio_url ? 'text-emerald-400' : 'text-amber-400'">{{ track.audio_url ? track.audio_original_name : t('musicAdmin.track.missingAudio') }}</span>
                       <small v-if="track.audio_url">{{ audioFormatLabel(track) }}</small>
                     </td>
                     <td>
@@ -153,18 +153,18 @@
                       <small v-if="track.lyrics_source">{{ track.lyrics_source }}</small>
                     </td>
                     <td>
-                      <span :class="track.official_video_id ? 'text-zinc-300' : 'text-zinc-500'">{{ track.official_video_id ? 'Linked' : 'None' }}</span>
+                      <span :class="track.official_video_id ? 'text-zinc-300' : 'text-zinc-500'">{{ track.official_video_id ? t('musicAdmin.track.linked') : t('musicAdmin.track.none') }}</span>
                     </td>
                     <td>
                       <span v-if="trackPublishProblems(track).length" class="text-amber-400">{{ trackPublishProblems(track).join(', ') }}</span>
-                      <span v-else class="status" :class="track.status">{{ track.status }}</span>
+                      <span v-else class="status" :class="track.status">{{ statusLabel(track.status) }}</span>
                     </td>
                     <td class="actions">
-                      <button type="button" @click="openTrack(track)">Edit</button>
+                      <button type="button" @click="openTrack(track)">{{ t('musicAdmin.edit') }}</button>
                       <button type="button" :disabled="syncingLyricsID === track.id" @click="syncLyrics(track)">
-                        {{ syncingLyricsID === track.id ? 'Syncing...' : 'Sync lyrics' }}
+                        {{ syncingLyricsID === track.id ? t('musicAdmin.track.syncing') : t('musicAdmin.track.syncLyrics') }}
                       </button>
-                      <button type="button" class="danger" @click="removeTrack(track)">Delete</button>
+                      <button type="button" class="danger" @click="removeTrack(track)">{{ t('musicAdmin.delete') }}</button>
                     </td>
                   </tr>
                 </tbody>
@@ -172,7 +172,7 @@
             </div>
           </details>
         </div>
-        <div v-else class="empty track-empty">No tracks yet.</div>
+        <div v-else class="empty track-empty">{{ t('musicAdmin.track.empty') }}</div>
       </section>
     </template>
 
@@ -181,56 +181,56 @@
         <form class="editor-panel" @submit.prevent="saveEditor">
         <header>
           <div>
-            <p>{{ editor.kind }}</p>
-            <h2>{{ editor.id ? `Edit ${editor.kind}` : `New ${editor.kind}` }}</h2>
+            <p>{{ editorKindLabel(editor.kind) }}</p>
+            <h2>{{ t(editor.id ? 'musicAdmin.editor.edit' : 'musicAdmin.editor.new', { kind: editorKindLabel(editor.kind) }) }}</h2>
           </div>
-          <button type="button" aria-label="Close editor" title="Close" @click="closeEditor">×</button>
+          <button type="button" :aria-label="t('musicAdmin.editor.close')" :title="t('common.close')" @click="closeEditor">×</button>
         </header>
 
         <div v-if="editor.kind === 'artist'" class="editor-fields">
-          <label><span>Artist name</span><input v-model="artistForm.name" required></label>
+          <label><span>{{ t('musicAdmin.artist.name') }}</span><input v-model="artistForm.name" required></label>
           <label>
-            <span>Primary channel <small>Optional</small></span>
+            <span>{{ t('musicAdmin.artist.primaryChannel') }} <small>{{ t('musicAdmin.editor.optional') }}</small></span>
             <select v-model="artistForm.primary_channel_id">
-              <option value="">No linked channel</option>
+              <option value="">{{ t('musicAdmin.artist.noChannel') }}</option>
               <option v-for="channel in availableArtistChannels" :key="channel.id" :value="channel.id">{{ channel.name }} · {{ channel.username }}</option>
             </select>
           </label>
           <label class="wide">
-            <span>Artist image <small>Optional</small></span>
+            <span>{{ t('musicAdmin.artist.image') }} <small>{{ t('musicAdmin.editor.optional') }}</small></span>
             <input type="file" accept="image/*" @change="pickArtistAvatar">
-            <small>Uses the linked channel image when none is uploaded.</small>
+            <small>{{ t('musicAdmin.artist.imageHelp') }}</small>
           </label>
-          <label class="wide"><span>Bio</span><textarea v-model="artistForm.bio" rows="5" /></label>
-          <label class="check wide"><input v-model="artistForm.verified" type="checkbox"><span>Verified music artist</span></label>
+          <label class="wide"><span>{{ t('musicAdmin.artist.bio') }}</span><textarea v-model="artistForm.bio" rows="5" /></label>
+          <label class="check wide"><input v-model="artistForm.verified" type="checkbox"><span>{{ t('musicAdmin.artist.verifiedArtist') }}</span></label>
         </div>
 
         <div v-if="editor.kind === 'release'" class="editor-fields">
           <label>
-            <span>Artist</span>
+            <span>{{ t('music.common.artist') }}</span>
             <select v-model="releaseForm.artist_id" required>
-              <option value="" disabled>Select an artist</option>
+              <option value="" disabled>{{ t('musicAdmin.release.selectArtist') }}</option>
               <option v-for="artist in artists" :key="artist.id" :value="artist.id">{{ artist.name }}</option>
             </select>
           </label>
-          <label><span>Title</span><input v-model="releaseForm.title" required></label>
+          <label><span>{{ t('musicAdmin.release.title') }}</span><input v-model="releaseForm.title" required></label>
           <label>
-            <span>Release type</span>
-            <select v-model="releaseForm.release_type"><option value="single">Single</option><option value="ep">EP</option><option value="album">Album</option></select>
+            <span>{{ t('musicAdmin.release.typeLabel') }}</span>
+            <select v-model="releaseForm.release_type"><option value="single">{{ t('musicAdmin.release.single') }}</option><option value="ep">{{ t('musicAdmin.release.ep') }}</option><option value="album">{{ t('musicAdmin.release.album') }}</option></select>
           </label>
-          <label><span>Release date</span><input v-model="releaseForm.release_date" type="date"></label>
+          <label><span>{{ t('musicAdmin.release.date') }}</span><input v-model="releaseForm.release_date" type="date"></label>
           <div v-if="editingRelease?.cover_url" class="release-cover-preview wide">
-            <img :src="imageVariantUrl(editingRelease.cover_url, 'sm')" :alt="`${editingRelease.title} cover`">
-            <div><strong>Current cover</strong><small>Upload another image or use artwork embedded in a track.</small></div>
+            <img :src="imageVariantUrl(editingRelease.cover_url, 'sm')" :alt="t('music.common.coverAlt', { title: editingRelease.title })">
+            <div><strong>{{ t('musicAdmin.release.currentCover') }}</strong><small>{{ t('musicAdmin.release.currentCoverHelp') }}</small></div>
           </div>
           <label class="wide">
-            <span>Cover image</span>
+            <span>{{ t('musicAdmin.release.cover') }}</span>
             <input :key="coverInputKey" type="file" accept="image/*" @change="pickCover">
           </label>
           <div v-if="editor.id && releaseArtworkTracks.length" class="embedded-artwork-picker wide">
             <div>
-              <strong>Use artwork from a track</strong>
-              <small>Reads the embedded cover and updates this release immediately. Publishing is unchanged.</small>
+              <strong>{{ t('musicAdmin.release.useTrackArtwork') }}</strong>
+              <small>{{ t('musicAdmin.release.trackArtworkHelp') }}</small>
             </div>
             <select v-model="embeddedArtworkTrackID" :disabled="extractingArtwork">
               <option v-for="track in releaseArtworkTracks" :key="track.id" :value="track.id">
@@ -242,58 +242,58 @@
               :disabled="!embeddedArtworkTrackID || extractingArtwork"
               @click="applyEmbeddedArtwork"
             >
-              {{ extractingArtwork ? 'Extracting...' : 'Use artwork now' }}
+              {{ extractingArtwork ? t('musicAdmin.release.extracting') : t('musicAdmin.release.useArtwork') }}
             </button>
           </div>
-          <label class="wide"><span>Label</span><input v-model="releaseForm.label"></label>
-          <label class="wide"><span>Copyright line</span><input v-model="releaseForm.copyright_text" placeholder="© 2026 Rights holder"></label>
-          <label class="wide"><span>Phonogram line</span><input v-model="releaseForm.phonogram_text" placeholder="℗ 2026 Rights holder"></label>
-          <label class="wide"><span>Territories</span><input v-model="releaseForm.territories" placeholder="Worldwide or a country list"></label>
-          <label class="check wide"><input v-model="releaseForm.rights_confirmed" type="checkbox"><span>I confirm GilTube has the rights to publish this release.</span></label>
+          <label class="wide"><span>{{ t('musicAdmin.release.label') }}</span><input v-model="releaseForm.label"></label>
+          <label class="wide"><span>{{ t('musicAdmin.release.copyright') }}</span><input v-model="releaseForm.copyright_text" placeholder="© 2026 Rights holder"></label>
+          <label class="wide"><span>{{ t('musicAdmin.release.phonogram') }}</span><input v-model="releaseForm.phonogram_text" placeholder="℗ 2026 Rights holder"></label>
+          <label class="wide"><span>{{ t('musicAdmin.release.territories') }}</span><input v-model="releaseForm.territories" :placeholder="t('musicAdmin.release.territoriesPlaceholder')"></label>
+          <label class="check wide"><input v-model="releaseForm.rights_confirmed" type="checkbox"><span>{{ t('musicAdmin.release.rightsConfirm') }}</span></label>
         </div>
 
         <div v-if="editor.kind === 'track'" class="editor-fields">
           <label class="wide">
-            <span>Release</span>
+            <span>{{ t('musicAdmin.release.release') }}</span>
             <select v-model="trackForm.release_id" required>
-              <option value="" disabled>Select a release</option>
+              <option value="" disabled>{{ t('musicAdmin.track.selectRelease') }}</option>
               <option v-for="release in releases" :key="release.id" :value="release.id">{{ release.artist_name }} · {{ release.title }}</option>
             </select>
           </label>
-          <label class="wide"><span>Track title</span><input v-model="trackForm.title" required></label>
-          <label><span>Disc</span><input v-model.number="trackForm.disc_number" type="number" min="1" required></label>
-          <label><span>Track number</span><input v-model.number="trackForm.track_number" type="number" min="1" required></label>
+          <label class="wide"><span>{{ t('musicAdmin.track.title') }}</span><input v-model="trackForm.title" required></label>
+          <label><span>{{ t('musicAdmin.track.disc') }}</span><input v-model.number="trackForm.disc_number" type="number" min="1" required></label>
+          <label><span>{{ t('musicAdmin.track.number') }}</span><input v-model.number="trackForm.track_number" type="number" min="1" required></label>
           <label><span>ISRC</span><input v-model="trackForm.isrc"></label>
-          <label><span>Language</span><input v-model="trackForm.language" placeholder="en"></label>
-          <label class="check"><input v-model="trackForm.explicit" type="checkbox"><span>Explicit</span></label>
+          <label><span>{{ t('musicAdmin.track.language') }}</span><input v-model="trackForm.language" :placeholder="t('videoEditor.languagePlaceholder')"></label>
+          <label class="check"><input v-model="trackForm.explicit" type="checkbox"><span>{{ t('musicAdmin.track.explicit') }}</span></label>
           <label class="wide">
-            <span>Audio master</span>
+            <span>{{ t('musicAdmin.track.master') }}</span>
             <input type="file" accept="audio/*,.flac,.wav,.opus" @change="pickAudio">
-            <small>Uploads in 50 MB chunks. The original is preserved and AAC 320, 256, and 128 kbps qualities are generated.</small>
-            <small v-if="editingTrack?.audio_original_name">Current: {{ editingTrack.audio_original_name }}</small>
+            <small>{{ t('musicAdmin.track.masterHelp') }}</small>
+            <small v-if="editingTrack?.audio_original_name">{{ t('musicAdmin.track.current', { name: editingTrack.audio_original_name }) }}</small>
           </label>
           <div v-if="editor.id" class="lyrics-sync-box wide">
             <div>
-              <strong>Lyrics</strong>
-              <small>{{ editingTrack ? lyricsStatusLabel(editingTrack) : 'Not synced' }}</small>
+              <strong>{{ t('musicAdmin.track.lyrics') }}</strong>
+              <small>{{ editingTrack ? lyricsStatusLabel(editingTrack) : t('musicAdmin.track.notSynced') }}</small>
             </div>
             <button type="button" :disabled="syncingLyricsID === editor.id" @click="editingTrack && syncLyrics(editingTrack)">
-              {{ syncingLyricsID === editor.id ? 'Syncing...' : 'Sync from LRCLIB' }}
+              {{ syncingLyricsID === editor.id ? t('musicAdmin.track.syncing') : t('musicAdmin.track.syncLrclib') }}
             </button>
           </div>
-          <div class="wide section-label">Official music video</div>
+          <div class="wide section-label">{{ t('musicAdmin.track.officialVideo') }}</div>
           <div v-if="selectedOfficialVideo" class="video-selection wide">
             <img v-if="selectedOfficialVideo.thumbnail_url" :src="resolveMediaUrl(selectedOfficialVideo.thumbnail_url)" alt="">
             <div v-else class="video-selection-empty" />
             <div>
               <strong>{{ selectedOfficialVideo.title }}</strong>
-              <small>{{ selectedOfficialVideo.channel?.name || 'GilTube video' }}</small>
+              <small>{{ selectedOfficialVideo.channel?.name || t('musicAdmin.track.giltubeVideo') }}</small>
             </div>
-            <button type="button" @click="clearSelectedOfficialVideo">Remove</button>
+            <button type="button" @click="clearSelectedOfficialVideo">{{ t('musicAdmin.track.remove') }}</button>
           </div>
           <div class="wide">
-            <label><span>{{ selectedOfficialVideo ? 'Choose a different video' : 'Choose a video' }}</span><input v-model="videoSearch" placeholder="Search uploaded videos" @input="handleVideoSearchInput"></label>
-            <div v-if="videoPickerLoading" class="mt-3 text-sm text-zinc-400">Loading videos...</div>
+            <label><span>{{ selectedOfficialVideo ? t('musicAdmin.track.chooseDifferentVideo') : t('musicAdmin.track.chooseVideo') }}</span><input v-model="videoSearch" :placeholder="t('musicAdmin.track.searchVideos')" @input="handleVideoSearchInput"></label>
+            <div v-if="videoPickerLoading" class="mt-3 text-sm text-zinc-400">{{ t('musicAdmin.track.loadingVideos') }}</div>
             <div v-else-if="videoPickerResults.length" class="video-picker-results">
               <button v-for="item in videoPickerResults" :key="item.id" type="button" @click="selectOfficialVideo(item)">
                 <img v-if="item.thumbnail_url" :src="resolveMediaUrl(item.thumbnail_url)" alt="">
@@ -309,8 +309,8 @@
         </div>
         <p v-if="editorError" class="editor-error">{{ editorError }}</p>
         <footer>
-          <button type="button" @click="closeEditor">Cancel</button>
-          <button type="submit" class="primary-action" :disabled="saving">{{ saving ? 'Saving...' : 'Save' }}</button>
+          <button type="button" @click="closeEditor">{{ t('common.cancel') }}</button>
+          <button type="submit" class="primary-action" :disabled="saving">{{ saving ? t('common.saving') : t('common.save') }}</button>
         </footer>
         </form>
       </div>
@@ -319,10 +319,10 @@
         <form class="editor-panel quick-upload-panel" @submit.prevent="submitQuickUpload">
         <header>
           <div>
-            <p>Quick upload</p>
+            <p>{{ t('musicAdmin.track.quickUpload') }}</p>
             <h2>{{ quickStepTitle }}</h2>
           </div>
-          <button type="button" aria-label="Close quick uploader" title="Close" @click="closeQuickUpload">×</button>
+          <button type="button" :aria-label="t('musicAdmin.quick.close')" :title="t('common.close')" @click="closeQuickUpload">×</button>
         </header>
 
         <div v-if="quickStep === 'files'" class="quick-step">
@@ -334,8 +334,8 @@
             @drop.prevent="dropQuickAudio"
           >
             <input type="file" multiple accept="audio/*,.mp3,.m4a,.aac,.flac,.wav,.ogg,.opus" @change="pickQuickAudio">
-            <strong>Drop audio files here</strong>
-            <span>Select multiple files to build a release in one pass.</span>
+            <strong>{{ t('musicAdmin.quick.drop') }}</strong>
+            <span>{{ t('musicAdmin.quick.dropHelp') }}</span>
           </label>
 
           <ol v-if="quickTracks.length" class="quick-file-list">
@@ -345,63 +345,63 @@
                 <strong>{{ track.title }}</strong>
                 <small>{{ track.file.name }}</small>
               </div>
-              <small>{{ track.tags.album || track.tags.artist ? 'Tags found' : 'Filename fallback' }}</small>
+              <small>{{ track.tags.album || track.tags.artist ? t('musicAdmin.quick.tagsFound') : t('musicAdmin.quick.filenameFallback') }}</small>
             </li>
           </ol>
         </div>
 
         <div v-else-if="quickStep === 'details'" class="editor-fields quick-details">
           <label v-if="quickTagChoices.length > 1" class="wide">
-            <span>Use tags from</span>
+            <span>{{ t('musicAdmin.quick.useTags') }}</span>
             <select v-model="quickTagSourceKey" @change="applyQuickTagSource">
               <option v-for="choice in quickTagChoices" :key="choice.key" :value="choice.key">{{ choice.label }}</option>
             </select>
           </label>
           <label>
-            <span>Artist</span>
+            <span>{{ t('music.common.artist') }}</span>
             <input v-model="quickForm.artist" required>
           </label>
           <label>
-            <span>Release title</span>
+            <span>{{ t('musicAdmin.quick.releaseTitle') }}</span>
             <input v-model="quickForm.title" required>
           </label>
           <label>
-            <span>Release type</span>
-            <select v-model="quickForm.release_type"><option value="single">Single</option><option value="ep">EP</option><option value="album">Album</option></select>
+            <span>{{ t('musicAdmin.release.typeLabel') }}</span>
+            <select v-model="quickForm.release_type"><option value="single">{{ t('musicAdmin.release.single') }}</option><option value="ep">{{ t('musicAdmin.release.ep') }}</option><option value="album">{{ t('musicAdmin.release.album') }}</option></select>
           </label>
-          <label><span>Release date</span><input v-model="quickForm.release_date" type="date"></label>
-          <label class="wide"><span>Label</span><input v-model="quickForm.label"></label>
-          <label class="wide"><span>Copyright line</span><input v-model="quickForm.copyright_text" placeholder="© 2026 Rights holder"></label>
-          <label class="wide"><span>Phonogram line</span><input v-model="quickForm.phonogram_text" placeholder="℗ 2026 Rights holder"></label>
-          <label class="wide"><span>Territories</span><input v-model="quickForm.territories"></label>
+          <label><span>{{ t('musicAdmin.release.date') }}</span><input v-model="quickForm.release_date" type="date"></label>
+          <label class="wide"><span>{{ t('musicAdmin.release.label') }}</span><input v-model="quickForm.label"></label>
+          <label class="wide"><span>{{ t('musicAdmin.release.copyright') }}</span><input v-model="quickForm.copyright_text" placeholder="© 2026 Rights holder"></label>
+          <label class="wide"><span>{{ t('musicAdmin.release.phonogram') }}</span><input v-model="quickForm.phonogram_text" placeholder="℗ 2026 Rights holder"></label>
+          <label class="wide"><span>{{ t('musicAdmin.release.territories') }}</span><input v-model="quickForm.territories"></label>
           <div v-if="quickCoverPreview" class="quick-cover-preview wide">
             <img :src="quickCoverPreview" alt="">
-            <div><strong>Embedded cover found</strong><small>It will be used as the release cover.</small></div>
+            <div><strong>{{ t('musicAdmin.quick.embeddedCover') }}</strong><small>{{ t('musicAdmin.quick.embeddedCoverHelp') }}</small></div>
           </div>
-          <label class="check wide"><input v-model="quickForm.rights_confirmed" type="checkbox"><span>I confirm GilTube has the rights to publish this release.</span></label>
+          <label class="check wide"><input v-model="quickForm.rights_confirmed" type="checkbox"><span>{{ t('musicAdmin.release.rightsConfirm') }}</span></label>
         </div>
 
         <div v-else class="quick-step">
           <div class="quick-review-heading">
             <div>
               <strong>{{ quickForm.title }}</strong>
-              <span>{{ quickForm.artist }} · {{ quickTracks.length }} tracks</span>
+              <span>{{ quickForm.artist }} · {{ quickTracks.length }} {{ t(quickTracks.length === 1 ? 'music.common.track' : 'music.common.tracks') }}</span>
             </div>
             <span v-if="quickImporting">{{ quickImportProgress }}%</span>
           </div>
           <ol class="bulk-track-list quick-review-list">
             <li v-for="(item, index) in quickTracks" :key="item.key" :class="item.status">
-              <input v-model.number="item.discNumber" type="number" min="1" :disabled="quickImporting" aria-label="Disc">
-              <input v-model.number="item.trackNumber" type="number" min="1" :disabled="quickImporting" aria-label="Track number">
+              <input v-model.number="item.discNumber" type="number" min="1" :disabled="quickImporting" :aria-label="t('musicAdmin.track.disc')">
+              <input v-model.number="item.trackNumber" type="number" min="1" :disabled="quickImporting" :aria-label="t('musicAdmin.track.number')">
               <div>
-                <input v-model="item.title" :disabled="quickImporting || item.status === 'done'" required aria-label="Track title">
+                <input v-model="item.title" :disabled="quickImporting || item.status === 'done'" required :aria-label="t('musicAdmin.track.title')">
                 <small>{{ item.file.name }}</small>
                 <small v-if="item.error" class="text-red-300">{{ item.error }}</small>
               </div>
               <span class="bulk-status">{{ bulkStatusLabel(item) }}</span>
               <div class="bulk-actions">
-                <button type="button" title="Move up" aria-label="Move track up" :disabled="quickImporting || index === 0" @click="moveQuickTrack(index, -1)">↑</button>
-                <button type="button" title="Move down" aria-label="Move track down" :disabled="quickImporting || index === quickTracks.length - 1" @click="moveQuickTrack(index, 1)">↓</button>
+                <button type="button" :title="t('music.player.moveUp')" :aria-label="t('music.player.moveTrackUp')" :disabled="quickImporting || index === 0" @click="moveQuickTrack(index, -1)">↑</button>
+                <button type="button" :title="t('music.player.moveDown')" :aria-label="t('music.player.moveTrackDown')" :disabled="quickImporting || index === quickTracks.length - 1" @click="moveQuickTrack(index, 1)">↓</button>
               </div>
             </li>
           </ol>
@@ -412,7 +412,7 @@
         </div>
         <p v-if="quickUploadError" class="editor-error">{{ quickUploadError }}</p>
         <footer>
-          <button type="button" :disabled="quickImporting" @click="quickStep === 'files' ? closeQuickUpload() : previousQuickStep()">Back</button>
+          <button type="button" :disabled="quickImporting" @click="quickStep === 'files' ? closeQuickUpload() : previousQuickStep()">{{ t('musicAdmin.quick.back') }}</button>
           <button type="submit" class="primary-action" :disabled="quickImporting || !canAdvanceQuickUpload">
             {{ quickPrimaryLabel }}
           </button>
@@ -424,39 +424,39 @@
         <form class="editor-panel bulk-import-panel" @submit.prevent="importTracks">
         <header>
           <div>
-            <p>Tracks</p>
-            <h2>Import audio files</h2>
+            <p>{{ t('musicAdmin.tracks') }}</p>
+            <h2>{{ t('musicAdmin.bulk.title') }}</h2>
           </div>
-          <button type="button" aria-label="Close importer" title="Close" @click="closeBulkImport">×</button>
+          <button type="button" :aria-label="t('musicAdmin.bulk.close')" :title="t('common.close')" @click="closeBulkImport">×</button>
         </header>
 
         <div class="editor-fields">
           <label class="wide">
-            <span>Release</span>
+            <span>{{ t('musicAdmin.release.release') }}</span>
             <select v-model="bulkReleaseID" required :disabled="bulkReleaseLocked" @change="resetBulkPositions">
-              <option value="" disabled>Select a release</option>
+              <option value="" disabled>{{ t('musicAdmin.track.selectRelease') }}</option>
               <option v-for="release in releases" :key="release.id" :value="release.id">{{ release.artist_name }} · {{ release.title }}</option>
             </select>
           </label>
-          <label><span>Disc</span><input v-model.number="bulkDiscNumber" type="number" min="1" required :disabled="bulkReleaseLocked" @change="resetBulkPositions"></label>
-          <label><span>Language <small>Optional</small></span><input v-model="bulkLanguage" placeholder="en"></label>
-          <label class="check"><input v-model="bulkExplicit" type="checkbox"><span>Mark all explicit</span></label>
-          <label class="wide"><span>Audio files</span><input type="file" multiple accept="audio/*,.mp3,.m4a,.aac,.flac,.wav,.ogg,.opus" @change="pickBulkAudio"></label>
+          <label><span>{{ t('musicAdmin.track.disc') }}</span><input v-model.number="bulkDiscNumber" type="number" min="1" required :disabled="bulkReleaseLocked" @change="resetBulkPositions"></label>
+          <label><span>{{ t('musicAdmin.track.language') }} <small>{{ t('musicAdmin.editor.optional') }}</small></span><input v-model="bulkLanguage" :placeholder="t('videoEditor.languagePlaceholder')"></label>
+          <label class="check"><input v-model="bulkExplicit" type="checkbox"><span>{{ t('musicAdmin.bulk.markExplicit') }}</span></label>
+          <label class="wide"><span>{{ t('musicAdmin.bulk.audioFiles') }}</span><input type="file" multiple accept="audio/*,.mp3,.m4a,.aac,.flac,.wav,.ogg,.opus" @change="pickBulkAudio"></label>
         </div>
 
         <ol v-if="bulkTracks.length" class="bulk-track-list">
           <li v-for="(item, index) in bulkTracks" :key="item.key" :class="item.status">
             <span class="bulk-position">{{ item.trackNumber }}</span>
             <div>
-              <input v-model="item.title" :disabled="bulkImporting || item.status === 'done'" required aria-label="Track title">
+              <input v-model="item.title" :disabled="bulkImporting || item.status === 'done'" required :aria-label="t('musicAdmin.track.title')">
               <small>{{ item.file.name }}</small>
               <small v-if="item.error" class="text-red-300">{{ item.error }}</small>
             </div>
             <span class="bulk-status">{{ bulkStatusLabel(item) }}</span>
             <div class="bulk-actions">
-              <button type="button" title="Move up" aria-label="Move track up" :disabled="bulkReleaseLocked || index === 0" @click="moveBulkTrack(index, -1)">↑</button>
-              <button type="button" title="Move down" aria-label="Move track down" :disabled="bulkReleaseLocked || index === bulkTracks.length - 1" @click="moveBulkTrack(index, 1)">↓</button>
-              <button type="button" title="Remove" aria-label="Remove track" :disabled="bulkReleaseLocked" @click="removeBulkTrack(index)">×</button>
+              <button type="button" :title="t('music.player.moveUp')" :aria-label="t('music.player.moveTrackUp')" :disabled="bulkReleaseLocked || index === 0" @click="moveBulkTrack(index, -1)">↑</button>
+              <button type="button" :title="t('music.player.moveDown')" :aria-label="t('music.player.moveTrackDown')" :disabled="bulkReleaseLocked || index === bulkTracks.length - 1" @click="moveBulkTrack(index, 1)">↓</button>
+              <button type="button" :title="t('musicAdmin.track.remove')" :aria-label="t('music.player.removeTrackQueue')" :disabled="bulkReleaseLocked" @click="removeBulkTrack(index)">×</button>
             </div>
           </li>
         </ol>
@@ -466,9 +466,9 @@
         </div>
         <p v-if="bulkImportError" class="editor-error">{{ bulkImportError }}</p>
         <footer>
-          <button type="button" :disabled="bulkImporting" @click="closeBulkImport">Cancel</button>
+          <button type="button" :disabled="bulkImporting" @click="closeBulkImport">{{ t('common.cancel') }}</button>
           <button type="submit" class="primary-action" :disabled="bulkImporting || !bulkTracks.length || !bulkReleaseID">
-            {{ bulkImporting ? `Importing ${bulkImportCurrent} of ${bulkTracks.length}` : `Import ${bulkTracks.length} tracks` }}
+            {{ bulkImporting ? t('musicAdmin.bulk.importing', { current: bulkImportCurrent, total: bulkTracks.length }) : t('musicAdmin.bulk.import', { count: bulkTracks.length }) }}
           </button>
         </footer>
         </form>
@@ -544,6 +544,7 @@ type QuickTrack = BulkTrack & {
 type QuickUploadStep = 'files' | 'details' | 'review'
 
 const localePath = useLocalePath()
+const { t, locale } = useI18n()
 const router = useRouter()
 const loading = ref(true)
 const saving = ref(false)
@@ -616,9 +617,9 @@ const quickForm = reactive<MusicReleaseInput & { artist: string }>({
 })
 
 const tabs = computed(() => [
-  { id: 'artists' as CatalogTab, label: 'Artists', count: artists.value.length },
-  { id: 'releases' as CatalogTab, label: 'Releases', count: releases.value.length },
-  { id: 'tracks' as CatalogTab, label: 'Tracks', count: tracks.value.length },
+  { id: 'artists' as CatalogTab, label: t('musicAdmin.artists'), count: artists.value.length },
+  { id: 'releases' as CatalogTab, label: t('musicAdmin.releases'), count: releases.value.length },
+  { id: 'tracks' as CatalogTab, label: t('musicAdmin.tracks'), count: tracks.value.length },
 ])
 const trackGroups = computed(() => releases.value
   .map(release => {
@@ -641,9 +642,9 @@ const availableArtistChannels = computed(() => channels.value.filter(channel =>
   !artists.value.some(artist => artist.primary_channel_id === channel.id && artist.id !== editor.value?.id),
 ))
 const quickStepTitle = computed(() => {
-  if (quickStep.value === 'details') return 'Album details'
-  if (quickStep.value === 'review') return 'Review tracks'
-  return 'Select audio files'
+  if (quickStep.value === 'details') return t('musicAdmin.quick.albumDetails')
+  if (quickStep.value === 'review') return t('musicAdmin.quick.reviewTracks')
+  return t('musicAdmin.quick.selectFiles')
 })
 const quickTagChoices = computed(() => quickTracks.value
   .filter(track => track.tags.artist || track.tags.album || track.tags.date || track.tags.cover)
@@ -657,15 +658,15 @@ const canAdvanceQuickUpload = computed(() => {
   return quickTracks.value.length > 0 && quickTracks.value.every(track => track.title.trim())
 })
 const quickPrimaryLabel = computed(() => {
-  if (quickImporting.value) return `Uploading ${quickImportProgress.value}%`
-  if (quickStep.value === 'files') return 'Continue'
-  if (quickStep.value === 'details') return 'Review tracks'
-  return `Create release and upload ${quickTracks.value.length} tracks`
+  if (quickImporting.value) return t('musicAdmin.quick.uploading', { progress: quickImportProgress.value })
+  if (quickStep.value === 'files') return t('musicAdmin.quick.continue')
+  if (quickStep.value === 'details') return t('musicAdmin.quick.reviewTracks')
+  return t('musicAdmin.quick.createUpload', { count: quickTracks.value.length })
 })
 
 const messageFrom = (error: any) => {
   const missing = error?.response?.data?.missing
-  if (Array.isArray(missing) && missing.length) return `Missing: ${missing.join(', ')}`
+  if (Array.isArray(missing) && missing.length) return t('musicAdmin.messages.missing', { fields: missing.join(', ') })
   return error?.response?.data?.error || error?.message || String(error)
 }
 
@@ -692,7 +693,7 @@ onMounted(async () => {
   try {
     await refresh()
   } catch (error: any) {
-    accessError.value = error?.response?.status === 403 ? 'Admin access required.' : messageFrom(error)
+    accessError.value = error?.response?.status === 403 ? t('musicAdmin.messages.adminRequired') : messageFrom(error)
   } finally {
     loading.value = false
   }
@@ -1119,9 +1120,9 @@ const removeBulkTrack = (index: number) => {
 }
 
 const bulkStatusLabel = (item: BulkTrack) => {
-  if (item.status === 'uploading') return 'Uploading'
-  if (item.status === 'done') return 'Imported'
-  if (item.status === 'error') return 'Retry'
+  if (item.status === 'uploading') return t('musicAdmin.bulk.uploading')
+  if (item.status === 'done') return t('musicAdmin.bulk.imported')
+  if (item.status === 'error') return t('musicAdmin.bulk.retry')
   return ''
 }
 
@@ -1167,12 +1168,12 @@ const importTracks = async () => {
     bulkImporting.value = false
   }
   if (failed > 0) {
-    bulkImportError.value = `${failed} ${failed === 1 ? 'track needs' : 'tracks need'} attention. Fix the title or retry the upload.`
+    bulkImportError.value = t('musicAdmin.messages.importNeedsAttention', { count: failed })
     return
   }
   const imported = bulkTracks.value.length
   bulkImportOpen.value = false
-  notice.value = `${imported} ${imported === 1 ? 'track' : 'tracks'} imported.`
+  notice.value = t('musicAdmin.messages.imported', { count: imported })
 }
 
 const runQuickImport = async () => {
@@ -1253,13 +1254,13 @@ const runQuickImport = async () => {
   }
   if (quickUploadError.value) return
   if (failed > 0) {
-    quickUploadError.value = `${failed} ${failed === 1 ? 'track needs' : 'tracks need'} attention.`
+    quickUploadError.value = t('musicAdmin.messages.importNeedsAttention', { count: failed })
     return
   }
   const imported = quickTracks.value.length
   quickUploadOpen.value = false
   tab.value = 'tracks'
-  notice.value = `${quickForm.title} created with ${imported} ${imported === 1 ? 'track' : 'tracks'}.`
+  notice.value = t('musicAdmin.messages.created', { title: quickForm.title, count: imported })
 }
 
 const loadVideoPicker = async () => {
@@ -1342,7 +1343,7 @@ const saveEditor = async () => {
     const kind = editor.value.kind
     editor.value = null
     await refresh()
-    notice.value = `${kind[0].toUpperCase()}${kind.slice(1)} saved.`
+    notice.value = t('musicAdmin.messages.saved', { kind: editorKindLabel(kind) })
   } catch (error: any) {
     editorError.value = messageFrom(error)
   } finally {
@@ -1364,24 +1365,24 @@ const runAction = async (action: () => Promise<any>, success: string) => {
 const setReleasePublished = (release: MusicRelease, publish: boolean) =>
   runAction(
     () => publish ? publishMusicRelease(release.id) : unpublishMusicRelease(release.id),
-    `${release.title} and its tracks ${publish ? 'published' : 'unpublished'}.`,
+    t(publish ? 'musicAdmin.messages.published' : 'musicAdmin.messages.unpublished', { title: release.title }),
   )
 
 const removeArtist = (artist: MusicArtist) => {
-  if (confirm(`Delete ${artist.name}? Artists with releases cannot be deleted.`)) {
-    runAction(() => deleteMusicArtist(artist.id), `${artist.name} deleted.`)
+  if (confirm(t('musicAdmin.messages.deleteArtist', { name: artist.name }))) {
+    runAction(() => deleteMusicArtist(artist.id), t('musicAdmin.messages.deleted', { title: artist.name }))
   }
 }
 
 const removeRelease = (release: MusicRelease) => {
-  if (confirm(`Delete ${release.title} and all of its tracks and stored audio?`)) {
-    runAction(() => deleteMusicRelease(release.id), `${release.title} deleted.`)
+  if (confirm(t('musicAdmin.messages.deleteRelease', { title: release.title }))) {
+    runAction(() => deleteMusicRelease(release.id), t('musicAdmin.messages.deleted', { title: release.title }))
   }
 }
 
 const removeTrack = (track: MusicTrack) => {
-  if (confirm(`Delete ${track.title} and its stored audio?`)) {
-    runAction(() => deleteMusicTrack(track.id), `${track.title} deleted.`)
+  if (confirm(t('musicAdmin.messages.deleteTrack', { title: track.title }))) {
+    runAction(() => deleteMusicTrack(track.id), t('musicAdmin.messages.deleted', { title: track.title }))
   }
 }
 
@@ -1393,7 +1394,7 @@ const syncLyrics = async (track: MusicTrack) => {
     const saved = await syncMusicTrackLyrics(track.id)
     const index = tracks.value.findIndex(item => item.id === track.id)
     if (index >= 0) tracks.value[index] = saved
-    notice.value = saved.synced_lyrics ? `${track.title} synced with timed lyrics.` : `${track.title} synced with lyrics.`
+    notice.value = t(saved.synced_lyrics ? 'musicAdmin.messages.timedLyrics' : 'musicAdmin.messages.plainLyrics', { title: track.title })
   } catch (error: any) {
     actionError.value = messageFrom(error)
     editorError.value = messageFrom(error)
@@ -1420,7 +1421,11 @@ const syncReleaseLyrics = async (group: { release: MusicRelease; tracks: MusicTr
         missing += 1
       }
     }
-    notice.value = `${group.release.title}: ${synced} ${synced === 1 ? 'track' : 'tracks'} synced${missing ? `, ${missing} not found` : ''}.`
+    notice.value = t('musicAdmin.messages.syncSummary', {
+      title: group.release.title,
+      synced,
+      missing: missing ? t('musicAdmin.messages.notFound', { count: missing }) : '',
+    })
   } finally {
     syncingLyricsID.value = ''
     syncingReleaseLyricsID.value = ''
@@ -1435,19 +1440,19 @@ const releaseRightsReady = (release: MusicRelease) => Boolean(
 )
 
 const audioFormatLabel = (track: MusicTrack) => {
-  if (!track.audio_codec) return 'Streaming qualities not generated'
+  if (!track.audio_codec) return t('musicAdmin.audio.notGenerated')
   const details = [
     track.audio_codec.toUpperCase(),
     track.audio_sample_rate ? `${Math.round(track.audio_sample_rate / 100) / 10} kHz` : '',
     track.audio_bit_depth ? `${track.audio_bit_depth}-bit` : '',
-    track.audio_lossless ? 'Lossless' : '',
+    track.audio_lossless ? t('musicAdmin.audio.lossless') : '',
   ].filter(Boolean)
   return details.join(' · ')
 }
 const lyricsStatusLabel = (track: MusicTrack) => {
-  if (track.synced_lyrics) return 'Timed lyrics'
-  if (track.lyrics) return 'Plain lyrics'
-  return 'Not synced'
+  if (track.synced_lyrics) return t('musicAdmin.audio.timedLyrics')
+  if (track.lyrics) return t('musicAdmin.audio.plainLyrics')
+  return t('musicAdmin.track.notSynced')
 }
 const lyricsStatusClass = (track: MusicTrack) => {
   if (track.synced_lyrics) return 'text-emerald-400'
@@ -1462,18 +1467,25 @@ const trackReleaseRightsReady = (track: MusicTrack) => {
 const trackPublishProblems = (track: MusicTrack) => {
   const release = releaseForTrack(track)
   return [
-    !track.audio_url && 'audio',
-    (!track.audio_low_url || !track.audio_medium_url || !track.audio_high_url) && 'streaming qualities',
-    !release?.copyright_text && 'release copyright line',
-    !release?.phonogram_text && 'release phonogram line',
-    !release?.territories && 'release territories',
-    !release?.rights_confirmed && 'release confirmation',
+    !track.audio_url && t('musicAdmin.problems.audio'),
+    (!track.audio_low_url || !track.audio_medium_url || !track.audio_high_url) && t('musicAdmin.problems.qualities'),
+    !release?.copyright_text && t('musicAdmin.problems.copyright'),
+    !release?.phonogram_text && t('musicAdmin.problems.phonogram'),
+    !release?.territories && t('musicAdmin.problems.territories'),
+    !release?.rights_confirmed && t('musicAdmin.problems.confirmation'),
   ].filter(Boolean)
 }
 
-const formatDate = (value: string) => new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' }).format(new Date(value))
+const editorKindLabel = (kind: EditorKind) => t(`musicAdmin.editor.${kind}`)
+const releaseTypeLabel = (type: string) => t(`musicAdmin.release.${type}`)
+const statusLabel = (status: string) => {
+  const key = `admin.transcodeJobs.statuses.${status}`
+  const translated = t(key)
+  return translated === key ? status : translated
+}
+const formatDate = (value: string) => new Intl.DateTimeFormat(locale.value, { dateStyle: 'medium' }).format(new Date(value))
 
-useHead({ title: 'Music Catalog - GilTube Admin' })
+useHead({ title: () => t('musicAdmin.pageTitle') })
 </script>
 
 <style scoped>

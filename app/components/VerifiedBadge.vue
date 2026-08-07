@@ -23,7 +23,7 @@
       >
         <!-- Header with Close Button -->
         <div class="flex items-center justify-between p-6 border-b border-zinc-800">
-          <h3 class="text-lg font-semibold text-white">Verified Channel</h3>
+          <h3 class="text-lg font-semibold text-white">{{ t('common.verifiedChannel') }}</h3>
           <button
             @click="isModalOpen = false"
             class="text-zinc-400 hover:text-white transition text-2xl leading-none"
@@ -45,6 +45,8 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+
+const { t } = useI18n()
 
 interface Props {
   verified: boolean

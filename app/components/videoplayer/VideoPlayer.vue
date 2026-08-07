@@ -85,13 +85,13 @@
           <div v-for="v in visibleViewers" :key="v.id" class="viewer flex items-center gap-2">
             <AvatarFallback
               :src="v.avatarUrl"
-              name="Viewer"
+              :name="t('live.viewerFallback')"
               class="h-6 w-6 bg-gray-500 text-[10px]"
             />
           </div>
         </div>
         <div class="text-sm">
-          <div v-if="viewers.length > 0">{{ viewers.length }} viewer{{ viewers.length === 1 ? '' : 's' }}</div>
+          <div v-if="viewers.length > 0">{{ t('video.player.viewerCount', viewers.length, { count: viewers.length }) }}</div>
           <div v-if="anonymousCount > 0">{{ anonText }}</div>
         </div>
       </div>
@@ -107,7 +107,7 @@
           class="rounded bg-white px-4 py-2 text-sm font-semibold text-black shadow-lg transition hover:bg-zinc-200"
           @click="skipIntro"
         >
-          Skip intro
+          {{ t('video.player.skipIntro') }}
         </button>
         <button
           v-if="showNextEpisodeOverlay"
@@ -115,7 +115,7 @@
           class="rounded bg-white px-4 py-2 text-sm font-semibold text-black shadow-lg transition hover:bg-zinc-200"
           @click="emit('nextEpisode')"
         >
-          {{ nextEpisodeLabel }}
+          {{ props.nextEpisodeLabel || t('video.player.nextEpisode') }}
         </button>
       </div>
 
@@ -125,11 +125,14 @@
 
 <script setup lang="ts">
 import { computed, ref, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
+import { useI18n } from 'vue-i18n'
 import AvatarFallback from '~/app/components/AvatarFallback.vue'
 import videojs from 'video.js'
 import 'video.js/dist/video-js.css'
 import 'videojs-contrib-quality-levels'
 import { getMyAccount, updateMyPlaybackLanguages } from '~/app/service/auth'
+
+const { t } = useI18n()
 
 const AUDIO_LANGUAGE_STORAGE_KEY = 'giltube_audio_language'
 const CAPTION_LANGUAGE_STORAGE_KEY = 'giltube_caption_language'
@@ -170,7 +173,7 @@ const props = withDefaults(defineProps<Props>(), {
   introStartSeconds: 0,
   introEndSeconds: 0,
   hasNextEpisode: false,
-  nextEpisodeLabel: 'Next episode',
+  nextEpisodeLabel: '',
   startTimeSeconds: 0,
   exactStartTime: false,
   progressEmitIntervalMs: 5000,
@@ -191,10 +194,7 @@ const isLive = ref(false)
 const viewers = ref<PresenceViewer[]>([])
 const anonymousCount = ref(0)
 const visibleViewers = computed(() => viewers.value.slice(0, 6))
-const anonText = computed(() => {
-  const n = anonymousCount.value
-  return `${n} anonymous viewer${n === 1 ? '' : 's'}`
-})
+const anonText = computed(() => t('video.player.anonymousViewerCount', anonymousCount.value, { count: anonymousCount.value }))
 
 // Progress bar state
 const currentTime = ref(0)
@@ -497,10 +497,10 @@ const handleKeyboardShortcuts = (event: KeyboardEvent) => {
     event.preventDefault()
     if (player.paused?.()) {
       void player.play?.()
-      showShortcutOverlay('PLAY')
+      showShortcutOverlay(t('video.player.play').toUpperCase())
     } else {
       player.pause?.()
-      showShortcutOverlay('PAUSE')
+      showShortcutOverlay(t('video.player.pause').toUpperCase())
     }
     return
   }
@@ -547,7 +547,7 @@ const handleKeyboardShortcuts = (event: KeyboardEvent) => {
     event.preventDefault()
     const nextMuted = !player.muted?.()
     player.muted?.(nextMuted)
-    showShortcutOverlay(nextMuted ? 'MUTE' : 'SOUND')
+    showShortcutOverlay(t(nextMuted ? 'video.player.mute' : 'video.player.sound').toUpperCase())
     return
   }
 
@@ -558,7 +558,7 @@ const handleKeyboardShortcuts = (event: KeyboardEvent) => {
     } else {
       player.requestFullscreen?.()
     }
-    showShortcutOverlay('FULL')
+    showShortcutOverlay(t('video.player.fullscreen').toUpperCase())
     return
   }
 
@@ -1040,11 +1040,11 @@ const createNextEpisodeButton = () => {
     constructor(playerRef: any, options: any) {
       super(playerRef, options)
       this.addClass('vjs-next-episode-button')
-      this.controlText('Next episode')
+      this.controlText(t('video.player.nextEpisode'))
       setTimeout(() => {
         const el = this.el()
         if (el) {
-          el.innerHTML = '<span class="vjs-icon-placeholder" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M5 6.75v10.5c0 .6.67.96 1.17.62L13.5 13v4.25c0 .6.67.96 1.17.62l7.5-5.25a.75.75 0 0 0 0-1.24l-7.5-5.25a.75.75 0 0 0-1.17.62V11L6.17 6.13A.75.75 0 0 0 5 6.75Z" fill="currentColor"/></svg></span><span class="vjs-control-text">Next episode</span>'
+          el.innerHTML = `<span class="vjs-icon-placeholder" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M5 6.75v10.5c0 .6.67.96 1.17.62L13.5 13v4.25c0 .6.67.96 1.17.62l7.5-5.25a.75.75 0 0 0 0-1.24l-7.5-5.25a.75.75 0 0 0-1.17.62V11L6.17 6.13A.75.75 0 0 0 5 6.75Z" fill="currentColor"/></svg></span><span class="vjs-control-text">${t('video.player.nextEpisode')}</span>`
         }
       }, 0)
     }
@@ -1059,8 +1059,9 @@ const createNextEpisodeButton = () => {
 }
 
 const getAudioTrackLabel = (track: any, index: number) => {
-  const label = track?.label || track?.language || `Audio ${index + 1}`
-  return String(label).trim() || `Audio ${index + 1}`
+  const fallback = `${t('video.player.audio')} ${index + 1}`
+  const label = track?.label || track?.language || fallback
+  return String(label).trim() || fallback
 }
 
 const createAudioButton = () => {
@@ -1073,13 +1074,13 @@ const createAudioButton = () => {
     constructor(playerRef: any, options: any) {
       super(playerRef, options)
       this.addClass('vjs-audio-button')
-      this.controlText('Audio')
+      this.controlText(t('video.player.audio'))
       this.audioTracks = playerRef.audioTracks?.()
 
       setTimeout(() => {
         const el = this.el()
         if (el) {
-          el.innerHTML = '<span class="vjs-icon-placeholder"></span><span class="vjs-control-text">Audio</span>'
+          el.innerHTML = `<span class="vjs-icon-placeholder"></span><span class="vjs-control-text">${t('video.player.audio')}</span>`
         }
       }, 0)
 
@@ -1327,12 +1328,12 @@ const createMobileSettingsButton = () => {
     constructor(playerRef: any, options: any) {
       super(playerRef, options)
       this.addClass('vjs-mobile-settings-button')
-      this.controlText('Settings')
+      this.controlText(t('video.player.settings'))
 
       setTimeout(() => {
         const el = this.el()
         if (el) {
-          el.innerHTML = '<span class="vjs-icon-placeholder">&#9881;</span><span class="vjs-control-text">Settings</span>'
+          el.innerHTML = `<span class="vjs-icon-placeholder">&#9881;</span><span class="vjs-control-text">${t('video.player.settings')}</span>`
         }
       }, 0)
     }
@@ -1378,7 +1379,7 @@ const createMobileSettingsButton = () => {
       if (!this.menu) return
       const item = videojs.dom.createEl('button', {
         className: 'vjs-mobile-settings-item vjs-mobile-settings-back',
-        innerHTML: 'Back',
+        innerHTML: t('video.player.back'),
         type: 'button'
       }) as HTMLButtonElement
 
@@ -1434,7 +1435,7 @@ const createMobileSettingsButton = () => {
       if (count === 0) {
         const empty = videojs.dom.createEl('div', {
           className: 'vjs-mobile-settings-empty',
-          innerHTML: 'No settings'
+          innerHTML: t('video.player.noSettings')
         })
         this.menu?.appendChild(empty)
       }
@@ -1447,14 +1448,14 @@ const createMobileSettingsButton = () => {
       if (showBack) {
         this.addBackItem()
       }
-      this.addHeading('Quality')
+      this.addHeading(t('video.player.quality'))
       let enabledIndexes: number[] = []
       for (let i = 0; i < levels.length; i++) {
         if (levels[i]?.enabled) enabledIndexes.push(i)
       }
       const isAuto = enabledIndexes.length !== 1
 
-      this.addItem('Auto', isAuto, () => {
+      this.addItem(t('video.player.auto'), isAuto, () => {
         if (qualityButton) {
           qualityButton.manualSelectionIndex = null
         }
@@ -1493,7 +1494,7 @@ const createMobileSettingsButton = () => {
       if (showBack) {
         this.addBackItem()
       }
-      this.addHeading('Audio')
+      this.addHeading(t('video.player.audio'))
       for (let i = 0; i < tracks.length; i++) {
         const track = tracks[i]
         if (track?.kind === 'metadata') continue
@@ -1515,9 +1516,9 @@ const createMobileSettingsButton = () => {
       if (showBack) {
         this.addBackItem()
       }
-      this.addHeading('Captions')
+      this.addHeading(t('video.player.captions'))
       const captionsOff = !captionTracks.some(({ track }) => track?.mode === 'showing')
-      this.addItem('Off', captionsOff, () => {
+      this.addItem(t('video.player.off'), captionsOff, () => {
         captionTracks.forEach(({ track }) => {
           track.mode = 'disabled'
         })
@@ -1977,7 +1978,7 @@ const createQualityButton = (player: any) => {
       setTimeout(() => {
         const el = this.el()
         if (el) {
-          el.innerHTML = '<span class="vjs-icon-placeholder">⚙</span><span class="vjs-control-text">Quality</span>'
+          el.innerHTML = `<span class="vjs-icon-placeholder">⚙</span><span class="vjs-control-text">${t('video.player.quality')}</span>`
         }
       }, 0)
 
@@ -2038,7 +2039,7 @@ const createQualityButton = (player: any) => {
       // ===== AUTO OPTION =====
       const autoItem = videojs.dom.createEl('button', {
         className: 'vjs-quality-menu-item',
-        innerHTML: 'Auto',
+        innerHTML: t('video.player.auto'),
         type: 'button'
       }) as HTMLButtonElement
 

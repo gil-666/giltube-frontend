@@ -7,7 +7,7 @@
           :name="hostName"
           class="mx-auto h-20 w-20 bg-zinc-800 text-2xl"
         />
-        <p class="mt-5 text-sm font-semibold uppercase tracking-[0.18em] text-red-300">Watch party invite</p>
+        <p class="mt-5 text-sm font-semibold uppercase tracking-[0.18em] text-red-300">{{ t('watchParty.invite') }}</p>
         <h1 class="mt-3 text-3xl font-bold">You were invited to {{ hostName }}'s watch party</h1>
         <p class="mt-4 text-base text-zinc-300">
           Currently watching <span class="font-semibold text-white">{{ currentWatchingTitle }}</span>
@@ -16,7 +16,7 @@
           This watch party has ended.
         </p>
         <div v-else-if="!isLoggedIn" class="mt-6">
-          <p class="mb-4 text-sm text-zinc-400">You need to be signed in to join watch parties.</p>
+          <p class="mb-4 text-sm text-zinc-400">{{ t('watchParty.signInRequired') }}</p>
           <NuxtLink :to="localePath('/login')" class="inline-flex rounded-lg bg-red-600 px-6 py-3 text-sm font-bold text-white transition hover:bg-red-700">
             Sign in
           </NuxtLink>
@@ -60,10 +60,10 @@
             <div class="flex h-full flex-col gap-4">
               <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                 <div>
-                  <p class="text-xs font-semibold uppercase tracking-[0.2em] text-red-300">Watch party</p>
+                  <p class="text-xs font-semibold uppercase tracking-[0.2em] text-red-300">{{ t('watchParty.party') }}</p>
                   <h1 class="mt-2 text-2xl font-bold">{{ currentWatchingTitle }}</h1>
                   <p class="mt-2 text-sm text-zinc-400">{{ partyData?.video?.description }}</p>
-                  <p v-if="isHost" class="mt-2 text-xs font-semibold uppercase tracking-wide text-red-300">You are the host</p>
+                  <p v-if="isHost" class="mt-2 text-xs font-semibold uppercase tracking-wide text-red-300">{{ t('watchParty.youHost') }}</p>
                   <div v-if="isHost" class="mt-4 inline-flex rounded-lg border border-white/10 bg-zinc-900 p-1">
                     <button
                       type="button"
@@ -94,7 +94,7 @@
               </div>
 
               <div v-if="showShareLinkPreview" class="rounded-lg border border-white/10 bg-zinc-950/80 p-3">
-                <p class="mb-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-zinc-500">Share link</p>
+                <p class="mb-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-zinc-500">{{ t('watchParty.shareLink') }}</p>
                 <input
                   :value="partyShareUrl"
                   readonly
@@ -124,7 +124,7 @@
         <div class="border-b border-white/10 p-4">
           <div class="flex items-center justify-between gap-3">
             <div>
-              <h2 class="font-semibold">Party chat</h2>
+              <h2 class="font-semibold">{{ t('watchParty.partyChat') }}</h2>
               <p class="text-xs text-zinc-500">{{ participants.length }} participant{{ participants.length === 1 ? '' : 's' }}</p>
             </div>
             <button class="rounded bg-white/10 px-3 py-1.5 text-xs font-semibold hover:bg-white/15" @click="showParticipants = !showParticipants">
@@ -146,7 +146,7 @@
                 class="h-7 w-7 text-xs"
               />
               <span class="text-sm">{{ person.name }}</span>
-              <span v-if="person.is_host" class="ml-auto rounded bg-red-600 px-2 py-0.5 text-[10px] font-bold uppercase">Host</span>
+              <span v-if="person.is_host" class="ml-auto rounded bg-red-600 px-2 py-0.5 text-[10px] font-bold uppercase">{{ t('watchParty.host') }}</span>
               <div v-if="isHost && !person.is_host" class="ml-auto flex gap-1">
                 <button type="button" class="rounded bg-zinc-700 px-2 py-1 text-[10px] font-semibold hover:bg-zinc-600" @click.prevent="makeHost(person.user_id)">
                   Make host
@@ -179,7 +179,7 @@
             v-if="showNewMessagesIndicator"
             type="button"
             class="absolute bottom-3 right-3 rounded-full bg-red-600 px-3 py-2 text-sm font-bold text-white shadow-lg transition hover:bg-red-700"
-            aria-label="Jump to latest chat messages"
+            :aria-label="t('watchParty.jumpLatest')"
             @click="jumpToLatestMessages"
           >
             ↓
@@ -196,8 +196,8 @@
             </button>
           </div>
           <form class="flex gap-2" @submit.prevent="sendMessage">
-            <input v-model="chatInput" class="min-w-0 flex-1 rounded bg-zinc-900 px-3 py-2 text-sm outline-none ring-1 ring-white/10 focus:ring-red-500" placeholder="Say something..." maxlength="500" />
-            <button class="rounded bg-red-600 px-4 py-2 text-sm font-semibold hover:bg-red-700" :disabled="!chatInput.trim()">Send</button>
+            <input v-model="chatInput" class="min-w-0 flex-1 rounded bg-zinc-900 px-3 py-2 text-sm outline-none ring-1 ring-white/10 focus:ring-red-500" :placeholder="t('watchParty.messagePlaceholder')" maxlength="500" />
+            <button class="rounded bg-red-600 px-4 py-2 text-sm font-semibold hover:bg-red-700" :disabled="!chatInput.trim()">{{ t('watchParty.send') }}</button>
           </form>
         </div>
       </aside>
@@ -240,6 +240,7 @@ import { resolveAvatarUrl, resolveMediaUrl } from '~/app/utils/media'
 const route = useRoute()
 const router = useRouter()
 const localePath = useLocalePath()
+const { t } = useI18n()
 const partyId = String(route.params.id || '')
 const partyData = ref<any>(null)
 const participants = ref<any[]>([])

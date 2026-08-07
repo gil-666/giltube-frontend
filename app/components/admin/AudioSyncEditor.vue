@@ -21,7 +21,7 @@
         <p class="sync-track-name">{{ trackLabel }}</p>
       </div>
 
-      <div class="source-toggle" aria-label="Preview audio source">
+      <div class="source-toggle" :aria-label="t('videoEditor.sync.previewSource')">
         <button type="button" :class="{ active: monitorSource === 'original' }" @click="setMonitorSource('original')">{{ t('admin.mediaIngests.audio.original') }}</button>
         <button type="button" :class="{ active: monitorSource === 'added' }" @click="setMonitorSource('added')">{{ t('admin.mediaIngests.audio.added') }}</button>
       </div>
@@ -30,19 +30,19 @@
         <label>
           <span>{{ t('admin.mediaIngests.audio.delay') }}</span>
           <div class="timing-input">
-            <button type="button" title="Subtract 100 ms" @click="delayMs -= 100">-</button>
+            <button type="button" :title="t('videoEditor.sync.subtract')" @click="delayMs -= 100">-</button>
             <input v-model.number="delayMs" type="number" step="10" @input="syncCandidate" />
             <span>ms</span>
-            <button type="button" title="Add 100 ms" @click="delayMs += 100">+</button>
+            <button type="button" :title="t('videoEditor.sync.add')" @click="delayMs += 100">+</button>
           </div>
         </label>
         <label>
           <span>{{ t('admin.mediaIngests.audio.trim') }}</span>
           <div class="timing-input">
-            <button type="button" title="Subtract 100 ms" @click="trimStartMs = Math.max(0, trimStartMs - 100)">-</button>
+            <button type="button" :title="t('videoEditor.sync.subtract')" @click="trimStartMs = Math.max(0, trimStartMs - 100)">-</button>
             <input v-model.number="trimStartMs" min="0" type="number" step="10" @input="syncCandidate" />
             <span>ms</span>
-            <button type="button" title="Add 100 ms" @click="trimStartMs += 100">+</button>
+            <button type="button" :title="t('videoEditor.sync.add')" @click="trimStartMs += 100">+</button>
           </div>
         </label>
       </div>
@@ -50,7 +50,7 @@
       <p class="sync-note">{{ t('admin.mediaIngests.audio.syncNote') }}</p>
 
       <div class="sync-actions">
-        <button type="button" class="secondary" @click="$emit('close')">Close</button>
+        <button type="button" class="secondary" @click="$emit('close')">{{ t('common.close') }}</button>
         <button type="button" class="primary" :disabled="saving" @click="applySync">
           {{ saving ? t('admin.mediaIngests.audio.encoding') : t('admin.mediaIngests.audio.apply') }}
         </button>

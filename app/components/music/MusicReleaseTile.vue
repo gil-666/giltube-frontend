@@ -7,7 +7,7 @@
           :src="imageVariantUrl(release.cover_url, 'md')"
           :srcset="imageVariantSrcset(release.cover_url)"
           sizes="(max-width: 640px) 44vw, 190px"
-          :alt="`${release.title} cover`"
+          :alt="t('music.common.coverAlt', { title: release.title })"
         >
         <span v-else class="cover-placeholder" aria-hidden="true">
           <svg viewBox="0 0 24 24"><path d="M9 18V5l10-2v13M9 18a3 3 0 1 1-3-3h3v3Zm10-2a3 3 0 1 1-3-3h3v3Z" /></svg>
@@ -18,8 +18,8 @@
         class="play-release"
         :class="{ busy }"
         :disabled="busy"
-        :title="`Play ${release.title}`"
-        :aria-label="`Play ${release.title}`"
+        :title="t('music.common.playRelease', { title: release.title })"
+        :aria-label="t('music.common.playRelease', { title: release.title })"
         @click="$emit('play', release)"
       >
         <svg v-if="!busy" viewBox="0 0 24 24"><path d="m8 5 11 7-11 7V5Z" /></svg>
@@ -28,7 +28,7 @@
     </div>
     <NuxtLink :to="localePath(`/music/releases/${release.slug}`)" class="release-title">{{ release.title }}</NuxtLink>
     <NuxtLink :to="localePath(`/music/artists/${release.artist_slug}`)" class="artist-name">{{ release.artist_name }}</NuxtLink>
-    <span class="release-meta">{{ release.release_type }} · {{ release.track_count }} {{ release.track_count === 1 ? 'track' : 'tracks' }}</span>
+    <span class="release-meta">{{ release.release_type }} · {{ release.track_count }} {{ t(release.track_count === 1 ? 'music.common.track' : 'music.common.tracks') }}</span>
   </article>
 </template>
 
@@ -47,6 +47,7 @@ defineEmits<{
 }>()
 
 const localePath = useLocalePath()
+const { t } = useI18n()
 </script>
 
 <style scoped>

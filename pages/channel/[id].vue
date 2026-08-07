@@ -14,7 +14,7 @@
         sandbox=""
         referrerpolicy="no-referrer"
         :srcdoc="headerThemeSrcdoc"
-        title="Custom channel header theme"
+        :title="t('channelPage.customHeader')"
       />
       <div class="relative min-h-[20rem] max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
         <button
@@ -178,7 +178,7 @@
             </button>
             <p v-if="editRemoveAvatar" class="mt-2 rounded-lg bg-red-950/60 p-2 text-sm text-red-100">{{ t('channels.avatarWillBeRemoved') }}</p>
             <div v-if="editAvatarPreview" class="mt-3 flex items-center gap-3">
-              <img :src="editAvatarPreview" alt="Avatar preview" class="h-14 w-14 rounded-full border border-zinc-700 object-cover" />
+              <img :src="editAvatarPreview" :alt="t('channelPage.avatarPreview')" class="h-14 w-14 rounded-full border border-zinc-700 object-cover" />
               <button type="button" class="text-sm font-semibold text-red-300 hover:text-red-200" @click="clearSelectedAvatar">{{ t('channels.remove') }}</button>
             </div>
           </div>
@@ -198,7 +198,7 @@
             <p v-if="editRemoveBackground" class="mt-2 rounded-lg bg-red-950/60 p-2 text-sm text-red-100">{{ t('channels.backgroundWillBeRemoved') }}</p>
             <div v-if="editorBackgroundPreviewUrl" class="mt-3 space-y-3">
               <div class="relative h-36 overflow-hidden rounded-xl border border-zinc-700 bg-zinc-900">
-                <img :src="editorBackgroundPreviewUrl" alt="Background preview" class="h-full w-full object-cover" :style="editBackgroundStyle" />
+                <img :src="editorBackgroundPreviewUrl" :alt="t('channelPage.backgroundPreview')" class="h-full w-full object-cover" :style="editBackgroundStyle" />
                 <div class="absolute inset-0 bg-black/60" />
               </div>
               <div class="grid gap-3 rounded-xl border border-zinc-800 bg-black/30 p-3 sm:grid-cols-3">
@@ -276,13 +276,13 @@
         sandbox=""
         referrerpolicy="no-referrer"
         :srcdoc="contentThemeSrcdoc"
-        title="Custom channel content theme"
+        :title="t('channelPage.customContent')"
       />
       <div class="relative max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
         <div class="channel-tabs mb-4 flex gap-2 border-b border-white/10">
-          <button type="button" class="channel-tab-button px-3 py-2 text-sm font-bold transition" :class="activeTab === 'videos' ? 'is-active text-white' : 'text-zinc-400 hover:text-white'" @click="activeTab = 'videos'">Videos</button>
-          <button type="button" class="channel-tab-button px-3 py-2 text-sm font-bold transition" :class="activeTab === 'clips' ? 'is-active text-white' : 'text-zinc-400 hover:text-white'" @click="activeTab = 'clips'">Clips</button>
-          <button v-if="musicArtist" type="button" class="channel-tab-button px-3 py-2 text-sm font-bold transition" :class="activeTab === 'music' ? 'is-active text-white' : 'text-zinc-400 hover:text-white'" @click="activeTab = 'music'">Music</button>
+          <button type="button" class="channel-tab-button px-3 py-2 text-sm font-bold transition" :class="activeTab === 'videos' ? 'is-active text-white' : 'text-zinc-400 hover:text-white'" @click="activeTab = 'videos'">{{ t('channelPage.videos') }}</button>
+          <button type="button" class="channel-tab-button px-3 py-2 text-sm font-bold transition" :class="activeTab === 'clips' ? 'is-active text-white' : 'text-zinc-400 hover:text-white'" @click="activeTab = 'clips'">{{ t('channelPage.clips') }}</button>
+          <button v-if="musicArtist" type="button" class="channel-tab-button px-3 py-2 text-sm font-bold transition" :class="activeTab === 'music' ? 'is-active text-white' : 'text-zinc-400 hover:text-white'" @click="activeTab = 'music'">{{ t('channelPage.music') }}</button>
         </div>
 
         <section v-if="activeTab === 'music'" class="channel-music-panel">
@@ -304,7 +304,7 @@
               <p>{{ release.release_type }} · {{ release.track_count }} {{ release.track_count === 1 ? 'track' : 'tracks' }}</p>
             </NuxtLink>
           </div>
-          <div v-else class="music-empty">No published releases yet.</div>
+          <div v-else class="music-empty">{{ t('channelPage.noReleases') }}</div>
         </section>
 
         <template v-else>

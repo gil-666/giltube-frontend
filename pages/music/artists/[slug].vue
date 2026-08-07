@@ -5,28 +5,28 @@
       <div class="artist-header-content">
         <AvatarFallback :src="resolveAvatarUrl(data.artist.avatar_url)" :name="data.artist.name" class="artist-avatar" />
         <div>
-          <p>Artist</p>
+          <p>{{ t('music.artist.label') }}</p>
           <h1>{{ data.artist.name }}</h1>
-          <NuxtLink v-if="data.artist.primary_channel_id" :to="localePath(`/channel/${data.artist.primary_channel_id}`)">View primary channel</NuxtLink>
+          <NuxtLink v-if="data.artist.primary_channel_id" :to="localePath(`/channel/${data.artist.primary_channel_id}`)">{{ t('music.artist.primaryChannel') }}</NuxtLink>
         </div>
       </div>
     </header>
 
     <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6">
       <p v-if="data.artist.bio" class="mb-8 max-w-3xl text-zinc-300">{{ data.artist.bio }}</p>
-      <h2 class="mb-4 text-xl font-bold text-white">Releases</h2>
+      <h2 class="mb-4 text-xl font-bold text-white">{{ t('music.common.releases') }}</h2>
       <div class="release-grid">
         <NuxtLink v-for="release in data.releases" :key="release.id" :to="localePath(`/music/releases/${release.slug}`)">
-          <img v-if="release.cover_url" :src="imageVariantUrl(release.cover_url, 'md')" :srcset="imageVariantSrcset(release.cover_url)" sizes="220px" :alt="`${release.title} cover`">
+          <img v-if="release.cover_url" :src="imageVariantUrl(release.cover_url, 'md')" :srcset="imageVariantSrcset(release.cover_url)" sizes="220px" :alt="t('music.common.coverAlt', { title: release.title })">
           <div v-else class="cover-placeholder" />
           <strong>{{ release.title }}</strong>
-          <span>{{ release.release_type }} · {{ release.track_count }} {{ release.track_count === 1 ? 'track' : 'tracks' }}</span>
+          <span>{{ release.release_type }} · {{ release.track_count }} {{ t(release.track_count === 1 ? 'music.common.track' : 'music.common.tracks') }}</span>
         </NuxtLink>
       </div>
     </div>
   </main>
-  <div v-else-if="pending" class="p-12 text-center text-zinc-400">Loading artist...</div>
-  <div v-else class="p-12 text-center text-red-300">Artist not found.</div>
+  <div v-else-if="pending" class="p-12 text-center text-zinc-400">{{ t('music.artist.loading') }}</div>
+  <div v-else class="p-12 text-center text-red-300">{{ t('music.artist.notFound') }}</div>
 </template>
 
 <script setup lang="ts">
@@ -39,6 +39,7 @@ import { imageVariantSrcset, imageVariantUrl, resolveAvatarUrl, resolveMediaUrl 
 
 const route = useRoute()
 const localePath = useLocalePath()
+const { t } = useI18n()
 const { data, pending } = await useAsyncData(
   `music-artist-${route.params.slug}`,
   () => getMusicArtist(String(route.params.slug)),
@@ -52,14 +53,14 @@ if (data.value) {
   const previewImage = artist.banner_url || artist.avatar_url
   useMetaTags({
     title: `${artist.name} - GilTube Music`,
-    description: artist.bio || `Listen to music and releases by ${artist.name} on GilTube Music.`,
+    description: artist.bio || t('music.artist.metaDescription', { artist: artist.name }),
     image: previewImage ? imageVariantUrl(previewImage, 'lg') : undefined,
-    imageAlt: `${artist.name} artist image`,
+    imageAlt: t('music.artist.imageAlt', { artist: artist.name }),
     url: localePath(`/music/artists/${artist.slug}`),
     type: 'profile',
   })
 } else {
-  useHead({ title: 'Artist - GilTube Music' })
+  useHead({ title: () => `${t('music.artist.label')} - GilTube Music` })
 }
 </script>
 

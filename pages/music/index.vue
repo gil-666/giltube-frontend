@@ -1,10 +1,10 @@
 <template>
   <main class="music-home">
     <header class="music-header">
-      <h1>Music</h1>
+      <h1>{{ t('music.common.music') }}</h1>
     </header>
 
-    <div v-if="pending" class="loading-shelves" aria-label="Loading music">
+    <div v-if="pending" class="loading-shelves" :aria-label="t('music.common.loading')">
       <section v-for="row in 3" :key="row">
         <span class="loading-heading" />
         <div>
@@ -13,19 +13,19 @@
       </section>
     </div>
 
-    <div v-else-if="error" class="page-message">Unable to load music.</div>
+    <div v-else-if="error" class="page-message">{{ t('music.common.loadError') }}</div>
 
-    <div v-else-if="!releases.length && !artists.length" class="page-message">No music yet.</div>
+    <div v-else-if="!releases.length && !artists.length" class="page-message">{{ t('music.home.empty') }}</div>
 
     <template v-else>
       <section v-if="releases.length" class="music-shelf">
         <div class="shelf-header">
-          <h2>New releases</h2>
+          <h2>{{ t('music.home.newReleases') }}</h2>
           <div class="shelf-controls">
-            <button type="button" title="Scroll left" aria-label="Scroll new releases left" @click="scrollShelf($event, -1)">
+            <button type="button" :title="t('music.home.scrollLeft')" :aria-label="t('music.home.scrollNewReleasesLeft')" @click="scrollShelf($event, -1)">
               <svg viewBox="0 0 24 24"><path d="m15 5-7 7 7 7" /></svg>
             </button>
-            <button type="button" title="Scroll right" aria-label="Scroll new releases right" @click="scrollShelf($event, 1)">
+            <button type="button" :title="t('music.home.scrollRight')" :aria-label="t('music.home.scrollNewReleasesRight')" @click="scrollShelf($event, 1)">
               <svg viewBox="0 0 24 24"><path d="m9 5 7 7-7 7" /></svg>
             </button>
           </div>
@@ -43,12 +43,12 @@
 
       <section v-if="artists.length" class="music-shelf">
         <div class="shelf-header">
-          <h2>Artists</h2>
+          <h2>{{ t('music.common.artists') }}</h2>
           <div class="shelf-controls">
-            <button type="button" title="Scroll left" aria-label="Scroll artists left" @click="scrollShelf($event, -1)">
+            <button type="button" :title="t('music.home.scrollLeft')" :aria-label="t('music.home.scrollArtistsLeft')" @click="scrollShelf($event, -1)">
               <svg viewBox="0 0 24 24"><path d="m15 5-7 7 7 7" /></svg>
             </button>
-            <button type="button" title="Scroll right" aria-label="Scroll artists right" @click="scrollShelf($event, 1)">
+            <button type="button" :title="t('music.home.scrollRight')" :aria-label="t('music.home.scrollArtistsRight')" @click="scrollShelf($event, 1)">
               <svg viewBox="0 0 24 24"><path d="m9 5 7 7-7 7" /></svg>
             </button>
           </div>
@@ -63,7 +63,7 @@
             <AvatarFallback :src="resolveAvatarUrl(artist.avatar_url)" :name="artist.name" class="artist-avatar" />
             <strong>{{ artist.name }}</strong>
             <span v-if="artist.channel_name">{{ artist.channel_name }}</span>
-            <span v-else>Artist</span>
+            <span v-else>{{ t('music.common.artist') }}</span>
           </NuxtLink>
         </div>
       </section>
@@ -76,10 +76,10 @@
             <svg viewBox="0 0 24 24"><path d="m9 5 7 7-7 7" /></svg>
           </NuxtLink>
           <div class="shelf-controls">
-            <button type="button" :title="`Scroll ${shelf.artist.name} left`" :aria-label="`Scroll ${shelf.artist.name} releases left`" @click="scrollShelf($event, -1)">
+            <button type="button" :title="t('music.home.scrollLeft')" :aria-label="t('music.home.scrollArtistLeft', { artist: shelf.artist.name })" @click="scrollShelf($event, -1)">
               <svg viewBox="0 0 24 24"><path d="m15 5-7 7 7 7" /></svg>
             </button>
-            <button type="button" :title="`Scroll ${shelf.artist.name} right`" :aria-label="`Scroll ${shelf.artist.name} releases right`" @click="scrollShelf($event, 1)">
+            <button type="button" :title="t('music.home.scrollRight')" :aria-label="t('music.home.scrollArtistRight', { artist: shelf.artist.name })" @click="scrollShelf($event, 1)">
               <svg viewBox="0 0 24 24"><path d="m9 5 7 7-7 7" /></svg>
             </button>
           </div>
@@ -108,6 +108,7 @@ import { getMusicHome, getMusicRelease, type MusicArtist, type MusicRelease } fr
 import { resolveAvatarUrl } from '~/app/utils/media'
 
 const localePath = useLocalePath()
+const { t } = useI18n()
 const { loadQueue } = useMusicPlayer()
 const loadingReleaseID = ref('')
 const { data, pending, error } = await useAsyncData('music-home', getMusicHome)
@@ -147,7 +148,7 @@ const scrollShelf = (event: Event, direction: -1 | 1) => {
   row?.scrollBy({ left: direction * Math.max(280, row.clientWidth * 0.78), behavior: 'smooth' })
 }
 
-useHead({ title: 'Music - GilTube' })
+useHead({ title: () => t('music.home.title') })
 </script>
 
 <style scoped>

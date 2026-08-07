@@ -98,8 +98,8 @@
         <section v-if="publicWatchParties.length > 0">
           <div class="mb-4 flex items-center justify-between gap-4">
             <div>
-              <h2 class="text-lg font-semibold">Watch parties live now</h2>
-              <p class="text-sm text-zinc-400">Join a public room and watch together.</p>
+              <h2 class="text-lg font-semibold">{{ t('home.watchParties') }}</h2>
+              <p class="text-sm text-zinc-400">{{ t('home.watchPartiesBody') }}</p>
             </div>
             <div class="hidden items-center gap-2 xl:flex">
               <button
@@ -315,7 +315,7 @@
                 size="16x9"
                 variant="feed"
                 :context="{ page: 'home', surface: 'all-videos-grid' }"
-                fallback-title="Featured sponsor"
+                :fallback-title="t('home.featuredSponsor')"
               />
               <VideoTile v-else :video="item.video" />
             </template>

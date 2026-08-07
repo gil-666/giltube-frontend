@@ -1,5 +1,5 @@
 <template>
-  <section class="music-player" aria-label="Music player">
+  <section class="music-player" :aria-label="t('music.player.player')">
     <div class="player-main">
       <img
         v-if="currentTrack?.cover_url"
@@ -14,32 +14,32 @@
       </div>
 
       <div class="track-copy">
-        <strong>{{ currentTrack?.title || 'Select a track' }}</strong>
+        <strong>{{ currentTrack?.title || t('music.player.selectTrack') }}</strong>
         <span>{{ currentTrack?.artist_name || '' }}</span>
       </div>
 
       <div class="transport">
-        <button type="button" title="Previous track" aria-label="Previous track" :disabled="tracks.length < 2" @click="playPrevious">
+        <button type="button" :title="t('music.player.previous')" :aria-label="t('music.player.previous')" :disabled="tracks.length < 2" @click="playPrevious">
           <svg viewBox="0 0 24 24"><path d="M6 5v14M18 6l-9 6 9 6V6Z" /></svg>
         </button>
-        <button type="button" class="play-button" :title="playing ? 'Pause' : 'Play'" :aria-label="playing ? 'Pause' : 'Play'" :disabled="!currentTrack" @click="togglePlayback">
+        <button type="button" class="play-button" :title="playing ? t('music.player.pause') : t('music.player.play')" :aria-label="playing ? t('music.player.pause') : t('music.player.play')" :disabled="!currentTrack" @click="togglePlayback">
           <svg v-if="playing" viewBox="0 0 24 24"><path d="M7 5h4v14H7V5Zm6 0h4v14h-4V5Z" /></svg>
           <svg v-else viewBox="0 0 24 24"><path d="m8 5 11 7-11 7V5Z" /></svg>
         </button>
-        <button type="button" title="Next track" aria-label="Next track" :disabled="tracks.length < 2" @click="playNext">
+        <button type="button" :title="t('music.player.next')" :aria-label="t('music.player.next')" :disabled="tracks.length < 2" @click="playNext">
           <svg viewBox="0 0 24 24"><path d="M18 5v14M6 6l9 6-9 6V6Z" /></svg>
         </button>
       </div>
 
       <div class="modes">
-        <button type="button" :class="{ active: state.shuffle }" :title="state.shuffle ? 'Turn shuffle off' : 'Turn shuffle on'" aria-label="Toggle shuffle" @click="toggleShuffle">
+        <button type="button" :class="{ active: state.shuffle }" :title="state.shuffle ? t('music.player.shuffleOff') : t('music.player.shuffleOn')" :aria-label="t('music.player.toggleShuffle')" @click="toggleShuffle">
           <svg viewBox="0 0 24 24"><path d="M4 7h3c4 0 6 10 10 10h3M17 4l3 3-3 3M4 17h3c1.7 0 3-1.8 4.2-4M15 7h5M17 14l3 3-3 3" /></svg>
         </button>
-        <button type="button" :class="{ active: state.repeat !== 'off' }" :title="repeatTitle" aria-label="Change repeat mode" @click="cycleRepeat">
+        <button type="button" :class="{ active: state.repeat !== 'off' }" :title="repeatTitle" :aria-label="t('music.player.changeRepeat')" @click="cycleRepeat">
           <svg viewBox="0 0 24 24"><path d="m17 2 3 3-3 3M4 11V9a4 4 0 0 1 4-4h12M7 22l-3-3 3-3m13-3v2a4 4 0 0 1-4 4H4" /></svg>
           <span v-if="state.repeat === 'one'">1</span>
         </button>
-        <button type="button" title="Open queue" aria-label="Open playback queue" @click="openPlayer('queue')">
+        <button type="button" :title="t('music.player.openQueue')" :aria-label="t('music.player.openPlaybackQueue')" @click="openPlayer('queue')">
           <svg viewBox="0 0 24 24"><path d="M4 6h12M4 11h12M4 16h8M18 14v6m-3-3h6" /></svg>
         </button>
       </div>
@@ -52,7 +52,7 @@
           min="0"
           :max="duration || 0"
           step="0.1"
-          aria-label="Track position"
+          :aria-label="t('music.player.trackPosition')"
           :disabled="!duration"
           @input="seekFromInput"
         >
@@ -61,7 +61,7 @@
 
       <div class="volume">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 9v6h4l5 4V5L9 9H5Zm12.5.5a4 4 0 0 1 0 5M19.5 7a7 7 0 0 1 0 10" /></svg>
-        <input :value="volume" type="range" min="0" max="1" step="0.05" aria-label="Volume" @input="setVolumeFromInput">
+        <input :value="volume" type="range" min="0" max="1" step="0.05" :aria-label="t('music.player.volume')" @input="setVolumeFromInput">
       </div>
     </div>
 
@@ -74,16 +74,16 @@
           :class="{ active: index === currentIndex }"
           @click="selectTrack(index, true)"
         >
-          <span class="queue-number">{{ index === currentIndex && playing ? 'Now' : track.track_number }}</span>
+          <span class="queue-number">{{ index === currentIndex && playing ? t('music.player.current') : track.track_number }}</span>
           <span class="queue-title">{{ track.title }}</span>
           <span v-if="track.explicit" class="explicit">E</span>
           <span class="queue-duration">{{ formatTime(track.duration_seconds) }}</span>
         </button>
         <div class="queue-actions">
-          <button type="button" title="Play next" aria-label="Play track next" @click="queueTrackNext(track)">
+          <button type="button" :title="t('music.player.playNext')" :aria-label="t('music.player.playTrackNext')" @click="queueTrackNext(track)">
             <svg viewBox="0 0 24 24"><path d="M5 6v12l9-6-9-6Zm13 0v12M15 8h6M18 5v6" /></svg>
           </button>
-          <button type="button" title="Add to queue" aria-label="Add track to queue" @click="appendTrack(track)">
+          <button type="button" :title="t('music.player.addQueue')" :aria-label="t('music.player.addTrackQueue')" @click="appendTrack(track)">
             <svg viewBox="0 0 24 24"><path d="M4 6h10M4 11h10M4 16h7M18 13v7m-3.5-3.5h7" /></svg>
           </button>
         </div>
@@ -97,6 +97,8 @@ import { computed, ref } from 'vue'
 import { useMusicPlayer } from '~/app/composables/useMusicPlayer'
 import type { MusicTrack } from '~/app/service/music'
 import { imageVariantSrcset, imageVariantUrl } from '~/app/utils/media'
+
+const { t } = useI18n()
 
 const props = withDefaults(defineProps<{
   tracks: MusicTrack[]
@@ -136,9 +138,9 @@ const duration = computed(() => queueIsActive.value
 const volume = computed(() => state.value.volume)
 const playing = computed(() => queueIsActive.value && state.value.playing)
 const repeatTitle = computed(() => {
-  if (state.value.repeat === 'one') return 'Repeat current track'
-  if (state.value.repeat === 'all') return 'Repeat queue'
-  return 'Repeat is off'
+  if (state.value.repeat === 'one') return t('music.player.repeatTrack')
+  if (state.value.repeat === 'all') return t('music.player.repeatQueue')
+  return t('music.player.repeatOff')
 })
 
 const showQueueNotice = (message: string) => {
@@ -177,11 +179,13 @@ const setVolumeFromInput = (event: Event) => {
 
 const queueTrackNext = (track: MusicTrack) => {
   queueNext(track)
-  showQueueNotice(`${track.title} will play next.`)
+  showQueueNotice(t('music.player.willPlayNext', { title: track.title }))
 }
 
 const appendTrack = (track: MusicTrack) => {
-  showQueueNotice(addToQueue(track) ? `${track.title} added to queue.` : `${track.title} is already queued.`)
+  showQueueNotice(addToQueue(track)
+    ? t('music.player.addedQueue', { title: track.title })
+    : t('music.player.alreadyQueued', { title: track.title }))
 }
 
 const formatTime = (value: number) => {

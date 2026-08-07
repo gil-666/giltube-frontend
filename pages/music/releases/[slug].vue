@@ -8,7 +8,7 @@
           :src="imageVariantUrl(data.release.cover_url, 'lg')"
           :srcset="imageVariantSrcset(data.release.cover_url)"
           sizes="(max-width: 640px) 72vw, 320px"
-          :alt="`${data.release.title} cover`"
+          :alt="t('music.common.coverAlt', { title: data.release.title })"
         >
         <div v-else class="release-cover cover-placeholder">
           <svg viewBox="0 0 24 24"><path d="M9 18V5l10-2v13M9 18a3 3 0 1 1-3-3h3v3Zm10-2a3 3 0 1 1-3-3h3v3Z" /></svg>
@@ -33,11 +33,11 @@
             <img
               :src="hiResAudioLogo"
               class="hi-res-badge"
-              alt="Hi-Res Audio"
-              title="Lossless audio available"
+              :alt="t('music.release.hiResAudio')"
+              :title="t('music.release.losslessAvailable')"
             >
             <div>
-              <strong>Lossless</strong>
+              <strong>{{ t('music.release.lossless') }}</strong>
               <span>{{ losslessSpecs }}</span>
             </div>
           </div>
@@ -50,8 +50,8 @@
         <button
           type="button"
           class="primary-play"
-          :title="isCurrentRelease && state.playing ? 'Pause' : 'Play release'"
-          :aria-label="isCurrentRelease && state.playing ? 'Pause' : 'Play release'"
+          :title="isCurrentRelease && state.playing ? t('music.release.pause') : t('music.release.play')"
+          :aria-label="isCurrentRelease && state.playing ? t('music.release.pause') : t('music.release.play')"
           :disabled="!data.tracks.length"
           @click="playRelease"
         >
@@ -62,20 +62,20 @@
           type="button"
           class="icon-action"
           :class="{ active: state.shuffle }"
-          title="Shuffle"
-          aria-label="Toggle shuffle"
+          :title="state.shuffle ? t('music.release.shuffleOff') : t('music.release.shuffleOn')"
+          :aria-label="t('music.release.toggleShuffle')"
           @click="toggleShuffle"
         >
           <svg viewBox="0 0 24 24"><path d="M4 7h3c4 0 6 10 10 10h3M17 4l3 3-3 3M4 17h3c1.7 0 3-1.8 4.2-4M15 7h5M17 14l3 3-3 3" /></svg>
         </button>
-        <button type="button" class="icon-action" title="Open queue" aria-label="Open playback queue" @click="openPlayer('queue')">
+        <button type="button" class="icon-action" :title="t('music.player.openQueue')" :aria-label="t('music.player.openPlaybackQueue')" @click="openPlayer('queue')">
           <svg viewBox="0 0 24 24"><path d="M4 6h12M4 11h12M4 16h8M18 14v6m-3-3h6" /></svg>
         </button>
       </div>
 
       <div class="track-heading" aria-hidden="true">
         <span>#</span>
-        <span>Title</span>
+        <span>{{ t('music.release.titleColumn') }}</span>
         <svg viewBox="0 0 24 24"><path d="M12 7v5l3 2M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>
       </div>
 
@@ -103,10 +103,10 @@
               v-if="track.official_video_id"
               :to="localePath(`/video/${track.official_video_id}`)"
               class="video-link"
-              title="Watch official music video"
+              :title="t('music.release.watchVideo')"
             >
               <svg viewBox="0 0 24 24"><path d="m9 7 8 5-8 5V7Z" /><rect x="3" y="4" width="18" height="16" rx="2" /></svg>
-              <span>Video</span>
+              <span>{{ t('music.common.video') }}</span>
             </NuxtLink>
           </span>
           <span class="track-duration">{{ formatDuration(track.duration_seconds) }}</span>
@@ -123,8 +123,8 @@
     </section>
   </main>
 
-  <div v-else-if="pending" class="page-state">Loading release...</div>
-  <div v-else class="page-state error">Release not found.</div>
+  <div v-else-if="pending" class="page-state">{{ t('music.release.loading') }}</div>
+  <div v-else class="page-state error">{{ t('music.release.notFound') }}</div>
 </template>
 
 <script setup lang="ts">
@@ -139,6 +139,7 @@ import hiResAudioLogo from '~/assets/hi-res-audio.png'
 
 const route = useRoute()
 const localePath = useLocalePath()
+const { t, locale } = useI18n()
 const { state, currentTrack, loadQueue, selectTrack, toggle, toggleShuffle, openPlayer } = useMusicPlayer()
 const { data, pending } = await useAsyncData(
   `music-release-${route.params.slug}`,
@@ -150,16 +151,16 @@ if (data.value) {
   const kind = release.release_type.charAt(0).toUpperCase() + release.release_type.slice(1)
   useMetaTags({
     title: `${release.title} by ${release.artist_name} - GilTube Music`,
-    description: `${kind} by ${release.artist_name}. Listen to ${release.title} on GilTube Music.`,
+    description: t('music.release.metaDescription', { title: release.title, artist: release.artist_name, kind }),
     image: imageVariantUrl(release.cover_url, 'lg'),
-    imageAlt: `${release.title} by ${release.artist_name} cover art`,
+    imageAlt: t('music.release.imageAlt', { title: release.title, artist: release.artist_name }),
     imageWidth: release.cover_url ? 1280 : undefined,
     imageHeight: release.cover_url ? 1280 : undefined,
     url: localePath(`/music/releases/${release.slug}`),
     type: 'music.album',
   })
 } else {
-  useHead({ title: 'Release - GilTube Music' })
+  useHead({ title: () => `${t('music.common.releases')} - GilTube Music` })
 }
 
 const totalDuration = computed(() =>
@@ -171,14 +172,14 @@ const releaseMeta = computed(() => {
   const count = data.value.tracks.length
   return [
     year,
-    `${count} ${count === 1 ? 'track' : 'tracks'}`,
+    `${count} ${t(count === 1 ? 'music.common.track' : 'music.common.tracks')}`,
     formatLongDuration(totalDuration.value),
   ].filter(Boolean).join(' · ')
 })
 const formattedReleaseDate = computed(() => {
   const value = data.value?.release.release_date
   if (!value) return ''
-  return new Intl.DateTimeFormat(undefined, { year: 'numeric', month: 'long', day: 'numeric' }).format(new Date(value))
+  return new Intl.DateTimeFormat(locale.value, { year: 'numeric', month: 'long', day: 'numeric' }).format(new Date(value))
 })
 const isCurrentRelease = computed(() =>
   Boolean(currentTrack.value && currentTrack.value.release_id === data.value?.release.id),
@@ -208,7 +209,7 @@ const losslessSpecs = computed(() => {
     const kilohertz = sampleRate / 1000
     specs.push(`${Number.isInteger(kilohertz) ? kilohertz : kilohertz.toFixed(1)} kHz`)
   }
-  return specs.join(' · ') || 'Lossless audio'
+  return specs.join(' · ') || t('music.release.losslessAvailable')
 })
 
 const formatDuration = (seconds: number) => {
@@ -220,7 +221,9 @@ function formatLongDuration(seconds: number) {
   const total = Math.max(0, Math.round(seconds))
   const minutes = Math.floor(total / 60)
   const remainder = total % 60
-  return minutes ? `${minutes} min ${remainder} sec` : `${remainder} sec`
+  return minutes
+    ? `${t('music.release.minutes', { count: minutes })} ${t('music.release.seconds', { count: remainder })}`
+    : t('music.release.seconds', { count: remainder })
 }
 
 const playRelease = () => {

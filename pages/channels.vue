@@ -120,7 +120,7 @@
             <p v-if="editRemoveAvatar" class="mt-2 rounded bg-red-950/60 p-2 text-sm text-red-100">{{ t('channels.avatarWillBeRemoved') }}</p>
             <!-- Avatar Preview -->
             <div v-if="editAvatarPreview" class="mt-3 flex items-center gap-3">
-              <img :src="editAvatarPreview" alt="Avatar preview" class="w-12 h-12 rounded-full object-cover border border-zinc-700" />
+              <img :src="editAvatarPreview" :alt="t('common.avatarPreview')" class="w-12 h-12 rounded-full object-cover border border-zinc-700" />
               <button
                 type="button"
                 @click="clearEditAvatarSelection"
@@ -152,7 +152,7 @@
             <p v-if="editRemoveBackground" class="mt-2 rounded bg-red-950/60 p-2 text-sm text-red-100">{{ t('channels.backgroundWillBeRemoved') }}</p>
             <div v-if="editBackgroundPreview" class="mt-3 space-y-2">
               <div class="relative h-28 overflow-hidden rounded-lg border border-zinc-700 bg-zinc-800">
-                <img :src="editBackgroundPreview" alt="Background preview" class="h-full w-full object-cover" />
+                <img :src="editBackgroundPreview" :alt="t('common.backgroundPreview')" class="h-full w-full object-cover" />
                 <div class="absolute inset-0 bg-black/55" />
               </div>
               <button

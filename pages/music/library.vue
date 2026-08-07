@@ -2,22 +2,22 @@
   <main class="music-library-page">
     <header class="page-header">
       <div>
-        <p class="eyebrow">GilTube Music</p>
-        <h1>Library</h1>
+        <p class="eyebrow">{{ t('music.brand') }}</p>
+        <h1>{{ t('music.library.title') }}</h1>
       </div>
-      <button v-if="queue.length" type="button" class="clear-button" @click="clearQueue">Clear queue</button>
+      <button v-if="queue.length" type="button" class="clear-button" @click="clearQueue">{{ t('music.library.clearQueue') }}</button>
     </header>
 
     <section class="library-section">
       <div class="section-heading">
-        <h2>Listening queue</h2>
-        <button v-if="currentTrack" type="button" @click="openPlayer('queue')">Open player</button>
+        <h2>{{ t('music.library.listeningQueue') }}</h2>
+        <button v-if="currentTrack" type="button" @click="openPlayer('queue')">{{ t('music.library.openPlayer') }}</button>
       </div>
 
       <div v-if="!queue.length" class="empty-queue">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18V5l10-2v13M9 18a3 3 0 1 1-3-3h3v3Zm10-2a3 3 0 1 1-3-3h3v3Z" /></svg>
-        <p>Play an album to start a queue.</p>
-        <NuxtLink :to="localePath('/music')">Browse music</NuxtLink>
+        <p>{{ t('music.library.emptyBody') }}</p>
+        <NuxtLink :to="localePath('/music')">{{ t('music.library.browse') }}</NuxtLink>
       </div>
 
       <div v-else class="queue-list">
@@ -30,7 +30,7 @@
           @click="playTrack(index)"
         >
           <span class="track-number">{{ index === state.currentIndex && state.playing ? '▶' : index + 1 }}</span>
-          <img v-if="track.cover_url" :src="imageVariantUrl(track.cover_url, 'sm')" :alt="`${track.release_title} cover`">
+          <img v-if="track.cover_url" :src="imageVariantUrl(track.cover_url, 'sm')" :alt="t('music.common.coverAlt', { title: track.release_title })">
           <span v-else class="cover-fallback" aria-hidden="true">♪</span>
           <span class="track-copy">
             <strong>{{ track.title }}</strong>
@@ -43,7 +43,7 @@
     </section>
 
     <section v-if="queueReleases.length" class="library-section">
-      <h2>Albums in your queue</h2>
+      <h2>{{ t('music.library.albumsInQueue') }}</h2>
       <div class="release-grid">
         <MusicReleaseTile
           v-for="release in queueReleases"
@@ -66,6 +66,7 @@ import { getMusicHome, getMusicRelease, type MusicRelease } from '~/app/service/
 import { imageVariantUrl } from '~/app/utils/media'
 
 const localePath = useLocalePath()
+const { t } = useI18n()
 const { state, currentTrack, selectTrack, clearQueue, openPlayer, loadQueue } = useMusicPlayer()
 const loadingReleaseID = ref('')
 const { data } = await useAsyncData('music-library-catalog', getMusicHome)
@@ -94,7 +95,7 @@ const formatDuration = (seconds: number) => {
   return `${Math.floor(value / 60)}:${String(value % 60).padStart(2, '0')}`
 }
 
-useHead({ title: 'Library - GilTube Music' })
+useHead({ title: () => t('music.library.pageTitle') })
 </script>
 
 <style scoped>

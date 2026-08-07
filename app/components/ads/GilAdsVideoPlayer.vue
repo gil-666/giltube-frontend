@@ -14,14 +14,14 @@
         <div class="gilads-preroll-controls">
           <div class="absolute inset-x-0 top-0 flex items-start justify-between gap-3 bg-gradient-to-b from-black/75 to-transparent p-4">
             <div class="pointer-events-auto flex max-w-[calc(100%-4rem)] items-center gap-2 rounded-full border border-cyan-300/30 bg-black/60 px-3 py-1 text-xs text-cyan-200">
-              <span class="shrink-0 font-semibold uppercase tracking-[0.18em]">Sponsored</span>
+              <span class="shrink-0 font-semibold uppercase tracking-[0.18em]">{{ t('ads.sponsored') }}</span>
               <span class="truncate font-medium normal-case tracking-normal text-white/85">{{ prerollAd.creative.headline || 'Sponsored video' }}</span>
             </div>
             <button
               type="button"
               class="pointer-events-auto flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-white/15 bg-black/70 text-sm font-bold text-white transition hover:bg-black"
-              aria-label="About this sponsor"
-              title="About this sponsor"
+              :aria-label="t('ads.about')"
+              :title="t('ads.about')"
               @click="showSponsorInfo = true"
             >
               i
@@ -63,7 +63,7 @@
       >
         <div class="w-full max-w-md rounded-lg bg-zinc-800" style="z-index: 2147483647 !important; position: relative; overflow: visible;">
           <div class="flex items-center justify-between border-b border-zinc-700 px-6 py-4">
-            <h2 class="text-lg font-semibold text-white">About this sponsor</h2>
+            <h2 class="text-lg font-semibold text-white">{{ t('ads.about') }}</h2>
             <button type="button" class="text-gray-400 hover:text-white" @click="showSponsorInfo = false">
               <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -73,13 +73,13 @@
 
           <div class="space-y-4 px-6 py-4">
             <div>
-              <p class="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-300/80">Sponsored video</p>
+              <p class="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-300/80">{{ t('ads.sponsoredVideo') }}</p>
               <h3 class="mt-1 text-base font-semibold text-white">{{ prerollAd.creative.headline || 'Sponsored video' }}</h3>
               <p v-if="prerollAd.creative.body" class="mt-2 text-sm text-zinc-300">{{ prerollAd.creative.body }}</p>
             </div>
 
             <div v-if="prerollAd.creative.destinationUrl" class="rounded border border-zinc-700 bg-zinc-900 p-3">
-              <p class="text-xs uppercase tracking-[0.18em] text-zinc-500">Sponsor link</p>
+              <p class="text-xs uppercase tracking-[0.18em] text-zinc-500">{{ t('ads.sponsorLink') }}</p>
               <p class="mt-1 break-all text-sm text-zinc-200">{{ prerollAd.creative.destinationUrl }}</p>
             </div>
 
@@ -135,6 +135,8 @@ import {
   trackGilAdEvent,
   type GilAdsServeResponse,
 } from '~/app/service/gilads'
+
+const { t } = useI18n()
 
 interface Props {
   src?: string

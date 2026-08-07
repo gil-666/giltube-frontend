@@ -4,7 +4,7 @@
             <div class="p-3 border-b border-zinc-800 flex items-center justify-between gap-2 bg-zinc-900 sticky top-0">
                 <div class="min-w-0">
                     <p class="font-semibold truncate">{{ channelName }} Chat</p>
-                    <p class="text-xs text-gray-400">Detached live chat window</p>
+                    <p class="text-xs text-gray-400">{{ t('live.detached') }}</p>
                 </div>
                 <div class="flex items-center gap-2">
                     <span
@@ -48,7 +48,7 @@
 
             <div class="p-3 border-t border-zinc-800 space-y-2">
                 <div v-if="isLoggedIn && availableChannels.length > 0" class="space-y-1">
-                    <label class="text-xs text-gray-400">Chat as</label>
+                    <label class="text-xs text-gray-400">{{ t('live.chatAs') }}</label>
                     <select v-model="selectedChatChannelId"
                         class="w-full bg-zinc-800 border border-zinc-700 rounded px-2 py-1.5 text-sm">
                         <option v-for="ch in availableChannels" :key="ch.id" :value="ch.id">{{ ch.name }}</option>
@@ -68,7 +68,7 @@
                 </div>
 
                 <div class="flex gap-2">
-                    <input v-model="chatInput" type="text" maxlength="500" placeholder="Say something..."
+                    <input v-model="chatInput" type="text" maxlength="500" :placeholder="t('live.saySomething')"
                         @keydown.enter="sendChatMessage"
                         class="flex-1 bg-zinc-800 border border-zinc-700 rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-500" />
                     <button @click="sendChatMessage" :disabled="chatSending || !canSendChat"
@@ -95,6 +95,8 @@ import {
     type LiveStreamState
 } from '~/app/service/live'
 import { useMetaTags } from '~/app/composables/useMetaTags'
+
+const { t } = useI18n()
 
 // Disable default layout to completely ignore header
 definePageMeta({ layout: false })

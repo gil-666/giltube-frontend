@@ -35,7 +35,15 @@
           <div :key="featuredItem.id" class="streaming-hero-copy">
             <p class="streaming-eyebrow">{{ eyebrow }}</p>
             <h1 class="streaming-hero-title">{{ featuredItem.title }}</h1>
-            <p class="streaming-hero-synopsis">{{ featuredItem.synopsis }}</p>
+            <button
+              v-if="featuredItem.synopsis"
+              type="button"
+              class="streaming-hero-synopsis"
+              :aria-label="`${detailsLabel}: ${featuredItem.title}`"
+              @click="$emit('open', featuredItem)"
+            >
+              {{ featuredItem.synopsis }}
+            </button>
             <div class="mt-4 flex flex-wrap gap-2 text-xs text-zinc-300">
               <span v-if="featuredItem.genre" class="rounded bg-white/10 px-2 py-1">{{ featuredItem.genre }}</span>
               <span v-for="meta in featuredItem.meta || []" :key="meta" class="rounded bg-white/10 px-2 py-1">{{ meta }}</span>
@@ -126,7 +134,7 @@
               <button
                 type="button"
                 class="streaming-modal-close"
-                :aria-label="`Close ${itemLabel} details`"
+                :aria-label="t('common.close')"
                 @click.stop="$emit('close')"
               >
                 &times;
@@ -144,9 +152,9 @@
                 <div class="streaming-modal-actions">
                   <NuxtLink
                     v-if="selectedItem.resumeLink"
-                :to="selectedItem.resumeLink"
-                class="streaming-modal-primary-action"
-              >
+                    :to="selectedItem.resumeLink"
+                    class="streaming-modal-primary-action"
+                  >
                     <span class="streaming-modal-action-icon streaming-modal-action-icon-dark">
                       <svg class="streaming-play-icon" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
                         <path d="M6 4.75v10.5a.75.75 0 0 0 1.16.63l8-5.25a.75.75 0 0 0 0-1.26l-8-5.25A.75.75 0 0 0 6 4.75Z" />
@@ -314,11 +322,35 @@ onBeforeUnmount(() => {
 }
 
 .streaming-hero-synopsis {
+  display: -webkit-box;
+  overflow: hidden;
+  width: fit-content;
   margin-top: 1rem;
   max-width: 42rem;
+  padding: 0;
+  border: 0;
+  appearance: none;
+  background: transparent;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
   color: rgb(228 228 231);
+  cursor: pointer;
+  font-family: inherit;
   font-size: 1rem;
   line-height: 1.6;
+  text-align: left;
+  text-overflow: ellipsis;
+  transition: color 160ms ease;
+}
+
+.streaming-hero-synopsis:hover {
+  color: #fff;
+}
+
+.streaming-hero-synopsis:focus-visible {
+  border-radius: 0.25rem;
+  outline: 2px solid rgba(255, 255, 255, 0.9);
+  outline-offset: 0.25rem;
 }
 
 .streaming-hero-actions {
@@ -449,10 +481,10 @@ onBeforeUnmount(() => {
   inset: 0;
   z-index: 2147483646;
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: center;
   overflow: hidden;
-  padding: 0.75rem;
+  padding: clamp(0.5rem, 2vw, 1rem);
   color: #fff;
   background: rgba(0, 0, 0, 0.8);
   backdrop-filter: blur(6px);
@@ -462,21 +494,30 @@ onBeforeUnmount(() => {
   display: flex;
   width: 100%;
   max-width: 64rem;
-  max-height: calc(100vh - 1.5rem);
+  max-height: calc(100vh - clamp(1rem, 4vw, 2rem));
+  max-height: calc(100dvh - clamp(1rem, 4vw, 2rem));
   flex-direction: column;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scroll-behavior: smooth;
   border-radius: 0.25rem;
   background: rgb(9 9 11);
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.75);
   outline: 1px solid rgba(255, 255, 255, 0.1);
+  scrollbar-color: rgba(113, 113, 122, 0.75) rgba(24, 24, 27, 0.25);
+  scrollbar-width: thin;
 }
 
 .streaming-modal-hero {
-  position: relative;
-  height: 13rem;
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  height: clamp(12.5rem, 28dvh, 18rem);
   flex: 0 0 auto;
   overflow: hidden;
   background: rgb(24 24 27);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.08), 0 14px 30px rgba(0, 0, 0, 0.3);
 }
 
 .streaming-modal-image {
@@ -635,39 +676,36 @@ onBeforeUnmount(() => {
 }
 
 .streaming-modal-body {
-  min-height: 0;
-  flex: 1 1 auto;
-  overflow-y: auto;
-  overscroll-behavior: contain;
+  flex: 0 0 auto;
   padding: 1rem;
-  scrollbar-color: rgba(113, 113, 122, 0.75) rgba(24, 24, 27, 0.25);
-  scrollbar-width: thin;
 }
 
-.streaming-modal-body::-webkit-scrollbar {
-  width: 10px;
+.streaming-modal-panel::-webkit-scrollbar {
+  width: 6px;
 }
 
-.streaming-modal-body::-webkit-scrollbar-track {
-  background: rgba(24, 24, 27, 0.35);
-  border-left: 1px solid rgba(63, 63, 70, 0.25);
+.streaming-modal-panel::-webkit-scrollbar-track {
+  background: transparent;
 }
 
-.streaming-modal-body::-webkit-scrollbar-thumb {
+.streaming-modal-panel::-webkit-scrollbar-thumb {
   min-height: 48px;
   background: linear-gradient(180deg, rgba(161, 161, 170, 0.72), rgba(82, 82, 91, 0.78));
-  border: 2px solid rgba(24, 24, 27, 0.9);
+  border: 1px solid rgba(24, 24, 27, 0.75);
   border-radius: 999px;
 }
 
-.streaming-modal-body::-webkit-scrollbar-thumb:hover {
+.streaming-modal-panel::-webkit-scrollbar-thumb:hover {
   background: linear-gradient(180deg, rgba(212, 212, 216, 0.86), rgba(113, 113, 122, 0.9));
 }
 
 @media (max-width: 639px) {
+  .streaming-hero-synopsis {
+    -webkit-line-clamp: 2;
+  }
+
   .streaming-modal-hero {
-    min-height: 16.5rem;
-    height: auto;
+    height: clamp(15rem, 37dvh, 18rem);
   }
 
   .streaming-modal-title {
@@ -722,10 +760,7 @@ onBeforeUnmount(() => {
 
   .streaming-modal-panel {
     max-height: calc(100vh - 2rem);
-  }
-
-  .streaming-modal-hero {
-    height: 18rem;
+    max-height: calc(100dvh - 2rem);
   }
 
   .streaming-modal-copy,

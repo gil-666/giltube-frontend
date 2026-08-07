@@ -23,15 +23,15 @@
       </div>
       <div :class="copyClass">
         <div class="min-w-0 flex-1">
-          <p class="text-[10px] font-semibold uppercase tracking-[0.18em] text-cyan-300/80">Sponsored</p>
+          <p class="text-[10px] font-semibold uppercase tracking-[0.18em] text-cyan-300/80">{{ t('ads.sponsored') }}</p>
           <h3 class="truncate text-xs font-semibold text-white">{{ ad.creative.headline || fallbackTitle }}</h3>
           <p v-if="ad.creative.body" class="truncate text-xs text-zinc-400">{{ ad.creative.body }}</p>
         </div>
         <button
           type="button"
           class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/5 text-xs font-bold text-zinc-300 transition hover:bg-white/10 hover:text-white"
-          aria-label="About this sponsor"
-          title="About this sponsor"
+          :aria-label="t('ads.about')"
+          :title="t('ads.about')"
           @click.prevent.stop="showSponsorInfo = true"
         >
           i
@@ -48,7 +48,7 @@
       >
         <div class="w-full max-w-md rounded-lg bg-zinc-800" style="z-index: 2147483647 !important; position: relative; overflow: visible;">
           <div class="flex items-center justify-between border-b border-zinc-700 px-6 py-4">
-            <h2 class="text-lg font-semibold text-white">About this sponsor</h2>
+            <h2 class="text-lg font-semibold text-white">{{ t('ads.about') }}</h2>
             <button type="button" class="text-gray-400 hover:text-white" @click="showSponsorInfo = false">
               <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -58,13 +58,13 @@
 
           <div class="space-y-4 px-6 py-4">
             <div>
-              <p class="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-300/80">Sponsored ad</p>
+              <p class="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-300/80">{{ t('ads.sponsoredAd') }}</p>
               <h3 class="mt-1 text-base font-semibold text-white">{{ ad.creative.headline || fallbackTitle }}</h3>
               <p v-if="ad.creative.body" class="mt-2 text-sm text-zinc-300">{{ ad.creative.body }}</p>
             </div>
 
             <div v-if="ad.creative.destinationUrl" class="rounded border border-zinc-700 bg-zinc-900 p-3">
-              <p class="text-xs uppercase tracking-[0.18em] text-zinc-500">Sponsor link</p>
+              <p class="text-xs uppercase tracking-[0.18em] text-zinc-500">{{ t('ads.sponsorLink') }}</p>
               <p class="mt-1 break-all text-sm text-zinc-200">{{ ad.creative.destinationUrl }}</p>
             </div>
 
@@ -90,6 +90,8 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { serveGilAd, trackGilAdEvent, type GilAdsServeResponse } from '~/app/service/gilads'
+
+const { t } = useI18n()
 
 interface Props {
   placement: string

@@ -379,7 +379,7 @@
               <h2 class="mt-1 truncate text-2xl font-black">{{ t('admin.mediaIngests.audio.title') }}</h2>
               <p class="mt-1 truncate text-sm text-zinc-500">{{ audioPanelItem.title }}</p>
             </div>
-            <button type="button" :disabled="bulkAudioImporting" class="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-zinc-800 text-2xl text-white hover:bg-zinc-700 disabled:opacity-50" aria-label="Close" @click="closeAudioPanel">×</button>
+            <button type="button" :disabled="bulkAudioImporting" class="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-zinc-800 text-2xl text-white hover:bg-zinc-700 disabled:opacity-50" :aria-label="t('common.close')" @click="closeAudioPanel">×</button>
           </header>
 
           <div class="min-h-0 flex-1 overflow-y-auto px-5 py-5 sm:px-8">
@@ -556,7 +556,7 @@
               <h2 class="mt-1 truncate text-2xl font-black">{{ t('admin.mediaIngests.subtitles.title') }}</h2>
               <p class="mt-1 truncate text-sm text-zinc-500">{{ subtitlePanelItem.title }}</p>
             </div>
-            <button type="button" :disabled="subtitleImporting" class="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-zinc-800 text-2xl hover:bg-zinc-700 disabled:opacity-50" aria-label="Close" @click="closeSubtitlePanel">×</button>
+            <button type="button" :disabled="subtitleImporting" class="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-zinc-800 text-2xl hover:bg-zinc-700 disabled:opacity-50" :aria-label="t('common.close')" @click="closeSubtitlePanel">×</button>
           </header>
 
           <div class="min-h-0 flex-1 overflow-y-auto px-5 py-5 sm:px-8">

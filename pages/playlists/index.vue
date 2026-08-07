@@ -59,12 +59,12 @@
           <div class="flex items-center gap-3 mt-4 pt-4 border-t border-zinc-700">
             <AvatarFallback
               :src="creatorAvatarUrl"
-              name="You"
+              :name="t('common.you')"
               class="h-8 w-8 shrink-0 text-xs"
             />
             <div class="min-w-0">
-              <p class="text-sm font-medium text-gray-200 truncate">You</p>
-              <p class="text-xs text-gray-500">Created {{ formatDate(playlist.created_at) }}</p>
+              <p class="text-sm font-medium text-gray-200 truncate">{{ t('common.you') }}</p>
+              <p class="text-xs text-gray-500">{{ t('playlists.createdLabel') }} {{ formatDate(playlist.created_at) }}</p>
             </div>
           </div>
           

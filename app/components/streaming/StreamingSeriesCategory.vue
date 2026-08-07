@@ -634,7 +634,6 @@ const EpisodeThumb = defineComponent({
 }
 
 .series-synopsis {
-  display: none;
   max-width: 48rem;
   color: rgb(212 212 216);
   font-size: 0.875rem;
@@ -1018,10 +1017,6 @@ const EpisodeThumb = defineComponent({
 }
 
 @media (min-width: 768px) {
-  .series-synopsis {
-    display: block;
-  }
-
   .series-mobile-episodes-header,
   .episode-grid {
     display: none;

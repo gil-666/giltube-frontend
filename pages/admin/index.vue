@@ -852,8 +852,8 @@
               <div v-if="episode.subtitles.length" class="mt-3 space-y-2">
                 <div v-for="track in episode.subtitles" :key="track.id" class="flex flex-col gap-3 rounded bg-zinc-900 px-3 py-2 sm:flex-row sm:items-center sm:justify-between">
                   <div class="grid min-w-0 flex-1 gap-2 sm:grid-cols-[8rem_minmax(0,1fr)]">
-                    <input v-model="track.language" placeholder="en" class="rounded border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-xs text-white placeholder-gray-500" />
-                    <input v-model="track.label" placeholder="English" class="rounded border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-xs text-white placeholder-gray-500" />
+                    <input v-model="track.language" :placeholder="t('videoEditor.languagePlaceholder')" class="rounded border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-xs text-white placeholder-gray-500" />
+                    <input v-model="track.label" :placeholder="t('videoEditor.languageNamePlaceholder')" class="rounded border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-xs text-white placeholder-gray-500" />
                     <p class="text-xs text-gray-500 sm:col-span-2">{{ track.language || 'und' }} · {{ track.default ? t('movieAdmin.subtitles.default') : t('movieAdmin.subtitles.optional') }}</p>
                   </div>
                   <div class="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
@@ -887,8 +887,8 @@
 
               <div class="mt-4 grid gap-3 md:grid-cols-[minmax(0,1fr)_8rem_10rem_8rem_8rem]">
                 <input type="file" accept=".srt,.ass,.vtt,text/vtt" class="block w-full text-sm text-gray-300 file:mr-3 file:rounded file:border-0 file:bg-zinc-700 file:px-3 file:py-2 file:text-white" @change="onSubtitleFileSelected($event, index)" />
-                <input v-model="episode.subtitleLanguage" placeholder="en" class="rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-white placeholder-gray-500" />
-                <input v-model="episode.subtitleLabel" placeholder="English" class="rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-white placeholder-gray-500" />
+                <input v-model="episode.subtitleLanguage" :placeholder="t('videoEditor.languagePlaceholder')" class="rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-white placeholder-gray-500" />
+                <input v-model="episode.subtitleLabel" :placeholder="t('videoEditor.languageNamePlaceholder')" class="rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-white placeholder-gray-500" />
                 <label class="flex items-center gap-2 rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-xs text-gray-300">
                   <input v-model="episode.subtitleDefault" type="checkbox" class="h-4 w-4 accent-red-600" />
                   {{ t('movieAdmin.subtitles.default') }}
@@ -908,8 +908,8 @@
             <div v-if="episode.attached" class="mt-4 rounded border border-zinc-800 bg-black/30 p-4">
               <div class="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                  <h4 class="text-sm font-semibold text-white">Audio tracks</h4>
-                  <p class="mt-1 text-xs text-gray-500">Edit audio track titles/languages, choose the default, or add/replace alternate audio tracks.</p>
+                  <h4 class="text-sm font-semibold text-white">{{ t('videoEditor.audio.title') }}</h4>
+                  <p class="mt-1 text-xs text-gray-500">{{ t('videoEditor.audio.body') }}</p>
                 </div>
                 <button type="button" class="rounded bg-zinc-800 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-zinc-700" @click="loadEpisodeAudioTracks(episode)">
                   {{ t('common.refresh') }}
@@ -919,8 +919,8 @@
               <div v-if="episode.audioTracks.length" class="mt-3 space-y-2">
                 <div v-for="track in episode.audioTracks" :key="track.id" class="flex flex-wrap items-center justify-between gap-3 rounded bg-zinc-900 px-3 py-2">
                   <div class="grid min-w-0 flex-1 gap-2 sm:grid-cols-[8rem_minmax(0,1fr)]">
-                    <input v-model="track.language" placeholder="en" class="rounded border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-xs text-white placeholder-gray-500" />
-                    <input v-model="track.label" placeholder="English" class="rounded border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-xs text-white placeholder-gray-500" />
+                    <input v-model="track.language" :placeholder="t('videoEditor.languagePlaceholder')" class="rounded border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-xs text-white placeholder-gray-500" />
+                    <input v-model="track.label" :placeholder="t('videoEditor.languageNamePlaceholder')" class="rounded border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-xs text-white placeholder-gray-500" />
                     <p class="text-xs text-gray-500 sm:col-span-2">{{ track.language || 'und' }} · {{ track.default ? t('movieAdmin.subtitles.default') : t('movieAdmin.subtitles.optional') }} · {{ track.delay_ms || 0 }}ms</p>
                   </div>
                   <div class="flex flex-wrap gap-2">
@@ -942,19 +942,19 @@
                   </div>
                 </div>
               </div>
-              <p v-else class="mt-3 text-sm text-gray-500">No alternate audio tracks found.</p>
+              <p v-else class="mt-3 text-sm text-gray-500">{{ t('videoEditor.audio.empty') }}</p>
 
               <div class="mt-4 grid gap-3 md:grid-cols-[minmax(0,1fr)_8rem_10rem_8rem_8rem]">
                 <input type="file" accept="audio/*,video/*,.mka,.mkv,.mp4,.aac,.mp3,.wav,.flac,.m4a" class="block w-full text-sm text-gray-300 file:mr-3 file:rounded file:border-0 file:bg-zinc-700 file:px-3 file:py-2 file:text-white" @change="onAudioFileSelected($event, index)" />
-                <input v-model="episode.audioLanguage" placeholder="en" class="rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-white placeholder-gray-500" />
-                <input v-model="episode.audioLabel" placeholder="English" class="rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-white placeholder-gray-500" />
+                <input v-model="episode.audioLanguage" :placeholder="t('videoEditor.languagePlaceholder')" class="rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-white placeholder-gray-500" />
+                <input v-model="episode.audioLabel" :placeholder="t('videoEditor.languageNamePlaceholder')" class="rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-white placeholder-gray-500" />
                 <label class="flex items-center gap-2 rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-xs text-gray-300">
                   <input v-model="episode.audioDefault" type="checkbox" class="h-4 w-4 accent-red-600" />
                   {{ t('movieAdmin.subtitles.default') }}
                 </label>
-                <input v-model.number="episode.audioDelayMS" type="number" step="100" placeholder="Delay ms" class="rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-white placeholder-gray-500" />
+                <input v-model.number="episode.audioDelayMS" type="number" step="100" :placeholder="t('movieAdmin.subtitles.delayMs')" class="rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-white placeholder-gray-500" />
               </div>
-              <p class="mt-2 text-xs text-gray-500">Audio delay is applied when adding/replacing a file. Existing encoded tracks can only edit title/language/default.</p>
+              <p class="mt-2 text-xs text-gray-500">{{ t('videoEditor.audio.delayHelp') }}</p>
               <div class="mt-3 flex flex-wrap gap-2">
                 <button type="button" :disabled="(!episode.audioFile && !episode.audioReplacingTrackId) || episode.audioUploading" class="rounded bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50" @click="saveAudioTrack(index, episode.audioReplacingTrackId)">
                   {{ episode.audioUploading ? t('common.saving') : episode.audioReplacingTrackId ? 'Save audio track' : 'Add audio track' }}

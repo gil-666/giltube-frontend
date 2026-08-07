@@ -44,7 +44,7 @@
           <p class="text-xs text-gray-400 mt-1">{{ t('createChannelPage.avatarHelper') }}</p>
           <!-- Avatar Preview -->
           <div v-if="avatarPreview" class="mt-3 flex items-center gap-3">
-            <img :src="avatarPreview" alt="Avatar preview" class="w-12 h-12 rounded-full object-cover border border-zinc-700" />
+            <img :src="avatarPreview" :alt="t('common.avatarPreview')" class="w-12 h-12 rounded-full object-cover border border-zinc-700" />
             <button
               type="button"
               @click="clearAvatar"
@@ -67,7 +67,7 @@
           <p class="text-xs text-gray-400 mt-1">{{ t('createChannelPage.backgroundHelper') }}</p>
           <div v-if="backgroundPreview" class="mt-3 space-y-2">
             <div class="relative h-32 overflow-hidden rounded-lg border border-zinc-700 bg-zinc-800">
-              <img :src="backgroundPreview" alt="Background preview" class="h-full w-full object-cover" />
+              <img :src="backgroundPreview" :alt="t('common.backgroundPreview')" class="h-full w-full object-cover" />
               <div class="absolute inset-0 bg-black/55" />
             </div>
             <button

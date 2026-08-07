@@ -1,35 +1,35 @@
 <template>
   <main class="music-search-page">
     <header class="page-header">
-      <h1>Search</h1>
+      <h1>{{ t('music.search.title') }}</h1>
       <form class="search-box" role="search" @submit.prevent="submitSearch">
         <svg viewBox="0 0 24 24" aria-hidden="true">
           <path d="m21 21-4.35-4.35m1.35-5.15a6.5 6.5 0 1 1-13 0 6.5 6.5 0 0 1 13 0Z" />
         </svg>
-        <input v-model="searchText" type="search" placeholder="Artists, albums, and singles" autocomplete="off">
-        <button v-if="searchText" type="button" aria-label="Clear search" @click="clearSearch">X</button>
+        <input v-model="searchText" type="search" :placeholder="t('music.search.placeholder')" autocomplete="off">
+        <button v-if="searchText" type="button" :aria-label="t('music.search.clear')" @click="clearSearch">X</button>
       </form>
     </header>
 
-    <div v-if="pending" class="page-state">Loading music...</div>
-    <div v-else-if="error" class="page-state">Unable to load music.</div>
+    <div v-if="pending" class="page-state">{{ t('music.common.loading') }}</div>
+    <div v-else-if="error" class="page-state">{{ t('music.common.loadError') }}</div>
 
     <template v-else>
       <section v-if="matchingArtists.length" class="result-section">
-        <h2>{{ query ? 'Artists' : 'Browse artists' }}</h2>
+        <h2>{{ query ? t('music.common.artists') : t('music.search.browseArtists') }}</h2>
         <div class="artist-grid">
           <NuxtLink v-for="artist in matchingArtists" :key="artist.id" :to="localePath(`/music/artists/${artist.slug}`)" class="artist-result">
             <AvatarFallback :src="resolveAvatarUrl(artist.avatar_url)" :name="artist.name" class="artist-avatar" />
             <span>
               <strong>{{ artist.name }}</strong>
-              <small>{{ artist.channel_name || 'Artist' }}</small>
+              <small>{{ artist.channel_name || t('music.common.artist') }}</small>
             </span>
           </NuxtLink>
         </div>
       </section>
 
       <section v-if="matchingReleases.length" class="result-section">
-        <h2>{{ query ? 'Releases' : 'Browse releases' }}</h2>
+        <h2>{{ query ? t('music.common.releases') : t('music.search.browseReleases') }}</h2>
         <div class="release-grid">
           <MusicReleaseTile
             v-for="release in matchingReleases"
@@ -42,7 +42,7 @@
       </section>
 
       <div v-if="query && !matchingArtists.length && !matchingReleases.length" class="page-state">
-        No music found for “{{ searchText.trim() }}”.
+        {{ t('music.search.noResults', { query: searchText.trim() }) }}
       </div>
     </template>
   </main>
@@ -60,6 +60,7 @@ import { resolveAvatarUrl } from '~/app/utils/media'
 const route = useRoute()
 const router = useRouter()
 const localePath = useLocalePath()
+const { t } = useI18n()
 const { loadQueue } = useMusicPlayer()
 const searchText = ref(String(route.query.q || ''))
 const loadingReleaseID = ref('')
@@ -103,7 +104,7 @@ const playRelease = async (release: MusicRelease) => {
   }
 }
 
-useHead({ title: 'Search music - GilTube Music' })
+useHead({ title: () => t('music.search.pageTitle') })
 </script>
 
 <style scoped>

@@ -2,7 +2,7 @@
   <section class="mt-6">
     <div class="mb-4 flex items-center justify-between gap-3">
       <div>
-        <h2 class="text-lg font-semibold text-white">Party queue</h2>
+        <h2 class="text-lg font-semibold text-white">{{ t('watchParty.queue.title') }}</h2>
         <p class="text-sm text-zinc-500">{{ queueItems.length }} item{{ queueItems.length === 1 ? '' : 's' }}</p>
       </div>
       <button
@@ -49,7 +49,7 @@
         class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-4 text-left transition hover:bg-white/10"
         @click="showMobileQueue = true"
       >
-        <span class="block text-sm font-semibold text-white">Open queue</span>
+        <span class="block text-sm font-semibold text-white">{{ t('watchParty.queue.open') }}</span>
         <span class="block text-xs text-zinc-500">{{ queueItems.length }} item{{ queueItems.length === 1 ? '' : 's' }}</span>
       </button>
     </div>
@@ -62,7 +62,7 @@
       <section class="flex max-h-[82vh] w-full flex-col rounded-t-2xl border border-white/10 bg-zinc-950">
         <div class="flex items-center justify-between border-b border-white/10 px-4 py-4">
           <div>
-            <h3 class="text-lg font-semibold text-white">Party queue</h3>
+            <h3 class="text-lg font-semibold text-white">{{ t('watchParty.queue.title') }}</h3>
             <p class="text-xs text-zinc-500">{{ queueItems.length }} item{{ queueItems.length === 1 ? '' : 's' }}</p>
           </div>
           <button type="button" class="rounded-full bg-white/10 px-3 py-1.5 text-sm font-bold hover:bg-white/15" @click="showMobileQueue = false">
@@ -115,7 +115,7 @@
         <section class="flex h-full w-full max-w-6xl flex-col overflow-hidden border border-white/10 bg-zinc-950/95 shadow-2xl backdrop-blur-xl sm:h-[min(88dvh,760px)] sm:rounded-2xl">
           <div class="border-b border-white/10 p-4 sm:p-5">
             <div class="flex items-center justify-between gap-3">
-              <h2 class="text-xl font-bold">Add video to queue</h2>
+              <h2 class="text-xl font-bold">{{ t('watchParty.queue.add') }}</h2>
               <button type="button" class="rounded-full bg-white/10 px-3 py-1.5 text-sm font-bold hover:bg-white/15" @click="showQueuePicker = false">
                 X
               </button>
@@ -124,13 +124,13 @@
               v-model="queueSearch"
               type="search"
               class="mt-4 w-full rounded-full bg-zinc-900 px-4 py-3 text-sm outline-none ring-1 ring-white/10 focus:ring-red-500"
-              placeholder="Search videos..."
+              :placeholder="t('watchParty.queue.search')"
               @input="handleQueueSearchInput"
             />
           </div>
           <div class="min-h-0 flex-1 overflow-y-auto p-4 sm:p-5">
-            <div v-if="queuePickerLoading" class="py-12 text-center text-sm text-zinc-400">Loading videos...</div>
-            <div v-else-if="queuePickerVideos.length === 0" class="py-12 text-center text-sm text-zinc-400">No videos found.</div>
+            <div v-if="queuePickerLoading" class="py-12 text-center text-sm text-zinc-400">{{ t('watchParty.queue.loading') }}</div>
+            <div v-else-if="queuePickerVideos.length === 0" class="py-12 text-center text-sm text-zinc-400">{{ t('watchParty.queue.empty') }}</div>
             <div v-else class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               <button
                 v-for="video in queuePickerVideos"
@@ -163,6 +163,8 @@
 import { onBeforeUnmount, ref, watch } from 'vue'
 import { getVideos } from '~/app/service/videos'
 import { searchWatchPartyVideos } from '~/app/service/watchParties'
+
+const { t } = useI18n()
 
 const props = defineProps<{
   queueItems: any[]

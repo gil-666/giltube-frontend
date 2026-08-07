@@ -16,12 +16,12 @@
       <aside
         v-if="currentTrack"
         class="global-music-player"
-        aria-label="Now playing"
+        :aria-label="t('music.player.nowPlaying')"
         @click.capture="suppressClickAfterSwipe"
         @touchstart.passive="startMiniPlayerSwipe"
         @touchend.passive="finishMiniPlayerSwipe"
       >
-        <button type="button" class="mini-track" title="Open player" @click="openDefaultPlayer">
+        <button type="button" class="mini-track" :title="t('music.player.open')" @click="openDefaultPlayer">
           <img v-if="currentTrack.cover_url" :src="imageVariantUrl(currentTrack.cover_url, 'sm')" alt="">
           <div v-else class="mini-cover-empty" />
           <span class="track-copy">
@@ -30,25 +30,25 @@
           </span>
         </button>
         <div class="mini-controls">
-          <button type="button" title="Previous track" aria-label="Previous track" @click="playPrevious">
+          <button type="button" :title="t('music.player.previous')" :aria-label="t('music.player.previous')" @click="playPrevious">
             <svg viewBox="0 0 24 24"><path d="M6 5v14M18 6l-9 6 9 6V6Z" /></svg>
           </button>
-          <button type="button" class="play" :title="state.playing ? 'Pause' : 'Play'" :aria-label="state.playing ? 'Pause' : 'Play'" @click="togglePlayback">
+          <button type="button" class="play" :title="state.playing ? t('music.player.pause') : t('music.player.play')" :aria-label="state.playing ? t('music.player.pause') : t('music.player.play')" @click="togglePlayback">
             <svg v-if="state.playing" viewBox="0 0 24 24"><path d="M7 5h4v14H7V5Zm6 0h4v14h-4V5Z" /></svg>
             <svg v-else viewBox="0 0 24 24"><path d="m8 5 11 7-11 7V5Z" /></svg>
           </button>
-          <button type="button" title="Next track" aria-label="Next track" @click="playNext">
+          <button type="button" :title="t('music.player.next')" :aria-label="t('music.player.next')" @click="playNext">
             <svg viewBox="0 0 24 24"><path d="M18 5v14M6 6l9 6-9 6V6Z" /></svg>
           </button>
-          <button type="button" title="Open queue" aria-label="Open queue" @click="openPlayer('queue')">
+          <button type="button" :title="t('music.player.openQueue')" :aria-label="t('music.player.openQueue')" @click="openPlayer('queue')">
             <svg viewBox="0 0 24 24"><path d="M4 6h12M4 11h12M4 16h8M18 14v6m-3-3h6" /></svg>
           </button>
-          <button type="button" title="Close player" aria-label="Close player" @click="clearQueue">
+          <button type="button" :title="t('music.player.close')" :aria-label="t('music.player.close')" @click="clearQueue">
             <svg viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18" /></svg>
           </button>
         </div>
         <div class="mini-timeline">
-          <input :value="state.currentTime" type="range" min="0" :max="state.duration || 0" step="0.1" aria-label="Track position" @input="seekFromInput">
+          <input :value="state.currentTime" type="range" min="0" :max="state.duration || 0" step="0.1" :aria-label="t('music.player.trackPosition')" @input="seekFromInput">
         </div>
       </aside>
     </Transition>
@@ -62,10 +62,10 @@
             :style="panelGestureStyle"
             role="dialog"
             aria-modal="true"
-            aria-label="Music player"
+            :aria-label="t('music.player.player')"
             @click.capture="suppressClickAfterSwipe"
           >
-            <button type="button" class="panel-close" title="Close" aria-label="Close player window" @click="closePanel">
+            <button type="button" class="panel-close" :title="t('common.close')" :aria-label="t('music.player.closeWindow')" @click="closePanel">
               <svg viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18" /></svg>
             </button>
 
@@ -107,39 +107,39 @@
                       @click="closePanel"
                     >
                       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 7 8 5-8 5V7Z" /><rect x="3" y="4" width="18" height="16" rx="2" /></svg>
-                      Watch video
+                      {{ t('music.player.watchVideo') }}
                     </NuxtLink>
                   </div>
                   <img
                     v-if="isPlayingLossless"
                     :src="hiResAudioLogo"
                     class="panel-hi-res"
-                    alt="Hi-Res Audio"
-                    title="Playing lossless master"
+                    :alt="t('music.release.hiResAudio')"
+                    :title="t('music.player.playingLossless')"
                   >
                 </div>
 
                 <div class="panel-timeline">
-                  <input :value="state.currentTime" type="range" min="0" :max="state.duration || 0" step="0.1" aria-label="Track position" @input="seekFromInput">
+                  <input :value="state.currentTime" type="range" min="0" :max="state.duration || 0" step="0.1" :aria-label="t('music.player.trackPosition')" @input="seekFromInput">
                   <span>{{ formatTime(state.currentTime) }}</span>
                   <span>{{ formatTime(state.duration) }}</span>
                 </div>
 
                 <div class="panel-transport">
-                  <button type="button" :class="{ active: state.shuffle }" :title="state.shuffle ? 'Turn shuffle off' : 'Turn shuffle on'" aria-label="Toggle shuffle" @click="toggleShuffle">
+                  <button type="button" :class="{ active: state.shuffle }" :title="state.shuffle ? t('music.player.shuffleOff') : t('music.player.shuffleOn')" :aria-label="t('music.player.toggleShuffle')" @click="toggleShuffle">
                     <svg viewBox="0 0 24 24"><path d="M4 7h3c4 0 6 10 10 10h3M17 4l3 3-3 3M4 17h3c1.7 0 3-1.8 4.2-4M15 7h5M17 14l3 3-3 3" /></svg>
                   </button>
-                  <button type="button" title="Previous track" aria-label="Previous track" @click="playPrevious">
+                  <button type="button" :title="t('music.player.previous')" :aria-label="t('music.player.previous')" @click="playPrevious">
                     <svg viewBox="0 0 24 24"><path d="M6 5v14M18 6l-9 6 9 6V6Z" /></svg>
                   </button>
-                  <button type="button" class="panel-play" :title="state.playing ? 'Pause' : 'Play'" :aria-label="state.playing ? 'Pause' : 'Play'" @click="togglePlayback">
+                  <button type="button" class="panel-play" :title="state.playing ? t('music.player.pause') : t('music.player.play')" :aria-label="state.playing ? t('music.player.pause') : t('music.player.play')" @click="togglePlayback">
                     <svg v-if="state.playing" viewBox="0 0 24 24"><path d="M7 5h4v14H7V5Zm6 0h4v14h-4V5Z" /></svg>
                     <svg v-else viewBox="0 0 24 24"><path d="m8 5 11 7-11 7V5Z" /></svg>
                   </button>
-                  <button type="button" title="Next track" aria-label="Next track" @click="playNext">
+                  <button type="button" :title="t('music.player.next')" :aria-label="t('music.player.next')" @click="playNext">
                     <svg viewBox="0 0 24 24"><path d="M18 5v14M6 6l9 6-9 6V6Z" /></svg>
                   </button>
-                  <button type="button" :class="{ active: state.repeat !== 'off' }" :title="repeatTitle" aria-label="Change repeat mode" @click="cycleRepeat">
+                  <button type="button" :class="{ active: state.repeat !== 'off' }" :title="repeatTitle" :aria-label="t('music.player.changeRepeat')" @click="cycleRepeat">
                     <svg viewBox="0 0 24 24"><path d="m17 2 3 3-3 3M4 11V9a4 4 0 0 1 4-4h12M7 22l-3-3 3-3m13-3v2a4 4 0 0 1-4 4H4" /></svg>
                     <span v-if="state.repeat === 'one'">1</span>
                   </button>
@@ -147,11 +147,11 @@
 
                 <label class="panel-volume">
                   <svg viewBox="0 0 24 24"><path d="M5 9v6h4l5 4V5L9 9H5Zm12.5.5a4 4 0 0 1 0 5M19.5 7a7 7 0 0 1 0 10" /></svg>
-                  <input :value="state.volume" type="range" min="0" max="1" step="0.05" aria-label="Volume" @input="setVolumeFromInput">
+                  <input :value="state.volume" type="range" min="0" max="1" step="0.05" :aria-label="t('music.player.volume')" @input="setVolumeFromInput">
                 </label>
               </section>
 
-              <section v-if="hasLyrics" class="lyrics-panel" aria-label="Lyrics">
+              <section v-if="hasLyrics" class="lyrics-panel" :aria-label="t('music.player.lyrics')">
                 <div v-if="currentTrack.cover_url" class="lyrics-art-backdrop" aria-hidden="true">
                   <img :src="imageVariantUrl(currentTrack.cover_url, 'lg')" alt="">
                 </div>
@@ -186,16 +186,16 @@
                     </p>
                   </template>
                   <div v-else class="lyrics-empty">
-                    <strong>No lyrics yet</strong>
-                    <span>Add lyrics to this track when they are available.</span>
+                    <strong>{{ t('music.player.noLyrics') }}</strong>
+                    <span>{{ t('music.player.noLyricsBody') }}</span>
                   </div>
                 </div>
               </section>
 
-              <section class="queue-panel" aria-label="Playback queue">
+              <section class="queue-panel" :aria-label="t('music.player.playbackQueue')">
                 <div class="queue-heading">
-                  <div><strong>Up next</strong><span>{{ state.queue.length }} tracks</span></div>
-                  <button type="button" @click="clearQueue">Clear</button>
+                  <div><strong>{{ t('music.player.upNext') }}</strong><span>{{ t('music.player.trackCount', state.queue.length, { count: state.queue.length }) }}</span></div>
+                  <button type="button" @click="clearQueue">{{ t('music.player.clear') }}</button>
                 </div>
                 <ol>
                   <li v-for="(track, index) in state.queue" :key="`${track.id}-${index}`" :class="{ active: index === state.currentIndex }">
@@ -207,13 +207,13 @@
                       </span>
                     </button>
                     <div class="queue-actions">
-                      <button type="button" title="Move up" aria-label="Move track up" :disabled="index === 0" @click="moveQueueItem(index, index - 1)">
+                      <button type="button" :title="t('music.player.moveUp')" :aria-label="t('music.player.moveTrackUp')" :disabled="index === 0" @click="moveQueueItem(index, index - 1)">
                         <svg viewBox="0 0 24 24"><path d="m6 15 6-6 6 6" /></svg>
                       </button>
-                      <button type="button" title="Move down" aria-label="Move track down" :disabled="index === state.queue.length - 1" @click="moveQueueItem(index, index + 1)">
+                      <button type="button" :title="t('music.player.moveDown')" :aria-label="t('music.player.moveTrackDown')" :disabled="index === state.queue.length - 1" @click="moveQueueItem(index, index + 1)">
                         <svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6" /></svg>
                       </button>
-                      <button type="button" title="Remove from queue" aria-label="Remove track from queue" @click="removeFromQueue(index)">
+                      <button type="button" :title="t('music.player.removeQueue')" :aria-label="t('music.player.removeTrackQueue')" @click="removeFromQueue(index)">
                         <svg viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18" /></svg>
                       </button>
                     </div>
@@ -222,10 +222,10 @@
               </section>
             </div>
 
-            <nav class="panel-tabs" aria-label="Player view">
-              <button type="button" class="mobile-player-tab" :class="{ active: state.panelView === 'player' }" :aria-pressed="state.panelView === 'player'" @click="setPanelView('player')">Now Playing</button>
-              <button v-if="hasLyrics" type="button" :class="{ active: state.panelView === 'lyrics' }" :aria-pressed="state.panelView === 'lyrics'" @click="setPanelView('lyrics')">Lyrics</button>
-              <button type="button" :class="{ active: state.panelView === 'queue' }" :aria-pressed="state.panelView === 'queue'" @click="setPanelView('queue')">Queue</button>
+            <nav class="panel-tabs" :aria-label="t('music.player.playerView')">
+              <button type="button" class="mobile-player-tab" :class="{ active: state.panelView === 'player' }" :aria-pressed="state.panelView === 'player'" @click="setPanelView('player')">{{ t('music.player.nowPlaying') }}</button>
+              <button v-if="hasLyrics" type="button" :class="{ active: state.panelView === 'lyrics' }" :aria-pressed="state.panelView === 'lyrics'" @click="setPanelView('lyrics')">{{ t('music.player.lyrics') }}</button>
+              <button type="button" :class="{ active: state.panelView === 'queue' }" :aria-pressed="state.panelView === 'queue'" @click="setPanelView('queue')">{{ t('music.player.queue') }}</button>
             </nav>
           </section>
         </div>
@@ -246,6 +246,7 @@ import { imageVariantSrcset, imageVariantUrl, resolveMediaUrl } from '~/app/util
 import hiResAudioLogo from '~/assets/hi-res-audio.png'
 
 const localePath = useLocalePath()
+const { t } = useI18n()
 const audioElement = ref<HTMLAudioElement | null>(null)
 const coverArtElement = ref<HTMLImageElement | null>(null)
 const lyricsScrollElement = ref<HTMLElement | null>(null)
@@ -342,9 +343,9 @@ const panelGestureStyle = computed(() => panelDragY.value > 0
   ? { '--panel-drag-y': `${panelDragY.value}px` }
   : undefined)
 const repeatTitle = computed(() => {
-  if (state.value.repeat === 'one') return 'Repeat current track'
-  if (state.value.repeat === 'all') return 'Repeat queue'
-  return 'Repeat is off'
+  if (state.value.repeat === 'one') return t('music.player.repeatTrack')
+  if (state.value.repeat === 'all') return t('music.player.repeatQueue')
+  return t('music.player.repeatOff')
 })
 const lyricsText = computed(() => String(currentTrack.value?.synced_lyrics || currentTrack.value?.lyrics || '').trim())
 const hasLyrics = computed(() => Boolean(lyricsText.value))

@@ -58,14 +58,14 @@
         <div class="flex flex-col gap-4">
           <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <p class="text-xs font-semibold uppercase tracking-[0.18em] text-red-300">Create clip</p>
+              <p class="text-xs font-semibold uppercase tracking-[0.18em] text-red-300">{{ t('video.clip.create') }}</p>
               <p class="mt-1 text-sm text-zinc-300">{{ formatClipTime(clipStart) }} - {{ formatClipTime(clipEnd) }} · max 30s</p>
             </div>
             <div class="grid grid-cols-2 gap-2 sm:flex sm:items-center">
               <button type="button" class="rounded-full bg-white px-4 py-2.5 text-sm font-bold text-black transition hover:bg-zinc-200" @click="toggleClipPlayback">
                 {{ clipPlayerPaused ? "Play" : "Pause" }}
               </button>
-              <button type="button" class="rounded-full bg-zinc-800 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-zinc-700" @click="cancelClipMode">Cancel</button>
+              <button type="button" class="rounded-full bg-zinc-800 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-zinc-700" @click="cancelClipMode">{{ t('video.clip.cancel') }}</button>
             </div>
           </div>
 
@@ -73,7 +73,7 @@
             <div class="grid gap-3 text-xs text-zinc-400 sm:grid-cols-[auto_minmax(12rem,1fr)_auto] sm:items-center">
               <span class="font-mono">{{ formatClipTime(clipViewportStart) }}</span>
               <label class="flex min-w-0 items-center gap-2 rounded-full bg-black/25 px-3 py-2">
-                <span class="font-semibold uppercase tracking-[0.14em] text-zinc-500">Zoom</span>
+                <span class="font-semibold uppercase tracking-[0.14em] text-zinc-500">{{ t('video.clip.zoom') }}</span>
                 <input
                   v-model.number="clipZoom"
                   type="range"
@@ -81,7 +81,7 @@
                   max="12"
                   step="1"
                   class="h-2 min-w-0 flex-1 accent-red-500"
-                  aria-label="Zoom clip timeline"
+                  :aria-label="t('video.clip.zoomTimeline')"
                 />
                 <span class="w-9 text-right font-bold text-zinc-300">{{ clipZoom }}x</span>
               </label>
@@ -96,9 +96,9 @@
               <div class="absolute left-4 right-4 top-1/2 h-3 -translate-y-1/2 rounded-full bg-zinc-700" />
               <div class="pointer-events-none absolute inset-y-3 left-1/2 w-px bg-white/10" />
               <div class="absolute top-1/2 z-10 h-8 -translate-y-1/2 rounded-full bg-red-500/40 ring-1 ring-red-300/40" :style="clipSelectionStyle" />
-              <button type="button" class="clip-handle absolute top-1/2 z-20 h-16 w-7 -translate-x-1/2 -translate-y-1/2 rounded-full bg-red-400 shadow-[0_0_18px_rgba(248,113,113,0.55)] sm:h-14 sm:w-5" :style="clipStartHandleStyle" aria-label="Move clip start" @pointerdown.stop="startClipDrag('start', $event)" />
-              <button type="button" class="clip-handle absolute top-1/2 z-20 h-16 w-7 -translate-x-1/2 -translate-y-1/2 rounded-full bg-red-400 shadow-[0_0_18px_rgba(248,113,113,0.55)] sm:h-14 sm:w-5" :style="clipEndHandleStyle" aria-label="Move clip end" @pointerdown.stop="startClipDrag('end', $event)" />
-              <button type="button" class="absolute bottom-3 top-3 z-30 w-4 -translate-x-1/2 rounded-full bg-white shadow-[0_0_18px_rgba(255,255,255,0.5)] ring-1 ring-black/20 sm:w-3" :style="clipPlayheadStyle" aria-label="Seek clip preview" @pointerdown.stop="startClipDrag('playhead', $event)">
+              <button type="button" class="clip-handle absolute top-1/2 z-20 h-16 w-7 -translate-x-1/2 -translate-y-1/2 rounded-full bg-red-400 shadow-[0_0_18px_rgba(248,113,113,0.55)] sm:h-14 sm:w-5" :style="clipStartHandleStyle" :aria-label="t('video.clip.moveStart')" @pointerdown.stop="startClipDrag('start', $event)" />
+              <button type="button" class="clip-handle absolute top-1/2 z-20 h-16 w-7 -translate-x-1/2 -translate-y-1/2 rounded-full bg-red-400 shadow-[0_0_18px_rgba(248,113,113,0.55)] sm:h-14 sm:w-5" :style="clipEndHandleStyle" :aria-label="t('video.clip.moveEnd')" @pointerdown.stop="startClipDrag('end', $event)" />
+              <button type="button" class="absolute bottom-3 top-3 z-30 w-4 -translate-x-1/2 rounded-full bg-white shadow-[0_0_18px_rgba(255,255,255,0.5)] ring-1 ring-black/20 sm:w-3" :style="clipPlayheadStyle" :aria-label="t('video.clip.seekPreview')" @pointerdown.stop="startClipDrag('playhead', $event)">
                 <span class="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-[115%] rounded-full border border-white/20 bg-white px-2 py-1 text-[11px] font-black text-black shadow-lg">
                   {{ formatClipTime(playerCurrentTime) }}
                 </span>
@@ -202,7 +202,7 @@
               v-if="isLoggedIn && canCreateClip"
               @click="startClipMode"
               class="flex items-center gap-2 px-4 py-2 rounded-lg transition text-sm font-medium bg-zinc-700 hover:bg-zinc-600"
-              title="Create clip"
+              :title="t('video.clip.create')"
             >
               <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <circle cx="6" cy="6" r="3" />
@@ -211,14 +211,14 @@
                 <path d="M14.47 14.48 20 20" />
                 <path d="M8.12 8.12 12 12" />
               </svg>
-              <span>Clip</span>
+              <span>{{ t('video.clip.button') }}</span>
             </button>
 
             <button
               v-if="isLoggedIn"
               @click="showAddToPlaylist = true"
               class="flex items-center gap-2 px-4 py-2 rounded-lg transition text-sm font-medium bg-zinc-700 hover:bg-zinc-600"
-              title="Add to Playlist"
+              :title="t('video.addPlaylist')"
             >
               <span class="text-lg font-bold">+</span>
               <span>{{ t('playlists.addVideoButton') }}</span>
@@ -227,7 +227,7 @@
             <button
               @click="shareVideo"
               class="flex items-center gap-2 px-4 py-2 rounded-lg transition text-sm font-medium bg-zinc-700 hover:bg-zinc-600"
-              title="Share"
+              :title="t('video.share')"
             >
               <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 12v7a1 1 0 001 1h14a1 1 0 001-1v-7"/>
@@ -242,7 +242,7 @@
               @click="downloadCurrentVideo"
               :disabled="isDownloadingVideo"
               class="flex items-center gap-2 px-4 py-2 rounded-lg transition text-sm font-medium bg-zinc-700 hover:bg-zinc-600 disabled:cursor-not-allowed disabled:opacity-60"
-              title="Download"
+              :title="t('video.download')"
             >
               <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M12 3v12" />
@@ -338,7 +338,7 @@
           class="music-attribution mt-3"
           aria-labelledby="music-in-video-heading"
         >
-          <h2 id="music-in-video-heading" class="music-attribution-heading">Music in this video</h2>
+          <h2 id="music-in-video-heading" class="music-attribution-heading">{{ t('video.musicInVideo') }}</h2>
 
           <div class="music-attribution-track">
             <NuxtLink
@@ -386,7 +386,7 @@
               <svg viewBox="0 0 24 24" aria-hidden="true">
                 <path d="M8 5v14l11-7z" />
               </svg>
-              <span>Listen</span>
+              <span>{{ t('video.listen') }}</span>
             </NuxtLink>
           </div>
 
@@ -500,14 +500,14 @@
 
         <section v-if="clipsOfThisVideo.length" class="mt-6 rounded-lg border border-zinc-800 bg-zinc-950/70 p-4">
           <div class="mb-4 flex items-center justify-between gap-3">
-            <h2 class="text-lg font-bold">Clips of this video</h2>
+            <h2 class="text-lg font-bold">{{ t('video.clip.clips') }}</h2>
             <span class="text-xs font-semibold uppercase tracking-[0.18em] text-zinc-500">{{ clipsOfThisVideo.length }} clips</span>
           </div>
           <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
             <NuxtLink v-for="clip in clipsOfThisVideo" :key="clip.id" :to="clipVideoLink(clip.id)" class="group min-w-0">
               <div class="relative aspect-video overflow-hidden rounded-lg bg-zinc-800">
                 <img v-if="clip.thumbnail_url" :src="resolveMediaUrl(clip.thumbnail_url)" :alt="clip.title" class="h-full w-full object-cover transition group-hover:opacity-80" />
-                <div v-else class="flex h-full w-full items-center justify-center text-xs text-zinc-500">No thumbnail</div>
+                <div v-else class="flex h-full w-full items-center justify-center text-xs text-zinc-500">{{ t('video.clip.noThumbnail') }}</div>
                 <span class="absolute bottom-2 right-2 rounded bg-black/80 px-1.5 py-0.5 text-[11px] font-bold text-white">{{ formatClipDuration(clip) }}</span>
               </div>
               <p class="mt-2 line-clamp-2 text-sm font-semibold text-zinc-200 group-hover:text-red-300">{{ clip.title }}</p>
@@ -713,7 +713,7 @@
               type="button"
               @click="showGiphyPicker = true"
               class="px-3 py-2 text-gray-400 hover:text-white transition text-sm flex items-center gap-1"
-              title="Add GIF"
+              :title="t('video.addGif')"
             >
               <span>GIF</span>
             </button>
@@ -795,7 +795,7 @@
         size="600x600"
         variant="square"
         :context="{ page: 'watch', videoId: id, channelId: video?.channel?.id }"
-        fallback-title="Watch page sponsor"
+        :fallback-title="t('video.sponsorFallback')"
         class="mb-5"
       />
       <h2 class="text-lg font-bold mb-4">{{ t('video.relatedVideos') }}</h2>
@@ -860,7 +860,7 @@
           size="600x600"
           variant="square"
           :context="{ page: 'watch', videoId: id, channelId: video?.channel?.id }"
-          fallback-title="Watch page sponsor"
+          :fallback-title="t('video.sponsorFallback')"
           class="mb-4"
         />
 
