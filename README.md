@@ -10,8 +10,6 @@
 <p align="center">
   <a href="https://giltube.gilservers.com"><strong>Open GilTube</strong></a>
   ·
-  <a href="https://github.com/gil-666/giltube-backend">Backend repository</a>
-  ·
   <a href="https://github.com/gil-666">Developer profile</a>
 </p>
 
@@ -30,9 +28,16 @@
 
 The public instance is the working product, not a static design mockup. It runs the Nuxt SSR application, Go API, PostgreSQL, Redis-backed jobs and presence, FFmpeg media workers, persistent media storage, and an Nginx gateway behind the production edge.
 
+<p align="center"><strong>Desktop</strong></p>
+
 <p align="center">
-  <img src="./public/screenshot-wide.png" alt="GilTube movie catalog" width="47%">
-  <img src="./public/screenshot-narrow.png" alt="GilTube mobile movie catalog" width="47%">
+  <img src="./public/giltube-desktop.png" alt="GilTube desktop home screen" width="100%">
+</p>
+
+<p align="center"><strong>Mobile</strong></p>
+
+<p align="center">
+  <img src="./public/giltube-mobile.png" alt="GilTube mobile home screen" width="380">
 </p>
 
 ## What GilTube is
@@ -243,7 +248,7 @@ Media Ingest can inspect a second source, list its audio and subtitle streams, i
 
 ## Frontend repository
 
-This repository contains the Nuxt application. The API and media worker live in the separate [giltube-backend](https://github.com/gil-666/giltube-backend) repository.
+This repository contains the Nuxt application. The API and media-worker services are maintained separately.
 
 ```text
 giltube-frontend/
