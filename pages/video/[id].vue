@@ -1021,7 +1021,7 @@
                 <NuxtLink :to="localePath(`/channel/${relatedVideo.channel?.id}`)" class="text-xs text-gray-400 hover:text-yellow-400 transition">{{ relatedVideo.channel?.name }}</NuxtLink>
                 <VerifiedBadge :verified="relatedVideo.channel?.verified || false" size="sm" />
               </div>
-              <p class="text-xs text-gray-500">{{ relatedVideo.views }} views</p>
+              <p class="text-xs text-gray-500">{{ formatViews(relatedVideo.views) }} views</p>
             </NuxtLink>
           </div>
           
@@ -1050,7 +1050,7 @@
                 <NuxtLink :to="localePath(`/channel/${relatedVideo.channel?.id}`)" class="text-xs text-gray-400 hover:text-yellow-400 transition">{{ relatedVideo.channel?.name }}</NuxtLink>
                 <VerifiedBadge :verified="relatedVideo.channel?.verified || false" size="sm" />
               </div>
-              <p class="text-xs text-gray-500">{{ relatedVideo.views }} views</p>
+              <p class="text-xs text-gray-500">{{ formatViews(relatedVideo.views) }} views</p>
             </NuxtLink>
           </div>
         </div>
@@ -1238,7 +1238,7 @@ import CommentNode from '~/app/components/comments/CommentNode.vue'
 import GiphyPicker from '~/app/components/GiphyPicker.vue'
 import AddToPlaylistModal from '~/app/components/AddToPlaylistModal.vue'
 import { GILADS_PLACEMENTS } from '~/app/service/gilads'
-import { getVideo, incrementViews, getVideos, likeVideo, unlikeVideo, checkIfLiked, getWatchProgress, getWatchProgressMap, saveWatchProgress, createVideoClip, getVideoClips, downloadVideo as downloadVideoService } from '~/app/service/videos'
+import { getVideo, getRelatedVideos, incrementViews, likeVideo, unlikeVideo, checkIfLiked, getWatchProgress, getWatchProgressMap, saveWatchProgress, createVideoClip, getVideoClips, downloadVideo as downloadVideoService } from '~/app/service/videos'
 import { getSeries, getSeriesEpisodeContext, getSeriesTrailerContext, suggestSeriesEpisodeIntro } from '~/app/service/series'
 import { getMovieVideoContext, getMovieTrailerContext } from '~/app/service/movies'
 import { getMusicVideoContext, type MusicTrack } from '~/app/service/music'
@@ -2023,9 +2023,8 @@ onMounted(async () => {
 
   // Always load related videos so mobile can still surface recommendations during playlist playback
   try {
-    const allVideos = await getVideos()
-    relatedVideos.value = allVideos.filter((v: any) => v.id !== id).slice(0, 10)
-    await loadProgressForVideos(relatedVideos.value.map((video: any) => video.id))
+    relatedVideos.value = await getRelatedVideos(id, 10)
+    void loadProgressForVideos(relatedVideos.value.map((relatedVideo: any) => relatedVideo.id))
   } catch (err) {
     console.error('Failed to load related videos:', err)
   }

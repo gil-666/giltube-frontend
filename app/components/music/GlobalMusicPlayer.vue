@@ -5,6 +5,11 @@
       :src="selectedAudioURL ? resolveMediaUrl(selectedAudioURL) : ''"
       preload="metadata"
       @loadedmetadata="onLoadedMetadata"
+      @loadstart="onAudioLoadStart"
+      @waiting="onAudioWaiting"
+      @stalled="onAudioWaiting"
+      @canplay="onAudioReady"
+      @playing="onAudioReady"
       @timeupdate="onTimeUpdate"
       @play="onPlay"
       @pause="onPause"
@@ -109,6 +114,11 @@
                       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 7 8 5-8 5V7Z" /><rect x="3" y="4" width="18" height="16" rx="2" /></svg>
                       {{ t('music.player.watchVideo') }}
                     </NuxtLink>
+                  </div>
+                  <div v-if="audioLoading" class="panel-track-loading" role="status" :aria-label="t('music.player.loadingTrack')">
+                    <span />
+                    <span />
+                    <span />
                   </div>
                   <img
                     v-if="isPlayingLossless"
@@ -260,6 +270,7 @@ const musicQuality = ref<MusicQuality>('auto')
 const musicQualityReady = ref(false)
 const networkRevision = ref(0)
 const sourceFallback = ref(false)
+const audioLoading = ref(false)
 const panelSwipeStartX = ref(0)
 const panelSwipeStartY = ref(0)
 const panelDragY = ref(0)
@@ -534,6 +545,7 @@ const cancelPanelSwipe = () => {
 const loadCurrentAudio = async (autoplay: boolean) => {
   await nextTick()
   if (!audioElement.value) return
+  audioLoading.value = true
   audioElement.value.load()
   audioElement.value.volume = state.value.volume
   if (autoplay) {
@@ -554,10 +566,28 @@ const reloadCurrentSource = async () => {
 }
 
 const onAudioError = async () => {
-  if (!currentTrack.value || sourceFallback.value) return
-  if (selectedAudioURL.value !== losslessStreamUrl(currentTrack.value) || !currentTrack.value.audio_high_url) return
+  if (!currentTrack.value || sourceFallback.value) {
+    audioLoading.value = false
+    return
+  }
+  if (selectedAudioURL.value !== losslessStreamUrl(currentTrack.value) || !currentTrack.value.audio_high_url) {
+    audioLoading.value = false
+    return
+  }
   sourceFallback.value = true
   await reloadCurrentSource()
+}
+
+const onAudioLoadStart = () => {
+  audioLoading.value = Boolean(currentTrack.value)
+}
+
+const onAudioWaiting = () => {
+  audioLoading.value = Boolean(currentTrack.value)
+}
+
+const onAudioReady = () => {
+  audioLoading.value = false
 }
 
 const getAdjacentIndex = (direction: 1 | -1) => {
@@ -1225,6 +1255,47 @@ svg {
   margin-left: auto;
   border-radius: 2px;
   object-fit: contain;
+}
+
+.panel-track-loading {
+  display: flex;
+  width: 28px;
+  height: 28px;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  border-radius: 50%;
+  background: rgb(39 39 42 / 0.78);
+  color: rgb(248 113 113);
+}
+
+.panel-track-loading span {
+  width: 3px;
+  height: 11px;
+  border-radius: 999px;
+  background: currentColor;
+  animation: track-loading-wave 780ms ease-in-out infinite;
+  transform-origin: center;
+}
+
+.panel-track-loading span:nth-child(2) {
+  animation-delay: 130ms;
+}
+
+.panel-track-loading span:nth-child(3) {
+  animation-delay: 260ms;
+}
+
+@keyframes track-loading-wave {
+  0%, 100% { transform: scaleY(0.35); opacity: 0.55; }
+  50% { transform: scaleY(1); opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .panel-track-loading span {
+    animation: none;
+  }
 }
 
 .panel-timeline {

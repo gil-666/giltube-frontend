@@ -67,7 +67,27 @@
               <h2 class="text-lg font-semibold">{{ t('home.movies') }}</h2>
               <p class="text-sm text-zinc-400">{{ t('home.moviesBody') }}</p>
             </div>
-            <NuxtLink :to="localePath('/category/movies')" class="text-sm font-medium text-zinc-300 hover:text-white">{{ t('home.viewAll') }}</NuxtLink>
+            <div class="flex items-center gap-3">
+              <NuxtLink :to="localePath('/category/movies')" class="text-sm font-medium text-zinc-300 hover:text-white">{{ t('home.viewAll') }}</NuxtLink>
+              <div class="hidden items-center gap-2 xl:flex">
+                <button
+                  type="button"
+                  class="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/5 text-lg text-white transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
+                  :disabled="moviesHomeLoading"
+                  @click="scrollCarousel('movies', -1)"
+                >
+                  ‹
+                </button>
+                <button
+                  type="button"
+                  class="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/5 text-lg text-white transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
+                  :disabled="moviesHomeLoading"
+                  @click="scrollCarousel('movies', 1)"
+                >
+                  ›
+                </button>
+              </div>
+            </div>
           </div>
           <div class="-mx-6 px-6 sm:mx-0 sm:px-0">
             <div v-if="moviesHomeLoading" aria-hidden="true" class="homepage-carousel flex snap-x gap-4 overflow-hidden pb-3 sm:gap-5 xl:gap-6">
@@ -89,7 +109,27 @@
               <h2 class="text-lg font-semibold">{{ t('home.series') }}</h2>
               <p class="text-sm text-zinc-400">{{ t('home.seriesBody') }}</p>
             </div>
-            <NuxtLink :to="localePath('/category/series')" class="text-sm font-medium text-zinc-300 hover:text-white">{{ t('home.viewAll') }}</NuxtLink>
+            <div class="flex items-center gap-3">
+              <NuxtLink :to="localePath('/category/series')" class="text-sm font-medium text-zinc-300 hover:text-white">{{ t('home.viewAll') }}</NuxtLink>
+              <div class="hidden items-center gap-2 xl:flex">
+                <button
+                  type="button"
+                  class="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/5 text-lg text-white transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
+                  :disabled="seriesHomeLoading"
+                  @click="scrollCarousel('series', -1)"
+                >
+                  ‹
+                </button>
+                <button
+                  type="button"
+                  class="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/5 text-lg text-white transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
+                  :disabled="seriesHomeLoading"
+                  @click="scrollCarousel('series', 1)"
+                >
+                  ›
+                </button>
+              </div>
+            </div>
           </div>
           <div class="-mx-6 px-6 sm:mx-0 sm:px-0">
             <div v-if="seriesHomeLoading" aria-hidden="true" class="homepage-carousel flex snap-x gap-4 overflow-hidden pb-3 sm:gap-5 xl:gap-6">

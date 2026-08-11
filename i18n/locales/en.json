@@ -838,6 +838,7 @@
     },
     "player": {
       "nowPlaying": "Now playing",
+      "loadingTrack": "Loading track",
       "selectTrack": "Select a track",
       "open": "Open player",
       "close": "Close player",

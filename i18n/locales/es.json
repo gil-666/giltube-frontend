@@ -838,6 +838,7 @@
     },
     "player": {
       "nowPlaying": "Reproduciendo",
+      "loadingTrack": "Cargando canción",
       "selectTrack": "Selecciona una canci\u00f3n",
       "open": "Abrir reproductor",
       "close": "Cerrar reproductor",
