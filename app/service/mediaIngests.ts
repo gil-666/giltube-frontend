@@ -127,8 +127,17 @@ export const importMediaIngestAudioTrack = async (id: string, data: {
   delay_ms?: number
   trim_start_ms?: number
 }) => {
-  const res = await api.post(`/admin/media-ingests/${id}/audio-tracks`, data, { timeout: 0 })
-  return res.data
+  const res = await api.post(`/admin/media-ingests/${id}/audio-tracks`, data)
+  const jobId = String(res.data?.job_id || '')
+  if (!jobId) return res.data
+
+  while (true) {
+    await new Promise(resolve => setTimeout(resolve, 1200))
+    const statusRes = await api.get(`/admin/media-ingests/${id}/audio-jobs/${jobId}`)
+    const job = statusRes.data || {}
+    if (job.status === 'completed') return job.result
+    if (job.status === 'failed') throw new Error(job.error || 'Failed to extract audio.')
+  }
 }
 
 export const listMediaIngestSubtitleSources = async (id: string) => {

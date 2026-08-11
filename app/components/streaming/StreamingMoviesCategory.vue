@@ -30,7 +30,7 @@
       <div class="movie-details-layout">
         <div class="movie-poster-column">
           <div class="movie-poster-frame">
-            <img :src="item.posterUrl" :alt="item.title" class="movie-poster-image" />
+            <img :src="item.posterUrl" :alt="item.title" class="movie-poster-image" decoding="async" />
           </div>
         </div>
         <div class="movie-details-main">
@@ -72,7 +72,7 @@
                 class="movie-related-card group"
               >
                 <div class="movie-related-thumb">
-                  <img :src="movie.backdropUrl" :alt="movie.title" />
+                  <img :src="movie.backdropUrl" :alt="movie.title" loading="lazy" decoding="async" />
                   <div v-if="movie.progressPercent > 0" class="movie-related-progress">
                     <div :style="{ width: `${movie.progressPercent}%` }" />
                   </div>
@@ -137,9 +137,12 @@ const route = useRoute()
 const router = useRouter()
 const localePath = useLocalePath()
 const { t } = useI18n()
+const props = defineProps({
+  initialMovie: { type: Object, default: null },
+})
 const loading = ref(false)
 const error = ref('')
-const movies = ref([])
+const movies = ref(props.initialMovie ? [props.initialMovie] : [])
 const activeFeaturedIndex = ref(0)
 const selectedMovieId = ref('')
 const watchProgressByVideoId = ref({})
@@ -151,6 +154,9 @@ const watchPartyMovie = ref(null)
 const moviePartySavedProgress = ref(null)
 const useSavedMovieProgress = ref(false)
 let featuredHeroTimer = null
+let catalogLoadHandle = null
+let progressLoadHandle = null
+let catalogLoaded = false
 
 const updateModalQueryParam = (key, value = '') => {
   if (typeof window === 'undefined') return
@@ -358,13 +364,17 @@ const startFeaturedHeroTimer = () => {
   }, 7000)
 }
 
-const loadMovieProgress = async () => {
+const loadMovieProgress = async (items = movies.value) => {
   const userId = typeof window !== 'undefined' ? localStorage.getItem('user_id') : ''
-  if (!userId || !movies.value.length) return
+  if (!userId || !items.length) return
   try {
-    const videoIds = movies.value.map((movie) => movie.video_id || movie.video?.id).filter(Boolean)
+    const videoIds = items.map((movie) => movie.video_id || movie.video?.id).filter(Boolean)
+    if (!videoIds.length) return
     const data = await getWatchProgressMap(videoIds)
-    watchProgressByVideoId.value = data?.progress || {}
+    watchProgressByVideoId.value = {
+      ...watchProgressByVideoId.value,
+      ...(data?.progress || {}),
+    }
   } catch (err) {
     console.error('Failed to load movie progress:', err)
   }
@@ -382,15 +392,20 @@ const updateMetaTags = () => {
 }
 
 const loadMoviesCategory = async () => {
+  if (catalogLoaded || loading.value) return
   loading.value = true
   error.value = ''
   try {
     const data = await listMovies()
+    const existingById = new Map(movies.value.map((movie) => [movie.id, movie]))
     movies.value = (data.movies || []).filter((movie) => {
       const channelId = movie.channel_id || movie.video?.channel?.id
       return channelId === GILTUBE_MOVIES_CHANNEL_ID
-    })
-    await loadMovieProgress()
+    }).map((movie) => ({ ...movie, ...(existingById.get(movie.id) || {}) }))
+    if (props.initialMovie && !movies.value.some((movie) => movie.id === props.initialMovie.id)) {
+      movies.value.unshift(props.initialMovie)
+    }
+    catalogLoaded = true
     startFeaturedHeroTimer()
     const requestedMovieId = typeof route.query.movie_id === 'string' ? route.query.movie_id : ''
     if (requestedMovieId) {
@@ -398,6 +413,15 @@ const loadMoviesCategory = async () => {
       if (movie) await openMovieModal(movie, false)
     }
     updateMetaTags()
+    const loadProgress = () => {
+      progressLoadHandle = null
+      loadMovieProgress()
+    }
+    if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+      progressLoadHandle = window.requestIdleCallback(loadProgress, { timeout: 2000 })
+    } else {
+      progressLoadHandle = setTimeout(loadProgress, 250)
+    }
   } catch (err) {
     console.error('Failed to load movies:', err)
     error.value = t('moviesCategory.errors.load')
@@ -446,14 +470,39 @@ watch(() => route.query.movie_id, async (movieId) => {
   await syncMovieModalFromId(id)
 })
 
+const scheduleCatalogLoad = () => {
+  const run = () => {
+    catalogLoadHandle = null
+    loadMoviesCategory()
+  }
+  if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+    catalogLoadHandle = window.requestIdleCallback(run, { timeout: props.initialMovie ? 2500 : 500 })
+  } else {
+    catalogLoadHandle = setTimeout(run, props.initialMovie ? 600 : 0)
+  }
+}
+
 onMounted(() => {
   if (typeof window !== 'undefined') {
     window.addEventListener('popstate', syncMovieModalFromUrl)
   }
-  loadMoviesCategory()
+  const requestedMovieId = typeof route.query.movie_id === 'string' ? route.query.movie_id : ''
+  if (requestedMovieId && props.initialMovie?.id === requestedMovieId) {
+    selectedMovieId.value = props.initialMovie.id
+    loadMovieProgress([props.initialMovie])
+  } else if (requestedMovieId) {
+    syncMovieModalFromId(requestedMovieId)
+  }
+  updateMetaTags()
+  scheduleCatalogLoad()
 })
 onUnmounted(() => {
   stopFeaturedHeroTimer()
+  for (const handle of [catalogLoadHandle, progressLoadHandle]) {
+    if (handle == null) continue
+    if (typeof window !== 'undefined' && 'cancelIdleCallback' in window) window.cancelIdleCallback(handle)
+    else clearTimeout(handle)
+  }
   if (typeof window !== 'undefined') {
     window.removeEventListener('popstate', syncMovieModalFromUrl)
   }

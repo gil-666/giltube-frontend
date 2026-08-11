@@ -1,6 +1,6 @@
 <template>
-  <StreamingSeriesCategory v-if="isSeriesCategory" />
-  <StreamingMoviesCategory v-else-if="isMoviesCategory" />
+  <StreamingSeriesCategory v-if="isSeriesCategory" :initial-series="ssrSeriesMeta" />
+  <StreamingMoviesCategory v-else-if="isMoviesCategory" :initial-movie="ssrMovieMeta" />
 
   <main v-else class="flex-1">
     <div class="p-6">
@@ -10,7 +10,7 @@
         <div v-for="video in videos" :key="video.id">
           <NuxtLink :to="localePath(`/video/${video.id}`)">
             <div class="relative aspect-video overflow-hidden rounded-xl bg-zinc-800">
-              <img class="h-full w-full object-cover" :src="getThumbnailUrl(video)" :alt="video.title" />
+              <img class="h-full w-full object-cover" :src="getThumbnailUrl(video)" :alt="video.title" loading="lazy" decoding="async" />
               <div v-if="videoProgressPercent(video.id) > 0" class="absolute inset-x-0 bottom-0 h-1 bg-black/55">
                 <div class="h-full bg-red-600" :style="{ width: `${videoProgressPercent(video.id)}%` }" />
               </div>

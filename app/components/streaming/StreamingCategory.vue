@@ -26,6 +26,8 @@
             :src="featuredItem.backdropUrl || featuredItem.posterUrl"
             :alt="featuredItem.title"
             class="streaming-hero-image"
+            decoding="async"
+            fetchpriority="high"
           />
         </Transition>
         <div class="streaming-hero-side-fade" />
@@ -96,6 +98,8 @@
                     :src="item.posterUrl || item.backdropUrl"
                     :alt="item.title"
                     class="streaming-poster-image"
+                    loading="lazy"
+                    decoding="async"
                   />
                   <div v-if="progressPercent(item) > 0" class="streaming-poster-progress">
                     <div :style="{ width: `${progressPercent(item)}%` }" />
@@ -129,7 +133,7 @@
         >
           <section class="streaming-modal-panel">
             <div class="streaming-modal-hero">
-              <img :src="selectedItem.backdropUrl || selectedItem.posterUrl" :alt="selectedItem.title" class="streaming-modal-image" />
+              <img :src="selectedItem.backdropUrl || selectedItem.posterUrl" :alt="selectedItem.title" class="streaming-modal-image" decoding="async" fetchpriority="high" />
               <div class="streaming-modal-fade" />
               <button
                 type="button"
@@ -398,6 +402,11 @@ onBeforeUnmount(() => {
   flex-direction: column;
   gap: 2.5rem;
   padding: 0 1.5rem 3rem;
+}
+
+.streaming-section {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 24rem;
 }
 
 .streaming-card {

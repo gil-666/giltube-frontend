@@ -30,7 +30,7 @@
       <div v-if="selectedSeries" class="series-details-layout">
         <div class="series-poster-column">
           <div class="series-poster-frame">
-            <img :src="getSeriesImage(selectedSeries, 'poster')" :alt="selectedSeries.title" class="series-poster-image" />
+            <img :src="getSeriesImage(selectedSeries, 'poster')" :alt="selectedSeries.title" class="series-poster-image" decoding="async" />
           </div>
         </div>
         <div class="series-details-main">
@@ -201,9 +201,12 @@ const route = useRoute()
 const router = useRouter()
 const localePath = useLocalePath()
 const { t } = useI18n()
+const props = defineProps({
+  initialSeries: { type: Object, default: null },
+})
 const loading = ref(false)
 const error = ref('')
-const allSeries = ref([])
+const allSeries = ref(props.initialSeries ? [props.initialSeries] : [])
 const groups = ref([])
 const featuredItems = ref([])
 const activeFeaturedIndex = ref(0)
@@ -222,6 +225,8 @@ const useSavedSeriesProgress = ref(false)
 const seriesPartyStartMode = ref('first')
 const seriesPartyStartVideoId = ref('')
 let featuredHeroTimer = null
+let catalogLoadHandle = null
+let catalogLoaded = false
 
 const updateModalQueryParam = (key, value = '') => {
   if (typeof window === 'undefined') return
@@ -314,17 +319,6 @@ const mergeEpisodeProgress = (progressMap) => {
   selectedEpisodeProgressByVideoId.value = {
     ...selectedEpisodeProgressByVideoId.value,
     ...(progressMap || {}),
-  }
-}
-
-const loadEpisodeProgress = async () => {
-  const userId = typeof window !== 'undefined' ? localStorage.getItem('user_id') : ''
-  if (!userId || !selectedEpisodes.value.length) return
-  try {
-    const data = await getWatchProgressMap(selectedEpisodes.value.map(episodeVideoId))
-    mergeEpisodeProgress(data?.progress)
-  } catch (err) {
-    console.error('Failed to load episode progress:', err)
   }
 }
 
@@ -486,27 +480,28 @@ const updateMetaTags = () => {
 }
 
 const loadSeriesCategory = async () => {
+  if (catalogLoaded || loading.value) return
   loading.value = true
   error.value = ''
   try {
     const data = await listSeries()
-    const details = await Promise.all((data.series || []).map(async (item) => {
-      try {
-        const detail = normalizeSeriesDetail(await getSeries(item.id))
-        return { ...item, ...detail, episodes: detail?.episodes || [] }
-      } catch {
-        return { ...item, episodes: [] }
-      }
+    const existingById = new Map(allSeries.value.map((item) => [item.id, item]))
+    const summaries = (data.series || []).map((item) => ({
+      ...item,
+      ...(existingById.get(item.id) || {}),
     }))
-    allSeries.value = details
-    const byId = new Map(details.map((item) => [item.id, item]))
+    for (const existing of allSeries.value) {
+      if (!summaries.some((item) => item.id === existing.id)) summaries.push(existing)
+    }
+    allSeries.value = summaries
+    const byId = new Map(summaries.map((item) => [item.id, item]))
     groups.value = (data.genres || []).map((group) => ({
       ...group,
       series: (group.series || []).map((item) => byId.get(item.id) || item),
     }))
-    const featured = details.filter((item) => item.is_featured).slice(0, 5)
+    const featured = summaries.filter((item) => item.is_featured).slice(0, 5)
     if (!featured.length && data.featured) featured.push(byId.get(data.featured.id) || data.featured)
-    if (!featured.length && details[0]) featured.push(details[0])
+    if (!featured.length && summaries[0]) featured.push(summaries[0])
     featuredItems.value = featured.slice(0, 5)
     activeFeaturedIndex.value = 0
     startFeaturedHeroTimer()
@@ -515,6 +510,7 @@ const loadSeriesCategory = async () => {
     if (requestedSeriesId) {
       await openSeriesModal(findLoadedSeries(requestedSeriesId) || normalizeSeriesDetail(await getSeries(requestedSeriesId)), false)
     }
+    catalogLoaded = true
     updateMetaTags()
   } catch (err) {
     console.error('Failed to load series:', err)
@@ -532,19 +528,23 @@ watch(selectedSeries, async (series) => {
   selectedEpisodeProgressByVideoId.value = {}
   const userId = typeof window !== 'undefined' ? localStorage.getItem('user_id') : ''
   if (series?.id && userId) {
-    try {
-      const data = await getSeriesWatchProgress(series.id)
+    const selectedId = series.id
+    const [seriesProgressResult, episodeProgressResult] = await Promise.allSettled([
+      getSeriesWatchProgress(series.id),
+      selectedEpisodes.value.length
+        ? getWatchProgressMap(selectedEpisodes.value.map(episodeVideoId))
+        : Promise.resolve(null),
+    ])
+    if (selectedSeries.value?.id !== selectedId) return
+    if (seriesProgressResult.status === 'fulfilled') {
+      const data = seriesProgressResult.value
       selectedSeriesProgress.value = data?.progress && data?.episode ? data : null
-      if (data?.progress?.video_id) {
-        mergeEpisodeProgress({ [data.progress.video_id]: data.progress })
-      }
-    } catch (err) {
-      console.error('Failed to load series watch progress:', err)
+      if (data?.progress?.video_id) mergeEpisodeProgress({ [data.progress.video_id]: data.progress })
     }
-    await loadEpisodeProgress()
+    if (episodeProgressResult.status === 'fulfilled') mergeEpisodeProgress(episodeProgressResult.value?.progress)
   }
-  updateMetaTags()
-})
+  if (typeof window !== 'undefined') updateMetaTags()
+}, { immediate: true })
 
 const syncSeriesModalFromId = async (id) => {
   if (!id) {
@@ -566,16 +566,37 @@ watch(() => route.query.series_id, async (seriesId) => {
   await syncSeriesModalFromId(id)
 })
 
+const scheduleCatalogLoad = () => {
+  const run = () => {
+    catalogLoadHandle = null
+    loadSeriesCategory()
+  }
+  if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+    catalogLoadHandle = window.requestIdleCallback(run, { timeout: props.initialSeries ? 2500 : 500 })
+  } else {
+    catalogLoadHandle = setTimeout(run, props.initialSeries ? 600 : 0)
+  }
+}
+
 onMounted(async () => {
   if (typeof window !== 'undefined') {
     window.addEventListener('popstate', syncSeriesModalFromUrl)
   }
-  await loadSeriesCategory()
+  const requestedSeriesId = typeof route.query.series_id === 'string' ? route.query.series_id : ''
+  if (requestedSeriesId && selectedSeries.value?.id !== requestedSeriesId) {
+    await syncSeriesModalFromId(requestedSeriesId)
+  }
+  scheduleCatalogLoad()
   await nextTick()
 })
 
 onUnmounted(() => {
   stopFeaturedHeroTimer()
+  if (catalogLoadHandle != null && typeof window !== 'undefined' && 'cancelIdleCallback' in window) {
+    window.cancelIdleCallback(catalogLoadHandle)
+  } else if (catalogLoadHandle != null) {
+    clearTimeout(catalogLoadHandle)
+  }
   if (typeof window !== 'undefined') {
     window.removeEventListener('popstate', syncSeriesModalFromUrl)
   }
@@ -590,7 +611,7 @@ const EpisodeThumb = defineComponent({
   },
   setup(props) {
     return () => h('div', { class: 'series-episode-thumb' }, [
-      h('img', { src: props.src, alt: props.episode.title, class: 'series-episode-thumb-image' }),
+      h('img', { src: props.src, alt: props.episode.title, class: 'series-episode-thumb-image', loading: 'lazy', decoding: 'async' }),
       props.progress > 0 ? h('div', { class: 'series-episode-progress' }, [
         h('div', { style: { width: `${props.progress}%` } }),
       ]) : null,

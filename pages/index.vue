@@ -20,7 +20,7 @@
         {{ loadError }}
       </div>
 
-      <div v-else-if="recommendedVideos.length === 0 && publicWatchParties.length === 0 && homeMovies.length === 0 && homeSeries.length === 0" class="rounded-2xl border border-white/10 bg-white/5 p-8 text-center">
+      <div v-else-if="!secondaryHomeLoading && recommendedVideos.length === 0 && publicWatchParties.length === 0 && homeMovies.length === 0 && homeSeries.length === 0" class="rounded-2xl border border-white/10 bg-white/5 p-8 text-center">
         <h2 class="text-xl font-semibold">{{ t('home.noVideos') }}</h2>
         <p class="mt-2 text-sm text-zinc-400">{{ t('home.noVideosBody') }}</p>
         <NuxtLink :to="localePath('/upload')" class="mt-5 inline-flex rounded-full bg-white px-4 py-2 text-sm font-medium text-zinc-950 hover:bg-zinc-200">
@@ -28,7 +28,7 @@
         </NuxtLink>
       </div>
 
-      <div v-else class="space-y-8">
+      <div v-else class="home-sections space-y-8">
         <section v-if="continueWatchingItems.length > 0">
           <div class="mb-4 flex items-center justify-between gap-4">
             <div>
@@ -54,14 +54,14 @@
           </div>
           <div class="-mx-6 px-6 sm:mx-0 sm:px-0">
             <div :ref="setCarouselRef('continue')" class="homepage-carousel flex snap-x gap-4 overflow-x-auto scroll-smooth pb-3 sm:gap-5 xl:gap-6">
-              <div v-for="item in continueWatchingItems" :key="item.video.id" class="homepage-carousel-item homepage-carousel-item--wide shrink-0 snap-start">
-                <ContinueTile :item="item" class="h-full" />
+              <div v-for="(item, index) in continueWatchingItems" :key="item.video.id" class="homepage-carousel-item homepage-carousel-item--wide shrink-0 snap-start">
+                <ContinueTile :item="item" :eager="index === 0" class="h-full" />
               </div>
             </div>
           </div>
         </section>
 
-        <section v-if="homeMovies.length > 0">
+        <section v-if="moviesHomeLoading || homeMovies.length > 0">
           <div class="mb-4 flex items-center justify-between gap-4">
             <div>
               <h2 class="text-lg font-semibold">{{ t('home.movies') }}</h2>
@@ -70,7 +70,12 @@
             <NuxtLink :to="localePath('/category/movies')" class="text-sm font-medium text-zinc-300 hover:text-white">{{ t('home.viewAll') }}</NuxtLink>
           </div>
           <div class="-mx-6 px-6 sm:mx-0 sm:px-0">
-            <div :ref="setCarouselRef('movies')" class="homepage-carousel flex snap-x gap-4 overflow-x-auto scroll-smooth pb-3 sm:gap-5 xl:gap-6">
+            <div v-if="moviesHomeLoading" aria-hidden="true" class="homepage-carousel flex snap-x gap-4 overflow-hidden pb-3 sm:gap-5 xl:gap-6">
+              <div v-for="n in 8" :key="n" class="homepage-carousel-item homepage-carousel-item--poster shrink-0 snap-start">
+                <div class="aspect-[2/3] w-full animate-pulse rounded-2xl border border-white/10 bg-white/5" />
+              </div>
+            </div>
+            <div v-else :ref="setCarouselRef('movies')" class="homepage-carousel flex snap-x gap-4 overflow-x-auto scroll-smooth pb-3 sm:gap-5 xl:gap-6">
               <div v-for="movie in homeMovies" :key="movie.id" class="homepage-carousel-item homepage-carousel-item--poster shrink-0 snap-start">
                 <MediaPosterTile :item="movie" class="h-full" />
               </div>
@@ -78,7 +83,7 @@
           </div>
         </section>
 
-        <section v-if="homeSeries.length > 0">
+        <section v-if="seriesHomeLoading || homeSeries.length > 0">
           <div class="mb-4 flex items-center justify-between gap-4">
             <div>
               <h2 class="text-lg font-semibold">{{ t('home.series') }}</h2>
@@ -87,7 +92,12 @@
             <NuxtLink :to="localePath('/category/series')" class="text-sm font-medium text-zinc-300 hover:text-white">{{ t('home.viewAll') }}</NuxtLink>
           </div>
           <div class="-mx-6 px-6 sm:mx-0 sm:px-0">
-            <div :ref="setCarouselRef('series')" class="homepage-carousel flex snap-x gap-4 overflow-x-auto scroll-smooth pb-3 sm:gap-5 xl:gap-6">
+            <div v-if="seriesHomeLoading" aria-hidden="true" class="homepage-carousel flex snap-x gap-4 overflow-hidden pb-3 sm:gap-5 xl:gap-6">
+              <div v-for="n in 8" :key="n" class="homepage-carousel-item homepage-carousel-item--poster shrink-0 snap-start">
+                <div class="aspect-[2/3] w-full animate-pulse rounded-2xl border border-white/10 bg-white/5" />
+              </div>
+            </div>
+            <div v-else :ref="setCarouselRef('series')" class="homepage-carousel flex snap-x gap-4 overflow-x-auto scroll-smooth pb-3 sm:gap-5 xl:gap-6">
               <div v-for="series in homeSeries" :key="series.id" class="homepage-carousel-item homepage-carousel-item--poster shrink-0 snap-start">
                 <MediaPosterTile :item="series" class="h-full" />
               </div>
@@ -191,12 +201,12 @@
             </div>
           </div>
           <div class="grid gap-6 sm:grid-cols-2 md:grid-cols-3 xl:hidden">
-            <VideoTile v-for="video in recommendedVideos" :key="video.id" :video="video" />
+            <VideoTile v-for="(video, index) in recommendedVideos" :key="video.id" :video="video" :eager="index === 0" />
           </div>
           <div class="hidden xl:block">
             <div :ref="setCarouselRef('recommended')" class="homepage-carousel flex gap-6 overflow-x-auto scroll-smooth pb-2">
-              <div v-for="video in recommendedVideos" :key="video.id" class="homepage-carousel-item shrink-0">
-                <VideoTile :video="video" class="h-full" />
+              <div v-for="(video, index) in recommendedVideos" :key="video.id" class="homepage-carousel-item shrink-0">
+                <VideoTile :video="video" :eager="index === 0" class="h-full" />
               </div>
             </div>
           </div>
@@ -368,6 +378,9 @@ const continueWatchingItems = ref([])
 const liveChannelIds = ref(new Set())
 const watchProgressByVideoId = ref({})
 const isLoading = ref(true)
+const secondaryHomeLoading = ref(true)
+const moviesHomeLoading = ref(true)
+const seriesHomeLoading = ref(true)
 const isLoadingMore = ref(false)
 const currentPage = ref(0)
 const pageSize = 24
@@ -376,7 +389,10 @@ const loadError = ref('')
 const sentinelElement = ref(null)
 const homeAdInsertionIndex = ref(5)
 let intersectionObserver = null
+let deferredHomeLoadHandle = null
+let deferredHomeLoadStarted = false
 const carouselContainers = {}
+const homeFeedCacheTTL = 5 * 60 * 1000
 
 const isChannelLive = (channelId) => liveChannelIds.value.has(channelId)
 
@@ -424,11 +440,6 @@ const browseGridItems = computed(() => {
     ...items.slice(adIndex),
   ]
 })
-
-const loadLiveChannels = () => {
-  const active = listActiveLiveStreams()
-  liveChannelIds.value = new Set((active || []).map((entry) => entry.channel_id))
-}
 
 const getThumbnailUrl = (video) => {
   return imageVariantUrl(video?.thumbnail_url, 'md') || resolveMediaUrl(video?.thumbnail_url, '/videos/placeholder-thumbnail.jpg')
@@ -712,68 +723,136 @@ useMetaTags({
   description: t('home.description')
 })
 
+const applyRecentProgress = (recentProgress) => {
+  continueWatchingItems.value = normalizeContinueWatchingItems(recentProgress?.items || [])
+  for (const item of continueWatchingItems.value) {
+    if (item?.video?.id && item.progress) {
+      watchProgressByVideoId.value[item.video.id] = item.progress
+    }
+  }
+}
+
+const applyRecommendationFeed = (homeFeed) => {
+  const recommendedPool = homeFeed?.browse || []
+  recommendationSourceVideos.value = recommendedPool
+  if (Array.isArray(homeFeed?.recommended)) {
+    recommendedVideos.value = homeFeed.recommended || []
+    trendingVideos.value = homeFeed.trending || []
+    trustedVideos.value = homeFeed.trusted || []
+    freshVideos.value = homeFeed.fresh || []
+  } else {
+    buildCollections(recommendedPool)
+  }
+  browseVideos.value = recommendedPool.slice(0, pageSize)
+  resetHomeAdInsertionIndex(browseVideos.value.length)
+  currentPage.value = 1
+  hasMore.value = recommendedPool.length >= pageSize
+}
+
+const homeFeedCacheKey = (userId) => `giltube:home-feed:${userId || 'guest'}`
+
+const restoreCachedHomeFeed = (userId) => {
+  if (typeof window === 'undefined') return false
+  try {
+    const cached = JSON.parse(sessionStorage.getItem(homeFeedCacheKey(userId)) || 'null')
+    if (!cached?.savedAt || Date.now() - Number(cached.savedAt) > homeFeedCacheTTL || !cached.feed) return false
+    applyRecommendationFeed(cached.feed)
+    return true
+  } catch {
+    return false
+  }
+}
+
+const cacheHomeFeed = (userId, homeFeed) => {
+  if (typeof window === 'undefined') return
+  try {
+    sessionStorage.setItem(homeFeedCacheKey(userId), JSON.stringify({ savedAt: Date.now(), feed: homeFeed }))
+  } catch {
+    // Storage can be unavailable in private browsing; the network path still works.
+  }
+}
+
+const loadDeferredHomeSections = async () => {
+  const [activeLive, parties] = await Promise.all([
+    listActiveLiveStreams().catch((err) => {
+      console.warn('Live row unavailable:', err)
+      return []
+    }),
+    listPublicWatchParties().catch((err) => {
+      console.warn('Watch parties row unavailable:', err)
+      return []
+    }),
+  ])
+  liveStreams.value = (activeLive || []).slice(0, 12)
+  publicWatchParties.value = Array.isArray(parties) ? parties : []
+  liveChannelIds.value = new Set((activeLive || []).map((entry) => entry.channel_id))
+
+  const moviesData = await listMovies().catch((err) => {
+    console.warn('Movies row unavailable:', err)
+    return { movies: [] }
+  })
+  homeMovies.value = (moviesData?.movies || []).filter((movie) => movie.video_id || movie.video).slice(0, 12).map(toHomeMovie)
+  moviesHomeLoading.value = false
+
+  const seriesData = await listSeries().catch((err) => {
+    console.warn('Series row unavailable:', err)
+    return { series: [] }
+  })
+  homeSeries.value = (seriesData?.series || []).filter((series) => series.first_episode || series.episode_count > 0).slice(0, 12).map(toHomeSeries)
+  seriesHomeLoading.value = false
+  secondaryHomeLoading.value = false
+}
+
+const scheduleDeferredHomeSections = () => {
+  if (deferredHomeLoadStarted || deferredHomeLoadHandle != null) return
+  const run = () => {
+    deferredHomeLoadHandle = null
+    deferredHomeLoadStarted = true
+    loadDeferredHomeSections()
+  }
+  if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+    deferredHomeLoadHandle = window.requestIdleCallback(run, { timeout: 1800 })
+  } else {
+    deferredHomeLoadHandle = setTimeout(run, 250)
+  }
+}
+
 const loadHomeFeed = async () => {
   isLoading.value = true
   loadError.value = ''
+  const userId = typeof window !== 'undefined' ? localStorage.getItem('user_id') : ''
+  const restoredFromCache = restoreCachedHomeFeed(userId)
+  if (restoredFromCache) {
+    isLoading.value = false
+    scheduleDeferredHomeSections()
+  }
+  const recentProgressPromise = userId
+    ? getRecentWatchProgress(12).catch((err) => {
+        console.warn('Continue watching unavailable:', err)
+        return { items: [] }
+      })
+    : Promise.resolve({ items: [] })
+  recentProgressPromise.then(applyRecentProgress)
 
   try {
-    const userId = typeof window !== 'undefined' ? localStorage.getItem('user_id') : ''
-    const [homeFeed, activeLive, parties, moviesData, seriesData, recentProgress] = await Promise.all([
-      getHomeRecommendations({ limit: 72, offset: 0 }).catch(async (err) => {
-        console.warn('Personalized home feed unavailable, falling back to video list:', err)
-        const fallbackVideos = await getVideos({ limit: 48, offset: 0 })
-        return { browse: fallbackVideos || [] }
-      }),
-      listActiveLiveStreams(),
-      listPublicWatchParties(),
-      listMovies().catch((err) => {
-        console.warn('Movies row unavailable:', err)
-        return { movies: [] }
-      }),
-      listSeries().catch((err) => {
-        console.warn('Series row unavailable:', err)
-        return { series: [] }
-      }),
-      userId
-        ? getRecentWatchProgress(12).catch((err) => {
-            console.warn('Continue watching unavailable:', err)
-            return { items: [] }
-          })
-        : Promise.resolve({ items: [] }),
-    ])
+    const homeFeed = await getHomeRecommendations({ limit: 48, offset: 0 }).catch(async (err) => {
+      console.warn('Personalized home feed unavailable, falling back to video list:', err)
+      const fallbackVideos = await getVideos({ limit: 48, offset: 0 })
+      return { browse: fallbackVideos || [] }
+    })
+    applyRecommendationFeed(homeFeed)
+    cacheHomeFeed(userId, homeFeed)
+    isLoading.value = false
+    scheduleDeferredHomeSections()
 
-    const recommendedPool = homeFeed?.browse || []
-    recommendationSourceVideos.value = recommendedPool
-    liveStreams.value = (activeLive || []).slice(0, 12)
-    publicWatchParties.value = Array.isArray(parties) ? parties : []
-    homeMovies.value = (moviesData?.movies || []).filter((movie) => movie.video_id || movie.video).slice(0, 12).map(toHomeMovie)
-    homeSeries.value = (seriesData?.series || []).filter((series) => series.first_episode || series.episode_count > 0).slice(0, 12).map(toHomeSeries)
-    continueWatchingItems.value = normalizeContinueWatchingItems(recentProgress?.items || [])
-    liveChannelIds.value = new Set((activeLive || []).map((entry) => entry.channel_id))
-
-    if (Array.isArray(homeFeed?.recommended)) {
-      recommendedVideos.value = homeFeed.recommended || []
-      trendingVideos.value = homeFeed.trending || []
-      trustedVideos.value = homeFeed.trusted || []
-      freshVideos.value = homeFeed.fresh || []
-    } else {
-      buildCollections(recommendationSourceVideos.value)
-    }
-
-    browseVideos.value = recommendedPool.slice(0, pageSize)
-    resetHomeAdInsertionIndex(browseVideos.value.length)
-    await loadProgressForVideos(recommendedPool.map((video) => video.id))
-    for (const item of continueWatchingItems.value) {
-      if (item?.video?.id && item.progress) {
-        watchProgressByVideoId.value[item.video.id] = item.progress
-      }
-    }
-    currentPage.value = 1
-    hasMore.value = recommendedPool.length > pageSize
+    const initialProgressIds = [...new Set([
+      ...recommendedVideos.value.map((video) => video.id),
+      ...browseVideos.value.map((video) => video.id),
+    ].filter(Boolean))]
+    loadProgressForVideos(initialProgressIds)
   } catch (err) {
     console.error('Failed to load home feed:', err)
-    loadError.value = t('home.loadError')
-  } finally {
+    if (!restoredFromCache) loadError.value = t('home.loadError')
     isLoading.value = false
   }
 }
@@ -784,7 +863,10 @@ const loadMoreVideos = async () => {
   isLoadingMore.value = true
   try {
     const offset = currentPage.value * pageSize
-    const newVideos = await getVideos({ limit: pageSize, offset })
+    const bufferedVideos = recommendationSourceVideos.value.slice(offset, offset + pageSize)
+    const newVideos = bufferedVideos.length > 0
+      ? bufferedVideos
+      : await getVideos({ limit: pageSize, offset })
 
     if (!Array.isArray(newVideos) || newVideos.length === 0) {
       hasMore.value = false
@@ -792,7 +874,7 @@ const loadMoreVideos = async () => {
     }
 
     browseVideos.value = [...browseVideos.value, ...newVideos]
-    await loadProgressForVideos(newVideos.map((video) => video.id))
+    loadProgressForVideos(newVideos.map((video) => video.id))
     currentPage.value += 1
     hasMore.value = newVideos.length === pageSize
   } catch (err) {
@@ -830,6 +912,10 @@ const MediaPosterTile = defineComponent({
       type: Object,
       required: true,
     },
+    eager: {
+      type: Boolean,
+      default: false,
+    },
   },
   setup(props) {
     return () => h('article', { class: 'motion-card group h-full w-full min-w-0 overflow-hidden rounded-2xl border border-white/10 bg-white/5' }, [
@@ -840,6 +926,8 @@ const MediaPosterTile = defineComponent({
             srcset: getMediaImageSrcset(props.item) || undefined,
             sizes: '(min-width: 1280px) 14rem, 42vw',
             alt: props.item.title,
+            loading: 'lazy',
+            decoding: 'async',
             class: 'h-full w-full object-cover transition duration-200 group-hover:scale-[1.03]',
           }),
           h('div', { class: 'absolute inset-0 bg-gradient-to-t from-black/85 via-black/10 to-transparent opacity-90' }),
@@ -872,6 +960,9 @@ const ContinueTile = defineComponent({
             srcset: getContinueImageSrcset(props.item) || undefined,
             sizes: '(min-width: 1280px) 24rem, 85vw',
             alt: continueTitle(props.item),
+            loading: props.eager ? 'eager' : 'lazy',
+            decoding: 'async',
+            fetchpriority: props.eager ? 'high' : 'auto',
             class: 'h-full w-full object-cover transition duration-200 group-hover:scale-[1.02]',
           }),
           h('div', { class: 'absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent' }),
@@ -906,6 +997,10 @@ const VideoTile = defineComponent({
       type: String,
       default: '',
     },
+    eager: {
+      type: Boolean,
+      default: false,
+    },
   },
   setup(props) {
     const isLiveCard = () => !!props.liveHref || !!props.video.is_live
@@ -931,6 +1026,9 @@ const VideoTile = defineComponent({
             srcset: getVideoImageSrcset(props.video) || undefined,
             sizes: '(min-width: 1280px) 16rem, (min-width: 640px) 50vw, 100vw',
             alt: props.video.title,
+            loading: props.eager ? 'eager' : 'lazy',
+            decoding: 'async',
+            fetchpriority: props.eager ? 'high' : 'auto',
             class: 'h-full w-full object-cover transition duration-200 group-hover:scale-[1.02]',
           }),
           is8K()
@@ -1003,6 +1101,8 @@ const WatchPartyTile = defineComponent({
             srcset: getImageSrcset(props.party?.thumbnail_url) || undefined,
             sizes: '(min-width: 1280px) 24rem, (min-width: 640px) 50vw, 100vw',
             alt: props.party.video_title || props.party.title || 'Watch party',
+            loading: 'lazy',
+            decoding: 'async',
             class: 'h-full w-full object-cover transition duration-200 group-hover:scale-[1.02]',
           }),
           h('div', { class: 'absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent' }),
@@ -1031,6 +1131,11 @@ onUnmounted(() => {
   if (intersectionObserver) {
     intersectionObserver.disconnect()
   }
+  if (deferredHomeLoadHandle != null && typeof window !== 'undefined' && 'cancelIdleCallback' in window) {
+    window.cancelIdleCallback(deferredHomeLoadHandle)
+  } else if (deferredHomeLoadHandle != null) {
+    clearTimeout(deferredHomeLoadHandle)
+  }
 })
 
 </script>
@@ -1039,6 +1144,11 @@ onUnmounted(() => {
 .homepage-carousel {
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
+}
+
+.home-sections > section {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 24rem;
 }
 
 .homepage-carousel::-webkit-scrollbar {
