@@ -98,6 +98,12 @@
         {{ t('admin.tabs.transcodeJobs') }}
       </button>
       <button
+        @click="activeTab = 'workers'"
+        :class="['flex-none snap-start whitespace-nowrap border-b-2 px-3 py-2 font-semibold transition sm:px-4', activeTab === 'workers' ? 'border-blue-500 text-blue-400' : 'border-transparent text-gray-400 hover:text-white']"
+      >
+        {{ t('admin.tabs.workers') }}
+      </button>
+      <button
         @click="activeTab = 'intro-suggestions'"
         :class="['flex-none snap-start whitespace-nowrap border-b-2 px-3 py-2 font-semibold transition sm:px-4', activeTab === 'intro-suggestions' ? 'border-blue-500 text-blue-400' : 'border-transparent text-gray-400 hover:text-white']"
       >
@@ -545,6 +551,7 @@
     <YouTubeMirrorAdminPanel v-if="activeTab === 'youtube-mirrors'" :channels="channels" />
     <MediaIngestAdminPanel v-if="activeTab === 'media-ingests'" :channels="channels" :series-items="adminSeries" />
     <TranscodeJobsAdminPanel v-if="activeTab === 'transcode-jobs'" />
+    <WorkerAdminPanel v-if="activeTab === 'workers'" />
 
     <!-- Series Tab -->
     <div v-if="activeTab === 'series'" class="space-y-6">
@@ -1120,6 +1127,7 @@ import { useLocalUploadBaseURL } from '~/app/composables/useLocalUploadBaseURL'
 import MovieAdminPanel from '~/app/components/admin/MovieAdminPanel.vue'
 import MediaIngestAdminPanel from '~/app/components/admin/MediaIngestAdminPanel.vue'
 import TranscodeJobsAdminPanel from '~/app/components/admin/TranscodeJobsAdminPanel.vue'
+import WorkerAdminPanel from '~/app/components/admin/WorkerAdminPanel.vue'
 import VideoEditorPanel from '~/app/components/admin/VideoEditorPanel.vue'
 import YouTubeMirrorAdminPanel from '~/app/components/admin/YouTubeMirrorAdminPanel.vue'
 import AdminHelpButton from '~/app/components/admin/AdminHelpButton.vue'
@@ -1165,6 +1173,7 @@ const adminTabOptions = computed(() => [
   { value: 'youtube-mirrors', label: t('admin.tabs.youtubeMirrors') },
   { value: 'media-ingests', label: t('admin.tabs.mediaIngests') },
   { value: 'transcode-jobs', label: t('admin.tabs.transcodeJobs') },
+  { value: 'workers', label: t('admin.tabs.workers') },
   { value: 'intro-suggestions', label: t('admin.tabs.introSuggestions') },
 ])
 const searchQuery = ref('')

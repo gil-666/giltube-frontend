@@ -485,6 +485,14 @@
                 <span class="min-w-0 flex-1 truncate">{{ t('app.giltubeMusic') }}</span>
                 <span class="shrink-0 rounded bg-rose-500 px-1.5 py-0.5 text-[9px] font-black leading-none text-white">NEW</span>
               </NuxtLink>
+              <NuxtLink v-if="isLoggedIn" :to="localePath('/subscriptions')"
+                class="flex items-center gap-2 rounded p-2 font-semibold text-red-300 transition hover:bg-zinc-800 hover:text-white"
+                :class="{ 'bg-zinc-800 text-white': normalizedRoutePath.startsWith('/subscriptions') }">
+                <svg class="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 20v-2a5 5 0 0 1 10 0v2M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm7-7v4m2-2h-4" />
+                </svg>
+                <span>{{ t('app.subscriptions') }}</span>
+              </NuxtLink>
               <!-- Dashboard (only when logged in) -->
               <NuxtLink v-if="isLoggedIn" :to="localePath('/dashboard')"
                 class="hover:bg-zinc-800 p-2 rounded cursor-pointer block text-blue-400 font-semibold">{{ t('app.dashboard') }}
@@ -495,8 +503,6 @@
               <NuxtLink v-if="isLoggedIn" :to="localePath('/playlists')"
                 class="hover:bg-zinc-800 p-2 rounded cursor-pointer block text-purple-400 font-semibold">{{ t('playlists.myPlaylists') }}
               </NuxtLink>
-              <!-- <NuxtLink to="/subscriptions" class="hover:bg-zinc-800 p-2 rounded cursor-pointer block">Subscriptions
-              </NuxtLink> -->
               <!-- My Channel (only when signed into a channel, not personal) -->
               <NuxtLink v-if="activeAccount !== 'personal' && activeAccount !== userId && isLoggedIn"
                 :to="localePath(`/channel/${activeAccount}`)"
@@ -802,6 +808,12 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 0 1 1-1h5a1 1 0 0 1 1 1v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5Zm9 0a1 1 0 0 1 1-1h5a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-5a1 1 0 0 1-1-1V5ZM4 15a1 1 0 0 1 1-1h5a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-4Zm9-3a1 1 0 0 1 1-1h5a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1h-5a1 1 0 0 1-1-1v-7Z" />
               </svg>
               <span>{{ t('app.dashboard') }}</span>
+            </NuxtLink>
+            <NuxtLink v-if="isLoggedIn" :to="localePath('/subscriptions')" class="mobile-sheet-action text-red-300" @click="mobileMoreOpen = false">
+              <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 20v-2a5 5 0 0 1 10 0v2M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm7-7v4m2-2h-4" />
+              </svg>
+              <span>{{ t('app.subscriptions') }}</span>
             </NuxtLink>
             <NuxtLink v-if="isLoggedIn" :to="localePath('/notifications')" class="mobile-sheet-action text-indigo-300" @click="mobileMoreOpen = false">
               <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -2363,6 +2375,7 @@ const handleLogout = async () => {
   const previousUserID = userId.value
   await detachPushSubscriptionForUser(previousUserID)
   localStorage.removeItem('user_id')
+  localStorage.removeItem('session_token')
   localStorage.removeItem('email')
   localStorage.removeItem('username')
   localStorage.removeItem('user_channels')

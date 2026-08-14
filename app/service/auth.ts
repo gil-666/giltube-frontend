@@ -13,6 +13,7 @@ interface LoginResponse {
   username?: string
   email?: string
   auth_method?: string
+  session_token?: string
 }
 
 interface RegisterRequest {

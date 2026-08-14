@@ -154,6 +154,7 @@ onMounted(async () => {
 
 const persistLogin = async (response: any, fallbackEmail: string) => {
   localStorage.setItem('user_id', response.user_id)
+  if (response.session_token) localStorage.setItem('session_token', response.session_token)
   localStorage.setItem('email', response.email || fallbackEmail || '')
   const username = response.username || ((response.email || fallbackEmail || '').split('@')[0] || '')
   localStorage.setItem('username', username)

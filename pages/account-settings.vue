@@ -543,6 +543,7 @@ const submitDeleteAccount = async () => {
     await deleteMyAccount({ current_password: deletePassword.value })
 
     localStorage.removeItem('user_id')
+    localStorage.removeItem('session_token')
     localStorage.removeItem('email')
     localStorage.removeItem('username')
     localStorage.removeItem('user_channels')

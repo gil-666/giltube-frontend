@@ -46,6 +46,7 @@ const message = computed(() => {
 
 const persistLogin = async (response: any) => {
   localStorage.setItem('user_id', response.user_id)
+  if (response.session_token) localStorage.setItem('session_token', response.session_token)
   localStorage.setItem('email', response.email || '')
   localStorage.setItem('username', response.username || ((response.email || '').split('@')[0] || ''))
 

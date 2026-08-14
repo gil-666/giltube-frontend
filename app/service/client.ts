@@ -22,6 +22,8 @@ apiClient.interceptors.request.use((config) => {
   if (userId) {
     config.headers['X-User-ID'] = userId
   }
+  const sessionToken = typeof window !== 'undefined' ? localStorage.getItem('session_token') : null
+  if (sessionToken) config.headers.Authorization = `Bearer ${sessionToken}`
   return config
 })
 

@@ -78,6 +78,23 @@
             </div>
             <p class="mt-2 text-sm font-semibold text-white sm:text-base break-words">{{ channel.description || t('channelPage.noDescription') }}</p>
 
+            <div class="mt-4 flex flex-wrap items-center gap-3">
+              <button
+                v-if="!canEditChannel && subscriptionActorChannelId !== channelId"
+                type="button"
+                :disabled="subscriptionBusy"
+                class="inline-flex min-w-28 items-center justify-center rounded-full px-5 py-2 text-sm font-bold shadow-lg transition disabled:cursor-wait disabled:opacity-60"
+                :class="isSubscribed ? 'border border-white/20 bg-black/55 text-white backdrop-blur hover:bg-white/15' : 'bg-white text-black hover:bg-zinc-200'"
+                @click="toggleSubscription"
+              >
+                {{ subscriptionBusy ? t('channelPage.subscriptionWorking') : isSubscribed ? t('channelPage.subscribed') : t('channelPage.subscribe') }}
+              </button>
+              <span class="rounded-full bg-black/35 px-3 py-1.5 text-sm font-semibold text-white backdrop-blur">
+                {{ t(subscriberCount === 1 ? 'channelPage.subscriberCountOne' : 'channelPage.subscriberCount', { count: formatViews(subscriberCount) }) }}
+              </span>
+            </div>
+            <p v-if="subscriptionError" class="mt-2 text-sm font-semibold text-red-200">{{ subscriptionError }}</p>
+
             <NuxtLink
               v-if="liveStatus?.is_live"
               :to="localePath(`/live/${channelId}`)"
@@ -351,6 +368,7 @@ import { getChannelInfo, getChannelVideos, getChannelClips } from '~/app/service
 import { updateChannel } from '~/app/service/upload'
 import { getChannelMusic, type MusicArtist, type MusicRelease } from '~/app/service/music'
 import { getChannelLiveStatus } from '~/app/service/live'
+import { activeSubscriptionChannelID, getChannelSubscription, subscribeToChannel, unsubscribeFromChannel } from '~/app/service/subscriptions'
 import { getTimeAgo } from '~/app/utils/time'
 import { formatViews } from '~/app/utils/format'
 import { imageVariantSrcset, imageVariantUrl, isVideo4K, isVideo8K, resolveMediaUrl } from '~/app/utils/media'
@@ -376,6 +394,11 @@ const error = ref('')
 const failedChannelAvatar = ref(false)
 const liveStatus = ref<any>(null)
 const currentUserId = ref('')
+const subscriptionActorChannelId = ref('')
+const isSubscribed = ref(false)
+const subscriberCount = ref(0)
+const subscriptionBusy = ref(false)
+const subscriptionError = ref('')
 const showChannelDetails = ref(false)
 const showChannelEditor = ref(false)
 const isSavingChannel = ref(false)
@@ -446,6 +469,7 @@ const contentThemeSrcdoc = computed(() => buildThemeSrcdoc(channel.value?.custom
 onMounted(async () => {
   try {
     currentUserId.value = localStorage.getItem('user_id') || ''
+    subscriptionActorChannelId.value = activeSubscriptionChannelID()
     failedChannelAvatar.value = false
     const [channelData, videosData] = await Promise.all([
       getChannelInfo(channelId),
@@ -453,6 +477,12 @@ onMounted(async () => {
     ])
     channel.value = channelData.channel
     ownerUsername.value = channelData.owner_username
+    getChannelSubscription(channelId, subscriptionActorChannelId.value).then((state) => {
+      isSubscribed.value = Boolean(state.subscribed)
+      subscriberCount.value = Number(state.subscriber_count || 0)
+    }).catch((subscriptionErr) => {
+      console.error('Channel subscription status failed:', subscriptionErr)
+    })
     videos.value = videosData.map((video: any) => ({
       ...video,
       thumbnail_url: video.thumbnail_url ? resolveMediaUrl(video.thumbnail_url) : null
@@ -492,6 +522,27 @@ onMounted(async () => {
     isLoading.value = false
   }
 })
+
+const toggleSubscription = async () => {
+  if (!currentUserId.value) {
+    await navigateTo(localePath('/login'))
+    return
+  }
+  if (subscriptionBusy.value) return
+  subscriptionBusy.value = true
+  subscriptionError.value = ''
+  try {
+    const state = isSubscribed.value
+      ? await unsubscribeFromChannel(channelId, subscriptionActorChannelId.value)
+      : await subscribeToChannel(channelId, subscriptionActorChannelId.value)
+    isSubscribed.value = Boolean(state.subscribed)
+    subscriberCount.value = Number(state.subscriber_count || 0)
+  } catch (err: any) {
+    subscriptionError.value = err?.response?.data?.error || t('channelPage.subscriptionError')
+  } finally {
+    subscriptionBusy.value = false
+  }
+}
 
 const openChannelEditor = () => {
   if (!channel.value) return
