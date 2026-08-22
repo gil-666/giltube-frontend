@@ -24,7 +24,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useLocalePath } from '#i18n'
 import { completeGilIDAuth } from '~/app/service/auth'
-import { fetchUserChannels } from '~/app/service/upload'
+import { persistAuthSession } from '~/app/utils/authSession'
 
 definePageMeta({
   layout: 'blank'
@@ -43,30 +43,6 @@ const message = computed(() => {
   if (currentStep.value === 'redirecting') return t('login.callbackRedirecting')
   return t('login.callbackProcessing')
 })
-
-const persistLogin = async (response: any) => {
-  localStorage.setItem('user_id', response.user_id)
-  if (response.session_token) localStorage.setItem('session_token', response.session_token)
-  localStorage.setItem('email', response.email || '')
-  localStorage.setItem('username', response.username || ((response.email || '').split('@')[0] || ''))
-
-  try {
-    const channelResult = await fetchUserChannels(response.user_id)
-    const defaultChannel = channelResult.channels.find((channel: any) => channel.id === channelResult.default_channel_id) ||
-      channelResult.channels.find((channel: any) => channel.is_default) ||
-      channelResult.channels[0]
-    if (defaultChannel?.id) {
-      localStorage.setItem('active_account', defaultChannel.id)
-      localStorage.setItem('active_account_name', defaultChannel.name)
-    } else {
-      localStorage.setItem('active_account', 'personal')
-      localStorage.setItem('active_account_name', response.username || 'Personal')
-      localStorage.removeItem('default_channel_id')
-    }
-  } catch (err) {
-    console.error('Failed to fetch channels:', err)
-  }
-}
 
 onMounted(async () => {
   const code = String(route.query.code || '').trim()
@@ -87,7 +63,7 @@ onMounted(async () => {
 
   try {
     const response = await completeGilIDAuth(code, state)
-    await persistLogin(response)
+    await persistAuthSession(response)
 
     currentStep.value = 'redirecting'
     const destination = response.return_to?.startsWith('/') ? response.return_to : '/'

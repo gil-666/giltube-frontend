@@ -263,6 +263,7 @@ import {
 import type { MusicQuality } from '~/app/service/auth'
 import { useMetaTags } from '~/app/composables/useMetaTags'
 import { prepareCredentialCreationOptions, serializeRegistrationCredential, supportsWebAuthn } from '~/app/service/webauthn'
+import { clearAuthSession } from '~/app/utils/authSession'
 
 useMetaTags({
   title: 'Account Settings - GilTube',
@@ -542,14 +543,7 @@ const submitDeleteAccount = async () => {
   try {
     await deleteMyAccount({ current_password: deletePassword.value })
 
-    localStorage.removeItem('user_id')
-    localStorage.removeItem('session_token')
-    localStorage.removeItem('email')
-    localStorage.removeItem('username')
-    localStorage.removeItem('user_channels')
-    localStorage.removeItem('active_account')
-    localStorage.removeItem('active_account_name')
-    localStorage.removeItem('default_channel_id')
+    clearAuthSession()
 
     router.push(localePath('/'))
     window.location.reload()

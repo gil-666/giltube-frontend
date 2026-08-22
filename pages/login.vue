@@ -122,9 +122,9 @@ import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useLocalePath } from '#i18n'
 import { beginGilIDAuth, beginPasskeyLogin, finishPasskeyLogin, getGilIDSessionProfile, login, logoutGilIDSession } from '~/app/service/auth'
-import { fetchUserChannels } from '~/app/service/upload'
 import { useMetaTags } from '~/app/composables/useMetaTags'
 import { prepareCredentialRequestOptions, serializeAuthenticationCredential, supportsWebAuthn } from '~/app/service/webauthn'
+import { persistAuthSession } from '~/app/utils/authSession'
 
 const { t } = useI18n()
 const localePath = useLocalePath()
@@ -152,30 +152,8 @@ onMounted(async () => {
   gilidSessionProfile.value = await getGilIDSessionProfile()
 })
 
-const persistLogin = async (response: any, fallbackEmail: string) => {
-  localStorage.setItem('user_id', response.user_id)
-  if (response.session_token) localStorage.setItem('session_token', response.session_token)
-  localStorage.setItem('email', response.email || fallbackEmail || '')
-  const username = response.username || ((response.email || fallbackEmail || '').split('@')[0] || '')
-  localStorage.setItem('username', username)
-
-  try {
-    const channelResult = await fetchUserChannels(response.user_id)
-    const defaultChannel = channelResult.channels.find((channel: any) => channel.id === channelResult.default_channel_id) ||
-      channelResult.channels.find((channel: any) => channel.is_default) ||
-      channelResult.channels[0]
-    if (defaultChannel?.id) {
-      localStorage.setItem('active_account', defaultChannel.id)
-      localStorage.setItem('active_account_name', defaultChannel.name)
-    } else {
-      localStorage.setItem('active_account', 'personal')
-      localStorage.setItem('active_account_name', username || 'Personal')
-      localStorage.removeItem('default_channel_id')
-    }
-  } catch (err) {
-    console.error('Failed to fetch channels:', err)
-  }
-
+const completeLogin = async (response: Parameters<typeof persistAuthSession>[0], fallbackEmail: string) => {
+  await persistAuthSession(response, fallbackEmail)
   router.push(localePath('/'))
 }
 
@@ -190,7 +168,7 @@ const handleLogin = async () => {
     })
 
     if (response.user_id) {
-      await persistLogin(response, email.value)
+      await completeLogin(response, email.value)
     } else {
       error.value = 'Login failed: No user ID returned'
     }
@@ -227,7 +205,7 @@ const handlePasskeyLogin = async () => {
     const response = await finishPasskeyLogin(begin.session_token, payload)
 
     if (response.user_id) {
-      await persistLogin(response, response.email || email.value)
+      await completeLogin(response, response.email || email.value)
       return
     }
 

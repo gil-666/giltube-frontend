@@ -1237,6 +1237,7 @@ import musicLogoFull from '~/assets/giltube-music-logo-full.png'
 import musicLogoSymbol from '~/assets/giltube-music-logo-symbol.png'
 import { beginGilIDAuth, getMyAccount } from '~/app/service/auth'
 import { fetchUserChannels, setDefaultChannel } from '~/app/service/upload'
+import { clearAuthSession } from '~/app/utils/authSession'
 import {
   listNotifications,
   getUnreadNotificationCount,
@@ -2472,14 +2473,7 @@ const handleLogout = async () => {
   if (!process.client) return
   const previousUserID = userId.value
   await detachPushSubscriptionForUser(previousUserID)
-  localStorage.removeItem('user_id')
-  localStorage.removeItem('session_token')
-  localStorage.removeItem('email')
-  localStorage.removeItem('username')
-  localStorage.removeItem('user_channels')
-  localStorage.removeItem('active_account')
-  localStorage.removeItem('active_account_name')
-  localStorage.removeItem('default_channel_id')
+  clearAuthSession()
   isLoggedIn.value = false
   dropdownOpen.value = false
   router.push('/')
