@@ -26,6 +26,8 @@
 
 **Public URL:** [https://giltube.gilservers.com](https://giltube.gilservers.com)
 
+**API documentation:** [English](./API.md) · [Español](./API-es.md)
+
 The public instance is the working product, not a static design mockup. It runs the Nuxt SSR application, Go API, PostgreSQL, Redis-backed jobs and presence, FFmpeg media workers, persistent media storage, and an Nginx gateway behind the production edge.
 
 <p align="center"><strong>Desktop</strong></p>
