@@ -96,11 +96,22 @@
             :aria-checked="!worker.scheduling_disabled"
             :aria-label="t('admin.workers.acceptJobs')"
             :disabled="updatingWorker === worker.id"
-            :class="!worker.scheduling_disabled ? 'bg-emerald-500' : 'bg-zinc-700'"
-            class="relative h-6 w-11 shrink-0 rounded-full transition-colors disabled:opacity-50"
+            class="relative h-6 w-11 shrink-0 rounded-full bg-transparent disabled:opacity-50"
             @click="toggleScheduling(worker)"
           >
-            <span :class="!worker.scheduling_disabled ? 'translate-x-5' : 'translate-x-1'" class="absolute left-0 top-1 h-4 w-4 rounded-full bg-white shadow transition-transform" />
+            <span
+              aria-hidden="true"
+              class="pointer-events-none absolute inset-0 rounded-full border transition-colors duration-200"
+              :style="{
+                backgroundColor: worker.scheduling_disabled ? '#3f3f46' : '#10b981',
+                borderColor: worker.scheduling_disabled ? '#52525b' : '#34d399'
+              }"
+            />
+            <span
+              aria-hidden="true"
+              class="pointer-events-none absolute top-1 h-4 w-4 rounded-full bg-white shadow transition-[left] duration-200"
+              :style="{ left: worker.scheduling_disabled ? '4px' : '24px' }"
+            />
           </button>
         </div>
 

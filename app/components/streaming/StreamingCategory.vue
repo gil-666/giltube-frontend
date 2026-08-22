@@ -251,16 +251,10 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .streaming-row {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 1rem;
-  overflow-x: auto;
   padding-bottom: 0.75rem;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
-
-.streaming-row::-webkit-scrollbar {
-  display: none;
 }
 
 .streaming-hero {
@@ -410,8 +404,8 @@ onBeforeUnmount(() => {
 }
 
 .streaming-card {
-  width: 11rem;
-  flex: 0 0 11rem;
+  min-width: 0;
+  width: 100%;
 }
 
 .streaming-poster {
@@ -748,14 +742,15 @@ onBeforeUnmount(() => {
 }
 
 @media (min-width: 640px) {
+  .streaming-row {
+    grid-template-columns: repeat(auto-fit, minmax(11rem, 14rem));
+    justify-content: start;
+    column-gap: clamp(1rem, 2vw, 1.75rem);
+  }
+
   .streaming-hero {
     padding-left: 2.5rem;
     padding-right: 2.5rem;
-  }
-
-  .streaming-card {
-    width: 14rem;
-    flex-basis: 14rem;
   }
 
   .streaming-content {

@@ -2,7 +2,7 @@
     <div
         :id="`comment-${comment.id}`"
         :class="[
-            'w-full min-w-0 bg-zinc-900 p-3 rounded text-sm transition-all duration-300 scroll-mt-24',
+            'comment-thread-card w-full min-w-0 bg-zinc-900 p-3 rounded text-sm transition-all duration-300 scroll-mt-24',
             isHighlighted ? 'comment-highlight' : ''
         ]"
     >
@@ -96,7 +96,7 @@
                     </button>
                 </div>
 
-                <div v-if="isReplying" class="mt-2 bg-zinc-800 rounded p-2">
+                <div v-if="isReplying" class="comment-reply-composer mt-2 bg-zinc-800 rounded p-2">
                     <textarea v-model="replyText" :placeholder="t('commentNode.writeReply')" maxlength="500" rows="2"
                         class="w-full bg-zinc-700 border border-zinc-600 rounded px-2 py-1 text-white text-xs focus:outline-none focus:border-blue-500 resize-none" />
                     <div class="flex justify-end gap-2 mt-2">

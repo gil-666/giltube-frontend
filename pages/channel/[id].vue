@@ -1,16 +1,16 @@
 ﻿<template>
-  <div class="min-h-screen bg-zinc-950 text-white">
+  <div class="channel-page min-h-screen bg-zinc-950 text-white">
     <!-- Channel Header -->
-    <div v-if="channel" class="relative overflow-hidden border-b border-zinc-800 bg-zinc-900">
+    <div v-if="channel" class="channel-hero relative overflow-hidden border-b border-zinc-800 bg-zinc-900">
       <div v-if="channelBackgroundUrl" class="absolute inset-0">
         <img :src="channelBackgroundUrl" :srcset="channelBackgroundSrcset || undefined" sizes="100vw" :alt="`${channel.name} background`" class="channel-fade-bg h-full w-full object-cover" :style="channelBackgroundStyle" />
-        <div class="absolute inset-0 bg-black/70" />
-        <div class="absolute inset-0 bg-gradient-to-t from-zinc-950 via-black/45 to-black/25" />
+        <div class="channel-hero-overlay absolute inset-0 bg-black/70" />
+        <div class="channel-hero-fade absolute inset-0 bg-gradient-to-t from-zinc-950 via-black/45 to-black/25" />
       </div>
       <div v-else class="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(220,38,38,0.18),transparent_34%),linear-gradient(135deg,rgba(39,39,42,0.95),rgba(9,9,11,1))]" />
       <iframe
         v-if="headerThemeSrcdoc"
-        class="channel-fade-bg pointer-events-none absolute inset-0 h-full w-full border-0"
+        class="channel-custom-theme channel-fade-bg pointer-events-none absolute inset-0 h-full w-full border-0"
         sandbox=""
         referrerpolicy="no-referrer"
         :srcdoc="headerThemeSrcdoc"
@@ -83,13 +83,13 @@
                 v-if="!canEditChannel && subscriptionActorChannelId !== channelId"
                 type="button"
                 :disabled="subscriptionBusy"
-                class="inline-flex min-w-28 items-center justify-center rounded-full px-5 py-2 text-sm font-bold shadow-lg transition disabled:cursor-wait disabled:opacity-60"
-                :class="isSubscribed ? 'border border-white/20 bg-black/55 text-white backdrop-blur hover:bg-white/15' : 'bg-white text-black hover:bg-zinc-200'"
+                class="channel-subscribe-button inline-flex min-w-28 items-center justify-center rounded-full px-5 py-2 text-sm font-bold shadow-lg transition disabled:cursor-wait disabled:opacity-60"
+                :class="[isSubscribed ? 'border border-white/20 bg-black/55 text-white backdrop-blur hover:bg-white/15' : 'bg-white text-black hover:bg-zinc-200', { 'is-subscribed': isSubscribed }]"
                 @click="toggleSubscription"
               >
                 {{ subscriptionBusy ? t('channelPage.subscriptionWorking') : isSubscribed ? t('channelPage.subscribed') : t('channelPage.subscribe') }}
               </button>
-              <span class="rounded-full bg-black/35 px-3 py-1.5 text-sm font-semibold text-white backdrop-blur">
+              <span class="channel-subscriber-count rounded-full bg-black/35 px-3 py-1.5 text-sm font-semibold text-white backdrop-blur">
                 {{ t(subscriberCount === 1 ? 'channelPage.subscriberCountOne' : 'channelPage.subscriberCount', { count: formatViews(subscriberCount) }) }}
               </span>
             </div>
@@ -289,7 +289,7 @@
     <div v-if="!isLoading && channel" class="channel-content-section relative overflow-hidden">
       <iframe
         v-if="contentThemeSrcdoc"
-        class="channel-fade-bg pointer-events-none absolute inset-0 h-full w-full border-0"
+        class="channel-custom-theme channel-fade-bg pointer-events-none absolute inset-0 h-full w-full border-0"
         sandbox=""
         referrerpolicy="no-referrer"
         :srcdoc="contentThemeSrcdoc"

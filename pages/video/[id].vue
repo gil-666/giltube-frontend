@@ -192,7 +192,7 @@
                 'bg-zinc-700 hover:bg-zinc-600': !isLiked,
                 'opacity-50 cursor-not-allowed': !isLoggedIn || isToggglingLike
               }"
-              class="flex items-center gap-2 px-4 py-2 rounded-lg transition text-sm font-medium"
+              class="watch-action-button flex items-center gap-2 px-4 py-2 rounded-lg transition text-sm font-medium"
             >
               <span>{{ isLiked ? '❤️' : '🤍' }}</span>
               <span>{{ likes }}</span>
@@ -201,7 +201,7 @@
             <button
               v-if="isLoggedIn && canCreateClip"
               @click="startClipMode"
-              class="flex items-center gap-2 px-4 py-2 rounded-lg transition text-sm font-medium bg-zinc-700 hover:bg-zinc-600"
+              class="watch-action-button flex items-center gap-2 px-4 py-2 rounded-lg transition text-sm font-medium bg-zinc-700 hover:bg-zinc-600"
               :title="t('video.clip.create')"
             >
               <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -217,7 +217,7 @@
             <button
               v-if="isLoggedIn"
               @click="showAddToPlaylist = true"
-              class="flex items-center gap-2 px-4 py-2 rounded-lg transition text-sm font-medium bg-zinc-700 hover:bg-zinc-600"
+              class="watch-action-button flex items-center gap-2 px-4 py-2 rounded-lg transition text-sm font-medium bg-zinc-700 hover:bg-zinc-600"
               :title="t('video.addPlaylist')"
             >
               <span class="text-lg font-bold">+</span>
@@ -226,7 +226,7 @@
 
             <button
               @click="shareVideo"
-              class="flex items-center gap-2 px-4 py-2 rounded-lg transition text-sm font-medium bg-zinc-700 hover:bg-zinc-600"
+              class="watch-action-button flex items-center gap-2 px-4 py-2 rounded-lg transition text-sm font-medium bg-zinc-700 hover:bg-zinc-600"
               :title="t('video.share')"
             >
               <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -241,7 +241,7 @@
               v-if="isClipVideo && (video.status === 'ready' || video.status === 'published')"
               @click="downloadCurrentVideo"
               :disabled="isDownloadingVideo"
-              class="flex items-center gap-2 px-4 py-2 rounded-lg transition text-sm font-medium bg-zinc-700 hover:bg-zinc-600 disabled:cursor-not-allowed disabled:opacity-60"
+              class="watch-action-button flex items-center gap-2 px-4 py-2 rounded-lg transition text-sm font-medium bg-zinc-700 hover:bg-zinc-600 disabled:cursor-not-allowed disabled:opacity-60"
               :title="t('video.download')"
             >
               <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -264,7 +264,7 @@
             <div v-if="hasOverflowActions" class="relative">
               <button
                 type="button"
-                class="flex h-10 w-10 items-center justify-center rounded-lg bg-zinc-700 text-xl font-bold transition hover:bg-zinc-600"
+                class="watch-action-button flex h-10 w-10 items-center justify-center rounded-lg bg-zinc-700 text-xl font-bold transition hover:bg-zinc-600"
                 :aria-label="t('video.moreActions')"
                 @click="showVideoActionMenu = !showVideoActionMenu"
               >
@@ -289,7 +289,7 @@
 
         <p v-if="downloadStatus" class="mt-2 text-sm text-blue-300">{{ downloadStatus }}</p>
 
-        <div v-if="descriptionBlocks.length" class="mt-3 rounded-lg border border-zinc-800 bg-zinc-950/70 p-4 text-sm leading-6 text-gray-300">
+        <div v-if="descriptionBlocks.length" class="watch-description mt-3 rounded-lg border border-zinc-800 bg-zinc-950/70 p-4 text-sm leading-6 text-gray-300">
           <div
             class="relative space-y-3"
             :class="{
@@ -680,7 +680,7 @@
         <h2 class="text-xl font-bold mb-6">{{ t('video.comments') }}</h2>
 
         <!-- Comment Form -->
-        <div v-if="isLoggedIn && (userChannels.length > 0 || (activeAccount !== userId && activeAccount !== 'personal'))" class="mb-6 bg-zinc-900 p-4 rounded">
+        <div v-if="isLoggedIn && (userChannels.length > 0 || (activeAccount !== userId && activeAccount !== 'personal'))" class="comment-composer mb-6 bg-zinc-900 p-4 rounded">
           <!-- Channel Selector (if on personal account and have channels) -->
           <div v-if="(activeAccount === userId || activeAccount === 'personal') && userChannels.length > 0" class="mb-3">
             <label class="text-xs text-gray-400 block mb-2">{{ t('video.commentAs') }}</label>
@@ -712,7 +712,7 @@
             <button
               type="button"
               @click="showGiphyPicker = true"
-              class="px-3 py-2 text-gray-400 hover:text-white transition text-sm flex items-center gap-1"
+              class="comment-secondary-action px-3 py-2 text-gray-400 hover:text-white transition text-sm flex items-center gap-1"
               :title="t('video.addGif')"
             >
               <span>GIF</span>
@@ -720,14 +720,14 @@
             <div class="flex gap-2">
               <button
                 @click="newCommentText = ''"
-                class="px-4 py-2 text-gray-400 hover:text-white transition text-sm"
+                class="comment-secondary-action px-4 py-2 text-gray-400 hover:text-white transition text-sm"
               >
                 {{ t('video.cancel') }}
               </button>
               <button
                 @click="postComment"
                 :disabled="!newCommentText.trim() || isPostingComment"
-                class="px-4 py-2 bg-red-600 hover:bg-red-700 rounded transition disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                class="comment-submit-action px-4 py-2 bg-red-600 hover:bg-red-700 rounded transition disabled:opacity-50 disabled:cursor-not-allowed text-sm"
               >
                 {{ isPostingComment ? t('video.posting') : t('video.comment') }}
               </button>

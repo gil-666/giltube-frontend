@@ -1,5 +1,21 @@
 <template>
-  <div class="min-h-screen bg-zinc-950 text-white flex flex-col overflow-x-hidden">
+  <div
+    class="min-h-screen bg-zinc-950 text-white flex flex-col overflow-x-hidden"
+    :class="[activeShellThemeClass, { 'easter-egg-active': !!activeEasterEgg && canApplyEasterEggTheme }]"
+  >
+    <div
+      v-if="transitionEasterEgg && easterEggTransitionPhase !== 'idle' && canApplyEasterEggTheme"
+      class="easter-egg-wipe"
+      :class="[
+        `easter-egg-wipe--${transitionEasterEgg.id}`,
+        `easter-egg-wipe--${easterEggTransitionPhase}`,
+      ]"
+      aria-hidden="true"
+    >
+      <span class="easter-egg-wipe__sparkle easter-egg-wipe__sparkle--one">✦</span>
+      <span class="easter-egg-wipe__sparkle easter-egg-wipe__sparkle--two">✦</span>
+      <span class="easter-egg-wipe__wordmark">{{ transitionEasterEgg.label }}</span>
+    </div>
 
     <!-- Offline Indicator -->
     <div ref="offlineRef" v-if="offlineMode" class="w-full bg-yellow-600 text-white px-4 py-2 fixed text-center text-sm font-semibold"
@@ -107,6 +123,14 @@
               class="music-brand-logo"
               :class="isMobileDevice ? 'music-brand-logo-symbol' : 'music-brand-logo-full'"
             />
+            <img
+              v-else-if="activeEasterEgg?.id === 'sabrina-tube' && canApplyEasterEggTheme && !sabrinaLogoFailed"
+              :src="sabrinaLogoSrc"
+              alt="SabrinaTube"
+              class="sabrina-brand-logo"
+              @error="handleSabrinaLogoError"
+            />
+            <span v-else-if="activeEasterEgg?.id === 'sabrina-tube' && canApplyEasterEggTheme" class="sabrina-brand-text">SabrinaTube</span>
             <img v-else src="./assets/logowhsmall.png" alt="GilTube" :class="isCompactMobileWatchTopBar ? 'h-6 object-contain' : 'h-8 object-contain md:h-14'" />
           </button>
           <!-- <span
@@ -172,6 +196,17 @@
             {{ t('app.library') }}
           </NuxtLink>
         </nav>
+
+        <button
+          v-if="activeEasterEgg && canApplyEasterEggTheme && !isMobileDevice"
+          type="button"
+          class="sabrina-exit-button"
+          aria-label="Exit SabrinaTube"
+          @click="exitActiveEasterEgg"
+        >
+          <span aria-hidden="true">x</span>
+          <span>Exit {{ activeEasterEgg.label }}</span>
+        </button>
 
         <!-- Mobile Search Button -->
         <button
@@ -372,6 +407,16 @@
       </div>
     </header>
 
+    <button
+      v-if="activeEasterEgg && canApplyEasterEggTheme && isMobileDevice && !shouldHideHeader"
+      type="button"
+      class="sabrina-mobile-exit-button"
+      aria-label="Exit SabrinaTube"
+      @click="exitActiveEasterEgg"
+    >
+      Exit {{ activeEasterEgg.label }}
+    </button>
+
     <!-- Mobile Expanded Search Bar -->
     <div v-if="!shouldHideHeader && isMobileDevice" v-show="showSearchBar"
       class="fixed left-0 right-0 border-b border-zinc-800 bg-zinc-950/95 shadow-2xl shadow-black/40 backdrop-blur-xl" :style="{ zIndex: 61, top: `${mobileSearchTopOffset}px` }">
@@ -556,7 +601,7 @@
 
     <nav
       v-if="isMobileDevice && !shouldHideHeader"
-      class="fixed inset-x-0 bottom-0 z-[70] border-t border-zinc-800 bg-zinc-950/95 px-2 pt-1.5 shadow-[0_-10px_30px_rgba(0,0,0,0.45)] backdrop-blur-xl"
+      class="mobile-bottom-nav fixed inset-x-0 bottom-0 z-[70] border-t border-zinc-800 bg-zinc-950/95 px-2 pt-1.5 shadow-[0_-10px_30px_rgba(0,0,0,0.45)] backdrop-blur-xl"
       style="padding-bottom: max(env(safe-area-inset-bottom), 0.4rem);"
       aria-label="Mobile navigation"
     >
@@ -662,7 +707,7 @@
     <Transition name="menu-pop">
       <div
         v-if="isMobileDevice && mobileCreateOpen && !shouldHideHeader"
-        class="fixed inset-x-3 z-[72] overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-950 shadow-2xl shadow-black/60"
+        class="mobile-create-menu fixed inset-x-3 z-[72] overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-950 shadow-2xl shadow-black/60"
         style="bottom: calc(5.1rem + env(safe-area-inset-bottom, 0px));"
       >
         <NuxtLink
@@ -697,7 +742,7 @@
     <Transition name="fade-soft">
       <div
         v-if="isMobileDevice && mobileMoreOpen && !shouldHideHeader"
-        class="fixed inset-0 z-[94] bg-black/60 backdrop-blur-[2px]"
+        class="mobile-menu-backdrop fixed inset-0 z-[94] bg-black/60 backdrop-blur-[2px]"
         @click="mobileMoreOpen = false"
       />
     </Transition>
@@ -705,12 +750,12 @@
     <Transition name="mobile-sheet">
       <section
         v-if="isMobileDevice && mobileMoreOpen && !shouldHideHeader"
-        class="fixed inset-x-0 bottom-0 z-[95] flex max-h-[84dvh] flex-col rounded-t-2xl border border-zinc-800 bg-zinc-950 text-white shadow-2xl"
+        class="mobile-more-sheet fixed inset-x-0 bottom-0 z-[95] flex max-h-[84dvh] flex-col rounded-t-2xl border border-zinc-800 bg-zinc-950 text-white shadow-2xl"
         style="padding-bottom: max(env(safe-area-inset-bottom), 0.75rem);"
         aria-label="Mobile menu"
       >
         <div class="shrink-0 px-4 pt-3">
-          <div class="mx-auto h-1 w-11 rounded-full bg-zinc-700" />
+          <div class="mobile-sheet-grabber mx-auto h-1 w-11 rounded-full bg-zinc-700" />
           <div class="mt-3 flex items-center justify-between">
             <button
               type="button"
@@ -738,7 +783,7 @@
             </button>
             <button
               type="button"
-              class="flex h-10 w-10 items-center justify-center rounded-full bg-zinc-900 text-zinc-300 transition hover:bg-zinc-800 hover:text-white"
+              class="mobile-menu-close flex h-10 w-10 items-center justify-center rounded-full bg-zinc-900 text-zinc-300 transition hover:bg-zinc-800 hover:text-white"
               aria-label="Close menu"
               @click="mobileMoreOpen = false"
             >
@@ -890,7 +935,7 @@
           <button
             v-if="isLoggedIn"
             type="button"
-            class="mt-5 w-full rounded-lg border border-red-900/70 px-3 py-2.5 text-left text-sm font-semibold text-red-300 transition hover:bg-red-950/40"
+            class="mobile-menu-logout mt-5 w-full rounded-lg border border-red-900/70 px-3 py-2.5 text-left text-sm font-semibold text-red-300 transition hover:bg-red-950/40"
             @click="handleMobileLogout"
           >
             {{ t('app.logout') }}
@@ -902,7 +947,7 @@
     <Transition name="mobile-sheet">
       <section
         v-if="isMobileDevice && mobileCategoriesOpen && !shouldHideHeader"
-        class="fixed inset-0 z-[100] flex flex-col bg-zinc-950 text-white"
+        class="mobile-categories-menu fixed inset-0 z-[100] flex flex-col bg-zinc-950 text-white"
         aria-label="Browse by category"
       >
         <div
@@ -916,7 +961,7 @@
             </div>
             <button
               type="button"
-              class="flex h-10 w-10 items-center justify-center rounded-full bg-zinc-900 text-zinc-300 transition hover:bg-zinc-800 hover:text-white"
+              class="mobile-menu-close flex h-10 w-10 items-center justify-center rounded-full bg-zinc-900 text-zinc-300 transition hover:bg-zinc-800 hover:text-white"
               aria-label="Close categories"
               @click="mobileCategoriesOpen = false"
             >
@@ -1186,6 +1231,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted, computed, watch, nextTick } from 'vue'
 import GlobalMusicPlayer from '~/app/components/music/GlobalMusicPlayer.vue'
+import { useEasterEggs } from '~/app/composables/useEasterEggs'
 import { useMusicPlayer } from '~/app/composables/useMusicPlayer'
 import musicLogoFull from '~/assets/giltube-music-logo-full.png'
 import musicLogoSymbol from '~/assets/giltube-music-logo-symbol.png'
@@ -1224,12 +1270,23 @@ const mobileMoreOpen = ref(false)
 const mobileCreateOpen = ref(false)
 const mobileCategoriesOpen = ref(false)
 const searchQuery = ref('')
+const sabrinaLogoFailed = ref(false)
+const sabrinaLogoSourceIndex = ref(0)
 const searchSuggestions = ref([])
 const searchSuggestionsOpen = ref(false)
 const searchSuggestionsLoading = ref(false)
 const desktopSearchRef = ref(null)
 const mobileSearchRef = ref(null)
 const { currentTrack: shellMusicTrack, openPlayer: openMusicPlayerPanel } = useMusicPlayer()
+const {
+  activeEasterEgg,
+  activeThemeClass,
+  activateFromSearchQuery,
+  clearEasterEgg,
+  easterEggTransitionPhase,
+  hydrateEasterEggs,
+  transitionEasterEgg,
+} = useEasterEggs()
 const activeWatchParty = ref(null)
 const watchPartyWidgetDismissed = ref(false)
 const isInsideWatchPartyRoute = computed(() => route.path.includes('/watch-party/'))
@@ -1246,7 +1303,40 @@ const shouldShowSearchSuggestions = computed(() =>
   searchSuggestions.value.length > 0
 )
 
+const sabrinaLogoSources = ['/sabrina-tube-logo.png', '/sabrina-tube-logo.svg']
+const sabrinaLogoSrc = computed(() => sabrinaLogoSources[sabrinaLogoSourceIndex.value] || '')
+
+const exitActiveEasterEgg = async () => {
+  await clearEasterEgg()
+  sabrinaLogoFailed.value = false
+  sabrinaLogoSourceIndex.value = 0
+}
+
+const handleSabrinaLogoError = () => {
+  if (sabrinaLogoSourceIndex.value < sabrinaLogoSources.length - 1) {
+    sabrinaLogoSourceIndex.value += 1
+    return
+  }
+  sabrinaLogoFailed.value = true
+}
+
+const tryActivateEasterEggFromSearch = async () => {
+  if (!canApplyEasterEggTheme.value) return false
+  if (!searchQuery.value.trim()) return false
+  const didActivate = await activateFromSearchQuery(searchQuery.value)
+  if (!didActivate) return false
+
+  searchQuery.value = ''
+  searchSuggestionsOpen.value = false
+  showSearchBar.value = false
+  mobileMoreOpen.value = false
+  mobileCreateOpen.value = false
+  mobileCategoriesOpen.value = false
+  return true
+}
+
 const handleDesktopSearch = async () => {
+  if (await tryActivateEasterEggFromSearch()) return
   if (searchQuery.value.trim()) {
     const base = isMusicRoute.value ? '/music/search' : '/search'
     const path = localePath(`${base}?q=${encodeURIComponent(searchQuery.value)}`)
@@ -1256,6 +1346,7 @@ const handleDesktopSearch = async () => {
 }
 
 const handleMobileSearch = async () => {
+  if (await tryActivateEasterEggFromSearch()) return
   if (searchQuery.value.trim()) {
     const base = isMusicRoute.value ? '/music/search' : '/search'
     const path = localePath(`${base}?q=${encodeURIComponent(searchQuery.value)}`)
@@ -1456,9 +1547,15 @@ const normalizedRoutePath = computed(() => {
   return path.replace(/^\/[a-z]{2}(?=\/|$)/, '') || '/'
 })
 
+const isAdminRoute = computed(() => normalizedRoutePath.value === '/admin' || normalizedRoutePath.value.startsWith('/admin/'))
+
 const isMusicRoute = computed(() =>
   normalizedRoutePath.value === '/music' || normalizedRoutePath.value.startsWith('/music/')
 )
+
+const canApplyEasterEggTheme = computed(() => !isAdminRoute.value && !isMusicRoute.value)
+
+const activeShellThemeClass = computed(() => canApplyEasterEggTheme.value ? activeThemeClass.value : '')
 
 const notificationBarHeight = computed(() => {
   let height = 0
@@ -1969,6 +2066,7 @@ watch(() => route.fullPath, () => {
 })
 
 onMounted(async () => {
+  hydrateEasterEggs()
   isMobileDevice.value = isLikelyMobileUserAgent(navigator.userAgent, navigator.maxTouchPoints || 0)
   if (isMobileDevice.value) {
     isSidebarOpen.value = false
@@ -2437,6 +2535,745 @@ if (process.client) {
 
 .search-suggestions-scrollbar::-webkit-scrollbar-thumb:hover {
   background: rgba(161, 161, 170, 0.95);
+}
+
+.theme-sabrina-tube {
+  --sabrina-bg: #fff0f6;
+  --sabrina-bg-strong: #ffd7e8;
+  --sabrina-panel: rgba(255, 247, 251, 0.94);
+  --sabrina-panel-strong: rgba(255, 228, 240, 0.96);
+  --sabrina-border: rgba(219, 39, 119, 0.26);
+  --sabrina-text: #3f1729;
+  --sabrina-muted: #8a4a65;
+  --sabrina-hot: #db2777;
+  --sabrina-soft: #f9a8d4;
+  background:
+    radial-gradient(circle at 12% 12%, rgba(255, 255, 255, 0.95) 0 8%, transparent 28%),
+    linear-gradient(135deg, #fff7fb 0%, #ffe4f0 42%, #ffd0e5 100%) !important;
+  color: var(--sabrina-text) !important;
+}
+
+.theme-sabrina-tube::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background-image:
+    radial-gradient(circle at 16px 16px, rgba(219, 39, 119, 0.13) 0 1.5px, transparent 2px),
+    radial-gradient(circle at 54px 42px, rgba(255, 255, 255, 0.75) 0 1.5px, transparent 2px);
+  background-size: 72px 72px;
+  mask-image: linear-gradient(to bottom, black, transparent 82%);
+}
+
+.theme-sabrina-tube > * {
+  position: relative;
+}
+
+.theme-sabrina-tube > header {
+  position: fixed;
+}
+
+.theme-sabrina-tube > .fixed {
+  position: fixed;
+}
+
+.easter-egg-wipe {
+  position: fixed !important;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  pointer-events: none;
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 420ms cubic-bezier(0.76, 0, 0.24, 1);
+}
+
+.easter-egg-wipe--sabrina-tube {
+  background:
+    radial-gradient(circle at 18% 30%, rgba(255, 255, 255, 0.95) 0 2px, transparent 3px),
+    radial-gradient(circle at 76% 68%, rgba(255, 255, 255, 0.8) 0 3px, transparent 4px),
+    linear-gradient(115deg, #ffdaea 0%, #f472b6 48%, #db2777 100%);
+  color: white;
+}
+
+.easter-egg-wipe--covering {
+  transform: scaleX(1);
+}
+
+.easter-egg-wipe--revealing {
+  transform: scaleX(0);
+  transform-origin: right center;
+  transition-duration: 520ms;
+}
+
+.easter-egg-wipe__wordmark {
+  font-family: "Brush Script MT", "Segoe Script", cursive;
+  font-size: clamp(2.5rem, 8vw, 7rem);
+  font-weight: 700;
+  line-height: 1;
+  opacity: 0;
+  text-shadow: 0 4px 18px rgba(131, 24, 67, 0.32);
+  transform: translateY(0.5rem) scale(0.96);
+  transition: opacity 180ms ease 160ms, transform 240ms ease 140ms;
+}
+
+.easter-egg-wipe--covering .easter-egg-wipe__wordmark {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+.easter-egg-wipe__sparkle {
+  position: absolute;
+  font-size: clamp(2rem, 6vw, 5rem);
+  opacity: 0.8;
+  text-shadow: 0 3px 18px rgba(131, 24, 67, 0.22);
+}
+
+.easter-egg-wipe__sparkle--one {
+  left: 13%;
+  top: 22%;
+}
+
+.easter-egg-wipe__sparkle--two {
+  right: 12%;
+  bottom: 19%;
+  font-size: clamp(1.5rem, 4vw, 3.5rem);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .easter-egg-wipe {
+    display: none;
+  }
+}
+
+.sabrina-brand-logo {
+  display: block;
+  height: 3.35rem;
+  width: auto;
+  max-width: min(15.5rem, 42vw);
+  object-fit: contain;
+}
+
+.sabrina-brand-text {
+  display: inline-flex;
+  align-items: center;
+  color: #be185d;
+  font-family: "Brush Script MT", "Segoe Script", cursive;
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1;
+  text-shadow: 0 1px 0 #fff, 0 4px 12px rgba(190, 24, 93, 0.24);
+}
+
+.sabrina-exit-button,
+.sabrina-mobile-exit-button {
+  border: 1px solid rgba(219, 39, 119, 0.32);
+  background: linear-gradient(180deg, #fff7fb, #ffd7e8);
+  color: #9d174d;
+  box-shadow: 0 10px 24px rgba(219, 39, 119, 0.18);
+  font-weight: 900;
+  transition:
+    transform 150ms ease,
+    border-color 150ms ease,
+    box-shadow 150ms ease;
+}
+
+.sabrina-exit-button {
+  display: inline-flex;
+  height: 2.25rem;
+  align-items: center;
+  gap: 0.45rem;
+  border-radius: 999px;
+  padding: 0 0.75rem 0 0.55rem;
+  font-size: 0.78rem;
+}
+
+.sabrina-exit-button span:first-child {
+  display: inline-flex;
+  height: 1.25rem;
+  width: 1.25rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: #db2777;
+  color: white;
+  line-height: 1;
+}
+
+.sabrina-mobile-exit-button {
+  position: fixed;
+  right: 0.85rem;
+  bottom: calc(5.3rem + env(safe-area-inset-bottom, 0px));
+  z-index: 78;
+  border-radius: 999px;
+  padding: 0.65rem 0.9rem;
+  font-size: 0.78rem;
+}
+
+.sabrina-exit-button:hover,
+.sabrina-mobile-exit-button:hover {
+  border-color: rgba(190, 24, 93, 0.5);
+  box-shadow: 0 14px 30px rgba(219, 39, 119, 0.26);
+  transform: translateY(-1px);
+}
+
+.theme-sabrina-tube header,
+.theme-sabrina-tube aside,
+.theme-sabrina-tube nav.fixed,
+.theme-sabrina-tube .mobile-sheet-enter-active + section,
+.theme-sabrina-tube [class*="bg-zinc-950"],
+.theme-sabrina-tube [class*="bg-black"] {
+  background-color: var(--sabrina-panel) !important;
+  color: var(--sabrina-text) !important;
+}
+
+.theme-sabrina-tube header,
+.theme-sabrina-tube aside,
+.theme-sabrina-tube [class*="border-zinc-"],
+.theme-sabrina-tube [class*="border-white/10"] {
+  border-color: var(--sabrina-border) !important;
+}
+
+.theme-sabrina-tube .route-page-shell main,
+.theme-sabrina-tube .route-page-shell > div,
+.theme-sabrina-tube [class*="bg-zinc-900"],
+.theme-sabrina-tube [class*="bg-zinc-800"],
+.theme-sabrina-tube [class*="bg-zinc-700"],
+.theme-sabrina-tube [class*="bg-zinc-600"],
+.theme-sabrina-tube [class*="bg-gray-900"],
+.theme-sabrina-tube [class*="bg-gray-800"],
+.theme-sabrina-tube [class*="bg-gray-700"],
+.theme-sabrina-tube [class*="bg-gray-600"] {
+  background-color: var(--sabrina-panel-strong) !important;
+  color: var(--sabrina-text) !important;
+}
+
+.theme-sabrina-tube input,
+.theme-sabrina-tube textarea,
+.theme-sabrina-tube select {
+  border-color: rgba(219, 39, 119, 0.28) !important;
+  background: rgba(255, 255, 255, 0.82) !important;
+  color: var(--sabrina-text) !important;
+}
+
+.theme-sabrina-tube input::placeholder,
+.theme-sabrina-tube textarea::placeholder {
+  color: rgba(138, 74, 101, 0.72) !important;
+}
+
+.theme-sabrina-tube [class*="text-white"],
+.theme-sabrina-tube [class*="text-zinc-100"],
+.theme-sabrina-tube [class*="text-zinc-200"],
+.theme-sabrina-tube [class*="text-gray-100"],
+.theme-sabrina-tube [class*="text-gray-200"] {
+  color: var(--sabrina-text) !important;
+}
+
+.theme-sabrina-tube [class*="text-zinc-300"],
+.theme-sabrina-tube [class*="text-zinc-400"],
+.theme-sabrina-tube [class*="text-gray-300"],
+.theme-sabrina-tube [class*="text-gray-400"],
+.theme-sabrina-tube [class*="text-gray-500"] {
+  color: var(--sabrina-muted) !important;
+}
+
+.theme-sabrina-tube [class*="bg-red-600"],
+.theme-sabrina-tube [class*="bg-blue-600"],
+.theme-sabrina-tube [class*="bg-rose-500"],
+.theme-sabrina-tube .account-panel-check,
+.theme-sabrina-tube .mobile-bottom-nav-create svg,
+.theme-sabrina-tube .music-now-playing-nav:not(:disabled) svg {
+  background: linear-gradient(135deg, #f472b6, #db2777) !important;
+  color: white !important;
+}
+
+.theme-sabrina-tube [class*="hover:bg-red-"]:hover,
+.theme-sabrina-tube [class*="hover:bg-blue-"]:hover,
+.theme-sabrina-tube [class*="hover:bg-zinc-"]:hover,
+.theme-sabrina-tube .account-panel-row:hover,
+.theme-sabrina-tube .account-panel-action:hover,
+.theme-sabrina-tube .mobile-bottom-nav-item:hover,
+.theme-sabrina-tube .mobile-sheet-action:hover {
+  background-color: rgba(249, 168, 212, 0.28) !important;
+  color: #831843 !important;
+}
+
+.theme-sabrina-tube .account-panel-row-active,
+.theme-sabrina-tube [class*="bg-blue-600"][class*="text-white"] {
+  background: rgba(219, 39, 119, 0.2) !important;
+  color: #831843 !important;
+}
+
+.theme-sabrina-tube .mobile-bottom-nav {
+  border-color: rgba(219, 39, 119, 0.3) !important;
+  background: rgba(255, 247, 251, 0.96) !important;
+  box-shadow: 0 -8px 24px rgba(190, 24, 93, 0.14) !important;
+}
+
+.theme-sabrina-tube .mobile-bottom-nav-item {
+  color: #9d4b70 !important;
+}
+
+.theme-sabrina-tube .mobile-bottom-nav-item.text-white {
+  background: rgba(249, 168, 212, 0.34) !important;
+  color: #831843 !important;
+}
+
+.theme-sabrina-tube .mobile-menu-backdrop {
+  background: rgba(63, 23, 41, 0.42) !important;
+}
+
+.theme-sabrina-tube .mobile-create-menu,
+.theme-sabrina-tube .mobile-more-sheet,
+.theme-sabrina-tube .mobile-categories-menu {
+  border-color: rgba(219, 39, 119, 0.34) !important;
+  background: #fff7fb !important;
+  color: var(--sabrina-text) !important;
+  box-shadow: 0 -14px 40px rgba(131, 24, 67, 0.2) !important;
+}
+
+.theme-sabrina-tube .mobile-create-menu > a {
+  color: #701a3d !important;
+}
+
+.theme-sabrina-tube .mobile-create-menu > a + a {
+  border-color: rgba(219, 39, 119, 0.2) !important;
+}
+
+.theme-sabrina-tube .mobile-create-menu > a > span,
+.theme-sabrina-tube .mobile-menu-close {
+  border: 1px solid rgba(219, 39, 119, 0.2);
+  background: #ffe4f0 !important;
+  color: #831843 !important;
+}
+
+.theme-sabrina-tube .mobile-sheet-grabber {
+  background: #f9a8d4 !important;
+}
+
+.theme-sabrina-tube .mobile-more-sheet [class*="border-zinc-"],
+.theme-sabrina-tube .mobile-categories-menu [class*="border-zinc-"] {
+  border-color: rgba(219, 39, 119, 0.2) !important;
+}
+
+.theme-sabrina-tube .mobile-sheet-action {
+  border: 1px solid rgba(219, 39, 119, 0.24);
+  background: rgba(255, 255, 255, 0.94) !important;
+  color: #701a3d !important;
+  box-shadow: 0 4px 12px rgba(190, 24, 93, 0.08);
+}
+
+.theme-sabrina-tube .mobile-sheet-action:hover,
+.theme-sabrina-tube .mobile-sheet-action:focus-visible {
+  border-color: rgba(190, 24, 93, 0.46);
+  background: #ffd7e8 !important;
+  color: #701a3d !important;
+}
+
+.theme-sabrina-tube .mobile-sheet-action.router-link-active {
+  border-color: rgba(190, 24, 93, 0.46);
+  background: #ffe4f0 !important;
+  color: #831843 !important;
+}
+
+.theme-sabrina-tube .mobile-more-sheet .mobile-menu-logout {
+  border-color: rgba(190, 24, 93, 0.52) !important;
+  background: #fff1f5 !important;
+  color: #881337 !important;
+}
+
+.theme-sabrina-tube .mobile-more-sheet .mobile-menu-logout:hover {
+  background: #ffe4e6 !important;
+  color: #881337 !important;
+}
+
+.theme-sabrina-tube .mobile-categories-menu > div:first-child {
+  border-color: rgba(219, 39, 119, 0.28) !important;
+  background: rgba(255, 247, 251, 0.96) !important;
+}
+
+.theme-sabrina-tube .mobile-categories-menu a {
+  border: 1px solid transparent;
+  color: #701a3d !important;
+}
+
+.theme-sabrina-tube .mobile-categories-menu a:hover {
+  border-color: rgba(219, 39, 119, 0.22);
+  background: #ffe4f0 !important;
+}
+
+.theme-sabrina-tube .mobile-categories-menu a[class*="bg-blue-600"] {
+  border-color: rgba(190, 24, 93, 0.38);
+  background: #f9a8d4 !important;
+  color: #701a3d !important;
+}
+
+/* Keep copy legible when it is intentionally layered over photography. */
+.theme-sabrina-tube [class*="relative"]:has(> img) [class*="text-white"],
+.theme-sabrina-tube [class*="relative"]:has(> img) [class*="text-zinc-100"],
+.theme-sabrina-tube [class*="relative"]:has(> img) [class*="text-zinc-200"] {
+  color: #fff !important;
+}
+
+.theme-sabrina-tube [class*="relative"]:has(> img) [class*="text-zinc-300"],
+.theme-sabrina-tube [class*="relative"]:has(> img) [class*="text-zinc-400"],
+.theme-sabrina-tube [class*="relative"]:has(> img) [class*="text-gray-300"],
+.theme-sabrina-tube [class*="relative"]:has(> img) [class*="text-gray-400"] {
+  color: #fce7f3 !important;
+}
+
+/* Saturated controls and status surfaces need light foregrounds. */
+.theme-sabrina-tube [class*="bg-red-600"],
+.theme-sabrina-tube [class*="bg-red-700"],
+.theme-sabrina-tube [class*="bg-red-800"],
+.theme-sabrina-tube [class*="bg-red-900"],
+.theme-sabrina-tube [class*="bg-red-950"],
+.theme-sabrina-tube [class*="bg-rose-600"],
+.theme-sabrina-tube [class*="bg-pink-600"],
+.theme-sabrina-tube [class*="bg-pink-700"],
+.theme-sabrina-tube [class*="bg-blue-700"],
+.theme-sabrina-tube [class*="bg-blue-800"],
+.theme-sabrina-tube [class*="bg-blue-900"],
+.theme-sabrina-tube [class*="bg-purple-700"],
+.theme-sabrina-tube [class*="bg-purple-800"],
+.theme-sabrina-tube [class*="bg-purple-900"] {
+  color: #fff !important;
+}
+
+.theme-sabrina-tube [class*="bg-red-600"] [class*="text-"],
+.theme-sabrina-tube [class*="bg-red-700"] [class*="text-"],
+.theme-sabrina-tube [class*="bg-red-800"] [class*="text-"],
+.theme-sabrina-tube [class*="bg-red-900"] [class*="text-"],
+.theme-sabrina-tube [class*="bg-red-950"] [class*="text-"],
+.theme-sabrina-tube [class*="bg-rose-600"] [class*="text-"],
+.theme-sabrina-tube [class*="bg-pink-600"] [class*="text-"],
+.theme-sabrina-tube [class*="bg-pink-700"] [class*="text-"],
+.theme-sabrina-tube [class*="bg-blue-700"] [class*="text-"],
+.theme-sabrina-tube [class*="bg-blue-800"] [class*="text-"],
+.theme-sabrina-tube [class*="bg-blue-900"] [class*="text-"],
+.theme-sabrina-tube [class*="bg-purple-700"] [class*="text-"],
+.theme-sabrina-tube [class*="bg-purple-800"] [class*="text-"],
+.theme-sabrina-tube [class*="bg-purple-900"] [class*="text-"] {
+  color: #fff !important;
+}
+
+.theme-sabrina-tube .continue-watching-card > div [class*="text-white"] {
+  color: var(--sabrina-text) !important;
+}
+
+.theme-sabrina-tube .continue-watching-card > div [class*="text-zinc-"],
+.theme-sabrina-tube .continue-watching-card > div [class*="text-gray-"] {
+  color: var(--sabrina-muted) !important;
+}
+
+.theme-sabrina-tube .watch-description {
+  background: rgba(255, 247, 251, 0.92) !important;
+}
+
+.theme-sabrina-tube .watch-description [class*="bg-gradient-to-"] {
+  background-image: linear-gradient(to top, rgba(255, 247, 251, 0.98), transparent) !important;
+}
+
+.theme-sabrina-tube .watch-action-button[class*="bg-zinc-"] {
+  border: 1px solid rgba(219, 39, 119, 0.3);
+  background: rgba(255, 255, 255, 0.92) !important;
+  color: #701a3d !important;
+  box-shadow: 0 4px 12px rgba(190, 24, 93, 0.12);
+}
+
+.theme-sabrina-tube .watch-action-button[class*="bg-zinc-"]:hover {
+  border-color: rgba(190, 24, 93, 0.5);
+  background: #ffd7e8 !important;
+  box-shadow: 0 6px 16px rgba(190, 24, 93, 0.18);
+}
+
+.theme-sabrina-tube .comment-composer,
+.theme-sabrina-tube .comment-thread-card {
+  border: 1px solid rgba(219, 39, 119, 0.28);
+  background: rgba(255, 255, 255, 0.88) !important;
+  box-shadow: 0 6px 18px rgba(190, 24, 93, 0.1);
+}
+
+.theme-sabrina-tube .comment-composer textarea,
+.theme-sabrina-tube .comment-composer select,
+.theme-sabrina-tube .comment-reply-composer textarea {
+  border-color: rgba(219, 39, 119, 0.38) !important;
+  background: #fff !important;
+  box-shadow: inset 0 1px 3px rgba(190, 24, 93, 0.07);
+}
+
+.theme-sabrina-tube .comment-reply-composer {
+  border: 1px solid rgba(219, 39, 119, 0.22);
+  background: rgba(255, 215, 232, 0.48) !important;
+}
+
+.theme-sabrina-tube .comment-secondary-action {
+  border: 1px solid rgba(219, 39, 119, 0.24);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.82);
+  color: #8a3157 !important;
+}
+
+.theme-sabrina-tube .comment-secondary-action:hover {
+  border-color: rgba(190, 24, 93, 0.46);
+  background: #ffd7e8 !important;
+  color: #701a3d !important;
+}
+
+.theme-sabrina-tube .comment-submit-action {
+  border: 1px solid rgba(190, 24, 93, 0.42);
+  box-shadow: 0 4px 12px rgba(190, 24, 93, 0.16);
+}
+
+.theme-sabrina-tube .music-attribution {
+  border-color: var(--sabrina-border) !important;
+  background: rgba(255, 247, 251, 0.9) !important;
+}
+
+.theme-sabrina-tube .music-attribution-heading,
+.theme-sabrina-tube .music-attribution-title {
+  color: var(--sabrina-text) !important;
+}
+
+.theme-sabrina-tube .music-attribution-link,
+.theme-sabrina-tube .music-attribution-copyright {
+  color: var(--sabrina-muted) !important;
+}
+
+.theme-sabrina-tube .music-attribution-cover,
+.theme-sabrina-tube .music-attribution-listen {
+  border-color: var(--sabrina-border) !important;
+  background: var(--sabrina-panel-strong) !important;
+  color: #831843 !important;
+}
+
+.theme-sabrina-tube .music-attribution-copyright {
+  border-color: var(--sabrina-border) !important;
+  background: rgba(255, 228, 240, 0.42) !important;
+}
+
+.theme-sabrina-tube .channel-music-panel,
+.theme-sabrina-tube .artist-page-link,
+.theme-sabrina-tube .channel-release-tile {
+  border-color: var(--sabrina-border) !important;
+  background: var(--sabrina-panel) !important;
+  color: var(--sabrina-text) !important;
+}
+
+.theme-sabrina-tube .channel-release-tile h3,
+.theme-sabrina-tube .music-panel-heading h2 {
+  color: var(--sabrina-text) !important;
+}
+
+.theme-sabrina-tube .channel-release-tile p,
+.theme-sabrina-tube .music-panel-heading p {
+  color: var(--sabrina-muted) !important;
+}
+
+.theme-sabrina-tube .channel-page {
+  background: #fff7fb !important;
+  color: var(--sabrina-text) !important;
+}
+
+.theme-sabrina-tube .channel-hero {
+  border-color: rgba(219, 39, 119, 0.34) !important;
+}
+
+.theme-sabrina-tube .channel-hero .channel-header-copy,
+.theme-sabrina-tube .channel-hero .channel-header-copy h1,
+.theme-sabrina-tube .channel-hero .channel-header-copy p,
+.theme-sabrina-tube .channel-hero .channel-header-copy [class*="text-white"],
+.theme-sabrina-tube .channel-hero .channel-header-metrics,
+.theme-sabrina-tube .channel-hero .channel-header-metrics * {
+  color: #fff !important;
+}
+
+.theme-sabrina-tube .channel-hero .channel-header-copy {
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.86) !important;
+}
+
+.theme-sabrina-tube .channel-hero .channel-header-metrics > * {
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  background: rgba(45, 12, 29, 0.54) !important;
+}
+
+.theme-sabrina-tube .channel-hero .channel-subscribe-button {
+  border: 1px solid rgba(255, 255, 255, 0.58) !important;
+  background: linear-gradient(135deg, #f472b6, #db2777) !important;
+  color: #fff !important;
+  text-shadow: none !important;
+}
+
+.theme-sabrina-tube .channel-hero .channel-subscribe-button:hover {
+  background: linear-gradient(135deg, #ec4899, #be185d) !important;
+}
+
+.theme-sabrina-tube .channel-hero .channel-subscribe-button.is-subscribed {
+  border-color: rgba(249, 168, 212, 0.72) !important;
+  background: #ffe4f0 !important;
+  color: #831843 !important;
+}
+
+.theme-sabrina-tube .channel-hero .channel-subscribe-button.is-subscribed:hover {
+  background: #fbcfe8 !important;
+}
+
+.theme-sabrina-tube .channel-hero .channel-header-copy .channel-subscriber-count {
+  border: 1px solid rgba(249, 168, 212, 0.72);
+  background: rgba(255, 247, 251, 0.94) !important;
+  color: #701a3d !important;
+  text-shadow: none !important;
+  box-shadow: 0 5px 14px rgba(45, 12, 29, 0.18);
+}
+
+.theme-sabrina-tube .channel-tabs {
+  border: 1px solid rgba(219, 39, 119, 0.24) !important;
+  background: rgba(255, 255, 255, 0.9) !important;
+  box-shadow: 0 7px 18px rgba(190, 24, 93, 0.1) !important;
+  backdrop-filter: blur(8px);
+}
+
+.theme-sabrina-tube .channel-tabs button {
+  color: var(--sabrina-muted) !important;
+  text-shadow: none !important;
+}
+
+.theme-sabrina-tube .channel-tabs button:hover,
+.theme-sabrina-tube .channel-tabs button.is-active {
+  color: #831843 !important;
+}
+
+.theme-sabrina-tube .channel-tab-button.is-active::after {
+  background: #db2777 !important;
+}
+
+.theme-sabrina-tube .channel-video-card {
+  border-color: rgba(219, 39, 119, 0.24) !important;
+  background: rgba(255, 255, 255, 0.92) !important;
+  box-shadow: 0 8px 20px rgba(190, 24, 93, 0.1) !important;
+  color: var(--sabrina-text) !important;
+}
+
+.theme-sabrina-tube .channel-video-card:hover {
+  border-color: rgba(190, 24, 93, 0.48) !important;
+  background: #fff0f6 !important;
+  box-shadow: 0 12px 28px rgba(190, 24, 93, 0.16) !important;
+}
+
+.theme-sabrina-tube .channel-video-card h3 {
+  color: #58152f !important;
+}
+
+.theme-sabrina-tube .channel-video-card p {
+  color: var(--sabrina-muted) !important;
+}
+
+.theme-sabrina-tube .channel-video-card [class*="bg-gray-900"] {
+  border-color: rgba(190, 24, 93, 0.34) !important;
+  background: #ffe4f0 !important;
+  color: #831843 !important;
+}
+
+.theme-sabrina-tube .streaming-hero-copy,
+.theme-sabrina-tube .streaming-hero-title,
+.theme-sabrina-tube .streaming-hero-synopsis {
+  color: #fff !important;
+  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.72);
+}
+
+.theme-sabrina-tube .streaming-eyebrow {
+  color: #fbcfe8 !important;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.82);
+}
+
+.theme-sabrina-tube .streaming-hero-copy [class*="bg-white/10"] {
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: rgba(0, 0, 0, 0.5) !important;
+  color: #fff !important;
+  text-shadow: none;
+}
+
+.theme-sabrina-tube .streaming-secondary-button {
+  border-color: rgba(255, 255, 255, 0.62) !important;
+  background: rgba(0, 0, 0, 0.52) !important;
+  color: #fff !important;
+}
+
+.theme-sabrina-tube .streaming-card {
+  overflow: hidden;
+  border: 1px solid rgba(219, 39, 119, 0.25);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.88) !important;
+  box-shadow: 0 7px 18px rgba(190, 24, 93, 0.1);
+  transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+}
+
+.theme-sabrina-tube .streaming-card:hover {
+  border-color: rgba(190, 24, 93, 0.46);
+  box-shadow: 0 12px 26px rgba(190, 24, 93, 0.16);
+  transform: translateY(-2px);
+}
+
+.theme-sabrina-tube .streaming-card > button > h3,
+.theme-sabrina-tube .streaming-card > button > p {
+  margin-left: 0.75rem;
+  margin-right: 0.75rem;
+}
+
+.theme-sabrina-tube .streaming-card > button > p {
+  margin-bottom: 0.75rem;
+  color: var(--sabrina-muted) !important;
+}
+
+.theme-sabrina-tube .motion-card,
+.theme-sabrina-tube .homepage-carousel-item > *,
+.theme-sabrina-tube article,
+.theme-sabrina-tube [class*="rounded-2xl"],
+.theme-sabrina-tube [class*="rounded-lg"] {
+  box-shadow: 0 14px 36px rgba(219, 39, 119, 0.11);
+}
+
+.theme-sabrina-tube .motion-card:hover {
+  box-shadow: 0 18px 42px rgba(219, 39, 119, 0.19);
+}
+
+.theme-sabrina-tube .search-suggestions-scrollbar {
+  scrollbar-color: rgba(219, 39, 119, 0.55) transparent;
+}
+
+.theme-sabrina-tube .search-suggestions-scrollbar::-webkit-scrollbar-thumb {
+  border-color: rgba(255, 240, 246, 0.9);
+  background: rgba(219, 39, 119, 0.55);
+}
+
+.theme-sabrina-tube .route-page-shell::before {
+  content: "";
+  position: fixed;
+  right: clamp(1rem, 5vw, 4rem);
+  top: clamp(5rem, 12vh, 9rem);
+  z-index: -1;
+  width: 9rem;
+  height: 9rem;
+  opacity: 0.2;
+  background:
+    linear-gradient(45deg, transparent 43%, #db2777 44% 56%, transparent 57%),
+    linear-gradient(-45deg, transparent 43%, #db2777 44% 56%, transparent 57%);
+  clip-path: polygon(50% 0, 61% 35%, 98% 35%, 68% 56%, 79% 91%, 50% 70%, 21% 91%, 32% 56%, 2% 35%, 39% 35%);
+}
+
+@media (max-width: 767px) {
+  .sabrina-brand-logo {
+    height: 2.35rem;
+    max-width: min(10.5rem, 45vw);
+  }
+
+  .sabrina-brand-text {
+    font-size: 1.45rem;
+  }
 }
 
 .giltube-account-panel-scroll {

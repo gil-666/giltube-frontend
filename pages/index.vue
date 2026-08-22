@@ -20,7 +20,7 @@
         {{ loadError }}
       </div>
 
-      <div v-else-if="!secondaryHomeLoading && recommendedVideos.length === 0 && publicWatchParties.length === 0 && homeMovies.length === 0 && homeSeries.length === 0" class="rounded-2xl border border-white/10 bg-white/5 p-8 text-center">
+      <div v-else-if="!isSabrinaTube && !secondaryHomeLoading && recommendedVideos.length === 0 && publicWatchParties.length === 0 && homeMovies.length === 0 && homeSeries.length === 0" class="rounded-2xl border border-white/10 bg-white/5 p-8 text-center">
         <h2 class="text-xl font-semibold">{{ t('home.noVideos') }}</h2>
         <p class="mt-2 text-sm text-zinc-400">{{ t('home.noVideosBody') }}</p>
         <NuxtLink :to="localePath('/upload')" class="mt-5 inline-flex rounded-full bg-white px-4 py-2 text-sm font-medium text-zinc-950 hover:bg-zinc-200">
@@ -29,6 +29,59 @@
       </div>
 
       <div v-else class="home-sections space-y-8">
+        <section v-if="isSabrinaTube && (sabrinaVideosLoading || sabrinaVideos.length > 0)" class="sabrina-video-shelf">
+          <div class="mb-4 flex items-end justify-between gap-4">
+            <div>
+              <p class="sabrina-video-shelf__eyebrow">{{ t('home.sabrinaSpotlight') }}</p>
+              <h2 class="text-xl font-semibold">{{ t('home.sabrinaRecommendations') }}</h2>
+            </div>
+            <div class="hidden items-center gap-2 sm:flex">
+              <button
+                type="button"
+                class="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/5 text-lg text-white transition hover:bg-white/10"
+                :aria-label="t('home.scrollSabrinaLeft')"
+                @click="scrollCarousel('sabrina', -1)"
+              >
+                ‹
+              </button>
+              <button
+                type="button"
+                class="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/5 text-lg text-white transition hover:bg-white/10"
+                :aria-label="t('home.scrollSabrinaRight')"
+                @click="scrollCarousel('sabrina', 1)"
+              >
+                ›
+              </button>
+            </div>
+          </div>
+          <div class="-mx-6 px-6 sm:mx-0 sm:px-0">
+            <div
+              v-if="sabrinaVideosLoading"
+              class="sabrina-video-grid homepage-carousel overflow-hidden pb-3"
+              aria-hidden="true"
+            >
+              <div v-for="n in 12" :key="n" class="sabrina-video-grid__item">
+                <div class="h-full overflow-hidden rounded-2xl border border-white/10 bg-white/5">
+                  <div class="aspect-video animate-pulse bg-white/10" />
+                  <div class="space-y-2 p-4">
+                    <div class="h-4 w-4/5 animate-pulse rounded bg-white/10" />
+                    <div class="h-3 w-2/5 animate-pulse rounded bg-white/10" />
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div
+              v-else
+              :ref="setCarouselRef('sabrina')"
+              class="sabrina-video-grid homepage-carousel overflow-x-auto scroll-smooth pb-3"
+            >
+              <div v-for="(video, index) in sabrinaVideos" :key="video.id" class="sabrina-video-grid__item">
+                <VideoTile :video="video" :eager="index < 2" class="h-full" />
+              </div>
+            </div>
+          </div>
+        </section>
+
         <section v-if="continueWatchingItems.length > 0">
           <div class="mb-4 flex items-center justify-between gap-4">
             <div>
@@ -387,10 +440,11 @@
 </template>
 
 <script setup>
-import { computed, defineComponent, h, nextTick, onMounted, onUnmounted, ref } from 'vue'
+import { computed, defineComponent, h, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import AvatarFallback from '~/app/components/AvatarFallback.vue'
 import GilAdsBanner from '~/app/components/ads/GilAdsBanner.vue'
 import { getVideos, getHomeRecommendations, getRecentWatchProgress, getWatchProgressMap } from '~/app/service/videos'
+import { getChannelVideos } from '~/app/service/channels'
 import { listMovies } from '~/app/service/movies'
 import { listSeries } from '~/app/service/series'
 import { listPublicWatchParties } from '~/app/service/watchParties'
@@ -400,10 +454,13 @@ import { getTimeAgo } from '~/app/utils/time'
 import { formatViews } from '~/app/utils/format'
 import { imageVariantSrcset, imageVariantUrl, isVideo4K, isVideo8K, resolveMediaUrl } from '~/app/utils/media'
 import { useMetaTags } from '~/app/composables/useMetaTags'
+import { useEasterEggs } from '~/app/composables/useEasterEggs'
 import VerifiedBadge from '~/app/components/VerifiedBadge.vue'
 
 const { t } = useI18n()
 const localePath = useLocalePath()
+const { activeEasterEgg } = useEasterEggs()
+const isSabrinaTube = computed(() => activeEasterEgg.value?.id === 'sabrina-tube')
 const recommendationSourceVideos = ref([])
 const liveStreams = ref([])
 const publicWatchParties = ref([])
@@ -412,6 +469,8 @@ const recommendedVideos = ref([])
 const trendingVideos = ref([])
 const trustedVideos = ref([])
 const freshVideos = ref([])
+const sabrinaVideos = ref([])
+const sabrinaVideosLoading = ref(false)
 const homeMovies = ref([])
 const homeSeries = ref([])
 const continueWatchingItems = ref([])
@@ -431,6 +490,7 @@ const homeAdInsertionIndex = ref(5)
 let intersectionObserver = null
 let deferredHomeLoadHandle = null
 let deferredHomeLoadStarted = false
+let sabrinaVideosRequest = null
 const carouselContainers = {}
 const homeFeedCacheTTL = 5 * 60 * 1000
 
@@ -453,6 +513,63 @@ const scrollCarousel = (key, direction) => {
     left: direction * element.clientWidth,
     behavior: 'smooth',
   })
+}
+
+const toHomeVideoFromSearch = (result) => ({
+  id: result.id,
+  title: result.title,
+  description: result.description || '',
+  thumbnail_url: result.thumbnail || '',
+  views: Number(result.views || 0),
+  created_at: null,
+  channel_id: result.channel_id,
+  channel: {
+    id: result.channel_id,
+    name: result.channel || 'Sabrina Carpenter',
+    avatar_url: result.avatar || '',
+    verified: !!result.verified,
+  },
+})
+
+const loadSabrinaVideos = async () => {
+  if (sabrinaVideosRequest) return sabrinaVideosRequest
+
+  sabrinaVideosLoading.value = true
+  sabrinaVideosRequest = (async () => {
+    try {
+      const response = await fetch('/api/v1/search?q=sabrina%20carpenter&page=1')
+      if (!response.ok) throw new Error(`Search returned ${response.status}`)
+
+      const data = await response.json()
+      const results = Array.isArray(data?.results) ? data.results : []
+      const channelResult = results.find((result) => (
+        result.type === 'channel' && String(result.name || result.title || '').trim().toLowerCase() === 'sabrina carpenter'
+      ))
+      const officialVideos = channelResult?.id
+        ? await getChannelVideos(channelResult.id).catch(() => [])
+        : []
+      const mentionedVideos = results
+        .filter(result => result.type === 'video')
+        .map(toHomeVideoFromSearch)
+
+      const officialLead = officialVideos.slice(0, 8)
+      const officialRemainder = officialVideos.slice(8)
+      const nonOfficialMentions = mentionedVideos.filter(video => video.channel?.id !== channelResult?.id)
+      const videosByID = new Map()
+      for (const video of [...officialLead, ...nonOfficialMentions, ...officialRemainder]) {
+        if (video?.id && !videosByID.has(video.id)) videosByID.set(video.id, video)
+      }
+      sabrinaVideos.value = [...videosByID.values()].slice(0, 12)
+      loadProgressForVideos(sabrinaVideos.value.map(video => video.id))
+    } catch (err) {
+      console.warn('SabrinaTube shelf unavailable:', err)
+      sabrinaVideos.value = []
+    } finally {
+      sabrinaVideosLoading.value = false
+    }
+  })()
+
+  return sabrinaVideosRequest
 }
 
 const resetHomeAdInsertionIndex = (itemCount) => {
@@ -992,7 +1109,7 @@ const ContinueTile = defineComponent({
   setup(props) {
     const progressPercent = () => getContinueProgressPercent(props.item)
 
-    return () => h('article', { class: 'motion-card group h-full w-full min-w-0 overflow-hidden rounded-2xl border border-red-500/20 bg-red-950/15' }, [
+    return () => h('article', { class: 'continue-watching-card motion-card group h-full w-full min-w-0 overflow-hidden rounded-2xl border border-red-500/20 bg-red-950/15' }, [
       h(NuxtLink, { to: continueLink(props.item), class: 'block' }, () => [
         h('div', { class: 'relative aspect-video bg-black' }, [
           h('img', {
@@ -1161,6 +1278,10 @@ const WatchPartyTile = defineComponent({
   },
 })
 
+watch(isSabrinaTube, (isActive) => {
+  if (isActive) loadSabrinaVideos()
+}, { immediate: true })
+
 onMounted(async () => {
   await loadHomeFeed()
   await nextTick()
@@ -1209,6 +1330,35 @@ onUnmounted(() => {
   width: clamp(9rem, 11vw, 11.5rem);
 }
 
+.sabrina-video-shelf {
+  margin-inline: -1.5rem;
+  border-block: 1px solid rgba(219, 39, 119, 0.2);
+  background: rgba(255, 255, 255, 0.24);
+  padding: 1.35rem 1.5rem 1rem;
+}
+
+.sabrina-video-shelf__eyebrow {
+  margin-bottom: 0.2rem;
+  color: #be185d;
+  font-size: 0.7rem;
+  font-weight: 900;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.sabrina-video-grid {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: clamp(13rem, 18vw, 18rem);
+  grid-template-rows: minmax(0, 1fr);
+  gap: 1rem 1.5rem;
+}
+
+.sabrina-video-grid__item {
+  display: flex;
+  min-width: 0;
+}
+
 @media (max-width: 640px) {
   .homepage-carousel {
     padding-bottom: 0.75rem;
@@ -1224,6 +1374,11 @@ onUnmounted(() => {
 
   .homepage-carousel-item--poster {
     width: min(42vw, 10.5rem);
+  }
+
+  .sabrina-video-grid {
+    grid-auto-columns: min(74vw, 19rem);
+    gap: 1rem;
   }
 }
 </style>
