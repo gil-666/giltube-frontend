@@ -63,6 +63,16 @@ onMounted(async () => {
 
   try {
     const response = await completeGilIDAuth(code, state)
+
+    if (response.app_redirect_url) {
+      if (!response.app_redirect_url.startsWith('giltube://auth/callback?')) {
+        throw new Error('Invalid mobile redirect returned by GilTube.')
+      }
+      currentStep.value = 'redirecting'
+      window.location.replace(response.app_redirect_url)
+      return
+    }
+
     await persistAuthSession(response)
 
     currentStep.value = 'redirecting'

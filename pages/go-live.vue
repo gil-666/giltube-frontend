@@ -7,22 +7,6 @@
           <p class="mt-2 max-w-2xl text-gray-400">{{ t('goLive.subtitle') }}</p>
         </div>
 
-        <div class="flex rounded-full border border-white/10 bg-white/5 p-1">
-          <button
-            type="button"
-            :class="tabButtonClass(activeTab === 'in-app')"
-            @click="activeTab = 'in-app'"
-          >
-            {{ t('goLive.inAppTab') }}
-          </button>
-          <button
-            type="button"
-            :class="tabButtonClass(activeTab === 'encoder')"
-            @click="activeTab = 'encoder'"
-          >
-            {{ t('goLive.customEncoderTab') }}
-          </button>
-        </div>
       </div>
 
       <div v-if="!isLoggedIn" class="rounded-3xl border border-zinc-800 bg-zinc-950/80 p-6 shadow-2xl">
@@ -75,6 +59,34 @@
               <span class="block text-xs text-gray-400">{{ t('goLive.dvrHelper') }}</span>
             </span>
           </label>
+          <label class="flex items-center gap-3 rounded-2xl border border-zinc-800 bg-black/30 px-4 py-3 lg:col-span-2">
+            <input v-model="adaptiveTranscodingEnabled" type="checkbox" class="h-4 w-4 accent-red-600" />
+            <span>
+              <span class="block text-sm font-black text-white">{{ t('goLive.adaptiveTranscoding') }}</span>
+              <span class="block text-xs text-gray-400">{{ t('goLive.adaptiveTranscodingHelper') }}</span>
+            </span>
+          </label>
+		  <label class="block lg:col-span-2">
+			<span class="mb-2 block text-sm font-semibold text-gray-300">Scheduled start (optional)</span>
+			<input v-model="scheduledFor" type="datetime-local" class="w-full rounded-2xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-white outline-none transition focus:border-red-500" />
+		  </label>
+		  <div class="grid gap-3 rounded-2xl border border-zinc-800 bg-black/30 p-4 lg:col-span-2 sm:grid-cols-[12rem_minmax(0,1fr)] sm:items-center">
+			<div class="aspect-video overflow-hidden rounded-xl bg-zinc-900">
+			  <img v-if="live?.thumbnail_url" :src="resolveMediaUrl(live.thumbnail_url)" alt="Live stream thumbnail" class="h-full w-full object-cover" />
+			  <div v-else class="flex h-full items-center justify-center text-xs text-zinc-500">No custom thumbnail</div>
+			</div>
+			<div>
+			  <p class="text-sm font-black text-white">Live stream thumbnail</p>
+			  <p class="mt-1 text-xs text-zinc-400">Shown on featured banners, live listings, and notifications. A 16:9 image works best.</p>
+			  <div class="mt-3 flex flex-wrap gap-2">
+				<label class="cursor-pointer rounded-lg bg-zinc-700 px-3 py-2 text-xs font-bold hover:bg-zinc-600">
+				  {{ thumbnailBusy ? 'Uploading…' : 'Choose image' }}
+				  <input type="file" accept="image/*" class="hidden" :disabled="thumbnailBusy || !selectedChannelId" @change="uploadThumbnail" />
+				</label>
+				<button v-if="live?.has_custom_thumbnail" type="button" :disabled="thumbnailBusy" class="rounded-lg bg-red-950 px-3 py-2 text-xs font-bold text-red-200 disabled:opacity-50" @click="removeThumbnail">Remove</button>
+			  </div>
+			</div>
+		  </div>
           <div class="flex items-end">
             <button
               type="button"
@@ -167,6 +179,7 @@
 
             <div class="mobile-live-controls-overlay absolute inset-x-0 bottom-0 bg-gradient-to-t from-black via-black/65 to-transparent p-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
               <div ref="mobileChatListRef" class="mobile-live-chat-overlay mb-4 max-h-[30dvh] space-y-2 overflow-y-auto overscroll-contain pr-1 lg:hidden">
+                <LivePollCard :channel-id="selectedChannelId" :actor-channel-id="selectedChannelId" :live="isLive" can-manage />
                 <div v-for="msg in chatMessages" :key="msg.id" class="max-w-[88%] rounded-2xl bg-black/45 px-3 py-2 text-sm backdrop-blur">
                   <span class="font-bold text-red-200">{{ msg.channel?.name || t('goLive.viewer') }}:</span>
                   <span class="ml-1 text-white/95">{{ msg.message }}</span>
@@ -292,6 +305,13 @@
                         <span class="block text-xs text-gray-400">{{ t('goLive.dvrShortHelper') }}</span>
                       </span>
                     </label>
+                    <label class="flex items-center gap-3 rounded-xl border border-white/10 bg-black/55 px-3 py-2">
+                      <input v-model="adaptiveTranscodingEnabled" type="checkbox" class="h-4 w-4 accent-red-500" />
+                      <span>
+                        <span class="block text-sm font-black text-white">{{ t('goLive.adaptiveTranscoding') }}</span>
+                        <span class="block text-xs text-gray-400">{{ t('goLive.adaptiveTranscodingShortHelper') }}</span>
+                      </span>
+                    </label>
                     <div class="flex items-center gap-2">
                       <span class="rounded-full border border-white/10 bg-white/10 px-3 py-1 text-xs font-bold" :class="isLive ? 'text-emerald-300' : 'text-gray-300'">
                         {{ isLive ? t('goLive.live') : t('goLive.offline') }}
@@ -355,6 +375,7 @@
               <p class="text-sm text-gray-400">{{ t('goLive.chatHelper') }}</p>
             </div>
             <div ref="chatListRef" class="min-h-0 flex-1 space-y-3 overflow-y-auto p-4">
+              <LivePollCard :channel-id="selectedChannelId" :actor-channel-id="selectedChannelId" :live="isLive" can-manage />
               <p v-if="chatMessages.length === 0" class="text-sm text-gray-500">{{ t('goLive.chatEmpty') }}</p>
               <div v-for="msg in chatMessages" :key="msg.id" class="rounded-2xl bg-zinc-900 px-3 py-2">
                 <p class="text-xs font-bold text-red-200">{{ msg.channel?.name || t('goLive.viewer') }}</p>
@@ -389,6 +410,13 @@
               <label class="mt-2 inline-flex items-center gap-2">
                 <input v-model="dvrEnabled" type="checkbox" class="h-4 w-4 accent-red-600" />
                 <span class="text-sm">{{ t('goLive.saveLiveAsVideo') }}</span>
+              </label>
+            </div>
+            <div class="rounded-2xl border border-zinc-800 bg-zinc-900 p-4">
+              <p class="text-xs text-gray-400 uppercase tracking-wide">{{ t('goLive.adaptiveTranscoding') }}</p>
+              <label class="mt-2 inline-flex items-center gap-2">
+                <input v-model="adaptiveTranscodingEnabled" type="checkbox" class="h-4 w-4 accent-red-600" />
+                <span class="text-sm">{{ t('goLive.adaptiveTranscodingShortHelper') }}</span>
               </label>
             </div>
           </div>
@@ -459,16 +487,20 @@ import { useLocalePath } from '#i18n'
 import {
   getLiveChatMessages,
   getMyLiveStream,
+	deleteMyLiveStreamThumbnail,
   postLiveChatMessage,
   rotateMyLiveStreamKey,
   saveMyLiveStreamSettings,
   setMyPublisherPresence,
   startMyLiveStream,
   stopMyLiveStream,
+	uploadMyLiveStreamThumbnail,
   type LiveChatMessage,
   type LiveStreamState
 } from '~/app/service/live'
+import LivePollCard from '~/app/components/live/LivePollCard.vue'
 import { useMetaTags } from '~/app/composables/useMetaTags'
+import { resolveMediaUrl } from '~/app/utils/media'
 
 const { t } = useI18n()
 const localePath = useLocalePath()
@@ -484,7 +516,7 @@ type LocalChannel = {
   name: string
 }
 
-const activeTab = ref<'in-app' | 'encoder'>('in-app')
+const activeTab = ref<'in-app' | 'encoder'>('encoder')
 const isLoggedIn = ref(false)
 const channels = ref<LocalChannel[]>([])
 const selectedChannelId = ref('')
@@ -498,6 +530,9 @@ const message = ref('')
 const error = ref(false)
 const publisherPresenceEnabled = ref(false)
 const dvrEnabled = ref(true)
+const adaptiveTranscodingEnabled = ref(true)
+const scheduledFor = ref('')
+const thumbnailBusy = ref(false)
 const savingPublisherPresence = ref(false)
 const savingSettings = ref(false)
 
@@ -645,6 +680,8 @@ const loadLiveState = async () => {
     description.value = live.value.description || ''
     publisherPresenceEnabled.value = !!live.value.use_publisher_presence
     dvrEnabled.value = live.value.dvr_enabled !== false
+	adaptiveTranscodingEnabled.value = live.value.adaptive_transcoding_enabled !== false
+	 scheduledFor.value = live.value.scheduled_for ? new Date(live.value.scheduled_for).toISOString().slice(0, 16) : ''
   } catch (err: any) {
     error.value = true
     message.value = err?.response?.data?.error || t('goLive.loadError')
@@ -670,7 +707,7 @@ const withAction = async (action: 'start' | 'stop' | 'rotate', fn: () => Promise
 
 const startStream = async () => {
   await withAction('start', async () => {
-    await startMyLiveStream(selectedChannelId.value, title.value, description.value, dvrEnabled.value)
+    await startMyLiveStream(selectedChannelId.value, title.value, description.value, dvrEnabled.value, adaptiveTranscodingEnabled.value)
     message.value = t('goLive.streamMarkedLive')
   })
 }
@@ -695,7 +732,7 @@ const saveSettings = async () => {
   error.value = false
   message.value = ''
   try {
-    await saveMyLiveStreamSettings(selectedChannelId.value, title.value, description.value, dvrEnabled.value)
+	await saveMyLiveStreamSettings(selectedChannelId.value, title.value, description.value, dvrEnabled.value, adaptiveTranscodingEnabled.value, scheduledFor.value ? new Date(scheduledFor.value).toISOString() : undefined)
     await loadLiveState()
     message.value = t('goLive.settingsSaved')
   } catch (err: any) {
@@ -703,6 +740,40 @@ const saveSettings = async () => {
     message.value = err?.response?.data?.error || t('goLive.saveError')
   } finally {
     savingSettings.value = false
+  }
+}
+
+const uploadThumbnail = async (event: Event) => {
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0]
+  if (!file || !selectedChannelId.value) return
+  thumbnailBusy.value = true
+  error.value = false
+  try {
+    await uploadMyLiveStreamThumbnail(selectedChannelId.value, file)
+    await loadLiveState()
+    message.value = 'Live stream thumbnail updated.'
+  } catch (err: any) {
+    error.value = true
+    message.value = err?.response?.data?.error || 'Could not upload live stream thumbnail.'
+  } finally {
+    thumbnailBusy.value = false
+    input.value = ''
+  }
+}
+
+const removeThumbnail = async () => {
+  if (!selectedChannelId.value) return
+  thumbnailBusy.value = true
+  try {
+    await deleteMyLiveStreamThumbnail(selectedChannelId.value)
+    await loadLiveState()
+    message.value = 'Custom live thumbnail removed.'
+  } catch (err: any) {
+    error.value = true
+    message.value = err?.response?.data?.error || 'Could not remove live stream thumbnail.'
+  } finally {
+    thumbnailBusy.value = false
   }
 }
 
@@ -1027,11 +1098,11 @@ const beginInAppLive = async (nextOrientation: 'vertical' | 'horizontal') => {
   message.value = ''
 
   try {
-    await saveMyLiveStreamSettings(selectedChannelId.value, title.value, description.value, dvrEnabled.value)
+    await saveMyLiveStreamSettings(selectedChannelId.value, title.value, description.value, dvrEnabled.value, adaptiveTranscodingEnabled.value)
     await loadLiveState()
     await startPreview()
     await publishWhip()
-    await startMyLiveStream(selectedChannelId.value, title.value, description.value, dvrEnabled.value)
+    await startMyLiveStream(selectedChannelId.value, title.value, description.value, dvrEnabled.value, adaptiveTranscodingEnabled.value)
     inAppPublishing.value = true
     await loadLiveState()
     startChatPolling()

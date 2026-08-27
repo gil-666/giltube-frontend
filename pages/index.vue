@@ -16,11 +16,11 @@
         </div>
       </div>
 
-      <div v-else-if="loadError" class="rounded-2xl border border-red-500/20 bg-red-500/10 p-5 text-red-100">
+      <div v-else-if="loadError && featuredItems.length === 0" class="rounded-2xl border border-red-500/20 bg-red-500/10 p-5 text-red-100">
         {{ loadError }}
       </div>
 
-      <div v-else-if="!isSabrinaTube && !secondaryHomeLoading && recommendedVideos.length === 0 && publicWatchParties.length === 0 && homeMovies.length === 0 && homeSeries.length === 0" class="rounded-2xl border border-white/10 bg-white/5 p-8 text-center">
+      <div v-else-if="!isSabrinaTube && !secondaryHomeLoading && featuredItems.length === 0 && recommendedVideos.length === 0 && publicWatchParties.length === 0 && homeMovies.length === 0 && homeSeries.length === 0" class="rounded-2xl border border-white/10 bg-white/5 p-8 text-center">
         <h2 class="text-xl font-semibold">{{ t('home.noVideos') }}</h2>
         <p class="mt-2 text-sm text-zinc-400">{{ t('home.noVideosBody') }}</p>
         <NuxtLink :to="localePath('/upload')" class="mt-5 inline-flex rounded-full bg-white px-4 py-2 text-sm font-medium text-zinc-950 hover:bg-zinc-200">
@@ -29,6 +29,28 @@
       </div>
 
       <div v-else class="home-sections space-y-8">
+		<section v-if="featuredItems.length" class="featured-hero relative isolate min-h-[22rem] overflow-hidden rounded-3xl border border-white/10 bg-black shadow-2xl sm:min-h-[30rem]">
+		  <Transition name="featured-fade" mode="out-in">
+			<div :key="activeFeatured.id" class="absolute inset-0">
+			  <img :src="featuredImage(activeFeatured)" :alt="activeFeatured.title" class="h-full w-full object-cover" />
+			  <div class="absolute inset-0 bg-gradient-to-r from-black via-black/75 to-black/10" />
+			  <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/20" />
+			</div>
+		  </Transition>
+		  <div class="relative z-10 flex min-h-[22rem] max-w-3xl flex-col justify-end p-6 sm:min-h-[30rem] sm:p-10 lg:p-14">
+			<p class="text-xs font-black uppercase tracking-[0.28em] text-red-300">{{ activeFeatured.header || featuredEyebrow(activeFeatured) }}</p>
+			<h1 class="mt-3 text-3xl font-black tracking-tight sm:text-5xl">{{ activeFeatured.title }}</h1>
+			<p v-if="activeFeatured.description" class="mt-3 line-clamp-3 max-w-2xl text-sm leading-6 text-zinc-200 sm:text-base">{{ activeFeatured.description }}</p>
+			<p v-if="activeFeatured.content_type === 'live' && activeFeatured.scheduled_for && !activeFeatured.is_live" class="mt-3 text-sm font-bold text-zinc-200">Live {{ formatFeaturedDate(activeFeatured.scheduled_for) }}</p>
+			<div class="mt-6 flex items-center gap-3">
+			  <NuxtLink :to="localePath(activeFeatured.target_url)" class="inline-flex rounded-full bg-white px-6 py-3 text-sm font-black text-black transition hover:bg-zinc-200">{{ activeFeatured.action_text }}</NuxtLink>
+			  <span v-if="activeFeatured.is_live" class="rounded-full bg-red-600 px-3 py-1.5 text-xs font-black uppercase tracking-wider">Live now</span>
+			</div>
+		  </div>
+		  <div v-if="featuredItems.length > 1" class="absolute bottom-5 right-5 z-20 flex gap-2">
+			<button v-for="(item,index) in featuredItems" :key="item.id" type="button" :aria-label="`Show featured item ${index+1}`" class="h-2.5 rounded-full transition-all" :class="index===featuredIndex?'w-8 bg-white':'w-2.5 bg-white/45 hover:bg-white/75'" @click="featuredIndex=index" />
+		  </div>
+		</section>
         <section v-if="isSabrinaTube && (sabrinaVideosLoading || sabrinaVideos.length > 0)" class="sabrina-video-shelf">
           <div class="mb-4 flex items-end justify-between gap-4">
             <div>
@@ -450,6 +472,7 @@ import { listSeries } from '~/app/service/series'
 import { listPublicWatchParties } from '~/app/service/watchParties'
 import { GILADS_PLACEMENTS } from '~/app/service/gilads'
 import { listActiveLiveStreams } from '~/app/service/live'
+import { listFeaturedContent } from '~/app/service/featured'
 import { getTimeAgo } from '~/app/utils/time'
 import { formatViews } from '~/app/utils/format'
 import { imageVariantSrcset, imageVariantUrl, isVideo4K, isVideo8K, resolveMediaUrl } from '~/app/utils/media'
@@ -463,6 +486,8 @@ const { activeEasterEgg } = useEasterEggs()
 const isSabrinaTube = computed(() => activeEasterEgg.value?.id === 'sabrina-tube')
 const recommendationSourceVideos = ref([])
 const liveStreams = ref([])
+const featuredItems = ref([])
+const featuredIndex = ref(0)
 const publicWatchParties = ref([])
 const browseVideos = ref([])
 const recommendedVideos = ref([])
@@ -491,10 +516,16 @@ let intersectionObserver = null
 let deferredHomeLoadHandle = null
 let deferredHomeLoadStarted = false
 let sabrinaVideosRequest = null
+let featuredTimer = null
 const carouselContainers = {}
 const homeFeedCacheTTL = 5 * 60 * 1000
 
 const isChannelLive = (channelId) => liveChannelIds.value.has(channelId)
+const activeFeatured = computed(() => featuredItems.value[featuredIndex.value] || featuredItems.value[0] || {})
+const featuredImage = (item) => imageVariantUrl(item?.image_url, 'lg') || resolveMediaUrl(item?.image_url, '/videos/placeholder-thumbnail.jpg')
+const featuredEyebrow = (item) => item?.content_type === 'live' ? (item?.is_live ? 'Live now' : 'Upcoming live') : item?.content_type === 'video' ? 'Featured' : 'Now available'
+const formatFeaturedDate = (value) => new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }).format(new Date(value))
+const loadFeatured = async () => { try { featuredItems.value = await listFeaturedContent() } catch (err) { console.warn('Featured content unavailable:', err); featuredItems.value = [] } }
 
 const setCarouselRef = (key) => (element) => {
   if (!element) {
@@ -1283,12 +1314,14 @@ watch(isSabrinaTube, (isActive) => {
 }, { immediate: true })
 
 onMounted(async () => {
-  await loadHomeFeed()
+  await Promise.all([loadFeatured(), loadHomeFeed()])
+	if (featuredItems.value.length > 1) featuredTimer = setInterval(() => { featuredIndex.value = (featuredIndex.value + 1) % featuredItems.value.length }, 7000)
   await nextTick()
   setupIntersectionObserver()
 })
 
 onUnmounted(() => {
+	if (featuredTimer) clearInterval(featuredTimer)
   if (intersectionObserver) {
     intersectionObserver.disconnect()
   }
@@ -1311,6 +1344,9 @@ onUnmounted(() => {
   content-visibility: auto;
   contain-intrinsic-size: auto 24rem;
 }
+
+.featured-fade-enter-active,.featured-fade-leave-active { transition: opacity .35s ease; }
+.featured-fade-enter-from,.featured-fade-leave-to { opacity: 0; }
 
 .homepage-carousel::-webkit-scrollbar {
   display: none;

@@ -3,8 +3,22 @@
         <div class="grid grid-cols-1 xl:grid-cols-[1fr_360px] gap-6 max-w-7xl mx-auto">
             <section class="space-y-5 min-w-0">
                 <div class="rounded-lg overflow-hidden border border-zinc-800 bg-zinc-950">
-                    <VideoPlayer v-if="playbackUrl" :src="playbackUrl" :status="isLive ? 'ready' : 'processing'" />
-                    
+					<VideoPlayer v-if="playbackUrl && isLive" :src="playbackUrl" status="ready" :lock-adaptive-quality="true" />
+					<div v-else class="relative flex aspect-video items-center justify-center overflow-hidden bg-zinc-950 p-8 text-center">
+                        <img
+                            v-if="live?.thumbnail_url"
+                            :src="live.thumbnail_url"
+                            alt=""
+                            aria-hidden="true"
+                            class="absolute inset-0 h-full w-full object-cover opacity-40"
+                        />
+                        <div v-if="live?.thumbnail_url" class="absolute inset-0 bg-black/45" />
+					  <div class="relative z-10">
+                            <p class="text-2xl font-black">{{ live?.waiting_for_publisher ? t('live.startingShortly') : live?.scheduled_for ? t('live.upcomingStream') : t('live.streamOffline') }}</p>
+                            <p v-if="live?.scheduled_for" class="mt-2 text-zinc-200">{{ t('live.scheduledFor', { date: formatTime(live.scheduled_for) }) }}</p>
+                            <p v-if="scheduledCountdown" class="mt-2 text-lg font-bold text-white">{{ scheduledCountdown }}</p>
+                        </div>
+					</div>
                 </div>
 
                 <div class="space-y-3">
@@ -14,7 +28,7 @@
                             :class="isLive ? 'bg-red-900 text-red-200 border-red-700' : 'bg-zinc-800 text-zinc-300 border-zinc-700'">
                             <span class="w-2 h-2 rounded-full"
                                 :class="isLive ? 'bg-red-400 animate-pulse' : 'bg-zinc-500'" />
-                            {{ isLive ? t('live.live') : t('live.offline') }}
+                            {{ isLive ? t('live.live') : live?.waiting_for_publisher ? t('live.startingSoonBadge') : t('live.offline') }}
                         </span>
                         <h1 class="text-2xl font-bold break-words">{{ liveTitle }}</h1>
                     </div>
@@ -43,7 +57,6 @@
                     </div>
 
                     <p class="text-sm text-gray-400 break-words">{{ liveDescription }}</p>
-
                     <div class="flex items-center gap-3 flex-wrap">
                         <NuxtLink :to="localePath(`/channel/${channelId}`)"
                             class="inline-flex items-center gap-3 p-2 rounded hover:bg-zinc-900 transition">
@@ -85,6 +98,8 @@
                         {{ t('live.refresh') }}
                     </button>
                 </div>
+
+                <LivePollCard :channel-id="channelId" :actor-channel-id="selectedChatChannelId" :live="isLive" :can-manage="selectedChatChannelId === channelId" />
 
                 <div ref="chatListRef" class="flex-1 overflow-y-auto p-4 space-y-3">
                     <div v-if="chatMessages.length === 0" class="text-sm text-gray-400">
@@ -151,6 +166,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import AvatarFallback from '~/app/components/AvatarFallback.vue'
+import LivePollCard from '~/app/components/live/LivePollCard.vue'
 import VideoPlayer from '~/app/components/videoplayer/VideoPlayer.vue'
 import VerifiedBadge from '~/app/components/VerifiedBadge.vue'
 import {
@@ -164,7 +180,7 @@ import { useMetaTags } from '~/app/composables/useMetaTags'
 import { useI18n } from 'vue-i18n'
 import { useLocalePath } from '#i18n'
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const localePath = useLocalePath()
 
 
@@ -245,6 +261,8 @@ let presenceHeartbeatTimer: ReturnType<typeof setInterval> | null = null
 let presenceReconnectTimer: ReturnType<typeof setTimeout> | null = null
 
 let chatPollTimer: ReturnType<typeof setInterval> | null = null
+let countdownTimer: ReturnType<typeof setInterval> | null = null
+const countdownNow = ref(Date.now())
 
 const isLive = computed(() => !!live.value?.is_live || live.value?.status === 'live')
 const playbackUrl = computed(() => live.value?.playback_url || '')
@@ -254,6 +272,26 @@ const channelName = computed(() => live.value?.channel?.name || t('app.myChannel
 const channelAvatar = computed(() => live.value?.channel?.avatar_url || '')
 const channelVerified = computed(() => !!live.value?.channel?.verified)
 const liveVideoId = computed(() => live.value?.id || channelId.value || '')
+const scheduledCountdown = computed(() => {
+    if (isLive.value || !live.value?.scheduled_for) return ''
+
+    const scheduledAt = new Date(live.value.scheduled_for).getTime()
+    if (Number.isNaN(scheduledAt)) return ''
+
+    const totalSeconds = Math.max(0, Math.ceil((scheduledAt - countdownNow.value) / 1000))
+    if (totalSeconds === 0) return t('live.startingSoon')
+
+    const hours = Math.floor(totalSeconds / 3600)
+    const minutes = Math.floor((totalSeconds % 3600) / 60)
+    const seconds = totalSeconds % 60
+    const parts: string[] = []
+
+    if (hours > 0) parts.push(t('live.countdownHours', { count: hours }, hours))
+    if (minutes > 0 || hours > 0) parts.push(t('live.countdownMinutes', { count: minutes }, minutes))
+    parts.push(t('live.countdownSeconds', { count: seconds }, seconds))
+
+    return t('live.startsIn', { countdown: parts.join(' ') })
+})
 
 // Watch for live stream data and update meta tags with actual values
 watch(
@@ -560,6 +598,16 @@ const formatRelativeTime = (value: string) => {
     return `${days}d`
 }
 
+const formatTime = (value: string) => {
+    const date = new Date(value)
+    if (Number.isNaN(date.getTime())) return ''
+
+    return new Intl.DateTimeFormat(locale.value, {
+        dateStyle: 'long',
+        timeStyle: 'short',
+    }).format(date)
+}
+
 const shareStream = async () => {
     try {
         const origin = typeof window !== 'undefined' ? window.location.origin : 'https://giltube.gilservers.com'
@@ -579,6 +627,11 @@ const shareStream = async () => {
 
 onMounted(async () => {
     syncLocalAuthState()
+
+    countdownNow.value = Date.now()
+    countdownTimer = setInterval(() => {
+        countdownNow.value = Date.now()
+    }, 1000)
 
     window.addEventListener('pagehide', leavePresenceBestEffort)
     window.addEventListener('beforeunload', leavePresenceBestEffort)
@@ -641,6 +694,9 @@ onUnmounted(() => {
     window.removeEventListener('beforeunload', leavePresenceBestEffort)
     if (chatPollTimer) {
         clearInterval(chatPollTimer)
+    }
+    if (countdownTimer) {
+        clearInterval(countdownTimer)
     }
     stopPresence()
 })

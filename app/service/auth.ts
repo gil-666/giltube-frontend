@@ -57,7 +57,8 @@ interface GilIDCallbackResponse extends LoginResponse {
   linked_existing_account: boolean
   new_account: boolean
   mode: 'login' | 'link'
-  return_to: string
+  return_to?: string
+  app_redirect_url?: string
 }
 
 interface GilIDSessionProfile {

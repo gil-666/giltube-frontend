@@ -155,6 +155,7 @@ interface Props {
   clipEndSeconds?: number
   disablePictureInPictureToggle?: boolean
   disableFullscreenToggle?: boolean
+  lockAdaptiveQuality?: boolean
 }
 
 const emit = defineEmits<{
@@ -182,7 +183,8 @@ const props = withDefaults(defineProps<Props>(), {
   clipStartSeconds: 0,
   clipEndSeconds: 0,
   disablePictureInPictureToggle: false,
-  disableFullscreenToggle: false
+  disableFullscreenToggle: false,
+  lockAdaptiveQuality: false
 })
 
 type PresenceViewer = {
@@ -276,6 +278,8 @@ let restoringLockedPlayback = false
 let lockedExpectedTime = 0
 let lockedExpectedPaused = true
 let shortcutOverlayTimer: ReturnType<typeof setTimeout> | null = null
+let adaptiveQualityLockTimer: ReturnType<typeof setTimeout> | null = null
+let adaptiveQualityLockApplied = false
 let lastTapAt = 0
 let lastTapSide: 'left' | 'right' | '' = ''
 let lastTapX = 0
@@ -1459,11 +1463,13 @@ const createMobileSettingsButton = () => {
         if (qualityButton) {
           qualityButton.manualSelectionIndex = null
         }
+        adaptiveQualityLockApplied = false
         for (let i = 0; i < levels.length; i++) {
           levels[i].enabled = true
         }
-        qualityButton?.refreshQuality?.()
+        if (!props.lockAdaptiveQuality) qualityButton?.refreshQuality?.()
         qualityButton?.updateMenuSelection?.()
+        scheduleAdaptiveQualityLock()
       })
 
       const seenLabels = new Set<string>()
@@ -1477,10 +1483,12 @@ const createMobileSettingsButton = () => {
           if (qualityButton) {
             qualityButton.manualSelectionIndex = i
           }
+          adaptiveQualityLockApplied = true
+          clearAdaptiveQualityLockTimer()
           for (let j = 0; j < levels.length; j++) {
             levels[j].enabled = j === i
           }
-          qualityButton?.refreshQuality?.()
+          if (!props.lockAdaptiveQuality) qualityButton?.refreshQuality?.()
           qualityButton?.updateMenuSelection?.()
         })
       }
@@ -1959,6 +1967,40 @@ const restoreLockedPlayback = async () => {
   }
 }
 
+const clearAdaptiveQualityLockTimer = () => {
+  if (!adaptiveQualityLockTimer) return
+  window.clearTimeout(adaptiveQualityLockTimer)
+  adaptiveQualityLockTimer = null
+}
+
+const scheduleAdaptiveQualityLock = () => {
+  if (!props.lockAdaptiveQuality || adaptiveQualityLockApplied || adaptiveQualityLockTimer || !player) return
+  adaptiveQualityLockTimer = window.setTimeout(() => {
+    adaptiveQualityLockTimer = null
+    const levels = player?.qualityLevels?.()
+    if (!levels || levels.length < 2 || qualityButton?.manualSelectionIndex !== null) return
+    let selectedIndex = Number(levels.selectedIndex)
+    if (!Number.isInteger(selectedIndex) || selectedIndex < 0 || selectedIndex >= levels.length) {
+      const mediaHeight = Number(player?.tech?.(true)?.vhs?.playlists?.media?.()?.attributes?.RESOLUTION?.height || 0)
+      selectedIndex = -1
+      for (let index = 0; index < levels.length; index++) {
+        if (Number(levels[index]?.height || 0) === mediaHeight) {
+          selectedIndex = index
+          break
+        }
+      }
+    }
+    if (selectedIndex < 0 || selectedIndex >= levels.length) return
+    adaptiveQualityLockApplied = true
+    qualityButton.manualSelectionIndex = selectedIndex
+    for (let index = 0; index < levels.length; index++) {
+      levels[index].enabled = index === selectedIndex
+    }
+    qualityButton.updateMenuSelection?.()
+    mobileSettingsButton?.buildMenu?.()
+  }, 6000)
+}
+
 // Create quality button component
 const createQualityButton = (player: any) => {
   const Button = videojs.getComponent('Button')
@@ -1986,9 +2028,11 @@ const createQualityButton = (player: any) => {
       if (this.qualityLevels) {
         this.qualityLevels.on('addqualitylevel', () => {
           this.buildMenu()
+          scheduleAdaptiveQualityLock()
         })
         this.qualityLevels.on('change', () => {
           this.updateMenuSelection()
+          scheduleAdaptiveQualityLock()
         })
       }
     }
@@ -2045,11 +2089,13 @@ const createQualityButton = (player: any) => {
 
       this.bindPress(autoItem, () => {
         this.manualSelectionIndex = null
+        adaptiveQualityLockApplied = false
         for (let j = 0; j < this.qualityLevels.length; j++) {
           this.qualityLevels[j].enabled = true
         }
         this.updateMenuSelection()
-        this.refreshQuality()
+        if (!props.lockAdaptiveQuality) this.refreshQuality()
+        scheduleAdaptiveQualityLock()
         this.toggleMenu()
       })
 
@@ -2078,13 +2124,15 @@ const createQualityButton = (player: any) => {
         this.bindPress(item, () => {
           const selectedIndex = parseInt(item.dataset.levelIndex!)
           this.manualSelectionIndex = selectedIndex
+          adaptiveQualityLockApplied = true
+          clearAdaptiveQualityLockTimer()
 
           for (let j = 0; j < this.qualityLevels.length; j++) {
             this.qualityLevels[j].enabled = j === selectedIndex
           }
 
           this.updateMenuSelection()
-          this.refreshQuality()
+          if (!props.lockAdaptiveQuality) this.refreshQuality()
           this.toggleMenu()
         })
 
@@ -2400,6 +2448,7 @@ onMounted(async () => {
 })
 
 onBeforeUnmount(() => {
+  clearAdaptiveQualityLockTimer()
   stopMobileControlsWatcher()
   stopUltrawideControlsGuard()
   document.removeEventListener('keydown', handleKeyboardShortcuts)
@@ -2448,6 +2497,9 @@ watch(
   () => props.src,
   (newSrc) => {
     if (player && newSrc && props.status === 'ready') {
+      clearAdaptiveQualityLockTimer()
+      adaptiveQualityLockApplied = false
+      if (qualityButton) qualityButton.manualSelectionIndex = null
       trackPreferencesReady = false
       hasAppliedInitialStartTime = false
       lastProgressEmitAt = 0

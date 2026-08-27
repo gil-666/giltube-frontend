@@ -1724,6 +1724,7 @@ const localizedNotificationUrl = (rawUrl) => {
 }
 
 const notificationSummary = (item) => {
+	if (item?.type === 'featured_content' && typeof item?.metadata?.push_title === 'string') return item.metadata.push_title
   if (!item?.actor_channel?.name) return t('app.newActivity')
   if (item.type === 'comment_video') return t('notifications.commentedOnVideo', { name: item.actor_channel.name })
   if (item.type === 'reply_comment') return t('notifications.repliedToComment', { name: item.actor_channel.name })

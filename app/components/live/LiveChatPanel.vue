@@ -24,6 +24,8 @@
                 </div>
             </div>
 
+            <LivePollCard :channel-id="channelId" :actor-channel-id="selectedChatChannelId" :live="isLive" :can-manage="selectedChatChannelId === channelId" />
+
             <div ref="chatListRef" class="flex-1 overflow-y-auto p-3 space-y-3">
                 <div v-if="chatMessages.length === 0" class="text-sm text-gray-400">
                     No messages yet.
@@ -86,6 +88,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import AvatarFallback from '~/app/components/AvatarFallback.vue'
+import LivePollCard from '~/app/components/live/LivePollCard.vue'
 import VerifiedBadge from '~/app/components/VerifiedBadge.vue'
 import {
     getChannelLiveStatus,

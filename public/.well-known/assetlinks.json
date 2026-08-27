@@ -1,0 +1,13 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.gilservers.giltube",
+      "sha256_cert_fingerprints": [
+        "60:18:6C:A2:E2:3A:3B:A6:09:94:8C:B0:B2:F1:50:19:37:36:49:9A:D3:6A:CA:2C:63:3F:1B:46:09:88:F2:D5",
+        "C2:9E:DF:95:5B:8C:CE:83:EC:E1:35:79:2E:A2:7A:C9:4A:2B:94:E5:30:70:32:4A:C9:8C:1A:9D:F3:E0:74:32"
+      ]
+    }
+  }
+]

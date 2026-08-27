@@ -157,6 +157,7 @@ const localePrefix = computed(() => (locale.value && locale.value !== 'en' ? `/$
 const AUTH_STATE_CHANGED_EVENT = 'giltube-auth-changed'
 
 const notificationSummary = (item: NotificationItem) => {
+	if (item.type === 'featured_content' && typeof item.metadata?.push_title === 'string') return item.metadata.push_title
   if (item.type === 'comment_video') return t('notifications.commentedOnVideo', { name: item.actor_channel.name })
   if (item.type === 'reply_comment') return t('notifications.repliedToComment', { name: item.actor_channel.name })
   if (item.type === 'like_video') return t('notifications.likedYourVideo', { name: item.actor_channel.name })

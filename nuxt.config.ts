@@ -13,6 +13,14 @@ const config = {
     host: '0.0.0.0',
     port: 3000,
   },
+  routeRules: {
+    '/.well-known/assetlinks.json': {
+      headers: {
+        'content-type': 'application/json',
+        'cache-control': 'public, max-age=300, must-revalidate'
+      }
+    }
+  },
   i18n: {
     strategy: 'prefix_except_default',
     lazy: true,
