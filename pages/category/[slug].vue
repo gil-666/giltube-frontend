@@ -10,7 +10,7 @@
         <div v-for="video in videos" :key="video.id">
           <NuxtLink :to="localePath(`/video/${video.id}`)">
             <div class="relative aspect-video overflow-hidden rounded-xl bg-zinc-800">
-              <img class="h-full w-full object-cover" :src="getThumbnailUrl(video)" :alt="video.title" loading="lazy" decoding="async" />
+              <img class="h-full w-full object-cover" v-bind="responsiveImage(getThumbnailUrl(video), '(min-width: 1024px) 25vw, (min-width: 768px) 33vw, (min-width: 640px) 50vw, 100vw')" :alt="video.title" loading="lazy" decoding="async" />
               <div v-if="videoProgressPercent(video.id) > 0" class="absolute inset-x-0 bottom-0 h-1 bg-black/55">
                 <div class="h-full bg-red-600" :style="{ width: `${videoProgressPercent(video.id)}%` }" />
               </div>
@@ -60,7 +60,7 @@ import StreamingMoviesCategory from '~/app/components/streaming/StreamingMoviesC
 import AvatarFallback from '~/app/components/AvatarFallback.vue'
 import { getTimeAgo } from '~/app/utils/time'
 import { formatViews } from '~/app/utils/format'
-import { isVideo4K, isVideo8K, resolveMediaUrl } from '~/app/utils/media'
+import { isVideo4K, isVideo8K, resolveMediaUrl, responsiveImage } from '~/app/utils/media'
 import { useMetaTags } from '~/app/composables/useMetaTags'
 import VerifiedBadge from '~/app/components/VerifiedBadge.vue'
 import { getWatchProgressMap } from '~/app/service/videos'
@@ -113,6 +113,9 @@ const { data: ssrSeriesMeta } = await useAsyncData(
   `category-series-social-${route.query.series_id || 'none'}`,
   async () => {
     if (route.params.slug !== 'series') return null
+    // Only needed for SSR social meta; on client navigation the streaming
+    // component fetches the detail itself without blocking the route change.
+    if (import.meta.client) return null
     const seriesId = typeof route.query.series_id === 'string' ? route.query.series_id : ''
     if (!seriesId) return null
     try {
@@ -121,7 +124,7 @@ const { data: ssrSeriesMeta } = await useAsyncData(
       return null
     }
   },
-  { default: () => null }
+  { default: () => null, lazy: true }
 )
 
 const normalizeMovieDetail = (data) => {
@@ -134,6 +137,9 @@ const { data: ssrMovieMeta } = await useAsyncData(
   `category-movie-social-${route.query.movie_id || 'none'}`,
   async () => {
     if (route.params.slug !== 'movies') return null
+    // Only needed for SSR social meta; on client navigation the streaming
+    // component fetches the detail itself without blocking the route change.
+    if (import.meta.client) return null
     const movieId = typeof route.query.movie_id === 'string' ? route.query.movie_id : ''
     if (!movieId) return null
     try {
@@ -142,7 +148,7 @@ const { data: ssrMovieMeta } = await useAsyncData(
       return null
     }
   },
-  { default: () => null }
+  { default: () => null, lazy: true }
 )
 
 const watchProgressPercent = (progress) => {

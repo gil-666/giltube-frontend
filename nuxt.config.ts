@@ -2,6 +2,12 @@ const config = {
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
   modules: ['@nuxtjs/tailwindcss', '@vite-pwa/nuxt', '@nuxtjs/i18n'],
+  tailwindcss: {
+    config: {
+      // The module's default globs don't cover app/components/**; opt files in here.
+      content: ['./app/components/videoplayer/ClipEditor.vue']
+    }
+  },
   pages: true,
   srcDir: './',
 

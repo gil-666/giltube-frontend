@@ -53,7 +53,7 @@
                         >
                             <img
                                 v-if="getVideoThumbnailUrl(preview.thumbnail_url)"
-                                :src="getVideoThumbnailUrl(preview.thumbnail_url)"
+                                v-bind="responsiveImage(getVideoThumbnailUrl(preview.thumbnail_url), '64px')"
                                 :alt="preview.title"
                                 class="h-10 w-16 rounded object-cover flex-shrink-0"
                             />
@@ -160,6 +160,7 @@
 </template>
 
 <script setup lang="ts">
+import { responsiveImage } from '~/app/utils/media'
 import { computed, ref, watch } from 'vue'
 import VerifiedBadge from '~/app/components/VerifiedBadge.vue'
 import { useI18n } from 'vue-i18n'

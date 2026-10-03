@@ -30,7 +30,7 @@
       <div v-if="selectedSeries" class="series-details-layout">
         <div class="series-poster-column">
           <div class="series-poster-frame">
-            <img :src="getSeriesImage(selectedSeries, 'poster')" :alt="selectedSeries.title" class="series-poster-image" decoding="async" />
+            <img v-bind="responsiveImage(getSeriesImage(selectedSeries, 'poster'), '12rem')" :alt="selectedSeries.title" class="series-poster-image" decoding="async" />
           </div>
         </div>
         <div class="series-details-main">
@@ -46,11 +46,13 @@
             </div>
             <div>
               <dt>{{ t('streaming.media.audioLanguages') }}</dt>
-              <dd>{{ mediaLanguages(selectedSeries.media_capabilities?.audio_languages) }}</dd>
+              <dd v-if="selectedSeriesDetailLoading" class="series-detail-placeholder" aria-hidden="true" />
+              <dd v-else>{{ mediaLanguages(selectedSeries.media_capabilities?.audio_languages) }}</dd>
             </div>
             <div>
               <dt>{{ t('streaming.media.captions') }}</dt>
-              <dd>{{ mediaLanguages(selectedSeries.media_capabilities?.caption_languages) }}</dd>
+              <dd v-if="selectedSeriesDetailLoading" class="series-detail-placeholder" aria-hidden="true" />
+              <dd v-else>{{ mediaLanguages(selectedSeries.media_capabilities?.caption_languages) }}</dd>
             </div>
           </dl>
 
@@ -75,6 +77,12 @@
           </div>
 
           <div ref="episodeRailElement" class="episode-grid">
+            <template v-if="selectedSeriesDetailLoading">
+              <div v-for="n in 3" :key="`episode-placeholder-${n}`" class="series-mobile-episode-card" aria-hidden="true">
+                <div class="series-episode-thumb series-detail-placeholder" />
+                <div class="series-detail-placeholder series-detail-placeholder-line" />
+              </div>
+            </template>
             <NuxtLink
               v-for="episode in visibleSelectedEpisodes"
               :key="episode.id"
@@ -92,11 +100,21 @@
           <div class="series-desktop-episodes">
             <div class="series-episodes-heading">
               <h3>{{ t('seriesCategory.details') }}</h3>
-              <p>
+              <p v-if="!selectedSeriesDetailLoading">
                 {{ t('seriesCategory.episodeCountLabel', { season: activeSeason, count: visibleSelectedEpisodes.length }) }}
               </p>
             </div>
             <div>
+              <template v-if="selectedSeriesDetailLoading">
+                <div v-for="n in 3" :key="`episode-row-placeholder-${n}`" class="series-episode-row" aria-hidden="true">
+                  <div class="series-episode-number">{{ n }}</div>
+                  <div class="series-episode-thumb series-detail-placeholder" />
+                  <div class="series-episode-copy">
+                    <div class="series-detail-placeholder series-detail-placeholder-line" />
+                  </div>
+                  <div />
+                </div>
+              </template>
               <NuxtLink
                 v-for="episode in visibleSelectedEpisodes"
                 :key="episode.id"
@@ -187,13 +205,13 @@
 </template>
 
 <script setup>
-import { computed, defineComponent, h, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
+import { computed, defineComponent, h, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import StreamingCategory from './StreamingCategory.vue'
 import StreamingSynopsis from './StreamingSynopsis.vue'
-import { listSeries, getSeries, getSeriesWatchProgress } from '~/app/service/series'
+import { getSeriesCached, getSeriesWatchProgress, listSeriesCached, peekCachedSeriesList } from '~/app/service/series'
 import { getWatchProgressMap } from '~/app/service/videos'
-import { resolveMediaUrl } from '~/app/utils/media'
+import { resolveMediaUrl, responsiveImage } from '~/app/utils/media'
 import { createWatchParty, getWatchPartySavedProgress } from '~/app/service/watchParties'
 import { useMetaTags } from '~/app/composables/useMetaTags'
 
@@ -204,7 +222,8 @@ const { t } = useI18n()
 const props = defineProps({
   initialSeries: { type: Object, default: null },
 })
-const loading = ref(false)
+const catalogLoading = ref(true)
+const detailLoadingId = ref('')
 const error = ref('')
 const allSeries = ref(props.initialSeries ? [props.initialSeries] : [])
 const groups = ref([])
@@ -225,7 +244,6 @@ const useSavedSeriesProgress = ref(false)
 const seriesPartyStartMode = ref('first')
 const seriesPartyStartVideoId = ref('')
 let featuredHeroTimer = null
-let catalogLoadHandle = null
 let catalogLoaded = false
 
 const updateModalQueryParam = (key, value = '') => {
@@ -299,6 +317,9 @@ const toDisplaySeries = (series) => {
     maxQuality: series.media_capabilities?.max_quality || '',
   }
 }
+
+const loading = computed(() => catalogLoading.value && !groups.value.length)
+const selectedSeriesDetailLoading = computed(() => !!selectedSeries.value && detailLoadingId.value === selectedSeries.value.id && !selectedSeries.value.episodes)
 
 const displayGroups = computed(() => groups.value.map((group) => ({ genre: group.genre, items: group.series.map(toDisplaySeries) })))
 const featuredItem = computed(() => toDisplaySeries(featuredItems.value[activeFeaturedIndex.value] || null))
@@ -429,19 +450,36 @@ const startSeriesWatchParty = async () => {
 
 const findLoadedSeries = (id) => allSeries.value.find((series) => series.id === id || series.slug === id) || null
 
+const mergeSeriesDetail = (detail) => {
+  const index = allSeries.value.findIndex((item) => item.id === detail.id)
+  if (index >= 0) {
+    allSeries.value[index] = { ...allSeries.value[index], ...detail }
+  } else {
+    allSeries.value = [...allSeries.value, detail]
+  }
+}
+
+// Open the panel right away with the summary we have, then swap in the full
+// detail (episodes, media capabilities) when it arrives.
 const openSeriesModal = async (series, updateRoute = true) => {
   if (!series) return
-  let detail = series
-  if (!series.episodes || !series.media_capabilities) {
-    try {
-      detail = normalizeSeriesDetail(await getSeries(series.id || series.slug)) || series
-    } catch {
-      detail = series
-    }
+  const id = series.id || series.slug
+  selectedSeries.value = findLoadedSeries(id) || series
+  if (updateRoute && series.id) {
+    updateModalQueryParam('series_id', series.id)
   }
-  selectedSeries.value = detail
-  if (updateRoute && detail.id) {
-    updateModalQueryParam('series_id', detail.id)
+  if (selectedSeries.value.episodes && selectedSeries.value.media_capabilities) return
+  const loadingId = selectedSeries.value.id
+  detailLoadingId.value = loadingId
+  try {
+    const detail = normalizeSeriesDetail(await getSeriesCached(id))
+    if (!detail) return
+    mergeSeriesDetail(detail)
+    if (selectedSeries.value?.id === detail.id) selectedSeries.value = findLoadedSeries(detail.id)
+  } catch (err) {
+    console.error('Failed to load series detail:', err)
+  } finally {
+    if (detailLoadingId.value === loadingId) detailLoadingId.value = ''
   }
 }
 
@@ -479,45 +517,51 @@ const updateMetaTags = () => {
   })
 }
 
+const applySeriesCatalog = (data) => {
+  const existingById = new Map(allSeries.value.map((item) => [item.id, item]))
+  const summaries = (data.series || []).map((item) => ({
+    ...item,
+    ...(existingById.get(item.id) || {}),
+  }))
+  for (const existing of allSeries.value) {
+    if (!summaries.some((item) => item.id === existing.id)) summaries.push(existing)
+  }
+  allSeries.value = summaries
+  const byId = new Map(summaries.map((item) => [item.id, item]))
+  groups.value = (data.genres || []).map((group) => ({
+    ...group,
+    series: (group.series || []).map((item) => byId.get(item.id) || item),
+  }))
+  const featured = summaries.filter((item) => item.is_featured).slice(0, 5)
+  if (!featured.length && data.featured) featured.push(byId.get(data.featured.id) || data.featured)
+  if (!featured.length && summaries[0]) featured.push(summaries[0])
+  featuredItems.value = featured.slice(0, 5)
+  activeFeaturedIndex.value = 0
+  catalogLoaded = true
+}
+
+// Reuse the list the home page already fetched so the grid renders instantly.
+const cachedCatalog = peekCachedSeriesList()
+if (cachedCatalog) applySeriesCatalog(cachedCatalog)
+
 const loadSeriesCategory = async () => {
-  if (catalogLoaded || loading.value) return
-  loading.value = true
+  if (catalogLoaded) {
+    catalogLoading.value = false
+    startFeaturedHeroTimer()
+    return
+  }
+  catalogLoading.value = true
   error.value = ''
   try {
-    const data = await listSeries()
-    const existingById = new Map(allSeries.value.map((item) => [item.id, item]))
-    const summaries = (data.series || []).map((item) => ({
-      ...item,
-      ...(existingById.get(item.id) || {}),
-    }))
-    for (const existing of allSeries.value) {
-      if (!summaries.some((item) => item.id === existing.id)) summaries.push(existing)
-    }
-    allSeries.value = summaries
-    const byId = new Map(summaries.map((item) => [item.id, item]))
-    groups.value = (data.genres || []).map((group) => ({
-      ...group,
-      series: (group.series || []).map((item) => byId.get(item.id) || item),
-    }))
-    const featured = summaries.filter((item) => item.is_featured).slice(0, 5)
-    if (!featured.length && data.featured) featured.push(byId.get(data.featured.id) || data.featured)
-    if (!featured.length && summaries[0]) featured.push(summaries[0])
-    featuredItems.value = featured.slice(0, 5)
-    activeFeaturedIndex.value = 0
+    applySeriesCatalog(await listSeriesCached())
     startFeaturedHeroTimer()
-
-    const requestedSeriesId = typeof route.query.series_id === 'string' ? route.query.series_id : ''
-    if (requestedSeriesId) {
-      await openSeriesModal(findLoadedSeries(requestedSeriesId) || normalizeSeriesDetail(await getSeries(requestedSeriesId)), false)
-    }
-    catalogLoaded = true
     updateMetaTags()
   } catch (err) {
     console.error('Failed to load series:', err)
     error.value = t('seriesCategory.errors.load')
     stopFeaturedHeroTimer()
   } finally {
-    loading.value = false
+    catalogLoading.value = false
   }
 }
 
@@ -527,7 +571,7 @@ watch(selectedSeries, async (series) => {
   selectedSeriesProgress.value = null
   selectedEpisodeProgressByVideoId.value = {}
   const userId = typeof window !== 'undefined' ? localStorage.getItem('user_id') : ''
-  if (series?.id && userId) {
+  if (series?.id && series.episodes && userId) {
     const selectedId = series.id
     const [seriesProgressResult, episodeProgressResult] = await Promise.allSettled([
       getSeriesWatchProgress(series.id),
@@ -553,7 +597,19 @@ const syncSeriesModalFromId = async (id) => {
     return
   }
   if (selectedSeries.value?.id === id) return
-  await openSeriesModal(findLoadedSeries(id) || normalizeSeriesDetail(await getSeries(id)), false)
+  const loaded = findLoadedSeries(id)
+  if (loaded) {
+    await openSeriesModal(loaded, false)
+    return
+  }
+  try {
+    const detail = normalizeSeriesDetail(await getSeriesCached(id))
+    if (!detail) return
+    mergeSeriesDetail(detail)
+    await openSeriesModal(detail, false)
+  } catch (err) {
+    console.error('Failed to load series detail:', err)
+  }
 }
 
 const syncSeriesModalFromUrl = async () => {
@@ -566,37 +622,19 @@ watch(() => route.query.series_id, async (seriesId) => {
   await syncSeriesModalFromId(id)
 })
 
-const scheduleCatalogLoad = () => {
-  const run = () => {
-    catalogLoadHandle = null
-    loadSeriesCategory()
-  }
-  if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
-    catalogLoadHandle = window.requestIdleCallback(run, { timeout: props.initialSeries ? 2500 : 500 })
-  } else {
-    catalogLoadHandle = setTimeout(run, props.initialSeries ? 600 : 0)
-  }
-}
-
-onMounted(async () => {
+onMounted(() => {
   if (typeof window !== 'undefined') {
     window.addEventListener('popstate', syncSeriesModalFromUrl)
   }
+  // The requested detail and the catalog load in parallel; the panel opens as
+  // soon as either one gives us something to show.
   const requestedSeriesId = typeof route.query.series_id === 'string' ? route.query.series_id : ''
-  if (requestedSeriesId && selectedSeries.value?.id !== requestedSeriesId) {
-    await syncSeriesModalFromId(requestedSeriesId)
-  }
-  scheduleCatalogLoad()
-  await nextTick()
+  if (requestedSeriesId) syncSeriesModalFromId(requestedSeriesId)
+  loadSeriesCategory()
 })
 
 onUnmounted(() => {
   stopFeaturedHeroTimer()
-  if (catalogLoadHandle != null && typeof window !== 'undefined' && 'cancelIdleCallback' in window) {
-    window.cancelIdleCallback(catalogLoadHandle)
-  } else if (catalogLoadHandle != null) {
-    clearTimeout(catalogLoadHandle)
-  }
   if (typeof window !== 'undefined') {
     window.removeEventListener('popstate', syncSeriesModalFromUrl)
   }
@@ -611,7 +649,7 @@ const EpisodeThumb = defineComponent({
   },
   setup(props) {
     return () => h('div', { class: 'series-episode-thumb' }, [
-      h('img', { src: props.src, alt: props.episode.title, class: 'series-episode-thumb-image', loading: 'lazy', decoding: 'async' }),
+      h('img', { ...responsiveImage(props.src, props.compact ? '11rem' : '18rem'), alt: props.episode.title, class: 'series-episode-thumb-image', loading: 'lazy', decoding: 'async' }),
       props.progress > 0 ? h('div', { class: 'series-episode-progress' }, [
         h('div', { style: { width: `${props.progress}%` } }),
       ]) : null,
@@ -725,6 +763,27 @@ const EpisodeThumb = defineComponent({
   background: rgba(255, 255, 255, 0.05);
   color: #fff;
   font-size: 1.125rem;
+}
+
+.series-detail-placeholder {
+  border-radius: 0.25rem;
+  background: rgb(39 39 42);
+  animation: series-detail-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+dd.series-detail-placeholder {
+  height: 1.25rem;
+  width: 7rem;
+}
+
+.series-detail-placeholder-line {
+  height: 0.875rem;
+  width: 70%;
+  margin-top: 0.75rem;
+}
+
+@keyframes series-detail-pulse {
+  50% { opacity: 0.5; }
 }
 
 .episode-grid {

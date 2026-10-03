@@ -13,6 +13,72 @@ export const getSeries = async (id: string) => {
   return res.data
 }
 
+// Admin view of a series: includes episodes that are still processing so
+// their metadata can be edited before they go live.
+export const getAdminSeries = async (id: string) => {
+  const res = await api.get(`/admin/series/${id}`)
+  return res.data
+}
+
+// Short-lived client cache so the home rows, the category page and the detail
+// modal share one request instead of refetching on every navigation.
+const SERIES_CACHE_TTL_MS = 60_000
+let seriesListCache: { data: any, at: number } | null = null
+let seriesListRequest: Promise<any> | null = null
+const seriesDetailCache = new Map<string, { data: any, at: number }>()
+const seriesDetailRequests = new Map<string, Promise<any>>()
+
+const isFresh = (entry: { at: number } | null | undefined) => !!entry && Date.now() - entry.at < SERIES_CACHE_TTL_MS
+
+export const clearSeriesCache = () => {
+  seriesListCache = null
+  seriesListRequest = null
+  seriesDetailCache.clear()
+  seriesDetailRequests.clear()
+}
+
+export const peekCachedSeriesList = () => (import.meta.client && isFresh(seriesListCache) ? seriesListCache!.data : null)
+
+export const listSeriesCached = async () => {
+  if (!import.meta.client) return listSeries()
+  if (isFresh(seriesListCache)) return seriesListCache!.data
+  if (!seriesListRequest) {
+    seriesListRequest = listSeries()
+      .then((data) => {
+        seriesListCache = { data, at: Date.now() }
+        return data
+      })
+      .finally(() => {
+        seriesListRequest = null
+      })
+  }
+  return seriesListRequest
+}
+
+export const getSeriesCached = async (id: string) => {
+  if (!import.meta.client) return getSeries(id)
+  const cached = seriesDetailCache.get(id)
+  if (isFresh(cached)) return cached!.data
+  let request = seriesDetailRequests.get(id)
+  if (!request) {
+    request = getSeries(id)
+      .then((data) => {
+        seriesDetailCache.set(id, { data, at: Date.now() })
+        return data
+      })
+      .finally(() => {
+        seriesDetailRequests.delete(id)
+      })
+    seriesDetailRequests.set(id, request)
+  }
+  return request
+}
+
+export const prefetchSeries = (id: string) => {
+  if (!import.meta.client || !id) return
+  getSeriesCached(id).catch(() => {})
+}
+
 export const getSeriesEpisodeContext = async (videoId: string) => {
   const res = await api.get(`/series-episodes/${videoId}`)
   return res.data
@@ -89,6 +155,7 @@ export const createSeries = async (data: {
   if (data.backdrop) formData.append('backdrop', data.backdrop)
 
   const res = await api.post('/admin/series', formData, { timeout: 0 })
+  clearSeriesCache()
   return res.data
 }
 
@@ -125,16 +192,19 @@ export const updateSeries = async (seriesId: string, data: {
   if (data.backdrop) formData.append('backdrop', data.backdrop)
 
   const res = await api.put(`/admin/series/${seriesId}`, formData, { timeout: 0 })
+  clearSeriesCache()
   return res.data
 }
 
 export const setSeriesTrailer = async (seriesId: string, videoId: string) => {
   const res = await api.post(`/admin/series/${seriesId}/trailer`, { video_id: videoId })
+  clearSeriesCache()
   return res.data
 }
 
 export const deleteSeries = async (seriesId: string) => {
   const res = await api.delete(`/admin/series/${seriesId}`)
+  clearSeriesCache()
   return res.data
 }
 
@@ -156,6 +226,7 @@ export const addSeriesEpisode = async (seriesId: string, data: {
     intro_start_seconds: data.introStartSeconds || 0,
     intro_end_seconds: data.introEndSeconds || 0,
   })
+  clearSeriesCache()
   return res.data
 }
 
@@ -175,6 +246,7 @@ export const updateSeriesEpisode = async (episodeId: string, data: {
     intro_start_seconds: data.introStartSeconds || 0,
     intro_end_seconds: data.introEndSeconds || 0,
   })
+  clearSeriesCache()
   return res.data
 }
 
@@ -191,6 +263,7 @@ export const reorderSeriesEpisodes = async (seriesId: string, episodes: Array<{
     })),
     preserve_slot_metadata: preserveSlotMetadata,
   })
+  clearSeriesCache()
   return res.data
 }
 
@@ -220,6 +293,7 @@ export const uploadSeriesEpisodeAudioTrack = async (episodeId: string, data: {
   const res = data.trackId
     ? await api.put(url, formData, { timeout: 0 })
     : await api.post(url, formData, { timeout: 0 })
+  clearSeriesCache()
   return res.data
 }
 
@@ -229,6 +303,7 @@ export const downloadSeriesEpisodeAudioTrackWAV = async (episodeId: string, trac
 
 export const deleteSeriesEpisodeAudioTrack = async (episodeId: string, trackId: string) => {
   const res = await api.delete(`/admin/series/episodes/${episodeId}/audio/${trackId}`)
+  clearSeriesCache()
   return res.data
 }
 
@@ -237,6 +312,7 @@ export const syncSeriesEpisodeAudioTrack = async (episodeId: string, trackId: st
     delay_ms: data.delayMs,
     trim_start_ms: data.trimStartMs,
   }, { timeout: 0 })
+  clearSeriesCache()
   return res.data
 }
 
@@ -266,10 +342,12 @@ export const uploadSeriesEpisodeSubtitle = async (episodeId: string, data: {
   const res = data.trackId
     ? await api.put(url, formData, { timeout: 0 })
     : await api.post(url, formData, { timeout: 0 })
+  clearSeriesCache()
   return res.data
 }
 
 export const deleteSeriesEpisodeSubtitle = async (episodeId: string, trackId: string) => {
   const res = await api.delete(`/admin/series/episodes/${episodeId}/subtitles/${trackId}`)
+  clearSeriesCache()
   return res.data
 }

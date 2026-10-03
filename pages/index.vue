@@ -467,15 +467,15 @@ import AvatarFallback from '~/app/components/AvatarFallback.vue'
 import GilAdsBanner from '~/app/components/ads/GilAdsBanner.vue'
 import { getVideos, getHomeRecommendations, getRecentWatchProgress, getWatchProgressMap } from '~/app/service/videos'
 import { getChannelVideos } from '~/app/service/channels'
-import { listMovies } from '~/app/service/movies'
-import { listSeries } from '~/app/service/series'
+import { listMoviesCached, prefetchMovie } from '~/app/service/movies'
+import { listSeriesCached, prefetchSeries } from '~/app/service/series'
 import { listPublicWatchParties } from '~/app/service/watchParties'
 import { GILADS_PLACEMENTS } from '~/app/service/gilads'
 import { listActiveLiveStreams } from '~/app/service/live'
 import { listFeaturedContent } from '~/app/service/featured'
 import { getTimeAgo } from '~/app/utils/time'
 import { formatViews } from '~/app/utils/format'
-import { imageVariantSrcset, imageVariantUrl, isVideo4K, isVideo8K, resolveMediaUrl } from '~/app/utils/media'
+import { capDensity, imageVariantSrcset, imageVariantUrl, isVideo4K, isVideo8K, resolveMediaUrl } from '~/app/utils/media'
 import { useMetaTags } from '~/app/composables/useMetaTags'
 import { useEasterEggs } from '~/app/composables/useEasterEggs'
 import VerifiedBadge from '~/app/components/VerifiedBadge.vue'
@@ -697,6 +697,7 @@ const toHomeMovie = (movie) => ({
     movieDurationLabel(movie.video),
   ].filter(Boolean).join(' • ') || t('home.movieLabel'),
   href: localePath(`/category/movies?movie_id=${movie.id}`),
+  prefetch: () => prefetchMovie(movie.id),
   imageUrl: movie.backdrop_url || movie.poster_url || movie.video?.thumbnail_url,
 })
 
@@ -705,6 +706,7 @@ const toHomeSeries = (series) => ({
   title: series.title,
   meta: t('home.seriesMeta', { seasons: series.seasons || 1, episodes: series.episode_count || 0 }),
   href: localePath(`/category/series?series_id=${series.id}`),
+  prefetch: () => prefetchSeries(series.id),
   imageUrl: series.backdrop_url || series.poster_url || series.first_episode?.video?.thumbnail_url,
 })
 
@@ -975,14 +977,14 @@ const loadDeferredHomeSections = async () => {
   publicWatchParties.value = Array.isArray(parties) ? parties : []
   liveChannelIds.value = new Set((activeLive || []).map((entry) => entry.channel_id))
 
-  const moviesData = await listMovies().catch((err) => {
+  const moviesData = await listMoviesCached().catch((err) => {
     console.warn('Movies row unavailable:', err)
     return { movies: [] }
   })
   homeMovies.value = (moviesData?.movies || []).filter((movie) => movie.video_id || movie.video).slice(0, 12).map(toHomeMovie)
   moviesHomeLoading.value = false
 
-  const seriesData = await listSeries().catch((err) => {
+  const seriesData = await listSeriesCached().catch((err) => {
     console.warn('Series row unavailable:', err)
     return { series: [] }
   })
@@ -1107,12 +1109,18 @@ const MediaPosterTile = defineComponent({
   },
   setup(props) {
     return () => h('article', { class: 'motion-card group h-full w-full min-w-0 overflow-hidden rounded-2xl border border-white/10 bg-white/5' }, [
-      h(NuxtLink, { to: props.item.href || '/', class: 'block' }, () => [
+      h(NuxtLink, {
+        to: props.item.href || '/',
+        class: 'block',
+        onPointerenter: props.item.prefetch,
+        onFocus: props.item.prefetch,
+        onTouchstart: props.item.prefetch,
+      }, () => [
         h('div', { class: 'relative aspect-[2/3] bg-black' }, [
           h('img', {
             src: getMediaImage(props.item),
             srcset: getMediaImageSrcset(props.item) || undefined,
-            sizes: '(min-width: 1280px) 14rem, 42vw',
+            sizes: capDensity('(min-width: 1280px) 14rem, 42vw'),
             alt: props.item.title,
             loading: 'lazy',
             decoding: 'async',
@@ -1146,7 +1154,7 @@ const ContinueTile = defineComponent({
           h('img', {
             src: getContinueImage(props.item),
             srcset: getContinueImageSrcset(props.item) || undefined,
-            sizes: '(min-width: 1280px) 24rem, 85vw',
+            sizes: capDensity('(min-width: 1280px) 24rem, 85vw'),
             alt: continueTitle(props.item),
             loading: props.eager ? 'eager' : 'lazy',
             decoding: 'async',
@@ -1212,7 +1220,7 @@ const VideoTile = defineComponent({
           h('img', {
             src: getThumbnailUrl(props.video),
             srcset: getVideoImageSrcset(props.video) || undefined,
-            sizes: '(min-width: 1280px) 16rem, (min-width: 640px) 50vw, 100vw',
+            sizes: capDensity('(min-width: 1280px) 16rem, (min-width: 640px) 50vw, 100vw'),
             alt: props.video.title,
             loading: props.eager ? 'eager' : 'lazy',
             decoding: 'async',
@@ -1287,7 +1295,7 @@ const WatchPartyTile = defineComponent({
           h('img', {
             src: getWatchPartyThumbnailUrl(props.party),
             srcset: getImageSrcset(props.party?.thumbnail_url) || undefined,
-            sizes: '(min-width: 1280px) 24rem, (min-width: 640px) 50vw, 100vw',
+            sizes: capDensity('(min-width: 1280px) 24rem, (min-width: 640px) 50vw, 100vw'),
             alt: props.party.video_title || props.party.title || 'Watch party',
             loading: 'lazy',
             decoding: 'async',

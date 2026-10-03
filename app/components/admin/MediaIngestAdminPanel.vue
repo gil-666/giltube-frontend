@@ -190,6 +190,14 @@
               </label>
             </div>
 
+            <label class="flex cursor-pointer items-start gap-3 rounded-lg border border-zinc-800 bg-zinc-900/60 p-3">
+              <input v-model="useLocalUpload" :disabled="uploadBusy" type="checkbox" class="mt-1 h-4 w-4 rounded accent-blue-500 disabled:opacity-50" />
+              <span>
+                <span class="block text-sm font-black">{{ t('upload.localUpload') }}</span>
+                <span class="mt-1 block text-xs leading-5 text-zinc-500">{{ t('upload.localUploadHelper') }}</span>
+              </span>
+            </label>
+
             <div
               class="flex min-h-44 flex-col items-center justify-center rounded-xl border border-dashed border-zinc-600 bg-zinc-900/60 p-6 text-center transition hover:border-red-400"
               @dragover.prevent
@@ -660,6 +668,7 @@ import { computed, onMounted, onBeforeUnmount, reactive, ref, watch } from 'vue'
 import AudioSyncEditor from '~/app/components/admin/AudioSyncEditor.vue'
 import { attachMediaIngest, bulkAttachSeriesMediaIngest, createMediaIngest, createUploadedMediaIngest, deleteMediaIngest, deleteMediaIngestFiles, importMediaIngestAudioTrack, importMediaIngestSubtitleTrack, listMediaIngestAudioSources, listMediaIngestSubtitleSources, listMediaIngests, pauseMediaIngest, previewSeriesMediaIngest, retryMediaIngest, type MediaIngest, type MediaIngestAudioSource, type MediaIngestAudioStream, type MediaIngestSeriesPreviewFile, type MediaIngestSubtitleSource, type MediaIngestSubtitleStream } from '~/app/service/mediaIngests'
 import { uploadFileInChunks } from '~/app/service/upload'
+import { useLocalUploadBaseURL } from '~/app/composables/useLocalUploadBaseURL'
 import { listMovies, syncMovieAudioTrack, uploadMovieAudioTrack } from '~/app/service/movies'
 import { getSeries, syncSeriesEpisodeAudioTrack, uploadSeriesEpisodeAudioTrack } from '~/app/service/series'
 import { resolveMediaUrl } from '~/app/utils/media'
@@ -688,6 +697,9 @@ const uploadForm = reactive({
   year: undefined as number | undefined,
   seasonCount: 1,
 })
+// Kept across uploads while the page is open, like the other admin upload toggles.
+const useLocalUpload = ref(false)
+const localUploadBaseURL = useLocalUploadBaseURL()
 const uploadAccept = '.mp4,.mkv,.webm,.mov,.avi,.m4v,.mpg,.mpeg,.wmv,.mka,.aac,.mp3,.wav,.flac,.m4a,.ogg,.opus,.ac3,.eac3,.dts,.ts,.m2ts,.srt,.ass,.vtt'
 const uploadExtensions = new Set(uploadAccept.split(','))
 const attachPanelId = ref('')
@@ -930,12 +942,13 @@ const submitUploadedIngest = async () => {
   uploadBusy.value = true
   uploadError.value = ''
   try {
+    const uploadBaseURL = useLocalUpload.value ? localUploadBaseURL : undefined
     const files: Array<{ upload_id: string; file_name: string }> = []
     for (const row of uploadFiles.value) {
       row.status = t('admin.mediaIngests.upload.uploadingFile')
       const uploadId = await uploadFileInChunks(row.file, progress => {
         row.progress = progress
-      })
+      }, uploadBaseURL)
       row.progress = 100
       row.status = t('admin.mediaIngests.upload.ready')
       files.push({ upload_id: uploadId, file_name: row.file.name })
@@ -946,7 +959,7 @@ const submitUploadedIngest = async () => {
       year: uploadForm.year,
       season_count: uploadForm.mediaType === 'series' ? uploadForm.seasonCount : 1,
       files,
-    })
+    }, { uploadBaseURL })
     message.value = t('admin.mediaIngests.upload.complete')
     uploadPanelOpen.value = false
     resetUploadPanel()

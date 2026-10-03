@@ -50,70 +50,15 @@
 
       </div>
 
-      <div
-        v-if="isClipMode"
-        ref="clipEditorRef"
-        class="clip-editor-panel mt-3 rounded-2xl border border-white/10 bg-zinc-950/95 p-3 shadow-2xl shadow-black/40 backdrop-blur sm:p-4"
-      >
-        <div class="flex flex-col gap-4">
-          <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p class="text-xs font-semibold uppercase tracking-[0.18em] text-red-300">{{ t('video.clip.create') }}</p>
-              <p class="mt-1 text-sm text-zinc-300">{{ formatClipTime(clipStart) }} - {{ formatClipTime(clipEnd) }} · max 30s</p>
-            </div>
-            <div class="grid grid-cols-2 gap-2 sm:flex sm:items-center">
-              <button type="button" class="rounded-full bg-white px-4 py-2.5 text-sm font-bold text-black transition hover:bg-zinc-200" @click="toggleClipPlayback">
-                {{ clipPlayerPaused ? "Play" : "Pause" }}
-              </button>
-              <button type="button" class="rounded-full bg-zinc-800 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-zinc-700" @click="cancelClipMode">{{ t('video.clip.cancel') }}</button>
-            </div>
-          </div>
-
-          <div class="flex flex-col gap-3 rounded-xl bg-zinc-900/80 p-3 sm:p-4">
-            <div class="grid gap-3 text-xs text-zinc-400 sm:grid-cols-[auto_minmax(12rem,1fr)_auto] sm:items-center">
-              <span class="font-mono">{{ formatClipTime(clipViewportStart) }}</span>
-              <label class="flex min-w-0 items-center gap-2 rounded-full bg-black/25 px-3 py-2">
-                <span class="font-semibold uppercase tracking-[0.14em] text-zinc-500">{{ t('video.clip.zoom') }}</span>
-                <input
-                  v-model.number="clipZoom"
-                  type="range"
-                  min="1"
-                  max="12"
-                  step="1"
-                  class="h-2 min-w-0 flex-1 accent-red-500"
-                  :aria-label="t('video.clip.zoomTimeline')"
-                />
-                <span class="w-9 text-right font-bold text-zinc-300">{{ clipZoom }}x</span>
-              </label>
-              <span class="text-right font-mono">{{ formatClipTime(clipViewportEnd) }}</span>
-            </div>
-
-            <div
-              ref="clipTrackRef"
-              class="clip-timeline relative h-28 touch-none overflow-visible rounded-xl bg-zinc-800/90 px-4 sm:h-24"
-              @pointerdown="handleClipTrackPointerDown"
-            >
-              <div class="absolute left-4 right-4 top-1/2 h-3 -translate-y-1/2 rounded-full bg-zinc-700" />
-              <div class="pointer-events-none absolute inset-y-3 left-1/2 w-px bg-white/10" />
-              <div class="absolute top-1/2 z-10 h-8 -translate-y-1/2 rounded-full bg-red-500/40 ring-1 ring-red-300/40" :style="clipSelectionStyle" />
-              <button type="button" class="clip-handle absolute top-1/2 z-20 h-16 w-7 -translate-x-1/2 -translate-y-1/2 rounded-full bg-red-400 shadow-[0_0_18px_rgba(248,113,113,0.55)] sm:h-14 sm:w-5" :style="clipStartHandleStyle" :aria-label="t('video.clip.moveStart')" @pointerdown.stop="startClipDrag('start', $event)" />
-              <button type="button" class="clip-handle absolute top-1/2 z-20 h-16 w-7 -translate-x-1/2 -translate-y-1/2 rounded-full bg-red-400 shadow-[0_0_18px_rgba(248,113,113,0.55)] sm:h-14 sm:w-5" :style="clipEndHandleStyle" :aria-label="t('video.clip.moveEnd')" @pointerdown.stop="startClipDrag('end', $event)" />
-              <button type="button" class="absolute bottom-3 top-3 z-30 w-4 -translate-x-1/2 rounded-full bg-white shadow-[0_0_18px_rgba(255,255,255,0.5)] ring-1 ring-black/20 sm:w-3" :style="clipPlayheadStyle" :aria-label="t('video.clip.seekPreview')" @pointerdown.stop="startClipDrag('playhead', $event)">
-                <span class="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-[115%] rounded-full border border-white/20 bg-white px-2 py-1 text-[11px] font-black text-black shadow-lg">
-                  {{ formatClipTime(playerCurrentTime) }}
-                </span>
-              </button>
-            </div>
-          </div>
-
-          <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
-            <input v-model="clipTitle" type="text" maxlength="200" class="min-h-11 min-w-0 flex-1 rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white placeholder:text-zinc-500 focus:border-red-400 focus:outline-none" :placeholder="clipTitlePlaceholder" />
-            <button type="button" class="min-h-11 rounded-xl bg-red-600 px-5 py-2 text-sm font-bold text-white transition hover:bg-red-500 disabled:cursor-not-allowed disabled:opacity-60" :disabled="isPublishingClip" @click="publishClip">
-              {{ isPublishingClip ? "Publishing..." : "Publish clip" }}
-            </button>
-          </div>
-          <p v-if="clipError" class="text-sm text-red-300">{{ clipError }}</p>
-        </div>
+      <div v-if="isClipMode" ref="clipEditorRef" class="mt-3">
+        <ClipEditor
+          :player="videoPlayerRef"
+          :default-title="clipTitlePlaceholder"
+          :publishing="isPublishingClip"
+          :error="clipError"
+          @cancel="cancelClipMode"
+          @publish="publishClip"
+        />
       </div>
 
       <!-- Video Info -->
@@ -407,7 +352,7 @@
           <div class="flex flex-col gap-4 sm:flex-row">
             <div class="w-32 shrink-0 overflow-hidden rounded bg-zinc-800">
               <img
-                :src="getTrailerSeriesPosterUrl(trailerSeries.poster_url)"
+                v-bind="responsiveImage(getTrailerSeriesPosterUrl(trailerSeries.poster_url), '128px')"
                 :alt="trailerSeries.title"
                 class="aspect-[2/3] h-full w-full object-cover"
               />
@@ -431,7 +376,7 @@
           <div class="flex flex-col gap-4 sm:flex-row">
             <div class="w-32 shrink-0 overflow-hidden rounded bg-zinc-800">
               <img
-                :src="getTrailerSeriesPosterUrl(currentSeries.poster_url)"
+                v-bind="responsiveImage(getTrailerSeriesPosterUrl(currentSeries.poster_url), '128px')"
                 :alt="currentSeries.title"
                 class="aspect-[2/3] h-full w-full object-cover"
               />
@@ -454,7 +399,7 @@
           <div class="flex flex-col gap-4 sm:flex-row">
             <div class="w-32 shrink-0 overflow-hidden rounded bg-zinc-800">
               <img
-                :src="getTrailerSeriesPosterUrl(trailerMovie.poster_url || trailerMovie.backdrop_url)"
+                v-bind="responsiveImage(getTrailerSeriesPosterUrl(trailerMovie.poster_url || trailerMovie.backdrop_url), '128px')"
                 :alt="trailerMovie.title"
                 class="aspect-[2/3] h-full w-full object-cover"
               />
@@ -478,7 +423,7 @@
           <div class="flex flex-col gap-4 sm:flex-row">
             <div class="w-32 shrink-0 overflow-hidden rounded bg-zinc-800">
               <img
-                :src="getTrailerSeriesPosterUrl(currentMovie.poster_url || currentMovie.backdrop_url)"
+                v-bind="responsiveImage(getTrailerSeriesPosterUrl(currentMovie.poster_url || currentMovie.backdrop_url), '128px')"
                 :alt="currentMovie.title"
                 class="aspect-[2/3] h-full w-full object-cover"
               />
@@ -506,7 +451,7 @@
           <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
             <NuxtLink v-for="clip in clipsOfThisVideo" :key="clip.id" :to="clipVideoLink(clip.id)" class="group min-w-0">
               <div class="relative aspect-video overflow-hidden rounded-lg bg-zinc-800">
-                <img v-if="clip.thumbnail_url" :src="resolveMediaUrl(clip.thumbnail_url)" :alt="clip.title" class="h-full w-full object-cover transition group-hover:opacity-80" />
+                <img loading="lazy" decoding="async" v-if="clip.thumbnail_url" v-bind="responsiveImage(resolveMediaUrl(clip.thumbnail_url), '(min-width: 1024px) 16vw, (min-width: 640px) 30vw, 50vw')" :alt="clip.title" class="h-full w-full object-cover transition group-hover:opacity-80" />
                 <div v-else class="flex h-full w-full items-center justify-center text-xs text-zinc-500">{{ t('video.clip.noThumbnail') }}</div>
                 <span class="absolute bottom-2 right-2 rounded bg-black/80 px-1.5 py-0.5 text-[11px] font-bold text-white">{{ formatClipDuration(clip) }}</span>
               </div>
@@ -648,9 +593,9 @@
           >
             <div class="flex gap-3 min-w-0">
               <div class="w-16 h-12 flex-shrink-0 bg-zinc-700 rounded overflow-hidden relative">
-                <img
+                <img loading="lazy" decoding="async"
                   v-if="item.video.thumbnail_url"
-                  :src="item.video.thumbnail_url"
+                  v-bind="responsiveImage(item.video.thumbnail_url, '64px')"
                   :alt="item.video.title"
                   class="w-full h-full object-cover"
                 />
@@ -819,9 +764,9 @@
               class="inline-block hover:opacity-80 transition flex-shrink-0"
             >
               <div class="bg-zinc-800 rounded overflow-hidden w-40 aspect-video mb-1.5 relative">
-                <img
+                <img loading="lazy" decoding="async"
                   class="w-full h-full object-cover"
-                  :src="resolveMediaUrl(relatedVideo.thumbnail_url)"
+                  v-bind="responsiveImage(resolveMediaUrl(relatedVideo.thumbnail_url), '160px')"
                   :alt="relatedVideo.title"
                 />
                 <div v-if="isVideo8K(relatedVideo.width)" class="absolute top-1 right-1 bg-green-900 text-green-200 px-1.5 py-0.5 rounded text-xs font-semibold border border-green-700">{{ t('video.eightKBadge') }}</div>
@@ -912,9 +857,9 @@
               <div class="flex gap-3 min-w-0">
                 <!-- Thumbnail -->
                 <div class="w-16 h-12 flex-shrink-0 bg-zinc-700 rounded overflow-hidden relative">
-                  <img
+                  <img loading="lazy" decoding="async"
                     v-if="item.video.thumbnail_url"
-                    :src="item.video.thumbnail_url"
+                    v-bind="responsiveImage(item.video.thumbnail_url, '64px')"
                     :alt="item.video.title"
                     class="w-full h-full object-cover"
                   />
@@ -965,9 +910,9 @@
                   class="inline-block hover:opacity-80 transition flex-shrink-0"
                 >
                   <div class="bg-zinc-800 rounded overflow-hidden w-40 aspect-video mb-1.5 relative">
-                    <img
+                    <img loading="lazy" decoding="async"
                       class="w-full h-full object-cover"
-                      :src="resolveMediaUrl(relatedVideo.thumbnail_url)"
+                      v-bind="responsiveImage(resolveMediaUrl(relatedVideo.thumbnail_url), '160px')"
                       :alt="relatedVideo.title"
                     />
                     <div v-if="isVideo8K(relatedVideo.width)" class="absolute top-1 right-1 bg-green-900 text-green-200 px-1.5 py-0.5 rounded text-xs font-semibold border border-green-700">{{ t('video.eightKBadge') }}</div>
@@ -1005,9 +950,9 @@
               class="block hover:opacity-80 transition"
             >
               <div class="bg-zinc-800 rounded overflow-hidden w-full aspect-video mb-2 relative">
-                <img
+                <img loading="lazy" decoding="async"
                   class="w-full h-full object-cover"
-                  :src="resolveMediaUrl(relatedVideo.thumbnail_url)"
+                  v-bind="responsiveImage(resolveMediaUrl(relatedVideo.thumbnail_url), '50vw')"
                   :alt="relatedVideo.title"
                 />
                 <div v-if="isVideo8K(relatedVideo.width)" class="absolute top-1 right-1 bg-green-900 text-green-200 px-1.5 py-0.5 rounded text-xs font-semibold border border-green-700">{{ t('video.eightKBadge') }}</div>
@@ -1034,9 +979,9 @@
               class="block hover:opacity-80 transition"
             >
               <div class="bg-zinc-800 rounded overflow-hidden aspect-video mb-1.5 relative">
-                <img
+                <img loading="lazy" decoding="async"
                   class="w-full h-full object-cover"
-                  :src="resolveMediaUrl(relatedVideo.thumbnail_url)"
+                  v-bind="responsiveImage(resolveMediaUrl(relatedVideo.thumbnail_url), '256px')"
                   :alt="relatedVideo.title"
                 />
                 <div v-if="isVideo8K(relatedVideo.width)" class="absolute top-1 right-1 bg-green-900 text-green-200 px-1.5 py-0.5 rounded text-xs font-semibold border border-green-700">{{ t('video.eightKBadge') }}</div>
@@ -1231,6 +1176,7 @@
 <script setup lang="ts">
 import GilAdsVideoPlayer from '~/app/components/ads/GilAdsVideoPlayer.vue'
 import VideoPlayer from '~/app/components/videoplayer/VideoPlayer.vue'
+import ClipEditor from '~/app/components/videoplayer/ClipEditor.vue'
 import GilAdsBanner from '~/app/components/ads/GilAdsBanner.vue'
 import AvatarFallback from '~/app/components/AvatarFallback.vue'
 import VerifiedBadge from '~/app/components/VerifiedBadge.vue'
@@ -1248,7 +1194,7 @@ import { getVideoComments, postComment as apiPostComment, deleteComment, likeCom
 import { insertGiphyIntoComment, type GiphyGif } from '~/app/utils/giphy'
 import { getTimeAgo } from '~/app/utils/time'
 import { formatViews } from '~/app/utils/format'
-import { imageVariantSrcset, imageVariantUrl, isVideo4K, isVideo8K, resolveAvatarUrl, resolveMediaUrl } from '~/app/utils/media'
+import { imageVariantSrcset, imageVariantUrl, isVideo4K, isVideo8K, resolveAvatarUrl, resolveMediaUrl, responsiveImage } from '~/app/utils/media'
 import { useMetaTags } from '~/app/composables/useMetaTags'
 import { computed, nextTick, ref, onMounted, onUnmounted, watch } from 'vue'
 import { useRequestHeaders, navigateTo, setResponseStatus } from '#app'
@@ -1350,25 +1296,14 @@ let lastWatchProgressSaveAt = 0
 
 const videoPlayerRef = ref<any>(null)
 const clipEditorRef = ref<HTMLElement | null>(null)
-const clipTrackRef = ref<HTMLElement | null>(null)
 const clipsOfThisVideo = ref<any[]>([])
 const isClipMode = ref(false)
 const isPublishingClip = ref(false)
 const clipError = ref('')
-const clipTitle = ref('')
-const clipStart = ref(0)
-const clipEnd = ref(0)
-const clipZoom = ref(4)
 const playerCurrentTime = ref(0)
 const playerDuration = ref(0)
-const clipPlayerPaused = ref(true)
-const activeClipDrag = ref<'start' | 'end' | 'playhead' | null>(null)
-const clipDragViewportStart = ref<number | null>(null)
-const clipDragViewportEnd = ref<number | null>(null)
-const MAX_CLIP_SECONDS = 30
 const MIN_CLIP_SOURCE_SECONDS = 120
 
-const clampNumber = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value))
 const clipAttributionName = computed(() => video.value?.clip?.clipped_by_channel || video.value?.clip?.clipped_by_username || 'User')
 const originalVideoLink = computed(() => localePath(`/video/${video.value?.clip?.original_video_id || ''}`))
 const clipVideoLink = (clipId: string) => localePath(`/video/${clipId}`)
@@ -1384,33 +1319,11 @@ const isMovieOrSeriesContext = computed(() => Boolean(
 ))
 const canCreateClip = computed(() => isLoggedIn.value && !isClipVideo.value && !isMovieOrSeriesContext.value && Number(playerDuration.value || 0) >= MIN_CLIP_SOURCE_SECONDS)
 const canPreviewIntroSuggestion = computed(() => Number(introSuggestionEnd.value || 0) > Number(introSuggestionStart.value || 0))
-const clipTitlePlaceholder = computed(() => `Clip: ${watchDisplayTitle.value || ''}`)
-const clipPlaybackStart = computed(() => isClipVideo.value ? Number(video.value?.clip?.start_seconds || 0) : (isClipMode.value ? clipStart.value : 0))
-const clipPlaybackEnd = computed(() => isClipVideo.value ? Number(video.value?.clip?.end_seconds || 0) : (isClipMode.value ? clipEnd.value : 0))
-const clipViewportSpan = computed(() => {
-  const duration = Number(playerDuration.value || 0)
-  if (duration <= 0) return 1
-  const zoom = clampNumber(Number(clipZoom.value || 1), 1, 12)
-  return Math.max(MAX_CLIP_SECONDS, duration / zoom)
-})
-const clipViewportCenter = computed(() => {
-  const selectionCenter = clipStart.value + Math.max(0, clipEnd.value - clipStart.value) / 2
-  return Number.isFinite(selectionCenter) ? selectionCenter : playerCurrentTime.value
-})
-const clipViewportStart = computed(() => {
-  const duration = Number(playerDuration.value || 0)
-  const span = Math.min(duration || 1, clipViewportSpan.value)
-  return clampNumber(clipViewportCenter.value - span / 2, 0, Math.max(0, duration - span))
-})
-const clipViewportEnd = computed(() => Math.min(Number(playerDuration.value || 0), clipViewportStart.value + clipViewportSpan.value))
-const clipPercent = (seconds: number) => {
-  const span = Math.max(1, clipViewportEnd.value - clipViewportStart.value)
-  return clampNumber(((seconds - clipViewportStart.value) / span) * 100, 0, 100)
-}
-const clipSelectionStyle = computed(() => ({ left: `${clipPercent(clipStart.value)}%`, width: `${Math.max(0, clipPercent(clipEnd.value) - clipPercent(clipStart.value))}%` }))
-const clipStartHandleStyle = computed(() => ({ left: `${clipPercent(clipStart.value)}%` }))
-const clipEndHandleStyle = computed(() => ({ left: `${clipPercent(clipEnd.value)}%` }))
-const clipPlayheadStyle = computed(() => ({ left: `${clipPercent(playerCurrentTime.value)}%` }))
+const clipTitlePlaceholder = computed(() => t('video.clip.titlePlaceholder', { title: watchDisplayTitle.value || '' }))
+// While editing, the player stays unconstrained so the editor can seek anywhere;
+// only published clips confine playback to their range.
+const clipPlaybackStart = computed(() => isClipVideo.value ? Number(video.value?.clip?.start_seconds || 0) : 0)
+const clipPlaybackEnd = computed(() => isClipVideo.value ? Number(video.value?.clip?.end_seconds || 0) : 0)
 const formatClipTime = (seconds: number) => {
   const total = Math.max(0, Math.floor(Number(seconds || 0)))
   const minutes = Math.floor(total / 60)
@@ -1525,81 +1438,10 @@ const loadProgressForVideos = async (videoIds: string[]) => {
     console.error('Failed to load watch progress:', err)
   }
 }
-const getClipTimeFromPointer = (event: PointerEvent) => {
-  const track = clipTrackRef.value
-  const duration = Number(playerDuration.value || 0)
-  if (!track || duration <= 0) return 0
-  const rect = track.getBoundingClientRect()
-  const percent = clampNumber((event.clientX - rect.left) / Math.max(1, rect.width), 0, 1)
-  const viewportStart = clipDragViewportStart.value ?? clipViewportStart.value
-  const viewportEnd = clipDragViewportEnd.value ?? clipViewportEnd.value
-  return clampNumber(viewportStart + percent * Math.max(1, viewportEnd - viewportStart), 0, duration)
-}
-
-const seekClipPreview = (seconds: number) => {
-  const next = clampNumber(seconds, 0, Number(playerDuration.value || 0))
-  playerCurrentTime.value = next
-  videoPlayerRef.value?.setPlaybackTime?.(next)
-}
-
-const updateClipDrag = (event: PointerEvent) => {
-  if (!activeClipDrag.value) return
-  const nextTime = getClipTimeFromPointer(event)
-  const duration = Number(playerDuration.value || 0)
-
-  if (activeClipDrag.value === 'start') {
-    clipStart.value = clampNumber(nextTime, 0, Math.max(0, clipEnd.value - 1))
-    if (clipEnd.value - clipStart.value > MAX_CLIP_SECONDS) {
-      clipEnd.value = Math.min(duration, clipStart.value + MAX_CLIP_SECONDS)
-    }
-    seekClipPreview(clipStart.value)
-  } else if (activeClipDrag.value === 'end') {
-    clipEnd.value = clampNumber(nextTime, Math.min(duration, clipStart.value + 1), duration)
-    if (clipEnd.value - clipStart.value > MAX_CLIP_SECONDS) {
-      clipStart.value = Math.max(0, clipEnd.value - MAX_CLIP_SECONDS)
-    }
-    seekClipPreview(clampNumber(playerCurrentTime.value, clipStart.value, Math.max(clipStart.value, clipEnd.value - 0.1)))
-  } else {
-    seekClipPreview(clampNumber(nextTime, clipStart.value, clipEnd.value))
-  }
-}
-
-const stopClipDrag = () => {
-  activeClipDrag.value = null
-  clipDragViewportStart.value = null
-  clipDragViewportEnd.value = null
-  window.removeEventListener('pointermove', updateClipDrag)
-  window.removeEventListener('pointerup', stopClipDrag)
-}
-
-const startClipDrag = (type: 'start' | 'end' | 'playhead', event: PointerEvent) => {
-  clipDragViewportStart.value = clipViewportStart.value
-  clipDragViewportEnd.value = clipViewportEnd.value
-  activeClipDrag.value = type
-  updateClipDrag(event)
-  window.addEventListener('pointermove', updateClipDrag)
-  window.addEventListener('pointerup', stopClipDrag)
-}
-
-const handleClipTrackPointerDown = (event: PointerEvent) => {
-  startClipDrag('playhead', event)
-}
-
 const startClipMode = async () => {
   if (!canCreateClip.value) return
-  const state = videoPlayerRef.value?.getPlaybackState?.()
-  const current = Number(state?.currentTime || playerCurrentTime.value || 0)
-  const duration = Number(state?.duration || playerDuration.value || 0)
-  playerDuration.value = duration
-  clipStart.value = clampNumber(current, 0, Math.max(0, duration - 1))
-  clipEnd.value = clampNumber(Math.min(clipStart.value + Math.min(15, MAX_CLIP_SECONDS), duration), clipStart.value + 1, duration)
-  clipZoom.value = duration > 900 ? 8 : duration > 240 ? 6 : 4
-  clipTitle.value = watchDisplayTitle.value ? `Clip: ${watchDisplayTitle.value}` : ''
   clipError.value = ''
   isClipMode.value = true
-  seekClipPreview(clipStart.value)
-  videoPlayerRef.value?.pauseAt?.(clipStart.value)
-  clipPlayerPaused.value = true
   await nextTick()
   clipEditorRef.value?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
 }
@@ -1607,24 +1449,9 @@ const startClipMode = async () => {
 const cancelClipMode = () => {
   isClipMode.value = false
   clipError.value = ''
-  stopClipDrag()
 }
 
-const toggleClipPlayback = () => {
-  if (!isClipMode.value) return
-  const state = videoPlayerRef.value?.getPlaybackState?.()
-  const paused = Boolean(state?.paused ?? clipPlayerPaused.value)
-  if (paused) {
-    const startAt = playerCurrentTime.value < clipStart.value || playerCurrentTime.value >= clipEnd.value ? clipStart.value : playerCurrentTime.value
-    videoPlayerRef.value?.playFrom?.(startAt)
-    clipPlayerPaused.value = false
-  } else {
-    videoPlayerRef.value?.pauseAt?.(playerCurrentTime.value)
-    clipPlayerPaused.value = true
-  }
-}
-
-const publishClip = async () => {
+const publishClip = async (payload: { startSeconds: number, endSeconds: number, title: string }) => {
   if (!isLoggedIn.value || !canCreateClip.value) return
   clipError.value = ''
   isPublishingClip.value = true
@@ -1632,9 +1459,9 @@ const publishClip = async () => {
     const isPersonalAccount = activeAccount.value === 'personal' || activeAccount.value === userId.value
     const channelId = isPersonalAccount ? personalAccountSelectedChannel.value : activeAccount.value
     const res = await createVideoClip(id, {
-      startSeconds: clipStart.value,
-      endSeconds: clipEnd.value,
-      title: clipTitle.value,
+      startSeconds: payload.startSeconds,
+      endSeconds: payload.endSeconds,
+      title: payload.title,
       channelId,
     })
     isClipMode.value = false
@@ -1642,7 +1469,7 @@ const publishClip = async () => {
       await navigateTo(localePath(`/video/${res.id}`))
     }
   } catch (err: any) {
-    clipError.value = err?.response?.data?.error || err?.message || 'Failed to publish clip'
+    clipError.value = err?.response?.data?.error || err?.message || t('video.clip.publishFailed')
   } finally {
     isPublishingClip.value = false
   }
@@ -1883,8 +1710,6 @@ const loadWatchResume = async () => {
 const handleWatchProgress = async (payload: { currentTime: number, duration: number }) => {
   playerCurrentTime.value = Number(payload.currentTime || 0)
   playerDuration.value = Number(payload.duration || 0)
-  const state = videoPlayerRef.value?.getPlaybackState?.()
-  clipPlayerPaused.value = Boolean(state?.paused ?? clipPlayerPaused.value)
   if (!isLoggedIn.value) return
   const now = Date.now()
   if (now - lastWatchProgressSaveAt < 10000) return

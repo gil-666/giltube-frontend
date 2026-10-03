@@ -15,6 +15,65 @@ export const getMovie = async (id: string) => {
   return res.data
 }
 
+// Short-lived client cache so the home rows, the category page and the detail
+// modal share one request instead of refetching on every navigation.
+const MOVIE_CACHE_TTL_MS = 60_000
+let moviesListCache: { data: any, at: number } | null = null
+let moviesListRequest: Promise<any> | null = null
+const moviesDetailCache = new Map<string, { data: any, at: number }>()
+const moviesDetailRequests = new Map<string, Promise<any>>()
+
+const isFresh = (entry: { at: number } | null | undefined) => !!entry && Date.now() - entry.at < MOVIE_CACHE_TTL_MS
+
+export const clearMovieCache = () => {
+  moviesListCache = null
+  moviesListRequest = null
+  moviesDetailCache.clear()
+  moviesDetailRequests.clear()
+}
+
+export const peekCachedMovies = () => (import.meta.client && isFresh(moviesListCache) ? moviesListCache!.data : null)
+
+export const listMoviesCached = async () => {
+  if (!import.meta.client) return listMovies()
+  if (isFresh(moviesListCache)) return moviesListCache!.data
+  if (!moviesListRequest) {
+    moviesListRequest = listMovies()
+      .then((data) => {
+        moviesListCache = { data, at: Date.now() }
+        return data
+      })
+      .finally(() => {
+        moviesListRequest = null
+      })
+  }
+  return moviesListRequest
+}
+
+export const getMovieCached = async (id: string) => {
+  if (!import.meta.client) return getMovie(id)
+  const cached = moviesDetailCache.get(id)
+  if (isFresh(cached)) return cached!.data
+  let request = moviesDetailRequests.get(id)
+  if (!request) {
+    request = getMovie(id)
+      .then((data) => {
+        moviesDetailCache.set(id, { data, at: Date.now() })
+        return data
+      })
+      .finally(() => {
+        moviesDetailRequests.delete(id)
+      })
+    moviesDetailRequests.set(id, request)
+  }
+  return request
+}
+
+export const prefetchMovie = (id: string) => {
+  if (!import.meta.client || !id) return
+  getMovieCached(id).catch(() => {})
+}
+
 export const getMovieVideoContext = async (videoId: string) => {
   const res = await api.get(`/movie-videos/${videoId}`)
   return res.data
@@ -58,6 +117,7 @@ export const createMovie = async (data: {
   if (data.backdrop) formData.append('backdrop', data.backdrop)
 
   const res = await api.post('/admin/movies', formData, { timeout: 0 })
+  clearMovieCache()
   return res.data
 }
 
@@ -96,16 +156,19 @@ export const updateMovie = async (movieId: string, data: {
   if (data.backdrop) formData.append('backdrop', data.backdrop)
 
   const res = await api.put(`/admin/movies/${movieId}`, formData, { timeout: 0 })
+  clearMovieCache()
   return res.data
 }
 
 export const setMovieTrailer = async (movieId: string, videoId: string) => {
   const res = await api.post(`/admin/movies/${movieId}/trailer`, { video_id: videoId })
+  clearMovieCache()
   return res.data
 }
 
 export const setMovieVideo = async (movieId: string, videoId: string) => {
   const res = await api.post(`/admin/movies/${movieId}/video`, { video_id: videoId })
+  clearMovieCache()
   return res.data
 }
 
@@ -113,6 +176,7 @@ export const deleteMovie = async (movieId: string, options: { deleteVideos?: boo
   const res = await api.delete(`/admin/movies/${movieId}`, {
     params: { delete_videos: options.deleteVideos ? 'true' : 'false' },
   })
+  clearMovieCache()
   return res.data
 }
 
@@ -174,6 +238,7 @@ export const uploadMovieAudioTrack = async (movieId: string, data: {
       timeout: 0,
     })
     data.onUploadProgress?.(100)
+    clearMovieCache()
     return res.data
   }
 
@@ -199,6 +264,7 @@ export const uploadMovieAudioTrack = async (movieId: string, data: {
         if (event.total) data.onUploadProgress?.(Math.round((event.loaded / event.total) * 100))
       },
     })
+  clearMovieCache()
   return res.data
 }
 
@@ -208,6 +274,7 @@ export const downloadMovieAudioTrackWAV = async (movieId: string, trackId: strin
 
 export const deleteMovieAudioTrack = async (movieId: string, trackId: string) => {
   const res = await api.delete(`/admin/movies/${movieId}/audio/${trackId}`)
+  clearMovieCache()
   return res.data
 }
 
@@ -216,6 +283,7 @@ export const syncMovieAudioTrack = async (movieId: string, trackId: string, data
     delay_ms: data.delayMs,
     trim_start_ms: data.trimStartMs,
   }, { timeout: 0 })
+  clearMovieCache()
   return res.data
 }
 
@@ -245,10 +313,12 @@ export const uploadMovieSubtitle = async (movieId: string, data: {
   const res = data.trackId
     ? await api.put(url, formData, { timeout: 0 })
     : await api.post(url, formData, { timeout: 0 })
+  clearMovieCache()
   return res.data
 }
 
 export const deleteMovieSubtitle = async (movieId: string, trackId: string) => {
   const res = await api.delete(`/admin/movies/${movieId}/subtitles/${trackId}`)
+  clearMovieCache()
   return res.data
 }

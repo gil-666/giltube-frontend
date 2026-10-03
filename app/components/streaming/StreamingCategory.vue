@@ -23,7 +23,7 @@
         <Transition name="streaming-hero-image" mode="out-in">
           <img
             :key="featuredItem.id"
-            :src="featuredItem.backdropUrl || featuredItem.posterUrl"
+            v-bind="responsiveImage(featuredItem.backdropUrl || featuredItem.posterUrl, '100vw')"
             :alt="featuredItem.title"
             class="streaming-hero-image"
             decoding="async"
@@ -83,10 +83,34 @@
 
       <div class="streaming-content">
         <section v-for="group in groups" :key="group.genre" class="streaming-section">
-          <div class="mb-3 flex items-center justify-between">
+          <div class="mb-3 flex items-center justify-between gap-4">
             <h2 class="text-xl font-semibold">{{ group.genre }}</h2>
+            <div v-if="rowScrollState[group.genre]?.scrollable" class="flex items-center gap-2">
+              <button
+                type="button"
+                class="streaming-row-button"
+                :aria-label="t('streaming.scrollRowLeft', { genre: group.genre })"
+                :disabled="!rowScrollState[group.genre]?.prev"
+                @click="scrollRow(group.genre, -1)"
+              >
+                &#8249;
+              </button>
+              <button
+                type="button"
+                class="streaming-row-button"
+                :aria-label="t('streaming.scrollRowRight', { genre: group.genre })"
+                :disabled="!rowScrollState[group.genre]?.next"
+                @click="scrollRow(group.genre, 1)"
+              >
+                &#8250;
+              </button>
+            </div>
           </div>
-          <div class="streaming-row">
+          <div
+            :ref="setRowRef(group.genre)"
+            class="streaming-row"
+            @scroll.passive="updateRowScrollState(group.genre)"
+          >
             <article
               v-for="item in group.items"
               :key="item.id"
@@ -95,7 +119,7 @@
               <button type="button" class="group block w-full text-left" @click="$emit('open', item)">
                 <div class="streaming-poster">
                   <img
-                    :src="item.posterUrl || item.backdropUrl"
+                    v-bind="responsiveImage(item.posterUrl || item.backdropUrl, '(min-width: 640px) 14rem, 11rem')"
                     :alt="item.title"
                     class="streaming-poster-image"
                     loading="lazy"
@@ -133,7 +157,7 @@
         >
           <section class="streaming-modal-panel">
             <div class="streaming-modal-hero">
-              <img :src="selectedItem.backdropUrl || selectedItem.posterUrl" :alt="selectedItem.title" class="streaming-modal-image" decoding="async" fetchpriority="high" />
+              <img v-bind="responsiveImage(selectedItem.backdropUrl || selectedItem.posterUrl, 'min(100vw, 64rem)')" :alt="selectedItem.title" class="streaming-modal-image" decoding="async" fetchpriority="high" />
               <div class="streaming-modal-fade" />
               <button
                 type="button"
@@ -194,7 +218,8 @@
 </template>
 
 <script setup>
-import { onBeforeUnmount, watch } from 'vue'
+import { responsiveImage } from '~/app/utils/media'
+import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 const props = defineProps({
@@ -227,6 +252,65 @@ const qualityBadgeClass = (quality) => {
   return ['streaming-quality-badge', modifier ? `is-${modifier}` : '']
 }
 
+const rowElements = {}
+const rowScrollState = ref({})
+// Rows below the fold skip layout (content-visibility), so re-measure when
+// they actually get laid out or resized.
+const rowResizeObserver = typeof ResizeObserver !== 'undefined'
+  ? new ResizeObserver((entries) => {
+    for (const entry of entries) {
+      const key = entry.target.dataset.rowKey
+      if (key) updateRowScrollState(key)
+    }
+  })
+  : null
+
+const updateRowScrollState = (key) => {
+  const element = rowElements[key]
+  if (!element) return
+  const maxScroll = element.scrollWidth - element.clientWidth
+  const next = {
+    scrollable: maxScroll > 4,
+    prev: element.scrollLeft > 4,
+    next: element.scrollLeft < maxScroll - 4,
+  }
+  const current = rowScrollState.value[key]
+  if (current && current.scrollable === next.scrollable && current.prev === next.prev && current.next === next.next) return
+  rowScrollState.value = { ...rowScrollState.value, [key]: next }
+}
+
+const updateAllRowScrollStates = () => {
+  for (const key of Object.keys(rowElements)) updateRowScrollState(key)
+}
+
+const setRowRef = (key) => (element) => {
+  if (!element) {
+    if (rowElements[key]) rowResizeObserver?.unobserve(rowElements[key])
+    delete rowElements[key]
+    return
+  }
+  if (rowElements[key] === element) return
+  element.dataset.rowKey = key
+  rowElements[key] = element
+  rowResizeObserver?.observe(element)
+  updateRowScrollState(key)
+}
+
+const scrollRow = (key, direction) => {
+  const element = rowElements[key]
+  if (!element) return
+  element.scrollBy({
+    left: direction * Math.max(element.clientWidth * 0.85, 200),
+    behavior: 'smooth',
+  })
+}
+
+watch(() => props.groups, () => nextTick(updateAllRowScrollStates))
+
+onMounted(() => {
+  nextTick(updateAllRowScrollStates)
+})
+
 const lockPageScroll = (locked) => {
   if (typeof document === 'undefined') return
   const html = document.documentElement
@@ -245,16 +329,51 @@ watch(() => props.selectedItem, (item) => {
 }, { immediate: true })
 
 onBeforeUnmount(() => {
+  rowResizeObserver?.disconnect()
   lockPageScroll(false)
 })
 </script>
 
 <style scoped>
 .streaming-row {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  display: flex;
   gap: 1rem;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-behavior: smooth;
+  scroll-snap-type: x proximity;
   padding-bottom: 0.75rem;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.streaming-row::-webkit-scrollbar {
+  display: none;
+}
+
+.streaming-row-button {
+  display: flex;
+  width: 2.25rem;
+  height: 2.25rem;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.05);
+  color: #fff;
+  font-size: 1.125rem;
+  line-height: 1;
+  transition: background-color 160ms ease, opacity 160ms ease;
+}
+
+.streaming-row-button:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.streaming-row-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
 }
 
 .streaming-hero {
@@ -404,8 +523,9 @@ onBeforeUnmount(() => {
 }
 
 .streaming-card {
-  min-width: 0;
-  width: 100%;
+  width: 11rem;
+  flex: 0 0 11rem;
+  scroll-snap-align: start;
 }
 
 .streaming-poster {
@@ -742,10 +862,9 @@ onBeforeUnmount(() => {
 }
 
 @media (min-width: 640px) {
-  .streaming-row {
-    grid-template-columns: repeat(auto-fit, minmax(11rem, 14rem));
-    justify-content: start;
-    column-gap: clamp(1rem, 2vw, 1.75rem);
+  .streaming-card {
+    width: 14rem;
+    flex-basis: 14rem;
   }
 
   .streaming-hero {

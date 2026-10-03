@@ -81,7 +81,23 @@
         <dl class="mt-4 grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
           <div><dt class="text-xs text-zinc-500">{{ t('admin.workers.system') }}</dt><dd class="mt-0.5 capitalize text-zinc-200">{{ worker.platform }} · {{ worker.arch }}</dd></div>
           <div><dt class="text-xs text-zinc-500">{{ t('admin.workers.encoder') }}</dt><dd class="mt-0.5 flex items-center gap-1.5 text-zinc-200"><span v-if="worker.is_gpu" class="rounded bg-blue-950 px-1.5 py-0.5 text-[10px] font-bold text-blue-300">GPU</span>{{ worker.encoder }}</dd></div>
-          <div><dt class="text-xs text-zinc-500">{{ t('admin.workers.roles') }}</dt><dd class="mt-0.5 text-zinc-200">{{ worker.roles.join(', ') }}</dd></div>
+          <div>
+            <dt class="text-xs text-zinc-500">{{ t('admin.workers.roles') }}</dt>
+            <dd class="mt-1">
+              <select
+                v-if="worker.managed && !worker.is_primary"
+                :value="worker.roles[0] || 'transcode'"
+                :disabled="worker.disabled || !!worker.current_job || updatingWorker === worker.id"
+                class="w-full rounded-md border border-zinc-700 bg-zinc-900 px-2 py-1.5 text-xs font-semibold text-zinc-100 outline-none transition focus:border-red-500 disabled:cursor-not-allowed disabled:opacity-50"
+                @change="changeRole(worker, ($event.target as HTMLSelectElement).value)"
+              >
+                <option value="transcode">{{ t('admin.workers.roleVideo') }}</option>
+                <option value="live-adaptive" :disabled="!worker.is_gpu || !['linux', 'windows'].includes(worker.platform.toLowerCase())">{{ t('admin.workers.roleLiveAdaptive') }}</option>
+              </select>
+              <span v-else class="text-zinc-200">{{ worker.roles.join(', ') }}</span>
+              <span v-if="updatingWorker === worker.id" class="mt-1 block text-[11px] text-amber-300">{{ t('admin.workers.applyingRole') }}</span>
+            </dd>
+          </div>
           <div><dt class="text-xs text-zinc-500">{{ t('admin.workers.lastSeen') }}</dt><dd class="mt-0.5 text-zinc-200">{{ formatRelative(worker.last_seen) }}</dd></div>
         </dl>
 
@@ -192,7 +208,7 @@
 
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
-import { createWorkerEnrollmentCode, deleteWorker, downloadWorkerRelease, enableWorker, listWorkerReleases, listWorkers, revokeWorker, setWorkerScheduling, type WorkerNode, type WorkerRelease } from '~/app/service/workers'
+import { createWorkerEnrollmentCode, deleteWorker, downloadWorkerRelease, enableWorker, listWorkerReleases, listWorkers, revokeWorker, setWorkerRoles, setWorkerScheduling, type WorkerNode, type WorkerRelease } from '~/app/service/workers'
 
 const { t } = useI18n()
 const workers = ref<WorkerNode[]>([])
@@ -273,6 +289,21 @@ const toggleScheduling = async (worker: WorkerNode) => {
   updatingWorker.value = worker.id
   await runAction(() => setWorkerScheduling(worker.id, enabled))
   updatingWorker.value = ''
+}
+const changeRole = async (worker: WorkerNode, role: string) => {
+  if (worker.roles.length === 1 && worker.roles[0] === role) return
+  updatingWorker.value = worker.id
+  error.value = ''
+  let actionError = ''
+  try {
+    await setWorkerRoles(worker.id, [role])
+  } catch (err: any) {
+    actionError = err?.response?.data?.error || t('admin.workers.actionError')
+  } finally {
+    await loadWorkers()
+    if (actionError) error.value = actionError
+    updatingWorker.value = ''
+  }
 }
 const runAction = async (action: () => Promise<any>) => { error.value = ''; try { await action(); await loadWorkers() } catch (err: any) { error.value = err?.response?.data?.error || t('admin.workers.actionError') } }
 const statusDotClass = (status: string) => status === 'online' ? 'bg-emerald-400' : status === 'revoked' ? 'bg-red-500' : 'bg-zinc-500'

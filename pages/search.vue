@@ -42,7 +42,7 @@
                         class="motion-card group cursor-pointer">
                         <div class="bg-zinc-800 rounded-lg overflow-hidden h-40 mb-3 relative">
                             <img class="w-full h-full object-cover group-hover:opacity-75 transition"
-                                :src="video.thumbnail" :alt="video.title" />
+                                v-bind="responsiveImage(video.thumbnail, '(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw')" :alt="video.title" />
                         </div>
                         <p class="font-semibold line-clamp-2 group-hover:text-red-500 transition">{{ video.title }}</p>
                         <div class="flex items-center text-zinc-400 gap-1 mt-1">
@@ -71,7 +71,7 @@
                             <img
                                 v-if="mediaImage(movie)"
                                 class="h-full w-full object-cover transition duration-300 group-hover:scale-105 group-hover:opacity-80"
-                                :src="mediaImage(movie)"
+                                v-bind="responsiveImage(mediaImage(movie), '(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw')"
                                 :alt="movie.title"
                             />
                             <div v-else class="flex h-full w-full items-center justify-center text-sm text-zinc-500">
@@ -107,7 +107,7 @@
                             <img
                                 v-if="mediaImage(series)"
                                 class="h-full w-full object-cover transition duration-300 group-hover:scale-105 group-hover:opacity-80"
-                                :src="mediaImage(series)"
+                                v-bind="responsiveImage(mediaImage(series), '(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw')"
                                 :alt="series.title"
                             />
                             <div v-else class="flex h-full w-full items-center justify-center text-sm text-zinc-500">
@@ -179,6 +179,7 @@
 </template>
 
 <script setup lang="ts">
+import { responsiveImage } from '~/app/utils/media'
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import AvatarFallback from '~/app/components/AvatarFallback.vue'

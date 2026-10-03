@@ -32,7 +32,7 @@
         <div class="w-full aspect-video bg-zinc-700 relative overflow-hidden">
           <img
             v-if="getPlaylistThumbnail(playlist)"
-            :src="getPlaylistThumbnail(playlist)"
+            v-bind="responsiveImage(getPlaylistThumbnail(playlist), '(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw')"
             :alt="playlist.title"
             class="absolute inset-0 h-full w-full object-cover"
           />
@@ -87,6 +87,7 @@
 </template>
 
 <script setup lang="ts">
+import { responsiveImage } from '~/app/utils/media'
 import { ref, onMounted, computed } from 'vue'
 import AvatarFallback from '~/app/components/AvatarFallback.vue'
 import { useI18n } from 'vue-i18n'

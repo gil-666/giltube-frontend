@@ -808,8 +808,11 @@
             <div class="grid gap-3 md:grid-cols-[5rem_5rem_minmax(0,1fr)]">
               <input v-model.number="episode.seasonNumber" min="1" type="number" class="rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-white" />
               <input v-model.number="episode.episodeNumber" min="1" type="number" class="rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-white" />
-              <input v-model="episode.title" :placeholder="t('seriesAdmin.placeholders.episodeTitle')" class="rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-white placeholder-gray-500" />
+              <input v-model="episode.title" :placeholder="t('seriesAdmin.placeholders.episodeTitle')" @input="episode.metadataDirty = true" class="rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-white placeholder-gray-500" />
             </div>
+            <p v-if="episode.attached && episode.videoStatus && episode.videoStatus !== 'ready'" class="mt-3 inline-flex items-center gap-2 rounded bg-amber-900/40 px-2 py-1 text-xs font-semibold text-amber-200">
+              {{ t('seriesAdmin.episodes.processing') }}
+            </p>
             <div v-if="episode.episodeId || episode.videoId" class="mt-3 grid gap-2 rounded border border-zinc-800 bg-black/30 px-3 py-2 text-xs md:grid-cols-2">
               <div v-if="episode.episodeId" class="min-w-0">
                 <span class="font-semibold uppercase tracking-wide text-gray-500">{{ t('seriesAdmin.ids.episode') }}</span>
@@ -820,7 +823,7 @@
                 <code class="mt-1 block select-all break-all font-mono text-gray-200">{{ episode.videoId }}</code>
               </div>
             </div>
-            <textarea v-model="episode.synopsis" rows="2" :placeholder="t('seriesAdmin.placeholders.episodeSynopsis')" class="mt-3 w-full rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-white placeholder-gray-500" />
+            <textarea v-model="episode.synopsis" rows="2" @input="episode.metadataDirty = true" :placeholder="t('seriesAdmin.placeholders.episodeSynopsis')" class="mt-3 w-full rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-white placeholder-gray-500" />
             <div class="mt-3 grid gap-3 md:grid-cols-[minmax(0,1fr)_7.5rem_7.5rem_8.5rem_26rem]">
               <input type="file" accept="video/*" class="block w-full text-sm text-gray-300 file:mr-3 file:rounded file:border-0 file:bg-zinc-700 file:px-3 file:py-2 file:text-white" @change="onEpisodeFileSelected($event, index)" />
               <input v-model.number="episode.introStartSeconds" min="0" type="number" :placeholder="t('seriesAdmin.placeholders.introStart')" class="rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-white placeholder-gray-500" />
@@ -1153,7 +1156,7 @@ import {
   deleteSeriesEpisodeAudioTrack,
   downloadSeriesEpisodeAudioTrackWAV,
   deleteSeriesEpisodeSubtitle,
-  getSeries,
+  getAdminSeries,
   GILTUBE_SERIES_CHANNEL_ID,
   listIntroSkipSuggestions,
   listSeries,
@@ -1270,10 +1273,12 @@ type EpisodeRow = {
   videoTitle: string
   thumbnailUrl: string
   originalFilename: string
+  videoStatus: string
   seasonNumber: number
   episodeNumber: number
   title: string
   synopsis: string
+  metadataDirty: boolean
   introStartSeconds: number
   introEndSeconds: number
   file: File | null
@@ -1588,10 +1593,12 @@ const createEpisodeRow = (episode: any = {}, nextNumber = 1): EpisodeRow => ({
   videoTitle: episode.video?.title || '',
   thumbnailUrl: episode.video?.thumbnail_url || '',
   originalFilename: episode.video?.original_filename || '',
+  videoStatus: episode.video?.status || '',
   seasonNumber: episode.season_number || 1,
   episodeNumber: episode.episode_number || nextNumber,
   title: episode.title || '',
   synopsis: episode.synopsis || '',
+  metadataDirty: false,
   introStartSeconds: episode.intro_start_seconds || 0,
   introEndSeconds: episode.intro_end_seconds || 0,
   file: null,
@@ -1695,6 +1702,29 @@ const startNewSeries = () => {
   resetSeriesWorkspace()
 }
 
+// Reloading the workspace (after an upload, series save, etc.) must not throw
+// away metadata that was applied locally but not saved yet, nor rows that are
+// still waiting for their file to be uploaded.
+const mergeUnsavedEpisodeRows = (serverRows: EpisodeRow[], previousRows: EpisodeRow[]) => {
+  const previousByEpisodeId = new Map(previousRows.filter(row => row.episodeId).map(row => [row.episodeId, row]))
+  for (const row of serverRows) {
+    const previous = previousByEpisodeId.get(row.episodeId)
+    if (!previous?.metadataDirty) continue
+    row.title = previous.title
+    row.synopsis = previous.synopsis
+    row.metadataDirty = true
+  }
+  const slotKey = (row: EpisodeRow) => `${row.seasonNumber}:${row.episodeNumber}`
+  const occupiedSlots = new Set(serverRows.map(slotKey))
+  const pendingRows = previousRows.filter(row =>
+    !row.episodeId && (row.file || row.uploading || row.title || row.synopsis) && !occupiedSlots.has(slotKey(row))
+  )
+  return [...serverRows, ...pendingRows].sort((a, b) => {
+    if (a.seasonNumber === b.seasonNumber) return a.episodeNumber - b.episodeNumber
+    return a.seasonNumber - b.seasonNumber
+  })
+}
+
 const hydrateSeriesWorkspace = async (seriesId: string) => {
   if (!seriesId) {
     resetSeriesWorkspace()
@@ -1705,8 +1735,9 @@ const hydrateSeriesWorkspace = async (seriesId: string) => {
   seriesProgressMessage.value = ''
   episodeOrderOpen.value = false
   try {
-    const detail = await getSeries(seriesId)
+    const detail = await getAdminSeries(seriesId)
     const item = detail.series
+    const sameSeries = createdSeriesId.value === item.id
     createdSeriesId.value = item.id
     selectedSeriesId.value = item.id
     seriesForm.value = {
@@ -1727,7 +1758,8 @@ const hydrateSeriesWorkspace = async (seriesId: string) => {
     trailerForm.value.title = `${seriesForm.value.title} Trailer`
     trailerFile.value = null
     trailerProgress.value = 0
-    episodeRows.value = (detail.episodes || []).map((episode: any, index: number) => createEpisodeRow(episode, index + 1))
+    const serverRows: EpisodeRow[] = (detail.episodes || []).map((episode: any, index: number) => createEpisodeRow(episode, index + 1))
+    episodeRows.value = sameSeries ? mergeUnsavedEpisodeRows(serverRows, episodeRows.value) : serverRows
     await loadAllEpisodeSubtitles()
     await loadAllEpisodeAudioTracks()
     if (episodeRows.value.length === 0) {
@@ -2088,6 +2120,7 @@ const applySeriesEpisodeMetadata = (result: MediaMetadataResult) => {
 
     if (episode.title) row.title = episode.title
     if (episode.synopsis) row.synopsis = episode.synopsis
+    row.metadataDirty = true
     filledCount++
   }
 
@@ -2542,6 +2575,7 @@ const saveEpisodeRowDetails = async (row: EpisodeRow) => {
     introStartSeconds: row.introStartSeconds,
     introEndSeconds: row.introEndSeconds,
   })
+  row.metadataDirty = false
 }
 
 const saveEpisode = async (index: number) => {

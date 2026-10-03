@@ -16,6 +16,7 @@ export interface WorkerNode {
   encoder_kind: string
   is_gpu: boolean
   roles: string[]
+  roles_locked: boolean
   version: string
   status: 'online' | 'offline' | 'revoked'
   managed: boolean
@@ -76,6 +77,11 @@ export const enableWorker = async (id: string) => {
 
 export const setWorkerScheduling = async (id: string, enabled: boolean) => {
   const response = await api.post(`/admin/workers/${encodeURIComponent(id)}/scheduling`, { enabled })
+  return response.data
+}
+
+export const setWorkerRoles = async (id: string, roles: string[]) => {
+  const response = await api.put(`/admin/workers/${encodeURIComponent(id)}/roles`, { roles })
   return response.data
 }
 

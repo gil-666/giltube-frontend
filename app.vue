@@ -528,7 +528,6 @@
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 18V5l10-2v13M9 18a3 3 0 1 1-3-3h3v3Zm10-2a3 3 0 1 1-3-3h3v3Z" />
                 </svg>
                 <span class="min-w-0 flex-1 truncate">{{ t('app.giltubeMusic') }}</span>
-                <span class="shrink-0 rounded bg-rose-500 px-1.5 py-0.5 text-[9px] font-black leading-none text-white">NEW</span>
               </NuxtLink>
               <NuxtLink v-if="isLoggedIn" :to="localePath('/subscriptions')"
                 class="flex items-center gap-2 rounded p-2 font-semibold text-red-300 transition hover:bg-zinc-800 hover:text-white"

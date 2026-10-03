@@ -79,6 +79,59 @@
         {{ formatDisplayTime(displayCurrentTime) }} / {{ formatDisplayTime(displayDuration) }}
       </div>
 
+      <!-- Right-click menu and stats panel; moved inside the player element so they work in fullscreen -->
+      <div ref="playerMenusOverlay" class="giltube-player-menus">
+        <div
+          v-if="contextMenuOpen"
+          ref="contextMenuEl"
+          class="giltube-context-menu"
+          role="menu"
+          :style="{ left: `${contextMenuPosition.x}px`, top: `${contextMenuPosition.y}px` }"
+          @contextmenu.prevent
+          @pointerdown.stop
+        >
+          <button
+            type="button"
+            class="giltube-context-menu-item"
+            role="menuitemcheckbox"
+            :aria-checked="statsOpen"
+            @click="toggleStatsPanel"
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M5 20V10m7 10V4m7 16v-7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+            </svg>
+            <span>{{ t('video.player.stats.menu') }}</span>
+            <span v-if="statsOpen" class="giltube-context-menu-check" aria-hidden="true">&#10003;</span>
+          </button>
+        </div>
+
+        <section
+          v-if="statsOpen"
+          class="giltube-stats-panel"
+          role="dialog"
+          :aria-label="t('video.player.stats.title')"
+          @pointerdown.stop
+          @dblclick.stop
+          @contextmenu.stop
+        >
+          <header class="giltube-stats-header">
+            <span>{{ t('video.player.stats.title') }}</span>
+            <button type="button" class="giltube-stats-close" :aria-label="t('video.player.stats.close')" @click="closeStatsPanel">&times;</button>
+          </header>
+          <dl class="giltube-stats-rows">
+            <template v-for="row in statsRows" :key="row.key">
+              <dt>{{ t(`video.player.stats.${row.key}`) }}</dt>
+              <dd>
+                <span>{{ row.value }}</span>
+                <span v-if="row.meter !== undefined" class="giltube-stats-meter" aria-hidden="true">
+                  <span :style="{ width: `${Math.round(row.meter * 100)}%` }" />
+                </span>
+              </dd>
+            </template>
+          </dl>
+        </section>
+      </div>
+
       <!-- Presence overlay (live only) -->
       <div v-if="isLive && (viewers.length > 0 || anonymousCount > 0)" class="presence-overlay absolute left-3 top-3 bg-black/60 text-white rounded-md p-2 flex items-center gap-3">
         <div class="avatars flex items-center gap-2">
@@ -813,7 +866,16 @@ const dumpPlayerDebugState = () => {
     topElementClasses: topElement?.className,
     topElementOpacity: topElement ? window.getComputedStyle(topElement).opacity : null,
     controlSamples,
-    qualityLevels: countUniqueQualityLevels(levels)
+    qualityLevels: countUniqueQualityLevels(levels),
+    rawQualityLevels: levels?.length ?? null,
+    qualityButtonHidden: qualityButton?.hasClass?.('vjs-hidden') ?? null,
+    mobileControls: isMobileControlsWidth(),
+    currentSrc: player.currentSrc?.(),
+    vhsRepresentations: player.tech?.({ IWillNotUseThisInPlugins: true })?.vhs?.representations?.()?.length ?? null,
+    audioTracks: Array.from({ length: player.audioTracks?.()?.length || 0 }, (_, i) => {
+      const track = player.audioTracks()[i]
+      return `${track.language || track.label}:${track.enabled ? 'on' : 'off'}`
+    })
   })
 }
 
@@ -1967,6 +2029,432 @@ const restoreLockedPlayback = async () => {
   }
 }
 
+// ---- Buffer rescue ------------------------------------------------------------
+// bufferBasedABR turns off VHS's own early-abort, so a slow high-quality segment
+// can drain the buffer into a stall before ABR reacts (it only re-evaluates once a
+// download finishes). Watch the in-flight segment instead: if it won't land before
+// the buffer runs low, abandon it and fetch the same part of the video one rung
+// lower. If that rung can't keep up either, keep stepping down to the lowest.
+const RESCUE_TICK_MS = 250
+const RESCUE_SAFE_RUNWAY_SECONDS = 20 // plenty buffered: never intervene
+const RESCUE_MARGIN_SECONDS = 4 // want each download to land with this much buffer left
+const RESCUE_OBSERVE_MS = 1000 // let a new request's throughput estimate settle first
+const RESCUE_COOLDOWN_MS = 1500
+const RESCUE_EXCLUDE_MS = 30000 // keep abandoned rungs out of ABR for a while
+const RESCUE_MIN_SAVING_SECONDS = 1 // only switch if the lower rung lands this much sooner
+const BANDWIDTH_VARIANCE = 1.2 // matches VHS's selector headroom
+
+// Opportunistic upgrades: with a healthy buffer, step up to a higher rung even
+// if measured bandwidth can't sustain it, spending buffer on better quality.
+// VHS (bufferBasedABR) won't switch down while the buffer is above its high
+// water line, so the upgrade holds until then and VHS steps back down smoothly.
+const UPGRADE_MIN_BUFFER_SECONDS = 40
+const UPGRADE_MIN_HD_SECONDS = 20 // only upgrade if we can play this long before hitting the floor
+const UPGRADE_INTERVAL_MS = 15000
+const UPGRADE_AFTER_RESCUE_MS = 10000
+
+type InFlightSegment = { segment: any, startedAt: number, stats: any }
+let rescueTimer: ReturnType<typeof setInterval> | null = null
+let rescueCount = 0
+let upgradeCount = 0
+let lastRescueAt = 0
+let lastUpgradeAt = 0
+let inFlightSegment: InFlightSegment | null = null
+
+// VHS feeds live request stats (bytes, measured bandwidth) to this hook on every
+// progress event; record them for the in-flight segment.
+const patchSegmentLoaderProgress = (loader: any) => {
+  if (!loader || loader.__giltubeProgressPatched || typeof loader.earlyAbortWhenNeeded_ !== 'function') return
+  const original = loader.earlyAbortWhenNeeded_
+  loader.earlyAbortWhenNeeded_ = function (stats: any) {
+    if (inFlightSegment && inFlightSegment.segment === this.pendingSegment_) inFlightSegment.stats = stats
+    return original.call(this, stats)
+  }
+  loader.__giltubeProgressPatched = true
+}
+
+const getForwardBuffer = () => {
+  const now = Number(player?.currentTime?.() || 0)
+  const buffered = player?.buffered?.()
+  for (let i = 0; i < (buffered?.length || 0); i++) {
+    if (buffered.start(i) <= now + 0.1 && buffered.end(i) > now) return { ahead: buffered.end(i) - now, end: buffered.end(i) }
+  }
+  return { ahead: 0, end: now }
+}
+
+// The pending segment can hold a stale copy of its playlist; resolve the live entry.
+const resolveMainPlaylist = (controller: any, playlist: any) => {
+  const playlists = controller.main?.()?.playlists || []
+  return playlists.find((candidate: any) => candidate === playlist)
+    || playlists.find((candidate: any) => candidate.id === playlist?.id || candidate.uri === playlist?.uri)
+    || playlist
+}
+
+const nextLowerRung = (controller: any, from: any) => {
+  const now = Date.now()
+  const fromBandwidth = Number(from?.attributes?.BANDWIDTH || 0)
+  return (controller.main?.()?.playlists || [])
+    .filter((playlist: any) => {
+      const bandwidth = Number(playlist?.attributes?.BANDWIDTH || 0)
+      return !playlist.disabled && !(playlist.excludeUntil > now) && bandwidth > 0 && bandwidth < fromBandwidth
+    })
+    .sort((a: any, b: any) => Number(b.attributes.BANDWIDTH) - Number(a.attributes.BANDWIDTH))[0] || null
+}
+
+const rescueStepDown = (controller: any, from: any, next: any) => {
+  // Temporary exclusion set directly: excludePlaylist() would count this as a
+  // playlist error and, past maxPlaylistRetries, ban the rung for the session.
+  from.excludeUntil = Date.now() + RESCUE_EXCLUDE_MS
+  // Align ABR's estimate with the rung we're moving to so it doesn't bounce.
+  controller.mainSegmentLoader_.bandwidth = Number(next.attributes.BANDWIDTH) * BANDWIDTH_VARIANCE + 1
+  // Same sequence VHS uses for its own early-abort: drop only the in-flight
+  // request (buffered media is kept) and continue from the new rung.
+  controller.delegateLoaders_('main', ['abort', 'pause'])
+  controller.switchMedia_(next, 'giltube-rescue')
+  rescueCount += 1
+  lastRescueAt = performance.now()
+  inFlightSegment = null
+  return true
+}
+
+// Highest rung worth fetching for the current player size (same idea as VHS's
+// limitRenditionByPlayerDimensions: the first rung that covers the player).
+const renditionCapForPlayer = (playlists: any[]) => {
+  const dpr = typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1
+  const width = Number(player?.currentWidth?.() || 0) * dpr
+  const height = Number(player?.currentHeight?.() || 0) * dpr
+  const sorted = [...playlists].sort((a, b) => Number(a.attributes.BANDWIDTH) - Number(b.attributes.BANDWIDTH))
+  return sorted.find((playlist) => {
+    const resolution = playlist.attributes?.RESOLUTION
+    return resolution && resolution.width >= width && resolution.height >= height
+  }) || sorted[sorted.length - 1] || null
+}
+
+const upgradeTick = (controller: any, forwardBuffer: number) => {
+  const now = performance.now()
+  if (forwardBuffer < UPGRADE_MIN_BUFFER_SECONDS) return
+  if (now - lastUpgradeAt < UPGRADE_INTERVAL_MS || now - lastRescueAt < UPGRADE_AFTER_RESCUE_MS) return
+  const current = resolveMainPlaylist(controller, controller.media?.())
+  if (!current?.endList) return // VOD only; live has no buffer to spend
+  const currentBandwidth = Number(current?.attributes?.BANDWIDTH || 0)
+  const nowMs = Date.now()
+  const usable = (controller.main?.()?.playlists || []).filter((playlist: any) =>
+    !playlist.disabled && !(playlist.excludeUntil > nowMs) && Number(playlist.attributes?.BANDWIDTH) > 0)
+  const cap = renditionCapForPlayer(usable)
+  if (!cap || !currentBandwidth || Number(cap.attributes.BANDWIDTH) <= currentBandwidth) return
+  // Climb one rung at a time: if the next rung up was recently abandoned by a
+  // rescue, wait for it rather than skipping past it.
+  const next = (controller.main?.()?.playlists || [])
+    .filter((playlist: any) => !playlist.disabled && Number(playlist.attributes?.BANDWIDTH) > currentBandwidth)
+    .sort((a: any, b: any) => Number(a.attributes.BANDWIDTH) - Number(b.attributes.BANDWIDTH))[0]
+  if (!next || next.excludeUntil > nowMs || Number(next.attributes.BANDWIDTH) > Number(cap.attributes.BANDWIDTH)) return
+
+  // Buffer budget: at the measured throughput, how fast would the next rung drain
+  // the buffer, and would it last long enough above VHS's downswitch floor?
+  const throughput = Number(getVhsHandler()?.systemBandwidth || controller.mainSegmentLoader_?.bandwidth || 0)
+  if (!throughput) return
+  const floor = Number(controller.bufferHighWaterLine?.() || 30)
+  const drainPerSecond = Math.max(0, Number(next.attributes.BANDWIDTH) / throughput - 1)
+  const secondsAtNextRung = drainPerSecond > 0 ? (forwardBuffer - floor) / drainPerSecond : Infinity
+  if (secondsAtNextRung < UPGRADE_MIN_HD_SECONDS) return
+
+  // Plain media switch: keeps everything buffered and loads the next segments
+  // from the higher rung.
+  controller.switchMedia_(next, 'giltube-upgrade')
+  upgradeCount += 1
+  lastUpgradeAt = now
+}
+
+const rescueTick = () => {
+  // Seeking isn't excluded: waiting for data after a seek is exactly a rebuffer,
+  // and VHS aborts the old request on seek so the new one is observed fresh.
+  if (!player || player.paused?.() || player.ended?.()) return
+  if (props.lockAdaptiveQuality || (qualityButton?.manualSelectionIndex ?? null) !== null) return
+  const controller = getVhsPlaylistController()
+  const loader = controller?.mainSegmentLoader_
+  if (!loader) return
+  patchSegmentLoaderProgress(loader)
+
+  if (!player.seeking?.()) upgradeTick(controller, getForwardBuffer().ahead / Math.max(0.1, Number(player.playbackRate?.() || 1)))
+
+  const pending = loader.pendingSegment_
+  if (!pending) {
+    inFlightSegment = null
+    return
+  }
+  const now = performance.now()
+  if (!inFlightSegment || inFlightSegment.segment !== pending) {
+    inFlightSegment = { segment: pending, startedAt: now, stats: null }
+    return
+  }
+
+  const rate = Math.max(0.1, Number(player.playbackRate?.() || 1))
+  const { ahead, end } = getForwardBuffer()
+  const runway = ahead / rate
+  const total = Number(player.duration?.() || 0)
+  if (runway >= RESCUE_SAFE_RUNWAY_SECONDS || (Number.isFinite(total) && total > 0 && end >= total - 0.5)) return
+  if (now - inFlightSegment.startedAt < RESCUE_OBSERVE_MS || now - lastRescueAt < RESCUE_COOLDOWN_MS) return
+
+  const playlist = resolveMainPlaylist(controller, pending.playlist || controller.media?.())
+  const bitrate = Number(playlist?.attributes?.BANDWIDTH || 0)
+  const segmentSeconds = Number(pending.duration || 0)
+  if (!bitrate || !segmentSeconds) return
+
+  const stats = inFlightSegment.stats
+  const deadline = runway - RESCUE_MARGIN_SECONDS
+  const next = nextLowerRung(controller, playlist)
+  if (!next) return
+
+  if (stats?.bytesReceived > 0 && stats?.bandwidth > 0 && Date.now() - (stats.firstBytesReceivedAt || Date.now()) >= RESCUE_OBSERVE_MS) {
+    const secondsToFinish = Math.max(0, segmentSeconds * bitrate - stats.bytesReceived * 8) / stats.bandwidth
+    if (secondsToFinish <= deadline) return
+    // Restarting the segment on the lower rung throws away what's downloaded, so
+    // only switch when that still lands meaningfully sooner.
+    const lowerSeconds = (segmentSeconds * Number(next.attributes.BANDWIDTH)) / stats.bandwidth
+    if (secondsToFinish - lowerSeconds < RESCUE_MIN_SAVING_SECONDS) return
+  } else {
+    // No usable throughput yet: only act once waiting has already eaten the margin.
+    const waited = (now - inFlightSegment.startedAt) / 1000
+    if (waited < Math.max(2, deadline)) return
+  }
+  rescueStepDown(controller, playlist, next)
+}
+
+const startBufferRescue = () => {
+  if (!rescueTimer) rescueTimer = setInterval(rescueTick, RESCUE_TICK_MS)
+}
+
+const stopBufferRescue = () => {
+  if (rescueTimer) clearInterval(rescueTimer)
+  rescueTimer = null
+}
+
+// ---- Right-click menu + "Stats" panel ---------------------------------------
+
+type StatsRow = { key: string, value: string, meter?: number }
+
+const playerMenusOverlay = ref<HTMLElement | null>(null)
+const contextMenuEl = ref<HTMLElement | null>(null)
+const contextMenuOpen = ref(false)
+const contextMenuPosition = ref({ x: 0, y: 0 })
+const statsOpen = ref(false)
+const statsRows = ref<StatsRow[]>([])
+let statsTimer: ReturnType<typeof setInterval> | null = null
+let stallCount = 0
+let hasStartedPlayback = false
+
+// Only count buffering that interrupts playback, not the initial load or seeks.
+const countStall = () => {
+  if (hasStartedPlayback && !player?.seeking?.()) stallCount += 1
+}
+
+const attachPlayerMenusOverlay = () => {
+  const playerEl = player?.el?.() as HTMLElement | undefined
+  if (!playerEl || !playerMenusOverlay.value || playerMenusOverlay.value.parentElement === playerEl) return
+  playerEl.appendChild(playerMenusOverlay.value)
+}
+
+const handleOutsidePointerDown = (event: PointerEvent) => {
+  if (contextMenuEl.value?.contains(event.target as Node)) return
+  closeContextMenu()
+}
+
+const closeContextMenu = () => {
+  if (!contextMenuOpen.value) return
+  contextMenuOpen.value = false
+  document.removeEventListener('pointerdown', handleOutsidePointerDown, true)
+  document.removeEventListener('keydown', handleContextMenuKeydown, true)
+  window.removeEventListener('blur', closeContextMenu)
+  window.removeEventListener('resize', closeContextMenu)
+  window.removeEventListener('scroll', closeContextMenu, true)
+}
+
+const handleContextMenuKeydown = (event: KeyboardEvent) => {
+  if (event.key !== 'Escape') return
+  event.stopPropagation()
+  closeContextMenu()
+}
+
+const handlePlayerContextMenu = (event: MouseEvent) => {
+  // A second right-click while our menu is open falls through to the browser menu.
+  if (contextMenuOpen.value) {
+    closeContextMenu()
+    return
+  }
+  const playerEl = player?.el?.() as HTMLElement | undefined
+  if (!playerEl) return
+  event.preventDefault()
+  const rect = playerEl.getBoundingClientRect()
+  const menuWidth = 200
+  const menuHeight = 48
+  contextMenuPosition.value = {
+    x: Math.max(8, Math.min(event.clientX - rect.left, rect.width - menuWidth - 8)),
+    y: Math.max(8, Math.min(event.clientY - rect.top, rect.height - menuHeight - 8)),
+  }
+  contextMenuOpen.value = true
+  // Defer so the pointerdown that opened the menu doesn't immediately close it.
+  setTimeout(() => {
+    if (!contextMenuOpen.value) return
+    document.addEventListener('pointerdown', handleOutsidePointerDown, true)
+    document.addEventListener('keydown', handleContextMenuKeydown, true)
+    window.addEventListener('blur', closeContextMenu)
+    window.addEventListener('resize', closeContextMenu)
+    window.addEventListener('scroll', closeContextMenu, true)
+  }, 0)
+  nextTick(() => contextMenuEl.value?.querySelector('button')?.focus())
+}
+
+const formatBitrate = (bitsPerSecond: number) => {
+  if (!Number.isFinite(bitsPerSecond) || bitsPerSecond <= 0) return '—'
+  if (bitsPerSecond >= 1e6) return `${(bitsPerSecond / 1e6).toFixed(2)} Mbps`
+  return `${Math.round(bitsPerSecond / 1e3)} Kbps`
+}
+
+const formatBytes = (bytes: number) => {
+  if (!Number.isFinite(bytes) || bytes <= 0) return '0 B'
+  const units = ['B', 'KB', 'MB', 'GB']
+  const exponent = Math.min(units.length - 1, Math.floor(Math.log(bytes) / Math.log(1024)))
+  return `${(bytes / 1024 ** exponent).toFixed(exponent ? 1 : 0)} ${units[exponent]}`
+}
+
+const formatResolution = (resolution: any, fps?: number) => {
+  if (!resolution?.width || !resolution?.height) return '—'
+  const rate = Number(fps)
+  return `${resolution.width}x${resolution.height}${Number.isFinite(rate) && rate > 0 ? `@${Math.round(rate)}` : ''}`
+}
+
+const collectStats = (): StatsRow[] => {
+  if (!player) return []
+  const tech = player.tech?.({ IWillNotUseThisInPlugins: true })
+  const videoEl = tech?.el?.() as HTMLVideoElement | undefined
+  const vhs = tech?.vhs
+  const controller = vhs?.playlistController_
+  const media = vhs?.playlists?.media?.()
+  const attributes = media?.attributes || {}
+  const src = String(player.currentSrc?.() || props.src || '')
+  const videoId = src.match(/\/videos\/([^/]+)\//)?.[1] || '—'
+
+  const playback = videoEl?.getVideoPlaybackQuality?.()
+  const droppedFrames = playback?.droppedVideoFrames ?? 0
+  const totalFrames = playback?.totalVideoFrames ?? 0
+  const dpr = typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1
+
+  const now = Number(player.currentTime?.() || 0)
+  const buffered = player.buffered?.()
+  let bufferAhead = 0
+  for (let i = 0; i < (buffered?.length || 0); i++) {
+    if (buffered.start(i) <= now + 0.1 && buffered.end(i) > now) bufferAhead = buffered.end(i) - now
+  }
+  const bufferGoal = Number(controller?.goalBufferLength?.() || 30)
+
+  let optimal = '—'
+  try {
+    optimal = formatResolution(controller?.selectPlaylist?.()?.attributes?.RESOLUTION)
+  } catch {
+    // Selector can throw while the main playlist is still loading.
+  }
+
+  const audioTracks = player.audioTracks?.()
+  let audio = '—'
+  for (let i = 0; i < (audioTracks?.length || 0); i++) {
+    if (audioTracks[i]?.enabled) audio = [audioTracks[i].label, audioTracks[i].language].filter(Boolean).join(' · ') || '—'
+  }
+
+  const rows: StatsRow[] = [
+    { key: 'videoId', value: videoId },
+    { key: 'viewport', value: `${Math.round(player.currentWidth?.() || 0)}x${Math.round(player.currentHeight?.() || 0)}${dpr !== 1 ? ` @${dpr}x` : ''}` },
+    { key: 'frames', value: t('video.player.stats.framesValue', { dropped: droppedFrames, total: totalFrames }) },
+    {
+      key: 'resolution',
+      value: `${formatResolution({ width: videoEl?.videoWidth, height: videoEl?.videoHeight }, attributes['FRAME-RATE'])} / ${optimal}`,
+    },
+    {
+      key: 'qualityMode',
+      value: qualityButton?.manualSelectionIndex !== null && qualityButton?.manualSelectionIndex !== undefined
+        ? t('video.player.stats.manual')
+        : t('video.player.auto'),
+    },
+    { key: 'bitrate', value: formatBitrate(Number(attributes.BANDWIDTH || 0)) },
+    { key: 'codecs', value: attributes.CODECS || [controller?.sourceUpdater_?.codecs?.video, controller?.sourceUpdater_?.codecs?.audio].filter(Boolean).join(', ') || '—' },
+    { key: 'audio', value: audio },
+    { key: 'volume', value: player.muted?.() ? t('video.player.stats.muted') : `${Math.round(Number(player.volume?.() || 0) * 100)}%` },
+    { key: 'connection', value: formatBitrate(Number(vhs?.systemBandwidth || 0)) },
+    { key: 'network', value: t('video.player.stats.networkValue', { bytes: formatBytes(Number(vhs?.stats?.mediaBytesTransferred || 0)), requests: Number(vhs?.stats?.mediaRequests || 0) }) },
+    { key: 'buffer', value: `${bufferAhead.toFixed(2)} s`, meter: Math.min(1, bufferAhead / Math.max(1, bufferGoal)) },
+    { key: 'stalls', value: String(stallCount) },
+    { key: 'rescues', value: String(rescueCount) },
+    { key: 'upgrades', value: String(upgradeCount) },
+    { key: 'speed', value: `${Number(player.playbackRate?.() || 1)}x` },
+  ]
+  if (isLive.value) {
+    const liveEdge = Number(player.liveTracker?.liveCurrentTime?.() || 0)
+    rows.push({ key: 'latency', value: liveEdge > 0 ? `${Math.max(0, liveEdge - now).toFixed(1)} s` : '—' })
+  }
+  rows.push({ key: 'stream', value: vhs ? 'HLS · VHS' : (src.includes('.m3u8') ? t('video.player.stats.nativeHls') : '—') })
+  return rows
+}
+
+const refreshStats = () => {
+  statsRows.value = collectStats()
+}
+
+const openStatsPanel = () => {
+  statsOpen.value = true
+  refreshStats()
+  if (!statsTimer) statsTimer = setInterval(refreshStats, 500)
+}
+
+const closeStatsPanel = () => {
+  statsOpen.value = false
+  if (statsTimer) {
+    clearInterval(statsTimer)
+    statsTimer = null
+  }
+}
+
+const toggleStatsPanel = () => {
+  closeContextMenu()
+  if (statsOpen.value) closeStatsPanel()
+  else openStatsPanel()
+}
+
+// VHS force-switches rendition the instant the player enters fullscreen
+// (fastQualityChange_ flushes the whole buffer), which freezes playback while
+// the new quality loads. Instead keep playing the current quality and let the
+// regular ABR check pick the best rendition for the new size and bandwidth; it
+// only steps up when the buffer allows and appends after what's buffered.
+const FULLSCREEN_EVENTS = ['fullscreenchange', 'webkitfullscreenchange']
+let inFullscreenTransition = false
+let fullscreenAbrTimer: ReturnType<typeof setTimeout> | null = null
+
+const getVhsHandler = () => player?.tech?.({ IWillNotUseThisInPlugins: true })?.vhs || null
+const getVhsPlaylistController = () => getVhsHandler()?.playlistController_ || null
+
+// Capture phase runs before VHS's own document listener for the same event.
+const markFullscreenTransition = () => {
+  inFullscreenTransition = true
+  setTimeout(() => {
+    inFullscreenTransition = false
+  }, 0)
+  if (fullscreenAbrTimer) clearTimeout(fullscreenAbrTimer)
+  // Re-evaluate once the player has settled at its new size.
+  fullscreenAbrTimer = setTimeout(() => {
+    fullscreenAbrTimer = null
+    getVhsPlaylistController()?.checkABR_?.('fullscreen')
+  }, 400)
+}
+
+const patchVhsFullscreenSwitch = () => {
+  const controller = getVhsPlaylistController()
+  if (!controller || controller.__giltubeFullscreenPatched || typeof controller.fastQualityChange_ !== 'function') return
+  const fastQualityChange = controller.fastQualityChange_
+  controller.fastQualityChange_ = (...args: any[]) => {
+    if (inFullscreenTransition) return
+    return fastQualityChange(...args)
+  }
+  controller.__giltubeFullscreenPatched = true
+}
+
 const clearAdaptiveQualityLockTimer = () => {
   if (!adaptiveQualityLockTimer) return
   window.clearTimeout(adaptiveQualityLockTimer)
@@ -2249,9 +2737,14 @@ onMounted(async () => {
       html5: {
         // PiP can only render captions owned by the native video element.
         nativeTextTracks: true,
-        hls: {
+        vhs: {
           overrideNative: true,
-          enableLowInitialPlaylist: false
+          enableLowInitialPlaylist: false,
+          useBandwidthFromLocalStorage: true,
+          bufferBasedABR: true,
+          maxPlaylistRetries: 3,
+          limitRenditionByPlayerDimensions: true,
+          useDevicePixelRatio: true
         }
       },
       controlBar: {
@@ -2301,6 +2794,18 @@ onMounted(async () => {
       syncClipTimeDisplays()
       attachProgressBarOverlay()
       attachSeriesActionsOverlay()
+      attachPlayerMenusOverlay()
+      player.el().addEventListener('contextmenu', handlePlayerContextMenu)
+      player.on('waiting', countStall)
+      player.on('playing', () => { hasStartedPlayback = true })
+      player.on('loadstart', () => {
+        stallCount = 0
+        rescueCount = 0
+        upgradeCount = 0
+        hasStartedPlayback = false
+        inFlightSegment = null
+      })
+      startBufferRescue()
       updatePictureInPictureSupport()
       nextTick(attachMobilePiPOverlay)
       updateResponsiveControls()
@@ -2371,10 +2876,17 @@ onMounted(async () => {
       const qualityLevels = player.qualityLevels?.()
       if (qualityLevels) {
         qualityLevels.on('addqualitylevel', updateQualityButtonVisibility)
+        qualityLevels.on('removequalitylevel', updateQualityButtonVisibility)
         qualityLevels.on('change', updateQualityButtonVisibility)
         qualityLevels.on('addqualitylevel', updateMobileSettingsButtonVisibility)
         qualityLevels.on('change', updateMobileSettingsButtonVisibility)
       }
+      // Re-check once playback is underway so a quality list populated before
+      // (or without) the events above can't leave the selector hidden.
+      player.on(['loadeddata', 'canplay', 'playing'], () => {
+        updateQualityButtonVisibility()
+        updateMobileSettingsButtonVisibility()
+      })
 
       const audioTracks = player.audioTracks?.()
       if (audioTracks) {
@@ -2398,6 +2910,9 @@ onMounted(async () => {
       }
 
       player.on('loadedmetadata', updateQualityButtonVisibility)
+      // A new VHS controller is created per source, so patch on every load.
+      player.on(['loadstart', 'loadedmetadata'], patchVhsFullscreenSwitch)
+      FULLSCREEN_EVENTS.forEach((name) => document.addEventListener(name, markFullscreenTransition, true))
       player.on('loadedmetadata', () => {
         resetAudioButtonMenu()
         audioButton?.buildMenu?.()
@@ -2414,6 +2929,8 @@ onMounted(async () => {
       player.on('loadedmetadata', syncUltrawideFullscreenClass)
       player.on('fullscreenchange', syncUltrawideFullscreenClass)
       player.on('fullscreenchange', attachProgressBarOverlay)
+      player.on('fullscreenchange', attachPlayerMenusOverlay)
+      player.on('fullscreenchange', closeContextMenu)
       player.on('fullscreenchange', attachSeriesActionsOverlay)
       player.on('fullscreenchange', attachMobilePiPOverlay)
       player.on('play', syncUltrawideFullscreenClass)
@@ -2452,6 +2969,14 @@ onBeforeUnmount(() => {
   stopMobileControlsWatcher()
   stopUltrawideControlsGuard()
   document.removeEventListener('keydown', handleKeyboardShortcuts)
+  FULLSCREEN_EVENTS.forEach((name) => document.removeEventListener(name, markFullscreenTransition, true))
+  closeContextMenu()
+  closeStatsPanel()
+  stopBufferRescue()
+  if (fullscreenAbrTimer) {
+    clearTimeout(fullscreenAbrTimer)
+    fullscreenAbrTimer = null
+  }
   if (window.giltubePlayerDebug?.getPlayer?.() === player) {
     delete window.giltubePlayerDebug
   }
@@ -2559,6 +3084,155 @@ watch(
 </script>
 
 <style scoped>
+.giltube-player-menus {
+  position: absolute;
+  inset: 0;
+  z-index: 60;
+  pointer-events: none;
+}
+
+.giltube-context-menu {
+  position: absolute;
+  min-width: 200px;
+  padding: 6px 0;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  background: rgba(24, 24, 27, 0.94);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(8px);
+  pointer-events: auto;
+}
+
+.giltube-context-menu-item {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 14px;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: left;
+  transition: background-color 120ms ease;
+}
+
+.giltube-context-menu-item:hover,
+.giltube-context-menu-item:focus-visible {
+  background: rgba(255, 255, 255, 0.1);
+  outline: none;
+}
+
+.giltube-context-menu-item svg {
+  width: 18px;
+  height: 18px;
+  flex: none;
+}
+
+.giltube-context-menu-check {
+  margin-left: auto;
+  color: #f87171;
+}
+
+.giltube-stats-panel {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: min(360px, calc(100% - 24px));
+  max-height: calc(100% - 80px);
+  overflow-y: auto;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.78);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
+  color: #e4e4e7;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 11px;
+  line-height: 1.45;
+  pointer-events: auto;
+  user-select: text;
+  backdrop-filter: blur(6px);
+}
+
+.giltube-stats-header {
+  position: sticky;
+  top: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 6px 6px 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(0, 0, 0, 0.6);
+  color: #fca5a5;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.giltube-stats-close {
+  display: flex;
+  width: 24px;
+  height: 24px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  color: #a1a1aa;
+  font-size: 16px;
+  line-height: 1;
+  transition: background-color 120ms ease, color 120ms ease;
+}
+
+.giltube-stats-close:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+}
+
+.giltube-stats-rows {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  column-gap: 12px;
+  row-gap: 2px;
+  margin: 0;
+  padding: 8px 12px 10px;
+}
+
+.giltube-stats-rows dt {
+  color: #a1a1aa;
+  font-weight: 600;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.giltube-stats-rows dd {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.giltube-stats-meter {
+  position: relative;
+  display: block;
+  flex: 1;
+  min-width: 40px;
+  max-width: 90px;
+  height: 4px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.giltube-stats-meter > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: #ef4444;
+  transition: width 300ms ease;
+}
+
 .video-player-container {
   height: 250px;
   isolation: isolate;

@@ -30,7 +30,7 @@
       <div class="movie-details-layout">
         <div class="movie-poster-column">
           <div class="movie-poster-frame">
-            <img :src="item.posterUrl" :alt="item.title" class="movie-poster-image" decoding="async" />
+            <img v-bind="responsiveImage(item.posterUrl, '12rem')" :alt="item.title" class="movie-poster-image" decoding="async" />
           </div>
         </div>
         <div class="movie-details-main">
@@ -54,11 +54,13 @@
             </div>
             <div>
               <dt>{{ t('streaming.media.audioLanguages') }}</dt>
-              <dd>{{ mediaLanguages(item.media_capabilities?.audio_languages) }}</dd>
+              <dd v-if="!item.media_capabilities && detailLoadingId === item.id" class="streaming-detail-placeholder" aria-hidden="true" />
+              <dd v-else>{{ mediaLanguages(item.media_capabilities?.audio_languages) }}</dd>
             </div>
             <div>
               <dt>{{ t('streaming.media.captions') }}</dt>
-              <dd>{{ mediaLanguages(item.media_capabilities?.caption_languages) }}</dd>
+              <dd v-if="!item.media_capabilities && detailLoadingId === item.id" class="streaming-detail-placeholder" aria-hidden="true" />
+              <dd v-else>{{ mediaLanguages(item.media_capabilities?.caption_languages) }}</dd>
             </div>
           </dl>
 
@@ -72,7 +74,7 @@
                 class="movie-related-card group"
               >
                 <div class="movie-related-thumb">
-                  <img :src="movie.backdropUrl" :alt="movie.title" loading="lazy" decoding="async" />
+                  <img v-bind="responsiveImage(movie.backdropUrl, '(min-width: 1024px) 18rem, (min-width: 640px) 45vw, 90vw')" :alt="movie.title" loading="lazy" decoding="async" />
                   <div v-if="movie.progressPercent > 0" class="movie-related-progress">
                     <div :style="{ width: `${movie.progressPercent}%` }" />
                   </div>
@@ -127,10 +129,10 @@ import StreamingCategory from './StreamingCategory.vue'
 import StreamingSynopsis from './StreamingSynopsis.vue'
 import { getWatchProgressMap } from '~/app/service/videos'
 import { createWatchParty, getWatchPartySavedProgress } from '~/app/service/watchParties'
-import { GILTUBE_MOVIES_CHANNEL_ID, getMovie, listMovies } from '~/app/service/movies'
+import { GILTUBE_MOVIES_CHANNEL_ID, getMovieCached, listMoviesCached, peekCachedMovies } from '~/app/service/movies'
 import { getTimeAgo } from '~/app/utils/time'
 import { formatViews } from '~/app/utils/format'
-import { resolveMediaUrl } from '~/app/utils/media'
+import { resolveMediaUrl, responsiveImage } from '~/app/utils/media'
 import { useMetaTags } from '~/app/composables/useMetaTags'
 
 const route = useRoute()
@@ -140,9 +142,9 @@ const { t } = useI18n()
 const props = defineProps({
   initialMovie: { type: Object, default: null },
 })
-const loading = ref(false)
 const error = ref('')
-const movies = ref(props.initialMovie ? [props.initialMovie] : [])
+const catalogLoading = ref(true)
+const detailLoadingId = ref('')
 const activeFeaturedIndex = ref(0)
 const selectedMovieId = ref('')
 const watchProgressByVideoId = ref({})
@@ -154,7 +156,6 @@ const watchPartyMovie = ref(null)
 const moviePartySavedProgress = ref(null)
 const useSavedMovieProgress = ref(false)
 let featuredHeroTimer = null
-let catalogLoadHandle = null
 let progressLoadHandle = null
 let catalogLoaded = false
 
@@ -177,6 +178,36 @@ const normalizeMovieDetail = (data) => {
   if (!data) return null
   if (!data.movie) return data
   return data.movie
+}
+
+const isCatalogMovie = (movie) => (movie.channel_id || movie.video?.channel?.id) === GILTUBE_MOVIES_CHANNEL_ID
+
+// Catalog summaries merged with any richer detail records already loaded.
+const mergeCatalogMovies = (data, existing = []) => {
+  const existingById = new Map(existing.map((movie) => [movie.id, movie]))
+  const merged = (data?.movies || [])
+    .filter(isCatalogMovie)
+    .map((movie) => ({ ...movie, ...(existingById.get(movie.id) || {}) }))
+  for (const movie of existing) {
+    if (!merged.some((item) => item.id === movie.id)) merged.unshift(movie)
+  }
+  return merged
+}
+
+// Reuse the list the home page already fetched so the grid renders instantly.
+const cachedCatalog = peekCachedMovies()
+const movies = ref(cachedCatalog
+  ? mergeCatalogMovies(cachedCatalog, props.initialMovie ? [props.initialMovie] : [])
+  : (props.initialMovie ? [props.initialMovie] : []))
+const loading = computed(() => catalogLoading.value && !movies.value.length)
+
+const mergeMovie = (detail) => {
+  const index = movies.value.findIndex((item) => item.id === detail.id)
+  if (index >= 0) {
+    movies.value[index] = { ...movies.value[index], ...detail }
+  } else {
+    movies.value = [detail, ...movies.value]
+  }
 }
 
 const durationLabel = (video) => {
@@ -321,23 +352,25 @@ const startMovieWatchParty = async () => {
   }
 }
 
+// Open the panel right away with the summary we have, then fill in the
+// detail-only fields (media capabilities) when they arrive.
 const openMovieModal = async (movie, updateRoute = true) => {
   if (!movie?.id) return
-  let detail = movie
-  if (!movie.media_capabilities) {
-    try {
-      detail = normalizeMovieDetail(await getMovie(movie.id)) || movie
-    } catch {
-      detail = movie
-    }
+  selectedMovieId.value = movie.id
+  if (updateRoute) {
+    updateModalQueryParam('movie_id', movie.id)
   }
-  selectedMovieId.value = detail.id || ''
-  const loaded = movies.value.findIndex((item) => item.id === detail.id)
-  if (loaded >= 0) {
-    movies.value[loaded] = { ...movies.value[loaded], ...detail }
-  }
-  if (updateRoute && detail.id) {
-    updateModalQueryParam('movie_id', detail.id)
+  const videoId = movie.video_id || movie.video?.id
+  if (videoId && !watchProgressByVideoId.value[videoId]) loadMovieProgress([movie])
+  if (movie.media_capabilities) return
+  detailLoadingId.value = movie.id
+  try {
+    const detail = normalizeMovieDetail(await getMovieCached(movie.id))
+    if (detail) mergeMovie(detail)
+  } catch (err) {
+    console.error('Failed to load movie detail:', err)
+  } finally {
+    if (detailLoadingId.value === movie.id) detailLoadingId.value = ''
   }
 }
 
@@ -392,26 +425,14 @@ const updateMetaTags = () => {
 }
 
 const loadMoviesCategory = async () => {
-  if (catalogLoaded || loading.value) return
-  loading.value = true
+  if (catalogLoaded) return
+  catalogLoading.value = true
   error.value = ''
   try {
-    const data = await listMovies()
-    const existingById = new Map(movies.value.map((movie) => [movie.id, movie]))
-    movies.value = (data.movies || []).filter((movie) => {
-      const channelId = movie.channel_id || movie.video?.channel?.id
-      return channelId === GILTUBE_MOVIES_CHANNEL_ID
-    }).map((movie) => ({ ...movie, ...(existingById.get(movie.id) || {}) }))
-    if (props.initialMovie && !movies.value.some((movie) => movie.id === props.initialMovie.id)) {
-      movies.value.unshift(props.initialMovie)
-    }
+    const data = await listMoviesCached()
+    movies.value = mergeCatalogMovies(data, movies.value)
     catalogLoaded = true
     startFeaturedHeroTimer()
-    const requestedMovieId = typeof route.query.movie_id === 'string' ? route.query.movie_id : ''
-    if (requestedMovieId) {
-      const movie = displayMovies.value.find((item) => item.id === requestedMovieId)
-      if (movie) await openMovieModal(movie, false)
-    }
     updateMetaTags()
     const loadProgress = () => {
       progressLoadHandle = null
@@ -427,7 +448,7 @@ const loadMoviesCategory = async () => {
     error.value = t('moviesCategory.errors.load')
     stopFeaturedHeroTimer()
   } finally {
-    loading.value = false
+    catalogLoading.value = false
   }
 }
 
@@ -439,20 +460,16 @@ const syncMovieModalFromId = async (id) => {
     updateMetaTags()
     return
   }
-  const movie = displayMovies.value.find((item) => item.id === id)
+  if (selectedMovieId.value === id) return
+  const movie = movies.value.find((item) => item.id === id)
   if (movie) {
     await openMovieModal(movie, false)
     return
   }
   try {
-    const detail = normalizeMovieDetail(await getMovie(id))
+    const detail = normalizeMovieDetail(await getMovieCached(id))
     if (detail) {
-      const loaded = movies.value.findIndex((item) => item.id === detail.id)
-      if (loaded >= 0) {
-        movies.value[loaded] = { ...movies.value[loaded], ...detail }
-      } else {
-        movies.value = [detail, ...movies.value]
-      }
+      mergeMovie(detail)
       await openMovieModal(detail, false)
     }
   } catch (err) {
@@ -470,38 +487,22 @@ watch(() => route.query.movie_id, async (movieId) => {
   await syncMovieModalFromId(id)
 })
 
-const scheduleCatalogLoad = () => {
-  const run = () => {
-    catalogLoadHandle = null
-    loadMoviesCategory()
-  }
-  if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
-    catalogLoadHandle = window.requestIdleCallback(run, { timeout: props.initialMovie ? 2500 : 500 })
-  } else {
-    catalogLoadHandle = setTimeout(run, props.initialMovie ? 600 : 0)
-  }
-}
-
 onMounted(() => {
   if (typeof window !== 'undefined') {
     window.addEventListener('popstate', syncMovieModalFromUrl)
   }
+  // The requested detail and the catalog load in parallel; the panel opens as
+  // soon as either one gives us something to show.
   const requestedMovieId = typeof route.query.movie_id === 'string' ? route.query.movie_id : ''
-  if (requestedMovieId && props.initialMovie?.id === requestedMovieId) {
-    selectedMovieId.value = props.initialMovie.id
-    loadMovieProgress([props.initialMovie])
-  } else if (requestedMovieId) {
-    syncMovieModalFromId(requestedMovieId)
-  }
+  if (requestedMovieId) syncMovieModalFromId(requestedMovieId)
   updateMetaTags()
-  scheduleCatalogLoad()
+  loadMoviesCategory()
 })
 onUnmounted(() => {
   stopFeaturedHeroTimer()
-  for (const handle of [catalogLoadHandle, progressLoadHandle]) {
-    if (handle == null) continue
-    if (typeof window !== 'undefined' && 'cancelIdleCallback' in window) window.cancelIdleCallback(handle)
-    else clearTimeout(handle)
+  if (progressLoadHandle != null) {
+    if (typeof window !== 'undefined' && 'cancelIdleCallback' in window) window.cancelIdleCallback(progressLoadHandle)
+    else clearTimeout(progressLoadHandle)
   }
   if (typeof window !== 'undefined') {
     window.removeEventListener('popstate', syncMovieModalFromUrl)
@@ -556,6 +557,18 @@ onUnmounted(() => {
 .movie-meta-grid dd {
   margin-top: 0.25rem;
   color: rgb(228 228 231);
+}
+
+.streaming-detail-placeholder {
+  height: 1.25rem;
+  width: 7rem;
+  border-radius: 0.25rem;
+  background: rgb(39 39 42);
+  animation: streaming-detail-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes streaming-detail-pulse {
+  50% { opacity: 0.5; }
 }
 
 .movie-related-section {

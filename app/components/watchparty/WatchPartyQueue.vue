@@ -24,7 +24,7 @@
           class="flex w-[26rem] max-w-[80vw] shrink-0 overflow-hidden rounded-xl border border-white/10 bg-white/5"
         >
           <div class="relative h-24 w-40 shrink-0 bg-black">
-            <img :src="thumbnailUrl(item.thumbnail_url)" :alt="item.title" class="h-full w-full object-cover" />
+            <img v-bind="responsiveImage(thumbnailUrl(item.thumbnail_url), '160px')" :alt="item.title" class="h-full w-full object-cover" />
           </div>
           <div class="min-w-0 flex-1 p-3">
             <p class="line-clamp-2 text-sm font-semibold text-white">{{ item.title }}</p>
@@ -84,7 +84,7 @@
               class="overflow-hidden rounded-xl border border-white/10 bg-white/5"
             >
               <div class="flex gap-3 p-3">
-                <img :src="thumbnailUrl(item.thumbnail_url)" :alt="item.title" class="h-16 w-28 rounded object-cover" />
+                <img v-bind="responsiveImage(thumbnailUrl(item.thumbnail_url), '112px')" :alt="item.title" class="h-16 w-28 rounded object-cover" />
                 <div class="min-w-0 flex-1">
                   <p class="line-clamp-2 text-sm font-semibold text-white">{{ item.title }}</p>
                   <p class="mt-1 text-xs text-zinc-500">Added by {{ item.added_by }}</p>
@@ -140,7 +140,7 @@
                 @click="selectQueueVideo(video.id)"
               >
                 <div class="relative aspect-video bg-black">
-                  <img :src="thumbnailUrl(video.thumbnail_url || video.thumbnail)" :alt="video.title" class="h-full w-full object-cover transition group-hover:scale-[1.02]" />
+                  <img v-bind="responsiveImage(thumbnailUrl(video.thumbnail_url || video.thumbnail), '(min-width: 1280px) 25vw, (min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw')" :alt="video.title" class="h-full w-full object-cover transition group-hover:scale-[1.02]" />
                   <div class="absolute inset-0 bg-black/0 transition group-hover:bg-black/25" />
                   <span class="absolute inset-x-3 bottom-3 rounded bg-red-600 px-3 py-2 text-center text-xs font-bold opacity-0 transition group-hover:opacity-100">
                     Add to queue
@@ -160,6 +160,7 @@
 </template>
 
 <script setup lang="ts">
+import { responsiveImage } from '~/app/utils/media'
 import { onBeforeUnmount, ref, watch } from 'vue'
 import { getVideos } from '~/app/service/videos'
 import { searchWatchPartyVideos } from '~/app/service/watchParties'

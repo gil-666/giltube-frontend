@@ -85,8 +85,12 @@ export const createUploadedMediaIngest = async (data: {
   year?: number
   season_count?: number
   files: Array<{ upload_id: string; file_name: string }>
-}) => {
-  const res = await api.post('/admin/media-ingests/uploads', data, { timeout: 0 })
+}, options: { uploadBaseURL?: string } = {}) => {
+  // Chunks and the finalize request must reach the same upload service.
+  const res = await api.post('/admin/media-ingests/uploads', data, {
+    timeout: 0,
+    ...(options.uploadBaseURL ? { baseURL: options.uploadBaseURL } : {}),
+  })
   return res.data
 }
 

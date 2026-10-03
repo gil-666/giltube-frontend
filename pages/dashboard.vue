@@ -119,7 +119,7 @@
                     >
                       <img
                         v-if="getThumbnailUrl(video)"
-                        :src="getThumbnailUrl(video)"
+                        v-bind="responsiveImage(getThumbnailUrl(video), '120px')"
                         :alt="video.title"
                         class="h-full w-full object-cover"
                         @error="handleImageError"
@@ -322,7 +322,7 @@ import ChannelMetrics from '~/app/components/ChannelMetrics.vue'
 import { ref, onMounted, computed, onUnmounted, watch, nextTick } from 'vue'
 import { getMyVideos, deleteVideo, downloadVideo as downloadVideoService } from '~/app/service/videos'
 import { useMetaTags } from '~/app/composables/useMetaTags'
-import { isVideo4K, isVideo8K, resolveMediaUrl } from '~/app/utils/media'
+import { isVideo4K, isVideo8K, resolveMediaUrl, responsiveImage } from '~/app/utils/media'
 import { useI18n } from 'vue-i18n'
 import { useLocalePath } from '#i18n'
 
