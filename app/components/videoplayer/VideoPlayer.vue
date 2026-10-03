@@ -157,7 +157,9 @@
         <button
           v-if="showSkipIntroButton"
           type="button"
-          class="rounded bg-white px-4 py-2 text-sm font-semibold text-black shadow-lg transition hover:bg-zinc-200"
+          class="skip-intro-button rounded bg-white px-4 py-2 text-sm font-semibold text-black shadow-lg transition hover:bg-zinc-200"
+          :class="{ 'skip-intro-faded': !skipIntroVisible }"
+          :tabindex="skipIntroVisible ? 0 : -1"
           @click="skipIntro"
         >
           {{ t('video.player.skipIntro') }}
@@ -203,6 +205,9 @@ interface Props {
   exactStartTime?: boolean
   progressEmitIntervalMs?: number
   controlsLocked?: boolean
+  // Standby: mounted and buffering behind the playback intro, but must not
+  // start, react to shortcuts or report progress until standby ends.
+  standby?: boolean
   clipMode?: boolean
   clipStartSeconds?: number
   clipEndSeconds?: number
@@ -232,6 +237,7 @@ const props = withDefaults(defineProps<Props>(), {
   exactStartTime: false,
   progressEmitIntervalMs: 5000,
   controlsLocked: false,
+  standby: false,
   clipMode: false,
   clipStartSeconds: 0,
   clipEndSeconds: 0,
@@ -309,6 +315,24 @@ const showSkipIntroButton = computed(() =>
   currentTime.value >= props.introStartSeconds &&
   currentTime.value < props.introEndSeconds
 )
+// "Skip intro" shows for the first few seconds of the intro, then only while
+// the control bar is showing (user active or paused).
+const SKIP_INTRO_INITIAL_MS = 5000
+const skipIntroWindow = ref(false)
+const controlBarShowing = ref(true)
+const skipIntroVisible = computed(() => skipIntroWindow.value || controlBarShowing.value)
+let skipIntroTimer: ReturnType<typeof setTimeout> | null = null
+watch(showSkipIntroButton, (visible) => {
+  if (skipIntroTimer) clearTimeout(skipIntroTimer)
+  skipIntroTimer = null
+  skipIntroWindow.value = visible
+  if (visible) {
+    skipIntroTimer = setTimeout(() => { skipIntroWindow.value = false }, SKIP_INTRO_INITIAL_MS)
+  }
+})
+const syncControlBarShowing = () => {
+  controlBarShowing.value = Boolean(player?.userActive?.() || player?.paused?.())
+}
 const showNextEpisodeOverlay = computed(() =>
   props.hasNextEpisode &&
   duration.value > 0 &&
@@ -545,7 +569,7 @@ const toggleCaptions = () => {
 }
 
 const handleKeyboardShortcuts = (event: KeyboardEvent) => {
-  if (!player || isEditableTarget(event.target) || !isPlayerShortcutTarget(event.target)) return
+  if (!player || props.standby || isEditableTarget(event.target) || !isPlayerShortcutTarget(event.target)) return
   if (event.metaKey || event.ctrlKey || event.altKey) return
 
   const normalizedKey = event.key.toLowerCase()
@@ -1963,7 +1987,7 @@ const enforceClipPlaybackBounds = () => {
 }
 
 const emitWatchProgress = (force = false) => {
-  if (!player) return
+  if (!player || props.standby) return
   const now = Date.now()
   const interval = Math.max(0, Number(props.progressEmitIntervalMs ?? 5000))
   if (!force && interval > 0 && now - lastProgressEmitAt < interval) return
@@ -2728,7 +2752,7 @@ onMounted(async () => {
 
     player = videojs(videoElement.value, {
       controls: true,
-      autoplay: props.autoplay,
+      autoplay: props.autoplay && !props.standby,
       preload: 'auto',
       inactivityTimeout: DEFAULT_INACTIVITY_TIMEOUT,
       responsive: false,
@@ -2941,6 +2965,9 @@ onMounted(async () => {
         emit('ended')
       })
       player.on('userinactive', handleUserInactive)
+      for (const event of ['useractive', 'userinactive', 'play', 'pause']) {
+        player.on(event, syncControlBarShowing)
+      }
 
       player.on('fullscreenchange', dumpPlayerDebugState)
       player.on('loadedmetadata', dumpPlayerDebugState)
@@ -2965,6 +2992,7 @@ onMounted(async () => {
 })
 
 onBeforeUnmount(() => {
+  if (skipIntroTimer) clearTimeout(skipIntroTimer)
   clearAdaptiveQualityLockTimer()
   stopMobileControlsWatcher()
   stopUltrawideControlsGuard()
@@ -3048,6 +3076,18 @@ watch(
   (newStatus) => {
     if (newStatus === 'processing' && player) {
       player.pause()
+    }
+  }
+)
+
+watch(
+  () => props.standby,
+  (standby) => {
+    if (!player) return
+    if (standby) {
+      player.pause?.()
+    } else if (props.autoplay) {
+      player.play?.()?.catch?.(() => {})
     }
   }
 )
@@ -3368,6 +3408,17 @@ watch(
   line-height: 1;
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.2);
   pointer-events: auto;
+}
+
+:deep(.video-js .series-player-actions button.skip-intro-button),
+.series-player-actions button.skip-intro-button {
+  transition: opacity 0.5s ease, background-color 0.15s ease;
+}
+
+:deep(.video-js .series-player-actions button.skip-intro-faded),
+.series-player-actions button.skip-intro-faded {
+  opacity: 0;
+  pointer-events: none;
 }
 
 :deep(.video-js .series-player-actions button:hover),

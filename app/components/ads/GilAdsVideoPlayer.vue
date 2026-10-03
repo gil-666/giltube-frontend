@@ -54,6 +54,38 @@
       </div>
     </div>
 
+    <div
+      v-if="showIntroFrame"
+      class="gilads-preroll-container playback-intro-container overflow-hidden rounded-lg bg-black"
+    >
+      <div v-if="showPlaybackIntro" ref="introHost" class="h-full w-full" />
+      <button
+        v-if="introMuted && !introNeedsTap"
+        type="button"
+        class="absolute left-5 top-5 rounded border border-white/20 bg-black/80 px-4 py-2 text-sm font-semibold text-white transition hover:bg-black"
+        @click="unmuteIntro"
+      >
+        🔇 {{ t('playbackIntro.unmute') }}
+      </button>
+      <button
+        v-if="introNeedsTap"
+        type="button"
+        class="absolute inset-0 flex items-center justify-center bg-black/40 text-white"
+        :aria-label="t('playbackIntro.play')"
+        @click="playIntroElement"
+      >
+        <span class="flex h-16 w-16 items-center justify-center rounded-full bg-white/90 text-2xl text-black">▶</span>
+      </button>
+      <button
+        v-if="introAllowSkip && showPlaybackIntro"
+        type="button"
+        class="absolute bottom-12 right-5 z-10 rounded border border-white/20 bg-black/80 px-4 py-2 text-sm font-semibold text-white transition hover:bg-black"
+        @click="finishPlaybackIntro"
+      >
+        {{ t('playbackIntro.skip') }}
+      </button>
+    </div>
+
     <Teleport to="body">
       <div
         v-if="showSponsorInfo && prerollAd?.creative"
@@ -103,6 +135,9 @@
     <VideoPlayer
       v-if="!showPreroll || !prerollAd?.creative"
       ref="videoPlayerRef"
+      :standby="introBlocksContent"
+      :class="{ 'playback-intro-standby': introBlocksContent }"
+      :inert="introBlocksContent"
       :src="src"
       :status="status"
       :autoplay="autoplay"
@@ -125,7 +160,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import videojs from 'video.js'
 import 'video.js/dist/video-js.css'
 import VideoPlayer from '~/app/components/videoplayer/VideoPlayer.vue'
@@ -135,6 +170,48 @@ import {
   trackGilAdEvent,
   type GilAdsServeResponse,
 } from '~/app/service/gilads'
+import { getPlaybackIntro, resolvePlaybackIntroSource } from '~/app/service/playbackIntro'
+import {
+  getPlaybackIntroElement,
+  getPlaybackIntroPlayer,
+  setPlaybackIntroActive,
+  setPlaybackIntroPlayer,
+} from '~/app/utils/playbackIntroElement'
+
+// Same volume control as the main player (video.js vertical volume panel);
+// every other control is off, and clicks don't pause the intro.
+const PLAYBACK_INTRO_PLAYER_OPTIONS = {
+  controls: true,
+  autoplay: false,
+  preload: 'auto',
+  fill: true,
+  fluid: false,
+  responsive: false,
+  inactivityTimeout: 3000,
+  bigPlayButton: false,
+  userActions: { click: false, doubleClick: false, hotkeys: false },
+  controlBar: {
+    playToggle: false,
+    progressControl: false,
+    currentTimeDisplay: false,
+    durationDisplay: false,
+    timeDivider: false,
+    remainingTimeDisplay: false,
+    liveDisplay: false,
+    seekToLive: false,
+    pictureInPictureToggle: false,
+    fullscreenToggle: false,
+    playbackRateMenuButton: false,
+    chaptersButton: false,
+    descriptionsButton: false,
+    subsCapsButton: false,
+    audioTrackButton: false,
+    volumePanel: {
+      inline: false,
+      vertical: true,
+    },
+  },
+}
 
 const { t } = useI18n()
 
@@ -153,6 +230,12 @@ interface Props {
   clipStartSeconds?: number
   clipEndSeconds?: number
   autoplay?: boolean
+  // Movies and series episodes may get the site-wide playback intro first.
+  introCandidate?: boolean
+  // The page sets introReady once it knows whether to suppress the intro
+  // (resuming, or arriving via a manual "next episode" click).
+  introReady?: boolean
+  introSuppressed?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -170,6 +253,9 @@ const props = withDefaults(defineProps<Props>(), {
   clipStartSeconds: 0,
   clipEndSeconds: 0,
   autoplay: true,
+  introCandidate: false,
+  introReady: true,
+  introSuppressed: false,
 })
 
 defineEmits<{
@@ -200,6 +286,23 @@ const adVideoElement = ref<HTMLVideoElement | null>(null)
 const showSponsorInfo = ref(false)
 const videoPlayerRef = ref<any>(null)
 let adPlayer: any = null
+
+// Playback intro: 'pending' while we ask the backend whether this video gets
+// one, 'playing' while it is shown (after any preroll ad), then 'done'.
+const introState = ref<'pending' | 'playing' | 'done'>(props.introCandidate && props.videoId ? 'pending' : 'done')
+const introSrc = ref('')
+const introAllowSkip = ref(true)
+const introNeedsTap = ref(false)
+const introMuted = ref(false)
+const introHost = ref<HTMLElement | null>(null)
+let introElement: HTMLVideoElement | null = null
+const introBlocksContent = computed(() => introState.value !== 'done')
+// The black frame also covers the brief lookup, so the standby player behind
+// it keeps real dimensions while it starts buffering.
+const showIntroFrame = computed(() => introBlocksContent.value && !(showPreroll.value && prerollAd.value?.creative))
+const showPlaybackIntro = computed(() => introState.value === 'playing' && Boolean(introSrc.value) && !(showPreroll.value && prerollAd.value?.creative))
+let introLookupStarted = false
+let releaseIntroSource = () => {}
 
 const adContext = computed(() => ({
   videoId: props.videoId,
@@ -243,6 +346,7 @@ defineExpose({
   playFrom: (seconds?: number) => videoPlayerRef.value?.playFrom?.(seconds),
   pauseAt: (seconds?: number) => {
     adPlayer?.pause?.()
+    introElement?.pause()
     videoPlayerRef.value?.pauseAt?.(seconds)
   },
   getPlaybackState: () => videoPlayerRef.value?.getPlaybackState?.() || { currentTime: 0, duration: 0, paused: true },
@@ -473,7 +577,174 @@ const handleAdClick = () => {
   trackAdEvent('click')
 }
 
+const startPlaybackIntro = async () => {
+  if (introLookupStarted || introState.value !== 'pending' || !props.introReady) return
+  if (props.introSuppressed) {
+    introState.value = 'done'
+    return
+  }
+  if (!props.autoplay) return
+  introLookupStarted = true
+  try {
+    const intro = await getPlaybackIntro(props.videoId)
+    if (introState.value !== 'pending') return
+    if (!intro.play || !intro.url) {
+      introState.value = 'done'
+      return
+    }
+    introAllowSkip.value = intro.allow_skip
+    const source = await resolvePlaybackIntroSource(intro)
+    if (introState.value !== 'pending') {
+      source.release()
+      return
+    }
+    releaseIntroSource = source.release
+    introSrc.value = source.src
+    introState.value = 'playing'
+  } catch (error) {
+    console.error('Failed to load playback intro:', error)
+    introState.value = 'done'
+  }
+}
+
+const isAutoplayBlocked = (error: unknown) => (error as DOMException)?.name === 'NotAllowedError'
+
+// When sound was blocked, the first tap or key press anywhere turns it on.
+const unmuteOnInteraction = () => unmuteIntro()
+const stopUnmuteOnInteraction = () => {
+  for (const event of ['pointerdown', 'touchend', 'keydown']) {
+    document.removeEventListener(event, unmuteOnInteraction, true)
+  }
+}
+
+const unmuteIntro = () => {
+  if (!introElement) return
+  introElement.muted = false
+  introMuted.value = false
+  stopUnmuteOnInteraction()
+}
+
+// Intro volume changes the visitor makes are saved for the main player too,
+// but not the automatic mute applied when the browser blocks sound.
+let introPlaybackStarted = false
+let introAutoMuted = false
+
+const handleIntroVolumeChange = () => {
+  if (!introElement) return
+  introMuted.value = introElement.muted
+  if (!introElement.muted && introAutoMuted) {
+    introAutoMuted = false
+    stopUnmuteOnInteraction()
+  }
+  if (!introPlaybackStarted || introAutoMuted) return
+  try {
+    window.localStorage.setItem(PLAYER_VOLUME_STORAGE_KEY, String(clampVolume(introElement.volume)))
+    window.localStorage.setItem(PLAYER_MUTED_STORAGE_KEY, String(introElement.muted))
+  } catch {
+    // Ignore storage failures.
+  }
+}
+
+const handleIntroPlaying = () => {
+  introPlaybackStarted = true
+}
+
+const playIntroElement = async () => {
+  const element = introElement
+  if (!element) return
+  introNeedsTap.value = false
+  try {
+    await element.play()
+    return
+  } catch (error) {
+    if (!isAutoplayBlocked(error)) {
+      // Interrupted or not ready yet (not an autoplay block): retry with sound
+      // once the media can play.
+      element.addEventListener('canplay', () => {
+        element.play().catch(() => { introNeedsTap.value = true })
+      }, { once: true })
+      return
+    }
+  }
+  // The browser refused audible autoplay (no interaction with the page yet).
+  // Play muted and restore sound on the visitor's first interaction.
+  introAutoMuted = true
+  element.muted = true
+  introMuted.value = true
+  for (const event of ['pointerdown', 'touchend', 'keydown']) {
+    document.addEventListener(event, unmuteOnInteraction, true)
+  }
+  try {
+    await element.play()
+  } catch {
+    introNeedsTap.value = true
+  }
+}
+
+const finishPlaybackIntro = () => {
+  if (introState.value === 'done') return
+  stopUnmuteOnInteraction()
+  introPlaybackStarted = false
+  introAutoMuted = false
+  if (introElement) {
+    introElement.pause()
+    introElement.removeEventListener('volumechange', handleIntroVolumeChange)
+    introElement.removeEventListener('playing', handleIntroPlaying)
+    introElement.removeEventListener('ended', finishPlaybackIntro)
+    introElement.removeEventListener('error', finishPlaybackIntro)
+    introElement.removeAttribute('src')
+    introElement.load()
+    getPlaybackIntroPlayer()?.el?.()?.remove()
+    introElement = null
+  }
+  setPlaybackIntroActive(false)
+  introState.value = 'done'
+  introNeedsTap.value = false
+  introMuted.value = false
+  nextTick(() => {
+    releaseIntroSource()
+    releaseIntroSource = () => {}
+  })
+}
+
+// Client-only: this callback creates a video.js player, and registering it on
+// the server would pull video.js into the SSR bundle (it cannot load in Node).
+if (process.client) watch(introHost, (host) => {
+  if (!host || introElement) return
+  // Reuse the app-wide element that was unlocked for audio by a user gesture,
+  // wrapped once in a video.js player so its volume control matches the main
+  // player's. The player is kept for the app's lifetime and re-attached here.
+  const element = getPlaybackIntroElement()
+  let introPlayer = getPlaybackIntroPlayer()
+  if (introPlayer) {
+    host.appendChild(introPlayer.el())
+  } else {
+    host.appendChild(element)
+    introPlayer = videojs(element, PLAYBACK_INTRO_PLAYER_OPTIONS)
+    setPlaybackIntroPlayer(introPlayer)
+  }
+  setPlaybackIntroActive(true)
+  element.pause()
+  element.muted = false
+  const savedVolume = readSavedPlayerVolume().volume
+  element.volume = savedVolume > 0 ? savedVolume : 1
+  element.addEventListener('ended', finishPlaybackIntro)
+  element.addEventListener('error', finishPlaybackIntro)
+  element.addEventListener('volumechange', handleIntroVolumeChange)
+  element.addEventListener('playing', handleIntroPlaying)
+  element.src = introSrc.value
+  introElement = element
+  introMuted.value = element.muted
+  void playIntroElement()
+})
+
+watch(() => [props.autoplay, props.introReady, props.introSuppressed], () => {
+  void startPlaybackIntro()
+})
+
 onMounted(async () => {
+  void startPlaybackIntro()
+
   if (!props.autoplay) {
     return
   }
@@ -494,6 +765,8 @@ onMounted(async () => {
 onBeforeUnmount(() => {
   showSponsorInfo.value = false
   disposeAdPlayer()
+  if (introState.value !== 'done') finishPlaybackIntro()
+  releaseIntroSource()
 })
 </script>
 
@@ -501,6 +774,22 @@ onBeforeUnmount(() => {
 .gilads-preroll-container {
   position: relative;
   height: 250px;
+}
+
+/* The main player buffers behind the intro at the same size, so adaptive
+   quality picks the rendition it will actually play. */
+.playback-intro-standby {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  /* opacity, unlike visibility, cannot be overridden by video.js controls. */
+  opacity: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.playback-intro-container {
+  z-index: 1;
 }
 
 .gilads-preroll-controls {

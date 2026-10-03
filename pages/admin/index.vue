@@ -110,6 +110,12 @@
 		Featured
 	  </button>
 	  <button
+        @click="activeTab = 'playback-intro'"
+        :class="['flex-none snap-start whitespace-nowrap border-b-2 px-3 py-2 font-semibold transition sm:px-4', activeTab === 'playback-intro' ? 'border-blue-500 text-blue-400' : 'border-transparent text-gray-400 hover:text-white']"
+      >
+        Playback intro
+      </button>
+	  <button
         @click="activeTab = 'intro-suggestions'"
         :class="['flex-none snap-start whitespace-nowrap border-b-2 px-3 py-2 font-semibold transition sm:px-4', activeTab === 'intro-suggestions' ? 'border-blue-500 text-blue-400' : 'border-transparent text-gray-400 hover:text-white']"
       >
@@ -559,6 +565,7 @@
     <TranscodeJobsAdminPanel v-if="activeTab === 'transcode-jobs'" />
     <WorkerAdminPanel v-if="activeTab === 'workers'" />
 	<FeaturedContentAdminPanel v-if="activeTab === 'featured'" />
+    <PlaybackIntroAdminPanel v-if="activeTab === 'playback-intro'" />
 
     <!-- Series Tab -->
     <div v-if="activeTab === 'series'" class="space-y-6">
@@ -1138,6 +1145,7 @@ import MovieAdminPanel from '~/app/components/admin/MovieAdminPanel.vue'
 import MediaIngestAdminPanel from '~/app/components/admin/MediaIngestAdminPanel.vue'
 import TranscodeJobsAdminPanel from '~/app/components/admin/TranscodeJobsAdminPanel.vue'
 import WorkerAdminPanel from '~/app/components/admin/WorkerAdminPanel.vue'
+import PlaybackIntroAdminPanel from '~/app/components/admin/PlaybackIntroAdminPanel.vue'
 import FeaturedContentAdminPanel from '~/app/components/admin/FeaturedContentAdminPanel.vue'
 import VideoEditorPanel from '~/app/components/admin/VideoEditorPanel.vue'
 import YouTubeMirrorAdminPanel from '~/app/components/admin/YouTubeMirrorAdminPanel.vue'
@@ -1186,6 +1194,7 @@ const adminTabOptions = computed(() => [
   { value: 'transcode-jobs', label: t('admin.tabs.transcodeJobs') },
   { value: 'workers', label: t('admin.tabs.workers') },
 	{ value: 'featured', label: 'Featured' },
+  { value: 'playback-intro', label: 'Playback intro' },
   { value: 'intro-suggestions', label: t('admin.tabs.introSuggestions') },
 ])
 const searchQuery = ref('')

@@ -2097,5 +2097,10 @@
     "avatarPreview": "Avatar preview",
     "backgroundPreview": "Background preview",
     "verifiedChannel": "Verified Channel"
+  },
+  "playbackIntro": {
+    "skip": "Skip",
+    "play": "Play intro",
+    "unmute": "Unmute"
   }
 }

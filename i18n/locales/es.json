@@ -2097,5 +2097,10 @@
     "avatarPreview": "Vista previa del avatar",
     "backgroundPreview": "Vista previa del fondo",
     "verifiedChannel": "Canal verificado"
+  },
+  "playbackIntro": {
+    "skip": "Omitir",
+    "play": "Reproducir intro",
+    "unmute": "Activar sonido"
   }
 }

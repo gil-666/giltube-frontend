@@ -38,6 +38,9 @@
           :next-episode-label="isPlayingFromSeries ? t('watchPage.nextEpisode') : t('watchPage.nextVideo')"
           :start-time-seconds="resumeStartSeconds"
           :autoplay="canAutoplayWatchVideo"
+          :intro-candidate="isPlaybackIntroCandidate"
+          :intro-ready="playbackIntroReady"
+          :intro-suppressed="playbackIntroSuppressed"
           :clip-mode="isClipMode"
           :clip-start-seconds="clipPlaybackStart"
           :clip-end-seconds="clipPlaybackEnd"
@@ -45,7 +48,7 @@
           @progress="handleWatchProgress"
           @seeked="handleWatchSeeked"
           @ended="handleVideoEnded"
-          @next-episode="skipToNextVideo"
+          @next-episode="skipToNextVideo(true)"
         />
 
       </div>
@@ -1187,6 +1190,7 @@ import { GILADS_PLACEMENTS } from '~/app/service/gilads'
 import { getVideo, getRelatedVideos, incrementViews, likeVideo, unlikeVideo, checkIfLiked, getWatchProgress, getWatchProgressMap, saveWatchProgress, createVideoClip, getVideoClips, downloadVideo as downloadVideoService } from '~/app/service/videos'
 import { getSeries, getSeriesEpisodeContext, getSeriesTrailerContext, suggestSeriesEpisodeIntro } from '~/app/service/series'
 import { getMovieVideoContext, getMovieTrailerContext } from '~/app/service/movies'
+import { consumePlaybackIntroSkip, skipPlaybackIntroFor } from '~/app/service/playbackIntro'
 import { getMusicVideoContext, type MusicTrack } from '~/app/service/music'
 import { useMusicPlayer } from '~/app/composables/useMusicPlayer'
 import { createWatchParty } from '~/app/service/watchParties'
@@ -1317,6 +1321,15 @@ const isMovieOrSeriesContext = computed(() => Boolean(
   trailerMovie.value ||
   video.value?.categories?.some((category: any) => ['movies', 'series'].includes(String(category.slug || '').toLowerCase()))
 ))
+// Known synchronously so the player can hold content back while it checks
+// whether the playback intro applies (the backend makes the final call).
+const isPlaybackIntroCandidate = computed(() => Boolean(
+  route.query.series_id ||
+  route.query.movie_id ||
+  video.value?.categories?.some((category: any) => ['movies', 'series'].includes(String(category.slug || '').toLowerCase()))
+))
+const playbackIntroReady = ref(false)
+const playbackIntroSuppressed = ref(false)
 const canCreateClip = computed(() => isLoggedIn.value && !isClipVideo.value && !isMovieOrSeriesContext.value && Number(playerDuration.value || 0) >= MIN_CLIP_SOURCE_SECONDS)
 const canPreviewIntroSuggestion = computed(() => Number(introSuggestionEnd.value || 0) > Number(introSuggestionStart.value || 0))
 const clipTitlePlaceholder = computed(() => t('video.clip.titlePlaceholder', { title: watchDisplayTitle.value || '' }))
@@ -1786,6 +1799,10 @@ onMounted(async () => {
   
   syncActiveAccountFromStorage()
   await loadWatchResume()
+  // No intro when resuming partway through or arriving via a manual
+  // "next episode" click.
+  playbackIntroSuppressed.value = resumeStartSeconds.value > 0 || consumePlaybackIntroSkip(id)
+  playbackIntroReady.value = true
 
   // Check if playing from playlist
   const seriesId = route.query.series_id
@@ -2477,7 +2494,7 @@ const loadTrailerContextForVideo = async () => {
 }
 
 // Skip to next video in playlist
-const skipToNextVideo = async () => {
+const skipToNextVideo = async (manual = false) => {
   if (!isQueuePlayback.value || !currentPlaylistId.value) {
     console.log('Cannot skip: not in queue mode or missing source id')
     return
@@ -2491,6 +2508,7 @@ const skipToNextVideo = async () => {
   const nextVideo = playlistVideos.value[currentVideoIndex.value + 1]
   if (nextVideo) {
     console.log('Skipping to next video:', nextVideo.id)
+    if (manual) skipPlaybackIntroFor(nextVideo.id)
     await navigateTo(queueVideoLink(nextVideo.id, currentVideoIndex.value + 1))
   }
 }
