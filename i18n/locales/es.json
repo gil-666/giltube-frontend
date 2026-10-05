@@ -205,6 +205,7 @@
     "explicitBadge": "Explícito 18+",
     "eightKBadge": "8K",
     "fourKBadge": "4K",
+    "hdrBadge": "HDR",
     "commentAs": "Comentar como:",
     "addComment": "Añade un comentario...",
     "signInToComment": "Inicia sesión para comentar",
@@ -289,6 +290,9 @@
       "back": "Volver",
       "noSettings": "No hay ajustes disponibles",
       "auto": "Automático",
+      "hdr": "HDR",
+      "hdrOn": "HDR: activado",
+      "hdrOff": "HDR: desactivado",
       "off": "Desactivados",
       "play": "Reproducir",
       "pause": "Pausar",
@@ -853,6 +857,8 @@
     },
     "media": {
       "maxQuality": "Calidad máxima",
+      "hdr": "HDR (alto rango dinámico)",
+      "surround": "Sonido envolvente 5.1",
       "audioLanguages": "Idiomas de audio",
       "captions": "Subtítulos",
       "notAvailable": "Ninguno"
@@ -1370,6 +1376,7 @@
       "rejected": "Sugerencia de intro rechazada.",
       "episodeLabel": "S{season} E{episode}",
       "suggestedBy": "Sugerido por {username}",
+      "autoDetected": "Detectado automáticamente · coincide con {percent}% de los episodios",
       "currentTiming": "Tiempo actual",
       "suggestedTiming": "Tiempo sugerido",
       "openEpisode": "Abrir episodio",
@@ -1677,6 +1684,8 @@
       "saveSeriesDetails": "Guardar detalles de la serie",
       "addEpisode": "Agregar episodio",
       "saveEpisodeDetails": "Guardar detalles de episodios",
+      "detectIntros": "Detectar intros",
+      "detectingIntros": "Detectando intros…",
       "savingEpisodes": "Guardando episodios...",
       "pickIntro": "Elegir intro",
       "pickTrailer": "Elegir video existente",
@@ -1694,6 +1703,12 @@
       "body": "Este video sigue visible en las superficies normales de GilTube y lleva a los usuarios hacia la serie.",
       "pickerTitle": "Elegir video de tráiler",
       "pickerBody": "Elige un video ya subido y enlázalo como tráiler de esta serie."
+    },
+    "introDetection": {
+      "help": "Encuentra la intro de cada episodio comparando el audio de la temporada. Los tiempos anclados a un episodio que marcaste manualmente se aplican automáticamente; los demás van a Sugerencias de intro para revisión.",
+      "started": "Detectando intros… la primera vez tarda unos segundos por episodio.",
+      "done": "Detección de intros terminada: {applied} aplicadas, {suggested} enviadas a Sugerencias de intro, {unmatched} no encontradas.",
+      "failed": "La detección de intros falló: {error}"
     },
     "episodes": {
       "title": "Episodios",

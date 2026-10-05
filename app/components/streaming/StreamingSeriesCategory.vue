@@ -315,6 +315,8 @@ const toDisplaySeries = (series) => {
     primaryLabel: t('streaming.actions.play'),
     resumeLink: series === selectedSeries.value ? selectedSeriesResumeLink.value : '',
     maxQuality: series.media_capabilities?.max_quality || '',
+    hdr: !!series.media_capabilities?.hdr,
+    surround: !!series.media_capabilities?.surround,
   }
 }
 

@@ -191,6 +191,7 @@ const { t } = useI18n()
 
 const AUDIO_LANGUAGE_STORAGE_KEY = 'giltube_audio_language'
 const CAPTION_LANGUAGE_STORAGE_KEY = 'giltube_caption_language'
+const HDR_PREFERENCE_STORAGE_KEY = 'giltube_hdr_enabled'
 
 interface Props {
   src?: string
@@ -223,6 +224,7 @@ const emit = defineEmits<{
   ended: []
   nextEpisode: []
   progress: [payload: { currentTime: number, duration: number }]
+  hdrchange: [playing: boolean]
 }>()
 
 const props = withDefaults(defineProps<Props>(), {
@@ -252,6 +254,45 @@ type PresenceViewer = {
 }
 
 const isLive = ref(false)
+
+// HDR titles publish master-hdr.m3u8 (HEVC Main10, fMP4) next to the SDR
+// master.m3u8. It is only probed on HDR displays whose browser can decode HEVC
+// through MSE; everyone else keeps the tonemapped SDR ladder.
+const readHDRPreference = () => {
+  try {
+    return localStorage.getItem(HDR_PREFERENCE_STORAGE_KEY) !== '0'
+  } catch {
+    return true
+  }
+}
+const hdrAvailable = ref(false)
+const hdrEnabled = ref(readHDRPreference())
+const isPlayingHDR = ref(false)
+let sourceLoadToken = 0
+
+const supportsHDRPlayback = () => {
+  if (typeof window === 'undefined') return false
+  if (!window.matchMedia?.('(dynamic-range: high)')?.matches) return false
+  const mediaSource = (window as any).ManagedMediaSource || window.MediaSource
+  return Boolean(mediaSource?.isTypeSupported?.('video/mp4; codecs="hvc1.2.4.L123.B0"'))
+}
+
+const hdrSourceFor = (src: string) => {
+  const [path = '', query] = src.split('?')
+  if (!/\/master\.m3u8$/i.test(path)) return ''
+  return path.replace(/master\.m3u8$/i, 'master-hdr.m3u8') + (query ? `?${query}` : '')
+}
+
+const probeHDRSource = async (src: string) => {
+  const url = hdrSourceFor(src)
+  if (!url || !supportsHDRPlayback()) return ''
+  try {
+    const response = await fetch(url, { method: 'HEAD', cache: 'no-store' })
+    return response.ok ? url : ''
+  } catch {
+    return ''
+  }
+}
 const viewers = ref<PresenceViewer[]>([])
 const anonymousCount = ref(0)
 const visibleViewers = computed(() => viewers.value.slice(0, 6))
@@ -420,6 +461,10 @@ const getQualityLevelLabel = (level: any, index: number) => {
   const fps = getQualityLevelFrameRate(level)
   if (fps >= 48) {
     label = `${label}${Math.round(fps)}`
+  }
+
+  if (isPlayingHDR.value) {
+    label = `${label} ${t('video.player.hdr')}`
   }
 
   return label
@@ -679,7 +724,7 @@ const updateQualityButtonVisibility = () => {
   const levels = player.qualityLevels()
   const levelCount = countUniqueQualityLevels(levels)
 
-  if (levelCount > 1) {
+  if (levelCount > 1 || hdrAvailable.value) {
     qualityButton.show()
   } else {
     qualityButton.hide()
@@ -757,6 +802,7 @@ const updateMobileSettingsButtonVisibility = () => {
   const tracks = typeof player.audioTracks === 'function' ? player.audioTracks() : null
   const hasSettings =
     countUniqueQualityLevels(levels) > 1 ||
+    hdrAvailable.value ||
     countSelectableAudioTracks(tracks) > 1 ||
     countCaptionTracks() > 0
 
@@ -1423,7 +1469,7 @@ const createMobileSettingsButton = () => {
       setTimeout(() => {
         const el = this.el()
         if (el) {
-          el.innerHTML = `<span class="vjs-icon-placeholder">&#9881;</span><span class="vjs-control-text">${t('video.player.settings')}</span>`
+          el.innerHTML = `<span class="vjs-icon-placeholder">&#9881;</span><span class="vjs-control-text">${t('video.player.settings')}</span><span class="vjs-hdr-badge" aria-hidden="true">${t('video.player.hdr')}</span>`
         }
       }, 0)
     }
@@ -1483,7 +1529,7 @@ const createMobileSettingsButton = () => {
 
     hasQualityItems() {
       const levels = this.player_?.qualityLevels?.()
-      return Boolean(levels && countUniqueQualityLevels(levels) > 1)
+      return hdrAvailable.value || Boolean(levels && countUniqueQualityLevels(levels) > 1)
     }
 
     hasAudioItems() {
@@ -1533,12 +1579,17 @@ const createMobileSettingsButton = () => {
 
     buildQualityItems(showBack = true) {
       const levels = this.player_?.qualityLevels?.()
-      if (!levels || countUniqueQualityLevels(levels) <= 1) return false
+      if (!levels || (countUniqueQualityLevels(levels) <= 1 && !hdrAvailable.value)) return false
 
       if (showBack) {
         this.addBackItem()
       }
       this.addHeading(t('video.player.quality'))
+      if (hdrAvailable.value) {
+        this.addItem(t(hdrEnabled.value ? 'video.player.hdrOn' : 'video.player.hdrOff'), hdrEnabled.value, () => {
+          setHDREnabled(!hdrEnabled.value)
+        })
+      }
       let enabledIndexes: number[] = []
       for (let i = 0; i < levels.length; i++) {
         if (levels[i]?.enabled) enabledIndexes.push(i)
@@ -2532,7 +2583,7 @@ const createQualityButton = (player: any) => {
       setTimeout(() => {
         const el = this.el()
         if (el) {
-          el.innerHTML = `<span class="vjs-icon-placeholder">⚙</span><span class="vjs-control-text">${t('video.player.quality')}</span>`
+          el.innerHTML = `<span class="vjs-icon-placeholder">⚙</span><span class="vjs-control-text">${t('video.player.quality')}</span><span class="vjs-hdr-badge" aria-hidden="true">${t('video.player.hdr')}</span>`
         }
       }, 0)
 
@@ -2649,6 +2700,20 @@ const createQualityButton = (player: any) => {
         })
 
         this.menu.appendChild(item)
+      }
+
+      if (hdrAvailable.value) {
+        this.menu.appendChild(videojs.dom.createEl('div', { className: 'vjs-quality-menu-separator' }))
+        const hdrItem = videojs.dom.createEl('button', {
+          className: `vjs-quality-menu-item vjs-quality-hdr-toggle${hdrEnabled.value ? ' vjs-hdr-on' : ''}`,
+          type: 'button'
+        }) as HTMLButtonElement
+        hdrItem.textContent = t(hdrEnabled.value ? 'video.player.hdrOn' : 'video.player.hdrOff')
+        this.bindPress(hdrItem, () => {
+          this.toggleMenu()
+          setHDREnabled(!hdrEnabled.value)
+        })
+        this.menu.appendChild(hdrItem)
       }
 
       this.updateMenuSelection()
@@ -2980,11 +3045,20 @@ onMounted(async () => {
       document.addEventListener('keydown', handleKeyboardShortcuts)
       attachPlayerGestureListeners()
 
+      // A failing HDR ladder (decoder refused HEVC, missing segments) must
+      // never strand playback: fall back to the SDR master at the same time.
+      player.on('error', () => {
+        if (!player || !isPlayingHDR.value || !props.src) return
+        console.warn('HDR playback failed, falling back to SDR')
+        const resumeAt = Number(player.currentTime?.() || 0)
+        hdrAvailable.value = false
+        player.error(null)
+        resetPlayerSourceState()
+        void loadPlayerSource(props.src, { resumeAt, resume: true, skipHDR: true })
+      })
+
       if (props.src && props.status === 'ready') {
-        player.src({
-          src: props.src,
-          type: inferSourceType(props.src)
-        })
+        void loadPlayerSource(props.src)
       }
     })
 
@@ -2992,6 +3066,8 @@ onMounted(async () => {
 })
 
 onBeforeUnmount(() => {
+  sourceLoadToken++
+  if (isPlayingHDR.value) emit('hdrchange', false)
   if (skipIntroTimer) clearTimeout(skipIntroTimer)
   clearAdaptiveQualityLockTimer()
   stopMobileControlsWatcher()
@@ -3046,27 +3122,81 @@ onBeforeUnmount(() => {
   }
 })
 
+const setPlayingHDR = (playing: boolean) => {
+  if (isPlayingHDR.value !== playing) {
+    isPlayingHDR.value = playing
+    emit('hdrchange', playing)
+  }
+  qualityButton?.toggleClass?.('vjs-hdr-active', playing)
+  mobileSettingsButton?.toggleClass?.('vjs-hdr-active', playing)
+}
+
+const resetPlayerSourceState = () => {
+  clearAdaptiveQualityLockTimer()
+  adaptiveQualityLockApplied = false
+  if (qualityButton) qualityButton.manualSelectionIndex = null
+  trackPreferencesReady = false
+  audioButton?.hide?.()
+  mobileSettingsButton?.hide?.()
+  resetAudioButtonMenu()
+  if (mobileSettingsButton?.menu) {
+    mobileSettingsButton.menu.innerHTML = ''
+    mobileSettingsButton.menu.classList.remove('vjs-open')
+  }
+  if (qualityButton?.menu) {
+    qualityButton.menu.innerHTML = ''
+    qualityButton.menu.classList.remove('vjs-open')
+  }
+}
+
+// Loads the SDR master, or its HDR sibling when the title has one, the device
+// can present it and the viewer has not switched HDR off.
+const loadPlayerSource = async (src: string, options: { resumeAt?: number, resume?: boolean, skipHDR?: boolean } = {}) => {
+  if (!player) return
+  const token = ++sourceLoadToken
+  const hdrUrl = options.skipHDR ? '' : await probeHDRSource(src)
+  if (!player || token !== sourceLoadToken) return
+  if (!options.skipHDR) hdrAvailable.value = Boolean(hdrUrl)
+  const useHDR = Boolean(hdrUrl) && hdrEnabled.value
+  const target = useHDR ? hdrUrl : src
+  setPlayingHDR(useHDR)
+  player.src({ src: target, type: inferSourceType(target) })
+  if (options.resumeAt && options.resumeAt > 0) {
+    const resumeAt = options.resumeAt
+    player.one('loadedmetadata', () => {
+      player?.currentTime(resumeAt)
+      currentTime.value = resumeAt
+      if (options.resume) player?.play?.()?.catch?.(() => {})
+    })
+  }
+  updateQualityButtonVisibility()
+  updateMobileSettingsButtonVisibility()
+}
+
+const setHDREnabled = (enabled: boolean) => {
+  hdrEnabled.value = enabled
+  try {
+    localStorage.setItem(HDR_PREFERENCE_STORAGE_KEY, enabled ? '1' : '0')
+  } catch {
+    // The choice still applies to this session.
+  }
+  if (!player || !props.src || !hdrAvailable.value || enabled === isPlayingHDR.value) return
+  const resumeAt = Number(player.currentTime?.() || 0)
+  const resume = !player.paused?.()
+  resetPlayerSourceState()
+  // Keep the viewer's position; the initial start time was already applied.
+  hasAppliedInitialStartTime = true
+  void loadPlayerSource(props.src, { resumeAt, resume })
+}
+
 watch(
   () => props.src,
   (newSrc) => {
     if (player && newSrc && props.status === 'ready') {
-      clearAdaptiveQualityLockTimer()
-      adaptiveQualityLockApplied = false
-      if (qualityButton) qualityButton.manualSelectionIndex = null
-      trackPreferencesReady = false
+      resetPlayerSourceState()
       hasAppliedInitialStartTime = false
       lastProgressEmitAt = 0
-      audioButton?.hide?.()
-      mobileSettingsButton?.hide?.()
-      resetAudioButtonMenu()
-      if (mobileSettingsButton?.menu) {
-        mobileSettingsButton.menu.innerHTML = ''
-        mobileSettingsButton.menu.classList.remove('vjs-open')
-      }
-      player.src({
-        src: newSrc,
-        type: inferSourceType(newSrc)
-      })
+      void loadPlayerSource(newSrc)
     }
   }
 )
@@ -3864,6 +3994,33 @@ watch(
 
 :deep(.vjs-quality-button:hover) {
   color: #ef4444;
+}
+
+:deep(.vjs-hdr-badge) {
+  display: none;
+  padding: 1px 4px;
+  border-radius: 3px;
+  background: #f5c518;
+  color: #111;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  line-height: 1.2;
+}
+
+:deep(.vjs-hdr-active .vjs-hdr-badge) {
+  display: inline-block;
+}
+
+:deep(.vjs-mobile-settings-button.vjs-hdr-active .vjs-hdr-badge) {
+  position: absolute;
+  top: 2px;
+  right: 0;
+  pointer-events: none;
+}
+
+:deep(.vjs-quality-hdr-toggle.vjs-hdr-on) {
+  color: #f5c518;
 }
 
 :deep(.vjs-quality-button:hover .vjs-control-text) {

@@ -155,6 +155,7 @@
       @next-episode="$emit('nextEpisode')"
       @progress="$emit('progress', $event)"
       @seeked="$emit('seeked', $event)"
+      @hdrchange="$emit('hdrchange', $event)"
     />
   </div>
 </template>
@@ -177,6 +178,8 @@ import {
   setPlaybackIntroActive,
   setPlaybackIntroPlayer,
 } from '~/app/utils/playbackIntroElement'
+
+const PLAYBACK_INTRO_VOLUME = 0.35
 
 // Same volume control as the main player (video.js vertical volume panel);
 // every other control is off, and clicks don't pause the intro.
@@ -264,6 +267,7 @@ defineEmits<{
   nextEpisode: []
   progress: [payload: { currentTime: number, duration: number }]
   seeked: [payload: { currentTime: number }]
+  hdrchange: [playing: boolean]
 }>()
 
 const PREROLL_COOLDOWN_VIDEOS = 3
@@ -726,8 +730,8 @@ if (process.client) watch(introHost, (host) => {
   setPlaybackIntroActive(true)
   element.pause()
   element.muted = false
-  const savedVolume = readSavedPlayerVolume().volume
-  element.volume = savedVolume > 0 ? savedVolume : 1
+  // The intro is mixed louder than most content, so it always starts quieter.
+  element.volume = PLAYBACK_INTRO_VOLUME
   element.addEventListener('ended', finishPlaybackIntro)
   element.addEventListener('error', finishPlaybackIntro)
   element.addEventListener('volumechange', handleIntroVolumeChange)

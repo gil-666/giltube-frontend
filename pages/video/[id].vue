@@ -49,6 +49,7 @@
           @seeked="handleWatchSeeked"
           @ended="handleVideoEnded"
           @next-episode="skipToNextVideo(true)"
+          @hdrchange="isPlayingHDR = $event"
         />
 
       </div>
@@ -75,7 +76,7 @@
         <h1 class="text-2xl font-bold">{{ watchDisplayTitle }}</h1>
 
         <!-- Badges Container - Horizontally Scrollable -->
-        <div v-if="video.explicit || is4K || is8K || (video.categories && video.categories.length > 0)" class="mt-3 flex gap-2 overflow-x-auto pb-2">
+        <div v-if="video.explicit || is4K || is8K || isPlayingHDR || (video.categories && video.categories.length > 0)" class="mt-3 flex gap-2 overflow-x-auto pb-2">
           <!-- Explicit Content Warning Badge -->
           <div v-if="video.explicit" class="inline-flex flex-shrink-0 items-center gap-2 bg-red-900 text-red-200 px-3 py-1.5 rounded-full border border-red-700">
             <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
@@ -90,6 +91,10 @@
           <!-- 4K Badge -->
           <div v-if="is4K" class="inline-flex flex-shrink-0 items-center gap-2 bg-green-900 text-green-200 px-3 py-1.5 rounded-full border border-green-700">
             <span class="text-xs font-semibold whitespace-nowrap">{{ t('video.fourKBadge') }}</span>
+          </div>
+          <!-- HDR Badge: only while the HDR ladder is actually playing -->
+          <div v-if="isPlayingHDR" class="inline-flex flex-shrink-0 items-center gap-2 bg-yellow-900 text-yellow-200 px-3 py-1.5 rounded-full border border-yellow-700">
+            <span class="text-xs font-semibold whitespace-nowrap">{{ t('video.hdrBadge') }}</span>
           </div>
 
           <!-- Category Badges -->
@@ -1762,6 +1767,7 @@ const videoSrc = computed(() => {
 })
 
 const is4K = computed(() => isVideo4K(video.value?.width))
+const isPlayingHDR = ref(false)
 const is8K = computed(() => isVideo8K(video.value?.width))
 
 const pauseWatchPlayerForExplicitWarning = () => {

@@ -205,6 +205,7 @@
     "explicitBadge": "18+ Explicit",
     "eightKBadge": "8K",
     "fourKBadge": "4K",
+    "hdrBadge": "HDR",
     "commentAs": "Comment as:",
     "addComment": "Add a comment...",
     "signInToComment": "Sign in to comment",
@@ -289,6 +290,9 @@
       "back": "Back",
       "noSettings": "No settings available",
       "auto": "Auto",
+      "hdr": "HDR",
+      "hdrOn": "HDR: On",
+      "hdrOff": "HDR: Off",
       "off": "Off",
       "play": "Play",
       "pause": "Pause",
@@ -853,6 +857,8 @@
     },
     "media": {
       "maxQuality": "Maximum quality",
+      "hdr": "HDR (high dynamic range)",
+      "surround": "5.1 surround sound",
       "audioLanguages": "Audio languages",
       "captions": "Captions",
       "notAvailable": "None"
@@ -1370,6 +1376,7 @@
       "rejected": "Intro suggestion rejected.",
       "episodeLabel": "S{season} E{episode}",
       "suggestedBy": "Suggested by {username}",
+      "autoDetected": "Auto-detected · matched {percent}% of episodes",
       "currentTiming": "Current timing",
       "suggestedTiming": "Suggested timing",
       "openEpisode": "Open episode",
@@ -1677,6 +1684,8 @@
       "saveSeriesDetails": "Save series details",
       "addEpisode": "Add episode",
       "saveEpisodeDetails": "Save episode details",
+      "detectIntros": "Detect intros",
+      "detectingIntros": "Detecting intros…",
       "savingEpisodes": "Saving episodes...",
       "pickIntro": "Pick intro",
       "pickTrailer": "Pick existing video",
@@ -1694,6 +1703,12 @@
       "body": "This video stays visible in normal GilTube surfaces and links viewers into the series.",
       "pickerTitle": "Pick trailer video",
       "pickerBody": "Choose an already uploaded video and link it as this series trailer."
+    },
+    "introDetection": {
+      "help": "Finds each episode's intro by matching audio across the season. Timings anchored to an episode you timed manually are applied automatically; others go to Intro suggestions for review.",
+      "started": "Detecting intros… this takes a few seconds per episode the first time.",
+      "done": "Intro detection finished: {applied} applied, {suggested} sent to Intro suggestions for review, {unmatched} not found.",
+      "failed": "Intro detection failed: {error}"
     },
     "episodes": {
       "title": "Episodes",

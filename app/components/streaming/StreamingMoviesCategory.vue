@@ -263,6 +263,8 @@ const toDisplayMovie = (movie) => {
     resumeLink: progress && percent > 0 && linkedVideoId ? localePath(`/video/${linkedVideoId}?movie_id=${movie.id}`) : '',
     durationLabel: durationLabel(movie.video),
     maxQuality: movie.media_capabilities?.max_quality || '',
+    hdr: !!movie.media_capabilities?.hdr,
+    surround: !!movie.media_capabilities?.surround,
     progressPercent: percent,
   }
 }

@@ -170,13 +170,34 @@
               <div class="streaming-modal-copy">
                 <p class="streaming-modal-eyebrow">{{ selectedItem.genre }}</p>
                 <h2 class="streaming-modal-title">{{ selectedItem.title }}</h2>
-                <span
-                  v-if="selectedItem.maxQuality"
-                  :class="qualityBadgeClass(selectedItem.maxQuality)"
-                  :aria-label="`${t('streaming.media.maxQuality')}: ${selectedItem.maxQuality}`"
+                <div
+                  v-if="selectedItem.maxQuality || selectedItem.hdr || selectedItem.surround"
+                  class="streaming-media-badges"
                 >
-                  {{ selectedItem.maxQuality }}
-                </span>
+                  <span
+                    v-if="selectedItem.maxQuality"
+                    :class="qualityBadgeClass(selectedItem.maxQuality)"
+                    :aria-label="`${t('streaming.media.maxQuality')}: ${selectedItem.maxQuality}`"
+                  >
+                    {{ selectedItem.maxQuality }}
+                  </span>
+                  <span
+                    v-if="selectedItem.hdr"
+                    class="streaming-quality-badge is-hdr"
+                    :title="t('streaming.media.hdr')"
+                    :aria-label="t('streaming.media.hdr')"
+                  >
+                    HDR
+                  </span>
+                  <span
+                    v-if="selectedItem.surround"
+                    class="streaming-quality-badge is-surround"
+                    :title="t('streaming.media.surround')"
+                    :aria-label="t('streaming.media.surround')"
+                  >
+                    5.1
+                  </span>
+                </div>
                 <div class="streaming-modal-actions">
                   <NuxtLink
                     v-if="selectedItem.resumeLink"
@@ -796,6 +817,29 @@ onBeforeUnmount(() => {
   border-color: rgba(74, 222, 128, 0.65);
   background: rgba(20, 83, 45, 0.78);
   color: rgb(220 252 231);
+}
+
+.streaming-media-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+  margin-top: 0.75rem;
+}
+
+.streaming-media-badges .streaming-quality-badge {
+  margin-top: 0;
+}
+
+.streaming-quality-badge.is-hdr {
+  border-color: rgba(250, 204, 21, 0.7);
+  background: rgba(113, 63, 18, 0.8);
+  color: rgb(254 249 195);
+}
+
+.streaming-quality-badge.is-surround {
+  border-color: rgba(167, 139, 250, 0.65);
+  background: rgba(76, 29, 149, 0.76);
+  color: rgb(237 233 254);
 }
 
 .streaming-modal-body {

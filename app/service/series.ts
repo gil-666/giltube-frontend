@@ -112,6 +112,23 @@ export const listIntroSkipSuggestions = async (status = 'pending') => {
   return res.data
 }
 
+export type IntroDetectionStatus = {
+  state: 'idle' | 'running' | 'done' | 'error'
+  summary?: { seasons_analyzed: number, applied: number, suggested: number, unmatched: number }
+  error?: string
+}
+
+// Audio-fingerprint intro detection across a series' episodes (admin only).
+export const startIntroDetection = async (seriesId: string): Promise<IntroDetectionStatus> => {
+  const res = await api.post(`/admin/series/${seriesId}/detect-intros`)
+  return res.data
+}
+
+export const getIntroDetection = async (seriesId: string): Promise<IntroDetectionStatus> => {
+  const res = await api.get(`/admin/series/${seriesId}/detect-intros`)
+  return res.data
+}
+
 export const approveIntroSkipSuggestion = async (suggestionId: string) => {
   const res = await api.post(`/admin/intro-suggestions/${suggestionId}/approve`)
   return res.data

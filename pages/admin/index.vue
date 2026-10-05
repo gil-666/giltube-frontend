@@ -160,7 +160,10 @@
                 {{ suggestion.series_title }} · {{ t('admin.introSuggestions.episodeLabel', { season: suggestion.season_number, episode: suggestion.episode_number }) }}
               </h3>
               <p class="mt-1 text-sm text-zinc-400">{{ suggestion.episode_title }}</p>
-              <p class="mt-2 text-xs text-zinc-500">
+              <p v-if="suggestion.source === 'auto'" class="mt-2 inline-flex rounded bg-blue-900/40 px-2 py-0.5 text-xs font-semibold text-blue-200">
+                {{ t('admin.introSuggestions.autoDetected', { percent: Math.round((suggestion.confidence || 0) * 100) }) }}
+              </p>
+              <p v-else class="mt-2 text-xs text-zinc-500">
                 {{ t('admin.introSuggestions.suggestedBy', { username: suggestion.username || 'User' }) }}
               </p>
             </div>
@@ -728,6 +731,15 @@
             >
               {{ savingEpisodeDetails ? t('seriesAdmin.actions.savingEpisodes') : t('seriesAdmin.actions.saveEpisodeDetails') }}
             </button>
+            <button
+              type="button"
+              :disabled="introDetectionRunning"
+              :title="t('seriesAdmin.introDetection.help')"
+              class="rounded bg-blue-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-600 disabled:cursor-not-allowed disabled:opacity-50"
+              @click="runIntroDetection"
+            >
+              {{ introDetectionRunning ? t('seriesAdmin.actions.detectingIntros') : t('seriesAdmin.actions.detectIntros') }}
+            </button>
             <button type="button" class="rounded bg-zinc-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-zinc-600" @click="addEpisodeRow">{{ t('seriesAdmin.actions.addEpisode') }}</button>
           </div>
         </div>
@@ -1165,6 +1177,8 @@ import {
   downloadSeriesEpisodeAudioTrackWAV,
   deleteSeriesEpisodeSubtitle,
   getAdminSeries,
+  getIntroDetection,
+  startIntroDetection,
   GILTUBE_SERIES_CHANNEL_ID,
   listIntroSkipSuggestions,
   listSeries,
@@ -1733,6 +1747,60 @@ const mergeUnsavedEpisodeRows = (serverRows: EpisodeRow[], previousRows: Episode
     return a.seasonNumber - b.seasonNumber
   })
 }
+
+// Intro detection runs in the background on the server; poll until it finishes,
+// then reload the episodes so detected timings appear.
+const introDetectionRunning = ref(false)
+let introDetectionTimer: ReturnType<typeof setTimeout> | null = null
+
+const pollIntroDetection = async (seriesId: string) => {
+  if (introDetectionTimer) clearTimeout(introDetectionTimer)
+  introDetectionTimer = null
+  try {
+    const status = await getIntroDetection(seriesId)
+    if (createdSeriesId.value !== seriesId) return
+    if (status.state === 'running') {
+      introDetectionRunning.value = true
+      introDetectionTimer = setTimeout(() => void pollIntroDetection(seriesId), 3000)
+      return
+    }
+    const wasRunning = introDetectionRunning.value
+    introDetectionRunning.value = false
+    if (!wasRunning) return
+    if (status.state === 'error') {
+      seriesError.value = t('seriesAdmin.introDetection.failed', { error: status.error || '' })
+      return
+    }
+    await hydrateSeriesWorkspace(seriesId)
+    const summary = status.summary || { applied: 0, suggested: 0, unmatched: 0 }
+    seriesProgressMessage.value = t('seriesAdmin.introDetection.done', summary)
+  } catch (err: any) {
+    introDetectionRunning.value = false
+    seriesError.value = err?.response?.data?.error || err?.message || t('seriesAdmin.introDetection.failed', { error: '' })
+  }
+}
+
+const runIntroDetection = async () => {
+  const seriesId = createdSeriesId.value
+  if (!seriesId || introDetectionRunning.value) return
+  seriesError.value = ''
+  seriesProgressMessage.value = t('seriesAdmin.introDetection.started')
+  try {
+    await startIntroDetection(seriesId)
+  } catch (err: any) {
+    // 409: already running (e.g. started automatically) — just follow it.
+    if (err?.response?.status !== 409) {
+      seriesError.value = err?.response?.data?.error || err?.message || t('seriesAdmin.introDetection.failed', { error: '' })
+      return
+    }
+  }
+  introDetectionRunning.value = true
+  await pollIntroDetection(seriesId)
+}
+
+onBeforeUnmount(() => {
+  if (introDetectionTimer) clearTimeout(introDetectionTimer)
+})
 
 const hydrateSeriesWorkspace = async (seriesId: string) => {
   if (!seriesId) {
