@@ -32,7 +32,7 @@
             <div v-if="isHost" class="mt-3 flex flex-wrap gap-2">
               <button type="button" class="rounded bg-zinc-700 px-2 py-1 text-[11px] hover:bg-zinc-600" :disabled="index === 0" @click="$emit('move', index, -1)">Up</button>
               <button type="button" class="rounded bg-zinc-700 px-2 py-1 text-[11px] hover:bg-zinc-600" :disabled="index === queueItems.length - 1" @click="$emit('move', index, 1)">Down</button>
-              <button type="button" class="rounded bg-red-600 px-2 py-1 text-[11px] hover:bg-red-700" @click="$emit('play', item.id)">Play</button>
+              <button type="button" class="rounded bg-zinc-100 px-2 py-1 text-[11px] hover:bg-white text-zinc-950" @click="$emit('play', item.id)">Play</button>
               <button type="button" class="rounded bg-zinc-700 px-2 py-1 text-[11px] hover:bg-zinc-600" @click="$emit('remove', item.id)">Remove</button>
             </div>
           </div>
@@ -91,7 +91,7 @@
                   <div v-if="isHost" class="mt-3 flex flex-wrap gap-2">
                     <button type="button" class="rounded bg-zinc-700 px-2 py-1 text-[11px] hover:bg-zinc-600" :disabled="index === 0" @click="$emit('move', index, -1)">Up</button>
                     <button type="button" class="rounded bg-zinc-700 px-2 py-1 text-[11px] hover:bg-zinc-600" :disabled="index === queueItems.length - 1" @click="$emit('move', index, 1)">Down</button>
-                    <button type="button" class="rounded bg-red-600 px-2 py-1 text-[11px] hover:bg-red-700" @click="$emit('play', item.id)">Play</button>
+                    <button type="button" class="rounded bg-zinc-100 px-2 py-1 text-[11px] hover:bg-white text-zinc-950" @click="$emit('play', item.id)">Play</button>
                     <button type="button" class="rounded bg-zinc-700 px-2 py-1 text-[11px] hover:bg-zinc-600" @click="$emit('remove', item.id)">Remove</button>
                   </div>
                 </div>
@@ -123,7 +123,7 @@
             <input
               v-model="queueSearch"
               type="search"
-              class="mt-4 w-full rounded-full bg-zinc-900 px-4 py-3 text-sm outline-none ring-1 ring-white/10 focus:ring-red-500"
+              class="mt-4 w-full rounded-full bg-zinc-900 px-4 py-3 text-sm outline-none ring-1 ring-white/10 focus:ring-white/20"
               :placeholder="t('watchParty.queue.search')"
               @input="handleQueueSearchInput"
             />
@@ -142,7 +142,7 @@
                 <div class="relative aspect-video bg-black">
                   <img v-bind="responsiveImage(thumbnailUrl(video.thumbnail_url || video.thumbnail), '(min-width: 1280px) 25vw, (min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw')" :alt="video.title" class="h-full w-full object-cover transition group-hover:scale-[1.02]" />
                   <div class="absolute inset-0 bg-black/0 transition group-hover:bg-black/25" />
-                  <span class="absolute inset-x-3 bottom-3 rounded bg-red-600 px-3 py-2 text-center text-xs font-bold opacity-0 transition group-hover:opacity-100">
+                  <span class="absolute inset-x-3 bottom-3 rounded bg-zinc-100 px-3 py-2 text-center text-xs font-bold opacity-0 transition group-hover:opacity-100 text-zinc-950">
                     Add to queue
                   </span>
                 </div>

@@ -50,6 +50,11 @@ export const getRelatedVideos = async (id: string, limit = 10) => {
   return res.data
 }
 
+export const getRelatedMedia = async (id: string, limit = 4) => {
+  const res = await api.get(`/videos/${id}/related-media`, { params: { limit } })
+  return res.data
+}
+
 export const getVideoClips = async (id: string) => {
   const res = await api.get(`/videos/${id}/clips`)
   return res.data

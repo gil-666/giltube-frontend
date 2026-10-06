@@ -264,6 +264,9 @@ const toDisplayMovie = (movie) => {
     durationLabel: durationLabel(movie.video),
     maxQuality: movie.media_capabilities?.max_quality || '',
     hdr: !!movie.media_capabilities?.hdr,
+    explicit: !!movie.explicit,
+    rating: movie.content_rating?.rating || '',
+    ratingDescriptors: movie.content_rating?.descriptors || [],
     surround: !!movie.media_capabilities?.surround,
     progressPercent: percent,
   }

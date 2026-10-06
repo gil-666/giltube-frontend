@@ -1,15 +1,14 @@
 <template>
   <div class="min-h-full bg-zinc-950 px-4 py-6 text-white sm:px-6 lg:px-8">
     <div class="mx-auto max-w-[96rem]">
-      <header class="mb-6 flex flex-col gap-4 border-b border-zinc-800 pb-6 sm:flex-row sm:items-end sm:justify-between">
+      <header class="mb-6 flex flex-col gap-4 border-b border-white/[0.07] pb-6 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p class="text-xs font-bold uppercase tracking-[0.18em] text-red-300">{{ t('app.currentAccount') }}</p>
-          <h1 class="mt-2 text-4xl font-black tracking-tight">{{ t('channels.title') }}</h1>
-          <p class="mt-2 max-w-2xl text-sm leading-6 text-zinc-400">{{ t('channels.manageSubtitle') }}</p>
+          <p class="text-xs font-medium text-zinc-400">{{ t('app.currentAccount') }}</p>
+          <h1 class="mt-2 text-2xl font-semibold tracking-tight">{{ t('channels.title') }}</h1>
         </div>
         <NuxtLink
           :to="localePath('/create-channel')"
-          class="inline-flex items-center justify-center gap-2 rounded-lg bg-red-600 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-red-700"
+          class="inline-flex items-center justify-center gap-2 rounded-lg bg-zinc-100 px-4 py-2.5 text-sm font-bold text-zinc-950 transition hover:bg-white"
         >
           <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 5v14M5 12h14" />
@@ -22,22 +21,22 @@
         {{ error }}
       </div>
 
-      <div v-if="isLoading" class="rounded-xl border border-zinc-800 bg-zinc-950 p-12 text-center shadow-2xl shadow-black/20">
-        <div class="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-2 border-zinc-700 border-b-blue-500"></div>
+      <div v-if="isLoading" class="rounded-xl border border-white/[0.07] bg-zinc-950 p-12 text-center shadow-2xl shadow-black/20">
+        <div class="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-2 border-white/10 border-b-blue-500"></div>
         <p class="text-sm font-semibold text-zinc-300">{{ t('channels.loading') }}</p>
       </div>
 
-      <div v-else-if="channels.length === 0" class="rounded-xl border border-zinc-800 bg-zinc-950 p-10 text-center shadow-2xl shadow-black/20">
+      <div v-else-if="channels.length === 0" class="rounded-xl border border-white/[0.07] bg-zinc-950 p-10 text-center shadow-2xl shadow-black/20">
         <div class="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-zinc-900 text-zinc-400">
           <svg class="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11a4 4 0 1 0-8 0m8 0a4 4 0 1 1-8 0m8 0v2a4 4 0 0 1-8 0v-2m12 9a8 8 0 1 0-16 0" />
           </svg>
         </div>
-        <h2 class="text-2xl font-black">{{ t('channels.noChannels') }}</h2>
+        <h2 class="text-2xl font-semibold">{{ t('channels.noChannels') }}</h2>
         <p class="mx-auto mt-2 max-w-md text-sm leading-6 text-zinc-400">{{ t('channels.emptyBody') }}</p>
         <NuxtLink
           :to="localePath('/create-channel')"
-          class="mt-6 inline-flex items-center justify-center rounded-lg bg-red-600 px-5 py-2.5 text-sm font-bold text-white transition hover:bg-red-700"
+          class="mt-6 inline-flex items-center justify-center rounded-lg bg-zinc-100 px-5 py-2.5 text-sm font-bold text-zinc-950 transition hover:bg-white"
         >
           {{ t('channels.createFirst') }}
         </NuxtLink>
@@ -47,7 +46,7 @@
         <article
           v-for="channel in channels"
           :key="channel.id"
-          class="motion-card group overflow-hidden rounded-xl border border-zinc-800 bg-zinc-950 shadow-2xl shadow-black/20 transition hover:border-zinc-700"
+          class="motion-card group overflow-hidden rounded-xl border border-white/[0.07] bg-zinc-950 shadow-2xl shadow-black/20 transition hover:border-zinc-700"
         >
           <div class="relative h-36 bg-zinc-900">
             <img
@@ -67,13 +66,13 @@
                   class="h-full w-full object-cover"
                   @error="failedAvatars[channel.id] = true"
                 />
-                <div v-else class="flex h-full w-full items-center justify-center text-2xl font-black text-zinc-200">
+                <div v-else class="flex h-full w-full items-center justify-center text-2xl font-semibold text-zinc-200">
                   {{ channel.name.charAt(0).toUpperCase() }}
                 </div>
               </div>
               <div class="min-w-0 pb-1">
                 <div class="flex items-center gap-2">
-                  <h2 class="truncate text-xl font-black text-white">{{ channel.name }}</h2>
+                  <h2 class="truncate text-xl font-semibold text-white">{{ channel.name }}</h2>
                   <span
                     v-if="channel.status && channel.status !== 'active'"
                     class="rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase"
@@ -93,20 +92,20 @@
             </p>
 
             <div class="grid grid-cols-2 gap-2 text-xs text-zinc-500">
-              <div class="rounded-lg border border-zinc-800 bg-zinc-900/60 px-3 py-2">
+              <div class="rounded-lg border border-white/[0.07] bg-zinc-900/60 px-3 py-2">
                 <p class="font-semibold uppercase">{{ t('channels.identity') }}</p>
                 <p class="mt-1 truncate text-zinc-300">{{ shortChannelId(channel.id) }}</p>
               </div>
-              <div class="rounded-lg border border-zinc-800 bg-zinc-900/60 px-3 py-2">
+              <div class="rounded-lg border border-white/[0.07] bg-zinc-900/60 px-3 py-2">
                 <p class="font-semibold uppercase">{{ t('channels.status') }}</p>
                 <p class="mt-1 text-zinc-300">{{ channel.status || 'active' }}</p>
               </div>
             </div>
 
-            <div class="flex flex-col gap-2 border-t border-zinc-800 pt-4 sm:flex-row">
+            <div class="flex flex-col gap-2 border-t border-white/[0.07] pt-4 sm:flex-row">
               <NuxtLink
                 :to="localePath(`/channel/${channel.id}`)"
-                class="inline-flex flex-1 items-center justify-center gap-2 rounded-lg bg-blue-600 px-3 py-2 text-sm font-bold text-white transition hover:bg-blue-700"
+                class="inline-flex flex-1 items-center justify-center gap-2 rounded-lg bg-zinc-100 px-3 py-2 text-sm font-bold text-zinc-950 transition hover:bg-white"
               >
                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 3h7v7m0-7L10 14m-7 7h12a2 2 0 0 0 2-2v-5" />
@@ -149,12 +148,12 @@
       >
       <div class="flex h-full min-h-0 w-full flex-col overflow-hidden bg-zinc-950 sm:h-auto sm:max-h-[min(90dvh,56rem)] sm:max-w-5xl sm:rounded-2xl sm:border sm:border-zinc-800 sm:shadow-2xl">
         <div
-          class="z-10 flex shrink-0 items-center justify-between gap-3 border-b border-zinc-800 bg-zinc-950/95 px-5 pb-4 pt-4 backdrop-blur sm:pt-4"
+          class="z-10 flex shrink-0 items-center justify-between gap-3 border-b border-white/[0.07] bg-zinc-950/95 px-5 pb-4 pt-4 backdrop-blur sm:pt-4"
           style="padding-top: max(env(safe-area-inset-top), 1rem);"
         >
           <div>
-            <p class="text-xs font-bold uppercase tracking-[0.18em] text-red-300">{{ t('channels.edit') }}</p>
-            <h3 class="text-2xl font-black">{{ t('channels.editModal') }}</h3>
+            <p class="text-xs font-medium text-zinc-400">{{ t('channels.edit') }}</p>
+            <h3 class="text-2xl font-semibold">{{ t('channels.editModal') }}</h3>
           </div>
           <button
             type="button"
@@ -169,7 +168,7 @@
         <form @submit.prevent="saveEdit" class="flex min-h-0 flex-1 flex-col">
           <div class="min-h-0 flex-1 overflow-y-auto p-4 sm:p-5">
             <div class="grid gap-5 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
-              <section class="overflow-hidden rounded-xl border border-zinc-800 bg-zinc-950">
+              <section class="overflow-hidden rounded-xl border border-white/[0.07] bg-zinc-950">
                 <div class="relative h-40 bg-zinc-900 sm:h-48">
                   <img
                     v-if="editPreviewBackground"
@@ -187,18 +186,18 @@
                         :alt="editPreviewName"
                         class="h-full w-full object-cover"
                       />
-                      <div v-else class="flex h-full w-full items-center justify-center text-2xl font-black text-zinc-200">
+                      <div v-else class="flex h-full w-full items-center justify-center text-2xl font-semibold text-zinc-200">
                         {{ editPreviewName.charAt(0).toUpperCase() }}
                       </div>
                     </div>
                     <div class="min-w-0 pb-1">
-                      <h4 class="truncate text-xl font-black">{{ editPreviewName }}</h4>
+                      <h4 class="truncate text-xl font-semibold">{{ editPreviewName }}</h4>
                       <p class="line-clamp-2 text-xs leading-5 text-zinc-300">{{ editPreviewDescription }}</p>
                     </div>
                   </div>
                 </div>
-                <div class="border-t border-zinc-800 p-4">
-                  <p class="text-xs font-bold uppercase tracking-[0.16em] text-zinc-500">{{ t('channels.preview') }}</p>
+                <div class="border-t border-white/[0.07] p-4">
+                  <p class="text-xs font-medium text-zinc-500">{{ t('channels.preview') }}</p>
                   <p class="mt-2 text-sm leading-5 text-zinc-300">{{ editPreviewDescription }}</p>
                 </div>
               </section>
@@ -211,7 +210,7 @@
                   v-model="editForm.name"
                   type="text"
                   required
-                  class="w-full rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-white outline-none transition focus:border-blue-500"
+                  class="w-full rounded-lg border border-white/10 bg-zinc-900 px-4 py-2.5 text-white outline-none transition focus:border-white/30"
                 />
               </div>
 
@@ -221,12 +220,12 @@
                 <textarea
                   v-model="editForm.description"
                   rows="3"
-                  class="w-full resize-none rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-white outline-none transition focus:border-blue-500"
+                  class="w-full resize-none rounded-lg border border-white/10 bg-zinc-900 px-4 py-2.5 text-white outline-none transition focus:border-white/30"
                 />
               </div>
 
               <div class="grid gap-3 sm:grid-cols-2">
-                <div class="rounded-xl border border-zinc-800 bg-zinc-900/40 p-3">
+                <div class="rounded-xl border border-white/[0.07] bg-zinc-900/40 p-3">
                   <div class="flex items-start justify-between gap-3">
                     <div>
                       <p class="text-sm font-semibold">{{ t('channels.avatar') }}</p>
@@ -234,7 +233,7 @@
                     </div>
                     <div class="h-12 w-12 shrink-0 overflow-hidden rounded-full bg-zinc-800">
                       <img v-if="editPreviewAvatar" :src="editPreviewAvatar" alt="" class="h-full w-full object-cover" />
-                      <div v-else class="flex h-full w-full items-center justify-center text-sm font-black text-zinc-200">
+                      <div v-else class="flex h-full w-full items-center justify-center text-sm font-semibold text-zinc-200">
                         {{ editPreviewName.charAt(0).toUpperCase() }}
                       </div>
                     </div>
@@ -247,7 +246,7 @@
                     <button
                       v-if="editAvatarPreview"
                       type="button"
-                      class="rounded-lg border border-zinc-700 px-3 py-2 text-xs font-bold text-zinc-300 transition hover:bg-zinc-800"
+                      class="rounded-lg border border-white/10 px-3 py-2 text-xs font-bold text-zinc-300 transition hover:bg-zinc-800"
                       @click="clearEditAvatarSelection"
                     >
                       {{ t('channels.remove') }}
@@ -263,7 +262,7 @@
                   </div>
                 </div>
 
-                <div class="rounded-xl border border-zinc-800 bg-zinc-900/40 p-3">
+                <div class="rounded-xl border border-white/[0.07] bg-zinc-900/40 p-3">
                   <div>
                     <p class="text-sm font-semibold">{{ t('channels.backgroundImage') }}</p>
                     <p class="mt-1 text-xs text-zinc-500">{{ t('channels.backgroundHelper') }}</p>
@@ -280,7 +279,7 @@
                     <button
                       v-if="editBackgroundPreview"
                       type="button"
-                      class="rounded-lg border border-zinc-700 px-3 py-2 text-xs font-bold text-zinc-300 transition hover:bg-zinc-800"
+                      class="rounded-lg border border-white/10 px-3 py-2 text-xs font-bold text-zinc-300 transition hover:bg-zinc-800"
                       @click="clearEditBackgroundSelection"
                     >
                       {{ t('channels.remove') }}
@@ -312,7 +311,7 @@
 
           <!-- Buttons -->
           <div
-            class="flex shrink-0 flex-col-reverse gap-3 border-t border-zinc-800 bg-zinc-950/95 px-4 py-4 backdrop-blur sm:flex-row sm:px-5"
+            class="flex shrink-0 flex-col-reverse gap-3 border-t border-white/[0.07] bg-zinc-950/95 px-4 py-4 backdrop-blur sm:flex-row sm:px-5"
             style="padding-bottom: max(env(safe-area-inset-bottom), 1rem);"
           >
             <button
@@ -325,7 +324,7 @@
             <button
               type="submit"
               :disabled="isSaving"
-              class="flex-1 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+              class="flex-1 rounded-lg bg-zinc-100 px-4 py-2.5 text-sm font-bold text-zinc-950 transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-50"
             >
               {{ isSaving ? t('channels.saving') : t('channels.save') }}
             </button>
@@ -341,13 +340,13 @@
       class="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm"
       @click.self="deleteConfirmId = null"
     >
-      <div class="w-full max-w-md rounded-2xl border border-zinc-800 bg-zinc-950 p-6 shadow-2xl">
+      <div class="w-full max-w-md rounded-2xl border border-white/[0.07] bg-zinc-950 p-6 shadow-2xl">
         <div class="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-red-950/70 text-red-200">
           <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 7h12m-9 0V5h6v2m-7 4v7m4-7v7m4-7v7M8 7l1 14h6l1-14" />
           </svg>
         </div>
-        <h3 class="text-2xl font-black">{{ t('channels.deleteModal') }}</h3>
+        <h3 class="text-2xl font-semibold">{{ t('channels.deleteModal') }}</h3>
         <p class="mt-3 text-sm leading-6 text-zinc-300">
           {{ t('channels.deleteConfirm', { name: deleteConfirmName }) }}
         </p>

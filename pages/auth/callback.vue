@@ -1,8 +1,8 @@
 <template>
   <div class="min-h-screen bg-zinc-950 text-white flex items-center justify-center p-6">
-    <div class="w-full max-w-lg rounded-2xl border border-zinc-800 bg-zinc-900 p-8 shadow-2xl">
-      <p class="text-xs font-semibold uppercase tracking-[0.2em] text-cyan-300">{{ t('login.gilidNetworkBadge') }}</p>
-      <h1 class="mt-3 text-3xl font-bold text-white">{{ t('login.callbackTitle') }}</h1>
+    <div class="w-full max-w-lg rounded-2xl border border-white/[0.07] bg-zinc-900 p-8 shadow-2xl">
+      <p class="text-xs font-medium text-zinc-400">{{ t('login.gilidNetworkBadge') }}</p>
+      <h1 class="mt-3 text-2xl font-semibold tracking-tight text-white">{{ t('login.callbackTitle') }}</h1>
       <p class="mt-3 text-sm text-zinc-300">{{ message }}</p>
 
       <div v-if="error" class="mt-5 rounded-lg border border-red-700 bg-red-950/50 px-4 py-3 text-sm text-red-200">
@@ -10,7 +10,7 @@
       </div>
 
       <div v-if="error" class="mt-5">
-        <NuxtLink :to="localePath('/login')" class="inline-flex rounded-lg bg-cyan-500 px-4 py-2 font-semibold text-slate-950 transition hover:bg-cyan-400">
+        <NuxtLink :to="localePath('/login')" class="inline-flex rounded-lg bg-zinc-100 px-4 py-2 font-semibold text-slate-950 transition hover:bg-white">
           {{ t('login.backToLogin') }}
         </NuxtLink>
       </div>

@@ -1,8 +1,8 @@
 <template>
   <div v-if="isOpen" class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-    <div class="bg-zinc-900 rounded-lg w-full max-w-2xl max-h-[80vh] overflow-hidden flex flex-col border border-zinc-700">
+    <div class="bg-zinc-900 rounded-lg w-full max-w-2xl max-h-[80vh] overflow-hidden flex flex-col border border-white/10">
       <!-- Header -->
-      <div class="border-b border-zinc-700 p-4 flex items-center justify-between">
+      <div class="border-b border-white/10 p-4 flex items-center justify-between">
         <h2 class="text-xl font-bold">{{ t('video.selectGif') || 'Select a GIF' }}</h2>
         <button
           @click="closeModal"
@@ -13,20 +13,20 @@
       </div>
 
       <!-- Search Bar -->
-      <div class="border-b border-zinc-700 p-4">
+      <div class="border-b border-white/10 p-4">
         <input
           v-model="searchQuery"
           @keyup.enter="performSearch"
           type="text"
           :placeholder="t('video.searchGif') || 'Search GIFs...'"
-          class="w-full bg-zinc-800 border border-zinc-700 rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-blue-500"
+          class="w-full bg-zinc-800 border border-white/10 rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-white/30"
         />
         <div class="flex gap-2 mt-2">
           <button
             @click="performSearch"
             :disabled="isLoading"
             :class="{
-              'bg-blue-600 hover:bg-blue-700': activeMode === 'search',
+              'bg-zinc-100 hover:bg-white text-zinc-950': activeMode === 'search',
               'bg-zinc-700 hover:bg-zinc-600': activeMode !== 'search'
             }"
             class="flex-1 px-3 py-2 rounded transition disabled:opacity-50 text-sm"
@@ -37,7 +37,7 @@
             @click="loadTrending"
             :disabled="isLoading"
             :class="{
-              'bg-blue-600 hover:bg-blue-700': activeMode === 'trending',
+              'bg-zinc-100 hover:bg-white text-zinc-950': activeMode === 'trending',
               'bg-zinc-700 hover:bg-zinc-600': activeMode !== 'trending'
             }"
             class="flex-1 px-3 py-2 rounded transition disabled:opacity-50 text-sm"
@@ -60,7 +60,7 @@
             v-for="gif in gifs"
             :key="gif.id"
             @click="selectGif(gif)"
-            class="relative group overflow-hidden rounded border border-zinc-700 hover:border-blue-500 transition"
+            class="relative group overflow-hidden rounded border border-white/10 hover:border-blue-500 transition"
           >
             <img
               :src="gif.images.downsized.url"
@@ -77,7 +77,7 @@
       </div>
 
       <!-- Footer -->
-      <div class="border-t border-zinc-700 p-4 flex justify-end gap-2">
+      <div class="border-t border-white/10 p-4 flex justify-end gap-2">
         <button
           @click="closeModal"
           class="px-4 py-2 text-gray-400 hover:text-white transition text-sm"

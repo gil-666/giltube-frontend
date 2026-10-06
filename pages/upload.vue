@@ -1,7 +1,7 @@
 <template>
   <div class="fixed inset-0 z-[100] overflow-y-auto bg-zinc-950 text-white">
     <div class="mx-auto flex min-h-dvh w-full max-w-6xl flex-col px-4 pb-8 pt-4 sm:px-6 lg:px-8">
-      <header class="flex shrink-0 items-center justify-between gap-4 border-b border-zinc-800 pb-4">
+      <header class="flex shrink-0 items-center justify-between gap-4 border-b border-white/[0.07] pb-4">
         <NuxtLink :to="localePath('/')" class="flex items-center gap-3 rounded-lg text-zinc-300 transition hover:text-white">
           <span class="flex h-10 w-10 items-center justify-center rounded-full bg-zinc-900">
             <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -11,8 +11,8 @@
           <span class="hidden text-sm font-bold sm:inline">{{ t('upload.cancel') }}</span>
         </NuxtLink>
         <div class="min-w-0 text-center">
-          <p class="text-xs font-bold uppercase tracking-[0.18em] text-red-300">{{ t('upload.title') }}</p>
-          <h1 class="mt-1 truncate text-2xl font-black sm:text-3xl">
+          <p class="text-xs font-medium text-zinc-400">{{ t('upload.title') }}</p>
+          <h1 class="mt-1 truncate text-2xl font-semibold sm:text-3xl">
             {{ currentStageTitle }}
           </h1>
         </div>
@@ -21,19 +21,19 @@
 
       <div v-if="!isReady" class="flex min-h-[70dvh] items-center justify-center">
         <div class="text-center">
-          <div class="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-2 border-zinc-700 border-b-blue-500"></div>
+          <div class="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-2 border-white/10 border-b-blue-500"></div>
           <p class="text-sm font-semibold text-zinc-300">{{ t('upload.checkingChannels') }}</p>
         </div>
       </div>
 
       <main v-else class="grid flex-1 gap-6 py-6 lg:grid-cols-[17rem_minmax(0,1fr)]">
         <aside class="hidden lg:block">
-          <div class="sticky top-6 space-y-3 rounded-xl border border-zinc-800 bg-zinc-950 p-4 shadow-2xl shadow-black/20">
+          <div class="sticky top-6 space-y-3 rounded-xl border border-white/[0.07] bg-zinc-950 p-4 shadow-2xl shadow-black/20">
             <div
               v-for="item in stageItems"
               :key="item.key"
               class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm"
-              :class="stage === item.key ? 'bg-blue-600 text-white' : 'text-zinc-500'"
+              :class="stage === item.key ? 'bg-zinc-100 text-zinc-950' : 'text-zinc-500'"
             >
               <span class="h-2.5 w-2.5 rounded-full" :class="stage === item.key ? 'bg-white' : 'bg-zinc-700'"></span>
               <span class="font-bold">{{ item.label }}</span>
@@ -50,46 +50,46 @@
             <button
               type="button"
               class="group flex min-h-[22rem] w-full flex-col items-center justify-center rounded-2xl border-2 border-dashed p-6 text-center transition sm:min-h-[28rem] sm:p-10"
-              :class="isDraggingFile ? 'border-blue-500 bg-blue-950/20' : 'border-zinc-700 bg-zinc-950 hover:border-blue-500 hover:bg-zinc-900/40'"
+              :class="isDraggingFile ? 'border-white/40 bg-white/[0.04]' : 'border-white/10 bg-zinc-950 hover:border-white/25 hover:bg-white/[0.02]'"
               @click="triggerFileInput"
               @dragenter.prevent="isDraggingFile = true"
               @dragover.prevent="isDraggingFile = true"
               @dragleave.prevent="handleFileDragLeave"
               @drop.prevent="handleFileDrop"
             >
-              <span class="mb-5 flex h-20 w-20 items-center justify-center rounded-full bg-zinc-900 text-zinc-300 transition group-hover:bg-blue-600 group-hover:text-white">
+              <span class="mb-5 flex h-20 w-20 items-center justify-center rounded-full bg-zinc-900 text-zinc-300 transition group-hover:bg-zinc-100 group-hover:text-zinc-950">
                 <svg class="h-10 w-10" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 0 1-.88-7.9A5 5 0 0 1 15.9 6H16a5 5 0 0 1 1 9.9M15 13l-3-3m0 0-3 3m3-3v11" />
                 </svg>
               </span>
-              <span class="text-2xl font-black">{{ t('upload.clickToSelect') }}</span>
+              <span class="text-2xl font-semibold">{{ t('upload.clickToSelect') }}</span>
               <span class="mt-2 max-w-sm text-sm leading-6 text-zinc-400">{{ t('upload.dragAndDrop') }}</span>
-              <span class="mt-6 rounded-full border border-zinc-800 px-4 py-2 text-xs font-bold uppercase tracking-[0.12em] text-zinc-500">MP4, WebM, MOV</span>
+              <span class="mt-6 rounded-full border border-white/[0.07] px-4 py-2 text-xs font-medium text-zinc-500">MP4, WebM, MOV</span>
             </button>
             <input ref="fileInput" type="file" accept="video/*" class="hidden" @change="handleFileSelect" />
           </div>
 
           <form v-if="stage === 'details'" class="grid gap-5 xl:grid-cols-[minmax(0,1fr)_22rem]" @submit.prevent="handleStartUpload">
             <div class="space-y-5">
-              <section class="rounded-xl border border-zinc-800 bg-zinc-950 p-4 shadow-2xl shadow-black/20 sm:p-5">
+              <section class="rounded-xl border border-white/[0.07] bg-zinc-950 p-4 shadow-2xl shadow-black/20 sm:p-5">
                 <div class="flex items-center gap-4">
-                  <div class="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-zinc-900 text-blue-300">
+                  <div class="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-zinc-900 text-zinc-200">
                     <svg class="h-7 w-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 10 4.55-2.28A1 1 0 0 1 21 8.62v6.76a1 1 0 0 1-1.45.9L15 14M5 18h8a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2Z" />
                     </svg>
                   </div>
                   <div class="min-w-0 flex-1">
-                    <p class="text-xs font-bold uppercase tracking-[0.16em] text-zinc-500">{{ t('upload.selectedFile') }}</p>
-                    <p class="mt-1 truncate text-base font-black">{{ selectedFileName }}</p>
+                    <p class="text-xs font-medium text-zinc-500">{{ t('upload.selectedFile') }}</p>
+                    <p class="mt-1 truncate text-base font-semibold">{{ selectedFileName }}</p>
                     <p v-if="selectedFile" class="mt-1 text-xs text-zinc-500">{{ formatFileSize(selectedFile.size) }}</p>
                   </div>
-                  <button type="button" class="rounded-lg border border-zinc-700 px-3 py-2 text-xs font-bold text-zinc-300 transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-50" :disabled="isUploading" @click="stage = 'select'">
+                  <button type="button" class="rounded-lg border border-white/10 px-3 py-2 text-xs font-bold text-zinc-300 transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-50" :disabled="isUploading" @click="stage = 'select'">
                     {{ t('upload.changeFile') }}
                   </button>
                 </div>
               </section>
 
-              <section class="rounded-xl border border-zinc-800 bg-zinc-950 p-4 shadow-2xl shadow-black/20 sm:p-5">
+              <section class="rounded-xl border border-white/[0.07] bg-zinc-950 p-4 shadow-2xl shadow-black/20 sm:p-5">
                 <div class="grid gap-4 sm:grid-cols-2">
                   <div>
                     <label class="mb-2 block text-sm font-bold">{{ t('upload.channel') }}</label>
@@ -120,34 +120,34 @@
             </div>
 
             <aside class="space-y-5">
-              <section class="rounded-xl border border-zinc-800 bg-zinc-950 p-4 shadow-2xl shadow-black/20">
+              <section class="rounded-xl border border-white/[0.07] bg-zinc-950 p-4 shadow-2xl shadow-black/20">
                 <label class="flex cursor-pointer items-start gap-3">
                   <input id="explicit-toggle" v-model="form.explicit" type="checkbox" class="mt-1 h-4 w-4 rounded accent-red-500" />
                   <span class="min-w-0">
-                    <span class="block text-sm font-black">{{ t('upload.explicit') }}</span>
+                    <span class="block text-sm font-semibold">{{ t('upload.explicit') }}</span>
                     <span class="mt-1 block text-xs leading-5 text-zinc-500">{{ t('upload.explicitHelper') }}</span>
                   </span>
                 </label>
               </section>
 
-              <section v-if="isAdmin" class="rounded-xl border border-zinc-800 bg-zinc-950 p-4 shadow-2xl shadow-black/20">
+              <section v-if="isAdmin" class="rounded-xl border border-white/[0.07] bg-zinc-950 p-4 shadow-2xl shadow-black/20">
                 <label class="flex cursor-pointer items-start gap-3">
                   <input id="local-upload-toggle" v-model="useLocalUpload" type="checkbox" class="mt-1 h-4 w-4 rounded accent-blue-500" />
                   <span>
-                    <span class="block text-sm font-black">{{ t('upload.localUpload') }}</span>
+                    <span class="block text-sm font-semibold">{{ t('upload.localUpload') }}</span>
                     <span class="mt-1 block text-xs leading-5 text-zinc-500">{{ t('upload.localUploadHelper') }}</span>
                   </span>
                 </label>
               </section>
 
-              <section class="rounded-xl border border-zinc-800 bg-zinc-950 p-4 shadow-2xl shadow-black/20">
+              <section class="rounded-xl border border-white/[0.07] bg-zinc-950 p-4 shadow-2xl shadow-black/20">
                 <div class="mb-3 flex items-center justify-between gap-3">
-                  <label class="text-sm font-black">{{ t('upload.customThumbnail') }}</label>
+                  <label class="text-sm font-semibold">{{ t('upload.customThumbnail') }}</label>
                   <button v-if="thumbnailPreview" type="button" class="text-xs font-bold text-red-300 transition hover:text-red-200" @click="clearThumbnail">
                     {{ t('upload.removeThumbnail') }}
                   </button>
                 </div>
-                <button type="button" class="relative flex aspect-video w-full items-center justify-center overflow-hidden rounded-lg border border-dashed border-zinc-700 bg-zinc-900 transition hover:border-blue-500" @click="triggerThumbnailInput">
+                <button type="button" class="relative flex aspect-video w-full items-center justify-center overflow-hidden rounded-lg border border-dashed border-white/10 bg-zinc-900 transition hover:border-white/25" @click="triggerThumbnailInput">
                   <img v-if="thumbnailPreview" :src="thumbnailPreview" :alt="form.title" class="h-full w-full object-cover" />
                   <span v-else class="flex flex-col items-center px-4 text-center">
                     <svg class="mb-2 h-8 w-8 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -161,67 +161,67 @@
                 <p class="mt-2 text-xs text-zinc-500">{{ t('upload.maxSize') }}</p>
               </section>
 
-              <div class="sticky bottom-0 -mx-4 border-t border-zinc-800 bg-zinc-950/95 p-4 backdrop-blur sm:static sm:mx-0 sm:border-0 sm:bg-transparent sm:p-0">
-                <button type="submit" :disabled="isUploading" class="w-full rounded-lg bg-red-600 px-5 py-3 text-sm font-black text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50">
+              <div class="sticky bottom-0 -mx-4 border-t border-white/[0.07] bg-zinc-950/95 p-4 backdrop-blur sm:static sm:mx-0 sm:border-0 sm:bg-transparent sm:p-0">
+                <button type="submit" :disabled="isUploading" class="w-full rounded-lg bg-zinc-100 px-5 py-3 text-sm font-semibold text-zinc-950 transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-50">
                   {{ t('upload.startUpload') }}
                 </button>
               </div>
             </aside>
           </form>
 
-          <div v-if="stage === 'uploading'" class="mx-auto max-w-3xl rounded-xl border border-zinc-800 bg-zinc-950 p-5 shadow-2xl shadow-black/20 sm:p-8">
+          <div v-if="stage === 'uploading'" class="mx-auto max-w-3xl rounded-xl border border-white/[0.07] bg-zinc-950 p-5 shadow-2xl shadow-black/20 sm:p-8">
             <div class="mb-6 flex items-center gap-4">
-              <div class="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-blue-950 text-blue-300">
+              <div class="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-zinc-800 text-zinc-200">
                 <svg class="h-7 w-7 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 16V4m0 0 4 4m-4-4-4 4M4 20h16" />
                 </svg>
               </div>
               <div class="min-w-0">
-                <p class="truncate text-lg font-black">{{ selectedFileName }}</p>
+                <p class="truncate text-lg font-semibold">{{ selectedFileName }}</p>
                 <p class="text-sm text-zinc-500">{{ t('upload.dontCloseWarning') }}</p>
               </div>
             </div>
             <div class="mb-3 flex items-center justify-between gap-4 text-sm">
               <span class="font-bold text-zinc-300">{{ t('upload.uploading') }}</span>
-              <span class="font-black text-blue-300">{{ t('upload.uploadProgress', { percent: uploadProgress }) }}</span>
+              <span class="font-semibold text-zinc-200">{{ t('upload.uploadProgress', { percent: uploadProgress }) }}</span>
             </div>
             <div class="h-3 overflow-hidden rounded-full bg-zinc-900">
-              <div class="h-full rounded-full bg-blue-600 transition-all duration-300" :style="{ width: uploadProgress + '%' }"></div>
+              <div class="h-full rounded-full bg-zinc-100 transition-all duration-300 text-zinc-950" :style="{ width: uploadProgress + '%' }"></div>
             </div>
           </div>
 
-          <div v-if="stage === 'complete'" class="mx-auto max-w-3xl rounded-xl border border-zinc-800 bg-zinc-950 p-5 shadow-2xl shadow-black/20 sm:p-8">
+          <div v-if="stage === 'complete'" class="mx-auto max-w-3xl rounded-xl border border-white/[0.07] bg-zinc-950 p-5 shadow-2xl shadow-black/20 sm:p-8">
             <div class="text-center">
               <div class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-950 text-green-300">
                 <svg class="h-9 w-9" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="m5 13 4 4L19 7" />
                 </svg>
               </div>
-              <h2 class="text-2xl font-black">{{ t('upload.uploadComplete') }}</h2>
+              <h2 class="text-2xl font-semibold">{{ t('upload.uploadComplete') }}</h2>
               <p class="mt-2 text-sm text-zinc-400">{{ t('upload.uploadSuccess') }}</p>
             </div>
 
-            <div class="mt-6 grid gap-3 rounded-xl border border-zinc-800 bg-zinc-900/40 p-4 sm:grid-cols-2">
+            <div class="mt-6 grid gap-3 rounded-xl border border-white/[0.07] bg-zinc-900/40 p-4 sm:grid-cols-2">
               <div>
-                <p class="text-xs font-bold uppercase tracking-[0.14em] text-zinc-500">{{ t('upload.channel') }}</p>
+                <p class="text-xs font-medium text-zinc-500">{{ t('upload.channel') }}</p>
                 <p class="mt-1 font-bold">{{ getChannelName(form.channelId) }}</p>
               </div>
               <div>
-                <p class="text-xs font-bold uppercase tracking-[0.14em] text-zinc-500">{{ t('upload.videoTitle') }}</p>
+                <p class="text-xs font-medium text-zinc-500">{{ t('upload.videoTitle') }}</p>
                 <p class="mt-1 font-bold">{{ form.title }}</p>
               </div>
               <div v-if="form.description" class="sm:col-span-2">
-                <p class="text-xs font-bold uppercase tracking-[0.14em] text-zinc-500">{{ t('upload.description') }}</p>
+                <p class="text-xs font-medium text-zinc-500">{{ t('upload.description') }}</p>
                 <p class="mt-1 text-sm leading-6 text-zinc-300">{{ form.description }}</p>
               </div>
             </div>
 
-            <p class="mt-4 rounded-lg border border-blue-900/70 bg-blue-950/40 px-4 py-3 text-sm text-blue-100">
+            <p class="mt-4 rounded-lg bg-white/[0.04] px-4 py-3 text-sm text-zinc-300">
               {{ t('upload.publishMessage') }}
             </p>
 
             <div class="mt-5 grid gap-3 sm:grid-cols-[1fr_auto_auto]">
-              <button type="button" :disabled="isPublishing" class="rounded-lg bg-green-600 px-5 py-3 text-sm font-black text-white transition hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50" @click="handlePublish">
+              <button type="button" :disabled="isPublishing" class="rounded-lg bg-zinc-100 px-5 py-3 text-sm font-semibold text-zinc-950 transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-50" @click="handlePublish">
                 {{ isPublishing ? t('upload.publishing') : t('upload.publish') }}
               </button>
               <button type="button" :disabled="isPublishing" class="rounded-lg bg-zinc-800 px-5 py-3 text-sm font-bold text-zinc-100 transition hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-50" @click="startOver">

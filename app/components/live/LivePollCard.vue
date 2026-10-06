@@ -1,21 +1,21 @@
 <template>
-  <div v-if="visiblePoll || canManage" class="space-y-2 border-b border-zinc-800 p-3">
+  <div v-if="visiblePoll || canManage" class="space-y-2 border-b border-white/[0.07] p-3">
     <div v-if="canManage" class="flex justify-end">
       <button type="button" class="rounded-full bg-zinc-800 px-3 py-1.5 text-xs font-bold text-white transition hover:bg-zinc-700" @click="composerOpen = !composerOpen">
         {{ t('live.poll.create') }}
       </button>
     </div>
 
-    <form v-if="composerOpen" class="space-y-2 rounded-2xl border border-zinc-700 bg-zinc-900 p-3" @submit.prevent="submitPoll">
-      <p class="text-sm font-black text-white">{{ t('live.poll.createTitle') }}</p>
-      <input v-model="question" maxlength="120" required :placeholder="t('live.poll.questionPlaceholder')" class="w-full rounded-xl border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-white outline-none focus:border-red-500" />
+    <form v-if="composerOpen" class="space-y-2 rounded-2xl border border-white/10 bg-zinc-900 p-3" @submit.prevent="submitPoll">
+      <p class="text-sm font-semibold text-white">{{ t('live.poll.createTitle') }}</p>
+      <input v-model="question" maxlength="120" required :placeholder="t('live.poll.questionPlaceholder')" class="w-full rounded-xl border border-white/10 bg-zinc-800 px-3 py-2 text-sm text-white outline-none focus:border-white/30" />
       <div v-for="(_, index) in options" :key="index" class="flex gap-2">
-        <input v-model="options[index]" maxlength="80" required :placeholder="t('live.poll.optionPlaceholder', { number: index + 1 })" class="min-w-0 flex-1 rounded-xl border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-white outline-none focus:border-red-500" />
+        <input v-model="options[index]" maxlength="80" required :placeholder="t('live.poll.optionPlaceholder', { number: index + 1 })" class="min-w-0 flex-1 rounded-xl border border-white/10 bg-zinc-800 px-3 py-2 text-sm text-white outline-none focus:border-white/30" />
         <button v-if="options.length > 2" type="button" class="h-9 w-9 rounded-full text-zinc-400 hover:bg-zinc-800 hover:text-white" :aria-label="t('live.poll.removeOption')" @click="options.splice(index, 1)">×</button>
       </div>
       <div class="flex items-center justify-between gap-2">
         <button v-if="options.length < 4" type="button" class="rounded-full px-3 py-2 text-xs font-bold text-zinc-200 hover:bg-zinc-800" @click="options.push('')">+ {{ t('live.poll.addOption') }}</button>
-        <button type="submit" :disabled="busy || !validPoll" class="ml-auto rounded-full bg-white px-4 py-2 text-xs font-black text-black disabled:opacity-40">{{ t('live.poll.askCommunity') }}</button>
+        <button type="submit" :disabled="busy || !validPoll" class="ml-auto rounded-full bg-white px-4 py-2 text-xs font-semibold text-black disabled:opacity-40">{{ t('live.poll.askCommunity') }}</button>
       </div>
     </form>
 
@@ -32,7 +32,7 @@
           <span v-if="showResults" class="absolute inset-y-0 left-0 bg-red-100 transition-all" :style="{ width: `${option.percentage}%` }" />
           <span class="relative h-4 w-4 flex-none rounded-full border border-zinc-500" :class="{ 'border-[5px] border-red-600': visiblePoll.selected_option_id === option.id }" />
           <span class="relative ml-2 min-w-0 flex-1 text-sm font-semibold text-zinc-950">{{ option.text }}</span>
-          <span v-if="showResults" class="relative ml-2 text-xs font-black text-zinc-800">{{ option.percentage }}%</span>
+          <span v-if="showResults" class="relative ml-2 text-xs font-semibold text-zinc-800">{{ option.percentage }}%</span>
         </button>
       </div>
       <p v-if="!actorChannelId && visiblePoll.status === 'active'" class="mt-3 text-xs text-zinc-500">{{ t('live.poll.signInVote') }}</p>

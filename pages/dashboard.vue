@@ -1,7 +1,7 @@
 <template>
   <div class="min-h-full bg-zinc-950 px-4 py-6 text-white sm:px-6 lg:px-8">
     <!-- Download Status Toast -->
-    <div v-if="downloadStatus" class="fixed top-4 right-4 bg-blue-600 text-white px-6 py-3 rounded-lg shadow-lg z-50">
+    <div v-if="downloadStatus" class="fixed top-4 right-4 bg-zinc-100 text-zinc-950 px-6 py-3 rounded-lg shadow-lg z-50">
       {{ downloadStatus }}
     </div>
 
@@ -9,19 +9,18 @@
     <div class="mx-auto mb-6 max-w-[96rem]">
       <div class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 class="text-4xl font-bold mb-2">{{ t('dashboard.title') }}</h1>
-          <p class="text-gray-400">{{ t('dashboard.subtitle') }}</p>
+          <h1 class="text-2xl font-semibold tracking-tight">{{ t('dashboard.title') }}</h1>
         </div>
         <NuxtLink
           :to="localePath('/upload')"
-          class="inline-flex items-center justify-center rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-700"
+          class="inline-flex items-center justify-center rounded-lg bg-zinc-100 px-4 py-2 text-sm font-semibold text-zinc-950 transition hover:bg-white"
         >
           {{ t('dashboard.uploadVideo') }}
         </NuxtLink>
       </div>
     </div>
 
-    <div class="mx-auto mb-6 max-w-[96rem] border-b border-zinc-800">
+    <div class="mx-auto mb-6 max-w-[96rem] border-b border-white/[0.07]">
       <div class="flex gap-8 overflow-x-auto text-sm font-semibold text-zinc-400">
         <button
           type="button"
@@ -48,7 +47,7 @@
       <!-- Loading State -->
       <div v-if="isLoading" class="mx-auto max-w-[96rem] py-12 text-center">
         <div class="inline-block">
-          <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mb-4"></div>
+          <div class="animate-spin rounded-full h-12 w-12 border-2 border-white/15 border-t-white/70 mb-4"></div>
           <p>{{ t('dashboard.loading') }}</p>
         </div>
       </div>
@@ -63,7 +62,7 @@
           <p class="text-gray-400 mb-6">{{ t('dashboard.startUploading') }}</p>
           <NuxtLink
             :to="localePath('/upload')"
-            class="inline-block px-6 py-3 bg-blue-600 hover:bg-blue-700 rounded font-bold transition"
+            class="inline-block px-6 py-3 bg-zinc-100 hover:bg-white rounded font-bold transition text-zinc-950"
           >
             {{ t('dashboard.uploadVideo') }}
           </NuxtLink>
@@ -73,10 +72,10 @@
       <div
         v-else
         ref="tableCardRef"
-        class="mx-auto flex max-w-[96rem] flex-col rounded-xl border border-zinc-800 bg-zinc-950 shadow-2xl shadow-black/20"
+        class="mx-auto flex max-w-[96rem] flex-col rounded-xl border border-white/[0.07] bg-zinc-950 shadow-2xl shadow-black/20"
         :style="{ minHeight: dashboardTableMinHeight }"
       >
-        <div class="shrink-0 flex items-center gap-3 border-b border-zinc-800 px-4 py-3">
+        <div class="shrink-0 flex items-center gap-3 border-b border-white/[0.07] px-4 py-3">
           <svg class="h-5 w-5 flex-shrink-0 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h18M6 12h12M10 19h4" />
           </svg>
@@ -90,7 +89,7 @@
 
         <div ref="tableScrollRef" class="dashboard-table-scroll min-h-0 flex-1 overflow-auto">
           <table class="w-full min-w-[1500px] table-fixed text-left text-sm">
-            <thead class="sticky top-0 z-10 border-b border-zinc-800 bg-zinc-950 text-xs font-semibold text-zinc-400">
+            <thead class="sticky top-0 z-10 border-b border-white/[0.07] bg-zinc-950 text-xs font-semibold text-zinc-400">
               <tr>
                 <th class="w-10 px-4 py-3">
                   <input type="checkbox" class="h-4 w-4 rounded border-zinc-600 bg-zinc-900 accent-red-600" :aria-label="t('dashboard.selectAll')" />
@@ -105,7 +104,7 @@
                 <th class="sticky right-0 w-16 bg-zinc-950 px-4 py-3 text-right shadow-[-12px_0_18px_-18px_rgba(0,0,0,0.9)]"></th>
               </tr>
             </thead>
-            <tbody class="divide-y divide-zinc-800">
+            <tbody class="divide-y divide-white/[0.07]">
               <tr v-for="video in paginatedVideos" :key="video.id" class="motion-row group transition hover:bg-zinc-900/80">
                 <td class="px-4 py-3 align-top">
                   <input type="checkbox" class="mt-7 h-4 w-4 rounded border-zinc-600 bg-zinc-900 accent-red-600" :aria-label="`Select ${video.title}`" />
@@ -195,11 +194,11 @@
           </table>
         </div>
 
-        <div v-if="filteredVideos.length === 0" class="border-t border-zinc-800 px-6 py-12 text-center text-sm text-zinc-500">
+        <div v-if="filteredVideos.length === 0" class="border-t border-white/[0.07] px-6 py-12 text-center text-sm text-zinc-500">
           No videos match your filter.
         </div>
 
-        <div v-else class="shrink-0 flex flex-col gap-3 border-t border-zinc-800 px-4 py-3 text-sm text-zinc-400 sm:flex-row sm:items-center sm:justify-between">
+        <div v-else class="shrink-0 flex flex-col gap-3 border-t border-white/[0.07] px-4 py-3 text-sm text-zinc-400 sm:flex-row sm:items-center sm:justify-between">
           <div class="flex items-center justify-between gap-4 sm:justify-end">
             <span>{{ paginationStart }}-{{ paginationEnd }} of {{ filteredVideos.length }}</span>
             <div class="flex items-center gap-1">
@@ -243,7 +242,7 @@
     <Transition name="menu-pop">
       <div
         v-if="selectedActionsVideo"
-        class="fixed z-50 w-56 origin-top-right overflow-hidden rounded-xl border border-zinc-700 bg-zinc-950 shadow-2xl shadow-black/50"
+        class="fixed z-50 w-56 origin-top-right overflow-hidden rounded-xl border border-white/10 bg-zinc-950 shadow-2xl shadow-black/50"
         :style="{ top: actionsMenuPosition.top + 'px', right: actionsMenuPosition.right + 'px' }"
       >
         <button
@@ -263,7 +262,7 @@
         <button
           type="button"
           :disabled="selectedActionsVideo.status !== 'published' && selectedActionsVideo.status !== 'ready' || downloadingVideoIds.has(selectedActionsVideo.id)"
-          class="flex w-full items-center gap-3 border-t border-zinc-800 px-4 py-3 text-left text-sm text-gray-100 transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-50"
+          class="flex w-full items-center gap-3 border-t border-white/[0.07] px-4 py-3 text-left text-sm text-gray-100 transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-50"
           :title="selectedActionsVideo.status !== 'published' && selectedActionsVideo.status !== 'ready' ? t('dashboard.downloadUnavailable') : t('dashboard.downloadHint')"
           @click="handleDownloadAction(selectedActionsVideo)"
         >
@@ -277,7 +276,7 @@
 
         <button
           type="button"
-          class="flex w-full items-center gap-3 border-t border-zinc-800 px-4 py-3 text-left text-sm text-red-100 transition hover:bg-zinc-800"
+          class="flex w-full items-center gap-3 border-t border-white/[0.07] px-4 py-3 text-left text-sm text-red-100 transition hover:bg-zinc-800"
           @click="handleDeleteAction(selectedActionsVideo)"
         >
           <span class="flex h-9 w-9 items-center justify-center rounded-lg bg-zinc-800 text-red-200">

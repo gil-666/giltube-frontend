@@ -23,7 +23,7 @@
       </div>
       <div :class="copyClass">
         <div class="min-w-0 flex-1">
-          <p class="text-[10px] font-semibold uppercase tracking-[0.18em] text-cyan-300/80">{{ t('ads.sponsored') }}</p>
+          <p class="text-[10px] font-medium text-cyan-300/80">{{ t('ads.sponsored') }}</p>
           <h3 class="truncate text-xs font-semibold text-white">{{ ad.creative.headline || fallbackTitle }}</h3>
           <p v-if="ad.creative.body" class="truncate text-xs text-zinc-400">{{ ad.creative.body }}</p>
         </div>
@@ -47,7 +47,7 @@
         @click.self="showSponsorInfo = false"
       >
         <div class="w-full max-w-md rounded-lg bg-zinc-800" style="z-index: 2147483647 !important; position: relative; overflow: visible;">
-          <div class="flex items-center justify-between border-b border-zinc-700 px-6 py-4">
+          <div class="flex items-center justify-between border-b border-white/10 px-6 py-4">
             <h2 class="text-lg font-semibold text-white">{{ t('ads.about') }}</h2>
             <button type="button" class="text-gray-400 hover:text-white" @click="showSponsorInfo = false">
               <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -58,13 +58,13 @@
 
           <div class="space-y-4 px-6 py-4">
             <div>
-              <p class="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-300/80">{{ t('ads.sponsoredAd') }}</p>
+              <p class="text-xs font-medium text-cyan-300/80">{{ t('ads.sponsoredAd') }}</p>
               <h3 class="mt-1 text-base font-semibold text-white">{{ ad.creative.headline || fallbackTitle }}</h3>
               <p v-if="ad.creative.body" class="mt-2 text-sm text-zinc-300">{{ ad.creative.body }}</p>
             </div>
 
-            <div v-if="ad.creative.destinationUrl" class="rounded border border-zinc-700 bg-zinc-900 p-3">
-              <p class="text-xs uppercase tracking-[0.18em] text-zinc-500">{{ t('ads.sponsorLink') }}</p>
+            <div v-if="ad.creative.destinationUrl" class="rounded border border-white/10 bg-zinc-900 p-3">
+              <p class="text-xs text-zinc-500">{{ t('ads.sponsorLink') }}</p>
               <p class="mt-1 break-all text-sm text-zinc-200">{{ ad.creative.destinationUrl }}</p>
             </div>
 
@@ -74,7 +74,7 @@
                 :href="ad.creative.destinationUrl"
                 target="_blank"
                 rel="noopener noreferrer"
-                class="rounded bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-700"
+                class="rounded bg-zinc-100 px-4 py-2 text-sm font-semibold text-zinc-950 transition hover:bg-white"
                 @click="handleClick"
               >
                 Visit sponsor

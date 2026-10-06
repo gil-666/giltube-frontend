@@ -7,11 +7,11 @@
         <p class="mt-1 text-xs text-yellow-300/80">{{ t('admin.transcodeJobs.softCancelNote') }}</p>
       </div>
       <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
-        <label class="text-xs font-bold uppercase tracking-wide text-gray-500">
+        <label class="text-xs font-medium text-gray-500">
           {{ t('admin.transcodeJobs.statusFilter') }}
           <select
             v-model="statusFilter"
-            class="mt-1 w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-white outline-none focus:border-blue-500 sm:w-44"
+            class="mt-1 w-full rounded-lg border border-white/10 bg-zinc-950 px-3 py-2 text-sm text-white outline-none focus:border-white/30 sm:w-44"
           >
             <option v-for="status in statuses" :key="status" :value="status">
               {{ t(`admin.transcodeJobs.statuses.${status}`) }}
@@ -19,7 +19,7 @@
           </select>
         </label>
         <button
-          class="rounded-lg border border-zinc-700 px-4 py-2 text-sm font-semibold text-gray-200 transition hover:border-blue-500 hover:text-white"
+          class="rounded-lg border border-white/10 px-4 py-2 text-sm font-semibold text-gray-200 transition hover:border-blue-500 hover:text-white"
           :disabled="loading"
           @click="loadJobs"
         >
@@ -32,11 +32,11 @@
       {{ error }}
     </div>
 
-    <div class="rounded-xl border border-zinc-800 bg-zinc-950/70">
+    <div class="rounded-xl border border-white/[0.07] bg-zinc-950/70">
       <div v-if="!jobs.length && !loading" class="p-8 text-center text-gray-500">
         {{ t('admin.transcodeJobs.empty') }}
       </div>
-      <div v-else class="divide-y divide-zinc-800">
+      <div v-else class="divide-y divide-white/[0.07]">
         <article
           v-for="job in jobs"
           :key="job.video_id"
@@ -45,7 +45,7 @@
           <div class="min-w-0">
             <div class="flex flex-wrap items-center gap-2">
               <h3 class="truncate text-base font-bold text-white">{{ job.title || job.video_id }}</h3>
-              <span :class="statusClass(job.status)" class="rounded-full px-2 py-0.5 text-xs font-bold uppercase tracking-wide">
+              <span :class="statusClass(job.status)" class="rounded-full px-2 py-0.5 text-xs font-medium">
                 {{ labelStatus(job.status) }}
               </span>
             </div>
@@ -59,7 +59,7 @@
           </div>
 
           <div>
-            <p class="text-xs font-bold uppercase tracking-wide text-gray-500">{{ t('admin.transcodeJobs.progress') }}</p>
+            <p class="text-xs font-medium text-gray-500">{{ t('admin.transcodeJobs.progress') }}</p>
             <div class="mt-2 h-2 overflow-hidden rounded-full bg-zinc-800">
               <div class="h-full rounded-full bg-red-500 transition-all" :style="{ width: `${safeProgress(job.progress)}%` }" />
             </div>

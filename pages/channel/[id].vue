@@ -1,13 +1,13 @@
 ﻿<template>
   <div class="channel-page min-h-screen bg-zinc-950 text-white">
     <!-- Channel Header -->
-    <div v-if="channel" class="channel-hero relative overflow-hidden border-b border-zinc-800 bg-zinc-900">
+    <div v-if="channel" class="channel-hero relative overflow-hidden bg-zinc-950">
       <div v-if="channelBackgroundUrl" class="absolute inset-0">
         <img :src="channelBackgroundUrl" :srcset="channelBackgroundSrcset || undefined" sizes="100vw" :alt="`${channel.name} background`" class="channel-fade-bg h-full w-full object-cover" :style="channelBackgroundStyle" />
         <div class="channel-hero-overlay absolute inset-0 bg-black/70" />
         <div class="channel-hero-fade absolute inset-0 bg-gradient-to-t from-zinc-950 via-black/45 to-black/25" />
       </div>
-      <div v-else class="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(220,38,38,0.18),transparent_34%),linear-gradient(135deg,rgba(39,39,42,0.95),rgba(9,9,11,1))]" />
+      <div v-else class="absolute inset-0 bg-[linear-gradient(180deg,#16161a_0%,#0c0c0e_100%)]" />
       <iframe
         v-if="headerThemeSrcdoc"
         class="channel-custom-theme channel-fade-bg pointer-events-none absolute inset-0 h-full w-full border-0"
@@ -16,7 +16,7 @@
         :srcdoc="headerThemeSrcdoc"
         :title="t('channelPage.customHeader')"
       />
-      <div class="relative min-h-[20rem] max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+      <div class="relative mx-auto min-h-[16rem] max-w-[100rem] px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
         <button
           v-if="canEditChannel"
           type="button"
@@ -53,11 +53,11 @@
               :srcset="channelAvatarSrcset || undefined"
               sizes="128px"
               :alt="channel.name"
-              class="w-24 sm:w-32 h-24 sm:h-32 rounded-full object-cover border-2 border-zinc-700"
+              class="h-24 w-24 rounded-full object-cover ring-1 ring-white/10 sm:h-32 sm:w-32"
               @error="failedChannelAvatar = true"
             />
             <div v-else
-              class="w-24 sm:w-32 h-24 sm:h-32 rounded-full bg-zinc-700 flex items-center justify-center text-3xl sm:text-5xl font-bold border-2 border-zinc-700">
+              class="flex h-24 w-24 items-center justify-center rounded-full bg-zinc-800 text-3xl font-semibold ring-1 ring-white/10 sm:h-32 sm:w-32 sm:text-5xl">
               {{ channel.name.charAt(0).toUpperCase() }}
             </div>
           </div>
@@ -65,18 +65,18 @@
           <!-- Channel Info -->
           <div class="channel-header-copy flex-1 min-w-0 pr-14 sm:pr-24">
             <div class="flex items-center gap-2">
-              <h1 class="text-2xl sm:text-4xl font-bold break-words">{{ channel.name }}</h1>
+              <h1 class="break-words text-2xl font-semibold tracking-tight sm:text-4xl">{{ channel.name }}</h1>
               <VerifiedBadge class="channel-verified-badge" :verified="channel.verified" size="lg"
                 tooltip="This account is verified by GilTube. It belongs to the channel owner and is not a fan account or impersonator." />
               <span
                 v-if="liveStatus?.is_live"
-                class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-red-900 text-red-200 border border-red-700"
+                class="inline-flex items-center gap-1.5 rounded-full bg-red-500/15 px-2 py-0.5 text-xs font-semibold text-red-300"
               >
                 <span class="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse" />
                 {{ t('live.live') }}
               </span>
             </div>
-            <p class="mt-2 text-sm font-semibold text-white sm:text-base break-words">{{ channel.description || t('channelPage.noDescription') }}</p>
+            <p v-if="channel.description" class="mt-2 max-w-2xl break-words text-sm leading-6 text-zinc-300 sm:text-[15px]">{{ channel.description }}</p>
 
             <div class="mt-4 flex flex-wrap items-center gap-3">
               <button
@@ -89,7 +89,7 @@
               >
                 {{ subscriptionBusy ? t('channelPage.subscriptionWorking') : isSubscribed ? t('channelPage.subscribed') : t('channelPage.subscribe') }}
               </button>
-              <span class="channel-subscriber-count rounded-full bg-black/35 px-3 py-1.5 text-sm font-semibold text-white backdrop-blur">
+              <span class="channel-subscriber-count text-sm text-zinc-400">
                 {{ t(subscriberCount === 1 ? 'channelPage.subscriberCountOne' : 'channelPage.subscriberCount', { count: formatViews(subscriberCount) }) }}
               </span>
             </div>
@@ -98,7 +98,7 @@
             <NuxtLink
               v-if="liveStatus?.is_live"
               :to="localePath(`/live/${channelId}`)"
-              class="inline-flex mt-3 px-3 py-1.5 rounded bg-red-600 hover:bg-red-700 transition text-sm font-semibold"
+              class="mt-3 inline-flex h-9 items-center rounded-full bg-red-600 px-4 text-sm font-semibold transition hover:bg-red-500"
             >
               {{ t('channelPage.watchLive') }}
             </NuxtLink>
@@ -267,7 +267,7 @@
             </div>
           </details>
 
-          <button type="submit" :disabled="isSavingChannel" class="w-full rounded-lg bg-red-600 px-4 py-2.5 font-bold text-white transition hover:bg-red-500 disabled:cursor-not-allowed disabled:opacity-60">
+          <button type="submit" :disabled="isSavingChannel" class="w-full rounded-lg bg-zinc-100 px-4 py-2.5 font-bold text-zinc-950 transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-60">
             {{ isSavingChannel ? t('channels.saving') : t('channels.save') }}
           </button>
         </form>
@@ -276,17 +276,17 @@
 
     <!-- Loading/Error State -->
     <div v-if="isLoading" class="flex justify-center items-center py-20">
-      <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+      <div class="h-8 w-8 animate-spin rounded-full border-2 border-white/15 border-t-white/70"></div>
     </div>
 
     <div v-if="error" class="max-w-6xl mx-auto px-4 sm:px-6 py-8">
-      <div class="bg-red-900 text-white p-4 rounded">
+      <div class="rounded-xl bg-white/[0.04] p-4 text-zinc-300">
         {{ error }}
       </div>
     </div>
 
     <!-- Videos Section -->
-    <div v-if="!isLoading && channel" class="channel-content-section relative overflow-hidden">
+    <div v-if="!isLoading && channel" class="channel-content-section relative overflow-hidden" :class="{ 'has-custom-theme': !!contentThemeSrcdoc }">
       <iframe
         v-if="contentThemeSrcdoc"
         class="channel-custom-theme channel-fade-bg pointer-events-none absolute inset-0 h-full w-full border-0"
@@ -295,8 +295,8 @@
         :srcdoc="contentThemeSrcdoc"
         :title="t('channelPage.customContent')"
       />
-      <div class="relative max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
-        <div class="channel-tabs mb-4 flex gap-2 border-b border-white/10">
+      <div class="relative mx-auto max-w-[100rem] px-4 py-6 sm:px-6 lg:px-8">
+        <div class="channel-tabs mb-6 flex gap-2 border-b border-white/[0.07]">
           <button type="button" class="channel-tab-button px-3 py-2 text-sm font-bold transition" :class="activeTab === 'videos' ? 'is-active text-white' : 'text-zinc-400 hover:text-white'" @click="activeTab = 'videos'">{{ t('channelPage.videos') }}</button>
           <button type="button" class="channel-tab-button px-3 py-2 text-sm font-bold transition" :class="activeTab === 'clips' ? 'is-active text-white' : 'text-zinc-400 hover:text-white'" @click="activeTab = 'clips'">{{ t('channelPage.clips') }}</button>
           <button v-if="musicArtist" type="button" class="channel-tab-button px-3 py-2 text-sm font-bold transition" :class="activeTab === 'music' ? 'is-active text-white' : 'text-zinc-400 hover:text-white'" @click="activeTab = 'music'">{{ t('channelPage.music') }}</button>
@@ -325,35 +325,27 @@
         </section>
 
         <template v-else>
-          <div v-if="displayedItems.length === 0" class="text-gray-400 text-center py-8">
-            {{ activeTab === 'clips' ? 'No clips yet' : t('channelPage.noVideos') }}
+          <div v-if="displayedItems.length === 0" class="py-10 text-sm text-zinc-500">
+            {{ activeTab === 'clips' ? t('channelPage.noClips') : t('channelPage.noVideos') }}
           </div>
 
-          <div v-else class="motion-grid grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
+          <div v-else class="motion-grid grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
             <NuxtLink v-for="video in displayedItems" :key="video.id" :to="localePath(`/video/${video.id}`)"
               class="channel-video-card group min-w-0 cursor-pointer">
-              <div class="relative mb-2 aspect-video overflow-hidden rounded-lg bg-zinc-800">
+              <div class="relative mb-3 aspect-video overflow-hidden rounded-xl bg-zinc-900">
                 <img v-if="video.thumbnail_url" :src="video.thumbnail_url" :alt="video.title"
                   :srcset="imageVariantSrcset(video.thumbnail_url) || undefined"
                   sizes="(min-width: 1024px) 25vw, 50vw"
-                  class="w-full h-full object-cover group-hover:opacity-80 transition-opacity" />
-                <div v-else class="w-full h-full bg-zinc-700 flex items-center justify-center">
+                  class="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]" />
+                <span v-if="isVideo8K(video.width) || isVideo4K(video.width)" class="absolute bottom-2 right-2 rounded-md bg-black/80 px-1.5 py-0.5 text-[11px] font-semibold text-zinc-100">{{ isVideo8K(video.width) ? '8K' : '4K' }}</span>
+                <div v-else-if="!video.thumbnail_url" class="flex h-full w-full items-center justify-center bg-zinc-800">
                   <span class="text-zinc-500 text-xs">{{ t('channelPage.noThumbnail') }}</span>
                 </div>
               </div>
-              <h3
-                class="text-zinc-100 font-semibold text-xs sm:text-sm line-clamp-2 group-hover:text-red-300 transition-colors break-words">
+              <h3 class="line-clamp-2 break-words text-sm font-medium leading-5 text-zinc-100">
                 {{ video.title }}
               </h3>
-              <span v-if="isVideo8K(video.width)"
-                class="p-0.5 bg-gray-900 text-gray-200 text-xs font-semibold flex-shrink-0 whitespace-nowrap border border-gray-500">8K</span>
-              <span v-if="isVideo4K(video.width)"
-                class="p-0.5 bg-gray-900 text-gray-200 text-xs font-semibold flex-shrink-0 whitespace-nowrap border border-gray-500">4K</span>
-              <div class="flex items-center gap-2 mt-1">
-                <p class="text-xs text-zinc-300 line-clamp-1">{{ video.channel?.name || channel?.name }}</p>
-                <VerifiedBadge v-if="video.channel?.verified || channel?.verified" :verified="true" size="sm" />
-              </div>
-              <p class="text-xs text-zinc-300 line-clamp-1">{{ t('channelPage.videoStats', { views: formatViews(video.views), time: getTimeAgo(video.created_at) }) }}</p>
+              <p class="mt-1 line-clamp-1 text-[13px] text-zinc-500">{{ t('channelPage.videoStats', { views: formatViews(video.views), time: getTimeAgo(video.created_at) }) }}</p>
             </NuxtLink>
           </div>
         </template>
@@ -917,6 +909,10 @@ const formatDate = (date) => {
 
 .channel-video-card {
   display: block;
+}
+
+/* Over a channel's custom background, cards keep a frame for contrast. */
+.has-custom-theme .channel-video-card {
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 0.875rem;
   background:
@@ -931,7 +927,7 @@ const formatDate = (date) => {
   backdrop-filter: blur(10px);
 }
 
-.channel-video-card:hover {
+.has-custom-theme .channel-video-card:hover {
   border-color: rgba(248, 113, 113, 0.5);
   background:
     linear-gradient(180deg, rgba(63, 63, 70, 0.8), rgba(24, 24, 27, 0.66)),

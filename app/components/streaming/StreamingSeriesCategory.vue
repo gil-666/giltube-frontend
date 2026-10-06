@@ -316,6 +316,9 @@ const toDisplaySeries = (series) => {
     resumeLink: series === selectedSeries.value ? selectedSeriesResumeLink.value : '',
     maxQuality: series.media_capabilities?.max_quality || '',
     hdr: !!series.media_capabilities?.hdr,
+    explicit: !!series.explicit,
+    rating: series.content_rating?.rating || '',
+    ratingDescriptors: series.content_rating?.descriptors || [],
     surround: !!series.media_capabilities?.surround,
   }
 }

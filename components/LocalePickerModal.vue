@@ -1,7 +1,7 @@
 <template>
   <Teleport v-if="show" to="body">
     <div class="fixed inset-0 z-[10000] flex items-center justify-center bg-black bg-opacity-75">
-      <div class="mx-4 w-full max-w-md rounded-lg border border-zinc-700 bg-zinc-900 p-8 shadow-2xl">
+      <div class="mx-4 w-full max-w-md rounded-lg border border-white/10 bg-zinc-900 p-8 shadow-2xl">
         <div class="mb-8 text-center">
           <h1 class="mb-2 text-3xl font-bold text-white">{{ t('modal.welcomeTitle') }}</h1>
           <p class="text-gray-400">{{ t('modal.selectLanguage') }}</p>

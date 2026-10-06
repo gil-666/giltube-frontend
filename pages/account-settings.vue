@@ -2,15 +2,14 @@
   <div class="min-h-screen bg-zinc-950 text-white p-6">
     <div class="max-w-3xl mx-auto space-y-8">
       <div>
-        <h1 class="text-4xl font-bold mb-2">{{ t('accountSettings.title') }}</h1>
-        <p class="text-gray-400">{{ t('accountSettings.subtitle') }}</p>
+        <h1 class="text-2xl font-semibold tracking-tight">{{ t('accountSettings.title') }}</h1>
       </div>
 
       <div v-if="isLoading" class="bg-zinc-900 rounded-lg p-6 text-gray-300">
         {{ t('accountSettings.loading') }}
       </div>
 
-      <div v-else class="bg-zinc-900 rounded-lg p-6 border border-zinc-800">
+      <div v-else class="bg-zinc-900 rounded-lg p-6 border border-white/[0.07]">
         <h2 class="text-xl font-semibold mb-4">{{ t('accountSettings.profile') }}</h2>
         <div class="space-y-2 text-sm">
           <p><span class="text-gray-500">{{ t('accountSettings.username') }}</span> {{ profile.username }}</p>
@@ -19,7 +18,7 @@
         </div>
       </div>
 
-      <section v-if="!isLoading" class="bg-zinc-900 rounded-lg p-6 border border-zinc-800">
+      <section v-if="!isLoading" class="bg-zinc-900 rounded-lg p-6 border border-white/[0.07]">
         <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <h2 class="text-xl font-semibold">{{ t('accountSettings.musicQuality') }}</h2>
@@ -29,7 +28,7 @@
             <select
               v-model="musicQuality"
               :disabled="musicQualitySaving"
-              class="w-full rounded bg-zinc-800 border border-zinc-700 px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-cyan-500 disabled:opacity-60"
+              class="w-full rounded bg-zinc-800 border border-white/10 px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-white/20 disabled:opacity-60"
               @change="saveMusicQuality"
             >
               <option value="auto">{{ t('accountSettings.qualityAuto') }}</option>
@@ -46,15 +45,15 @@
         </div>
       </section>
 
-      <div class="bg-zinc-900 rounded-lg p-6 border border-cyan-800 space-y-4">
+      <div class="bg-zinc-900 rounded-lg p-6 border border-white/[0.08] space-y-4">
         <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
-            <p class="text-xs font-semibold uppercase tracking-[0.2em] text-cyan-300">{{ t('login.gilidNetworkBadge') }}</p>
+            <p class="text-xs font-medium text-zinc-400">{{ t('login.gilidNetworkBadge') }}</p>
             <h2 class="mt-2 text-xl font-semibold">{{ t('accountSettings.gilidTitle') }}</h2>
             <p class="mt-2 text-sm text-gray-300">
               {{ profile.gilid_linked ? t('accountSettings.gilidLinkedBody') : t('accountSettings.gilidUnlinkedBody') }}
             </p>
-            <p v-if="profile.gilid_linked && profile.gilid_email" class="mt-2 text-xs text-cyan-200">
+            <p v-if="profile.gilid_linked && profile.gilid_email" class="mt-2 text-xs text-zinc-400">
               {{ t('accountSettings.gilidLinkedEmail', { email: profile.gilid_email }) }}
             </p>
           </div>
@@ -62,14 +61,14 @@
             v-if="!profile.gilid_linked"
             @click="linkGilID"
             :disabled="gilidLinking"
-            class="rounded-lg bg-cyan-500 px-4 py-2 font-semibold text-slate-950 transition hover:bg-cyan-400 disabled:bg-gray-600 disabled:text-white"
+            class="shrink-0 whitespace-nowrap rounded-lg bg-zinc-100 px-4 py-2 font-semibold text-zinc-950 transition hover:bg-white disabled:opacity-50"
           >
             {{ gilidLinking ? t('accountSettings.gilidRedirecting') : t('accountSettings.linkGilid') }}
           </button>
         </div>
       </div>
 
-      <form v-if="!profile.gilid_linked" @submit.prevent="submitEmailChange" class="bg-zinc-900 rounded-lg p-6 border border-zinc-800 space-y-4">
+      <form v-if="!profile.gilid_linked" @submit.prevent="submitEmailChange" class="bg-zinc-900 rounded-lg p-6 border border-white/[0.07] space-y-4">
         <h2 class="text-xl font-semibold">{{ t('accountSettings.changeEmail') }}</h2>
 
         <div>
@@ -80,7 +79,7 @@
             type="email"
             required
             autocomplete="email"
-            class="w-full rounded bg-zinc-800 border border-zinc-700 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+            class="w-full rounded bg-zinc-800 border border-white/10 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-white/20"
           />
         </div>
 
@@ -92,7 +91,7 @@
             type="password"
             required
             autocomplete="current-password"
-            class="w-full rounded bg-zinc-800 border border-zinc-700 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+            class="w-full rounded bg-zinc-800 border border-white/10 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-white/20"
           />
         </div>
 
@@ -101,13 +100,13 @@
         <button
           type="submit"
           :disabled="emailSaving"
-          class="px-5 py-2 rounded bg-cyan-600 hover:bg-cyan-700 disabled:opacity-60 transition"
+          class="px-5 py-2 rounded bg-zinc-100 hover:bg-white disabled:opacity-60 transition text-zinc-950"
         >
           {{ emailSaving ? t('accountSettings.updatingEmail') : t('accountSettings.updateEmail') }}
         </button>
       </form>
 
-      <form v-if="!profile.gilid_linked" @submit.prevent="submitPasswordChange" class="bg-zinc-900 rounded-lg p-6 border border-zinc-800 space-y-4">
+      <form v-if="!profile.gilid_linked" @submit.prevent="submitPasswordChange" class="bg-zinc-900 rounded-lg p-6 border border-white/[0.07] space-y-4">
         <h2 class="text-xl font-semibold">{{ t('accountSettings.changePassword') }}</h2>
 
         <div>
@@ -118,7 +117,7 @@
             type="password"
             required
             autocomplete="current-password"
-            class="w-full rounded bg-zinc-800 border border-zinc-700 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+            class="w-full rounded bg-zinc-800 border border-white/10 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-white/20"
           />
         </div>
 
@@ -131,7 +130,7 @@
             required
             minlength="6"
             autocomplete="new-password"
-            class="w-full rounded bg-zinc-800 border border-zinc-700 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+            class="w-full rounded bg-zinc-800 border border-white/10 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-white/20"
           />
         </div>
 
@@ -144,7 +143,7 @@
             required
             minlength="6"
             autocomplete="new-password"
-            class="w-full rounded bg-zinc-800 border border-zinc-700 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+            class="w-full rounded bg-zinc-800 border border-white/10 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-white/20"
           />
         </div>
 
@@ -153,13 +152,13 @@
         <button
           type="submit"
           :disabled="passwordSaving"
-          class="px-5 py-2 rounded bg-cyan-600 hover:bg-cyan-700 disabled:opacity-60 transition"
+          class="px-5 py-2 rounded bg-zinc-100 hover:bg-white disabled:opacity-60 transition text-zinc-950"
         >
           {{ passwordSaving ? t('accountSettings.updatingPassword') : t('accountSettings.updatePassword') }}
         </button>
       </form>
 
-      <div id="passkeys" class="bg-zinc-900 rounded-lg p-6 border border-zinc-800 space-y-4">
+      <div id="passkeys" class="bg-zinc-900 rounded-lg p-6 border border-white/[0.07] space-y-4">
         <div class="flex items-center justify-between gap-4">
           <div>
             <h2 class="text-xl font-semibold">{{ t('accountSettings.passkeys') }}</h2>
@@ -168,7 +167,7 @@
           <button
             @click="registerPasskey"
             :disabled="passkeySaving"
-            class="px-4 py-2 rounded bg-cyan-600 hover:bg-cyan-700 disabled:opacity-60 transition"
+            class="px-4 py-2 rounded bg-zinc-100 hover:bg-white disabled:opacity-60 transition text-zinc-950"
           >
             {{ passkeySaving ? t('accountSettings.waiting') : t('accountSettings.addPasskey') }}
           </button>
@@ -185,7 +184,7 @@
         </div>
 
         <div v-else class="space-y-3">
-          <div v-for="item in passkeys" :key="item.id" class="flex items-center justify-between rounded border border-zinc-700 px-4 py-3">
+          <div v-for="item in passkeys" :key="item.id" class="flex items-center justify-between rounded border border-white/10 px-4 py-3">
             <div>
               <p class="font-medium">{{ item.name }}</p>
               <p class="text-xs text-gray-400">{{ t('accountSettings.addedDate', { date: formatDate(item.created_at) }) }}</p>
@@ -194,7 +193,7 @@
             <button
               @click="removePasskey(item.id)"
               :disabled="passkeyDeletingId === item.id"
-              class="px-3 py-1.5 rounded bg-red-600 hover:bg-red-700 disabled:opacity-60 transition text-sm"
+              class="rounded-full px-3 py-1.5 text-sm text-red-400 transition hover:bg-red-500/10 disabled:opacity-60"
             >
               {{ passkeyDeletingId === item.id ? t('accountSettings.removingPasskey') : t('accountSettings.removePasskey') }}
             </button>
@@ -215,7 +214,7 @@
             v-model="deletePassword"
             type="password"
             autocomplete="current-password"
-            class="w-full rounded bg-zinc-800 border border-zinc-700 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-red-500"
+            class="w-full rounded bg-zinc-800 border border-white/10 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-white/20"
           />
         </div>
 
@@ -225,7 +224,7 @@
             id="deleteConfirm"
             v-model="deleteConfirmText"
             type="text"
-            class="w-full rounded bg-zinc-800 border border-zinc-700 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-red-500"
+            class="w-full rounded bg-zinc-800 border border-white/10 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-white/20"
           />
         </div>
 

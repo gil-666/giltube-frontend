@@ -3,7 +3,7 @@
         <div class="p-6 max-w-6xl mx-auto">
             <!-- Loading State -->
             <div v-if="isLoading" class="flex justify-center items-center py-12">
-                <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+                <div class="animate-spin rounded-full h-12 w-12 border-2 border-white/15 border-t-white/70"></div>
             </div>
 
             <!-- Playlist Header -->
@@ -12,7 +12,7 @@
                 <div class="mb-8">
                     <div class="flex flex-col lg:flex-row lg:items-start gap-6 mb-4">
                         <div class="w-full lg:w-80 xl:w-96 flex-shrink-0">
-                            <div class="aspect-video rounded-2xl overflow-hidden bg-zinc-900 border border-zinc-800 shadow-2xl">
+                            <div class="aspect-video rounded-2xl overflow-hidden bg-zinc-900 border border-white/[0.07] shadow-2xl">
                                 <img
                                     v-if="playlistCoverImage"
                                     :src="playlistCoverImage"
@@ -21,7 +21,7 @@
                                 />
                                 <div v-else class="w-full h-full flex items-center justify-center bg-gradient-to-br from-zinc-800 to-zinc-950 text-gray-400">
                                     <div class="text-center">
-                                        <div class="text-sm uppercase tracking-[0.3em] mb-2">{{ t('playlists.playlist') }}</div>
+                                        <div class="text-sm mb-2">{{ t('playlists.playlist') }}</div>
                                         <div class="text-lg font-semibold">{{ playlist.title }}</div>
                                     </div>
                                 </div>
@@ -29,14 +29,10 @@
                         </div>
 
                         <div class="flex-1 min-w-0">
-                            <h1 class="text-4xl font-bold mb-2">{{ playlist.title }}</h1>
+                            <h1 class="mb-2 text-3xl font-semibold tracking-tight">{{ playlist.title }}</h1>
                             <p v-if="playlist.description" class="text-gray-400 text-lg">{{ playlist.description }}</p>
                             <div class="flex items-center gap-3 mt-4 flex-wrap">
-                                <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold" :class="{
-                                    'bg-green-900 text-green-200': playlist.visibility === 'public',
-                                    'bg-yellow-900 text-yellow-200': playlist.visibility === 'unlisted',
-                                    'bg-red-900 text-red-200': playlist.visibility === 'private'
-                                }">
+                                <span class="inline-block rounded-full bg-white/[0.07] px-3 py-1 text-xs font-medium capitalize text-zinc-300">
                                     {{ playlist.visibility }}
                                 </span>
                                 <span class="text-sm text-gray-400">{{ playlist.videos_count }} {{ playlist.videos_count === 1 ? t('playlists.video') : t('playlists.videos') }}</span>
@@ -48,25 +44,25 @@
                             <NuxtLink 
                                 v-if="playlist.videos && playlist.videos.length > 0"
                                 :to="localePath(`/video/${playlist.videos[0].id}?playlist_id=${route.params.id}&index=0`)"
-                                class="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg font-medium transition text-sm flex items-center gap-2">
+                                class="px-4 py-2 bg-zinc-100 hover:bg-white rounded-lg font-medium transition text-sm flex items-center gap-2 text-zinc-950">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
                                     <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
                                 </svg>
                                 {{ t('playlists.playButton') || 'Play' }}
                             </NuxtLink>
                             <button v-if="isOwner" @click="showEditPlaylist = true"
-                                class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg font-medium transition text-sm">
+                                class="px-4 py-2 bg-zinc-100 hover:bg-white rounded-lg font-medium transition text-sm text-zinc-950">
                                 {{ t('playlists.editButton') }}
                             </button>
                             <button v-if="isOwner" @click="deletePlaylist"
-                                class="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg font-medium transition text-sm">
+                                class="px-4 py-2 bg-white/[0.06] hover:bg-red-500/15 hover:text-red-300 rounded-lg font-medium transition text-sm">
                                 {{ t('playlists.deleteButton') }}
                             </button>
                         </div>
                     </div>
 
                     <!-- Creator Card -->
-                    <div class="flex items-center gap-3 mt-6 pt-4 border-t border-zinc-700">
+                    <div class="flex items-center gap-3 mt-6 pt-4 border-t border-white/10">
                         <AvatarFallback
                             :src="creatorAvatarUrl"
                             :name="creatorName || creatorInitial"
@@ -105,7 +101,7 @@
                             <!-- Video Info -->
                             <div class="flex-1 min-w-0">
                                 <NuxtLink :to="localePath(`/video/${video.id}?playlist_id=${route.params.id}&index=${index}`)"
-                                    class="block hover:text-blue-400 transition">
+                                    class="block transition hover:text-white">
                                     <p class="font-medium truncate">{{ video.title }}</p>
                                 </NuxtLink>
                                 <NuxtLink :to="localePath(`/channel/${video.channel_id}`)"
@@ -146,7 +142,7 @@
 
                                 <!-- Remove Button -->
                                 <button @click="removeVideo(video.id, index)"
-                                    class="p-2 bg-red-700 hover:bg-red-600 rounded transition"
+                                    class="rounded-full p-2 text-zinc-400 transition hover:bg-red-500/10 hover:text-red-400"
                                     :title="t('playlists.removeVideo')">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 20 20"
                                         fill="currentColor">
@@ -167,8 +163,8 @@
 
             <!-- Not Found State -->
             <div v-else class="text-center py-12">
-                <h1 class="text-2xl font-bold text-gray-400">{{ t('playlists.notFound') }}</h1>
-                <NuxtLink :to="localePath('/playlists')" class="text-blue-400 hover:text-blue-300 mt-4 inline-block">
+                <h1 class="text-xl font-semibold text-zinc-300">{{ t('playlists.notFound') }}</h1>
+                <NuxtLink :to="localePath('/playlists')" class="text-zinc-200 hover:text-white mt-4 inline-block">
                     {{ t('playlists.backToPlaylists') }}
                 </NuxtLink>
             </div>

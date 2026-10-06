@@ -5,7 +5,7 @@
   >
     <div class="flex items-start justify-between gap-3">
       <div class="min-w-0">
-        <p class="text-xs font-semibold uppercase tracking-[0.18em] text-red-300">{{ t('video.clip.create') }}</p>
+        <p class="text-xs font-medium text-zinc-400">{{ t('video.clip.create') }}</p>
         <p class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 font-mono text-sm text-zinc-300">
           <span>{{ formatTime(start, true) }} – {{ formatTime(end, true) }}</span>
           <span
@@ -190,12 +190,12 @@
         v-model="title"
         type="text"
         maxlength="200"
-        class="min-h-11 min-w-0 flex-1 rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white placeholder:text-zinc-500 focus:border-red-400 focus:outline-none"
+        class="min-h-11 min-w-0 flex-1 rounded-xl border border-white/10 bg-zinc-900 px-3 py-2 text-sm text-white placeholder:text-zinc-500 focus:border-white/30 focus:outline-none"
         :placeholder="defaultTitle"
       />
       <button
         type="submit"
-        class="min-h-11 rounded-xl bg-red-600 px-5 py-2 text-sm font-bold text-white transition hover:bg-red-500 disabled:cursor-not-allowed disabled:opacity-60"
+        class="min-h-11 rounded-xl bg-zinc-100 px-5 py-2 text-sm font-bold text-zinc-950 transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-60"
         :disabled="publishing || clipLength < MIN_CLIP_SECONDS"
       >
         {{ publishing ? t('video.clip.publishing') : t('video.clip.publish') }}

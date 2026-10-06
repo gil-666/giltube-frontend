@@ -3,7 +3,7 @@
     <div v-if="isOpen" class="fixed inset-0 bg-black/50 flex items-center justify-center" style="z-index: 2147483647 !important; pointer-events: auto; overflow: visible;" @click.self="closeModal">
       <div class="bg-zinc-800 rounded-lg max-w-md w-full mx-4" style="z-index: 2147483647 !important; position: relative; overflow: visible;">
         <!-- Header -->
-        <div class="flex items-center justify-between px-6 py-4 border-b border-zinc-700">
+        <div class="flex items-center justify-between px-6 py-4 border-b border-white/10">
           <h2 class="text-lg font-semibold text-white">
             {{ isEditing ? t('playlists.editPlaylist') : t('playlists.createPlaylist') }}
           </h2>
@@ -18,17 +18,17 @@
         <div class="px-6 py-4 space-y-4">
           <div>
             <label class="block text-sm font-medium text-gray-300 mb-2">{{ t('playlists.title') }}</label>
-            <input v-model="form.title" type="text" class="w-full px-3 py-2 bg-zinc-700 border border-zinc-600 rounded text-white placeholder-gray-500 focus:outline-none focus:border-red-500" :placeholder="t('playlists.titlePlaceholder')" />
+            <input v-model="form.title" type="text" class="w-full px-3 py-2 bg-zinc-700 border border-zinc-600 rounded text-white placeholder-gray-500 focus:outline-none focus:border-white/30" :placeholder="t('playlists.titlePlaceholder')" />
           </div>
 
           <div>
             <label class="block text-sm font-medium text-gray-300 mb-2">{{ t('playlists.description') }}</label>
-            <textarea v-model="form.description" rows="3" class="w-full px-3 py-2 bg-zinc-700 border border-zinc-600 rounded text-white placeholder-gray-500 focus:outline-none focus:border-red-500" :placeholder="t('playlists.descriptionPlaceholder')" />
+            <textarea v-model="form.description" rows="3" class="w-full px-3 py-2 bg-zinc-700 border border-zinc-600 rounded text-white placeholder-gray-500 focus:outline-none focus:border-white/30" :placeholder="t('playlists.descriptionPlaceholder')" />
           </div>
 
           <div>
             <label class="block text-sm font-medium text-gray-300 mb-2">{{ t('playlists.visibility') }}</label>
-            <select v-model="form.visibility" class="w-full px-3 py-2 bg-zinc-700 border border-zinc-600 rounded text-white focus:outline-none focus:border-red-500">
+            <select v-model="form.visibility" class="w-full px-3 py-2 bg-zinc-700 border border-zinc-600 rounded text-white focus:outline-none focus:border-white/30">
               <option value="private">{{ t('playlists.private') }}</option>
               <option value="unlisted">{{ t('playlists.unlisted') }}</option>
               <option value="public">{{ t('playlists.public') }}</option>
@@ -37,7 +37,7 @@
 
           <div v-if="channels.length > 0">
             <label class="block text-sm font-medium text-gray-300 mb-2">{{ t('playlists.channel') }}</label>
-            <select v-model="form.channelId" class="w-full px-3 py-2 bg-zinc-700 border border-zinc-600 rounded text-white focus:outline-none focus:border-red-500">
+            <select v-model="form.channelId" class="w-full px-3 py-2 bg-zinc-700 border border-zinc-600 rounded text-white focus:outline-none focus:border-white/30">
               <option value="">{{ t('playlists.personal') }}</option>
               <option v-for="channel in channels" :key="channel.id" :value="channel.id">
                 {{ channel.name }}
@@ -47,11 +47,11 @@
         </div>
 
         <!-- Buttons -->
-        <div class="flex gap-2 px-6 py-4 border-t border-zinc-700">
+        <div class="flex gap-2 px-6 py-4 border-t border-white/10">
           <button @click="closeModal" class="flex-1 px-4 py-2 bg-zinc-700 hover:bg-zinc-600 rounded text-white transition">
             {{ t('common.cancel') }}
           </button>
-          <button @click="handleSave" :disabled="!form.title || isSaving" class="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed rounded text-white transition">
+          <button @click="handleSave" :disabled="!form.title || isSaving" class="flex-1 px-4 py-2 bg-zinc-100 hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed rounded text-zinc-950 transition">
             {{ isSaving ? t('common.saving') : (isEditing ? t('common.update') : t('common.create')) }}
           </button>
         </div>

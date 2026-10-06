@@ -184,6 +184,8 @@ Envía el token en las solicitudes del usuario:
 Authorization: Bearer gts_...
 ```
 
+Ejemplo:
+
 ```bash
 curl --fail-with-body \
   -H "Authorization: Bearer $GILTUBE_ACCESS_TOKEN" \
@@ -193,6 +195,12 @@ curl --fail-with-body \
 La API valida el bearer token y obtiene de él el ID del usuario. Nunca pongas un
 token de acceso en una URL. Algunas operaciones administrativas sensibles de
 workers también exigen una sesión bearer vigente.
+
+Un bearer token mal formado, caducado o revocado se rechaza con `401`, incluso
+en endpoints que también funcionan de forma anónima. Una cuenta bloqueada
+(baneada) recibe `403`. Si una solicitud envía a la vez un bearer token y la
+cabecera `X-User-ID` o el parámetro `user_id`, los IDs deben coincidir; de lo
+contrario se rechaza con `403`.
 
 Los clientes propios antiguos todavía pueden enviar `X-User-ID` o el parámetro
 `user_id` sin bearer token. Es un mecanismo temporal de compatibilidad, no una
@@ -214,6 +222,8 @@ La mayoría de los errores JSON tienen esta forma:
 }
 ```
 
+Códigos de estado habituales:
+
 | Estado | Significado |
 | --- | --- |
 | `200` | Lectura o actualización correcta. |
@@ -231,6 +241,8 @@ No tomes decisiones según el texto del error. Usa el estado HTTP y considera lo
 campos adicionales solo como información de diagnóstico.
 
 ### Paginación
+
+La paginación depende de cada endpoint:
 
 - Los feeds de videos y categorías usan `limit` y `offset` basado en cero.
 - La búsqueda usa `page` basado en uno y devuelve `per_page` y `total`.
@@ -258,7 +270,16 @@ compatibilidad, la API también admite `GET` y `HEAD` sobre
 `/channel-backgrounds/{filename}`. Prefiere siempre la URL devuelta por el
 recurso.
 
+Las imágenes subidas (miniaturas, avatares, fondos y miniaturas de directos)
+admiten como máximo 16 MiB y 32 megapíxeles. El servidor las guarda como varias
+variantes JPEG redimensionadas y devuelve la URL de la variante predeterminada;
+por ejemplo, las miniaturas de video se generan a 320×180, 640×360 y 1280×720 y
+la API devuelve la de 640×360. No deduzcas los nombres de las demás variantes a
+partir de una URL devuelta.
+
 ## Leyenda de acceso
+
+Las tablas de endpoints usan estas etiquetas de acceso:
 
 | Etiqueta | Requisito |
 | --- | --- |
@@ -280,6 +301,12 @@ recurso.
 | `GET` | `/categories/all` | Público | Ninguno | Todas las categorías, incluidas las de interfaces administrativas. |
 | `GET` | `/categories/{slug}/videos` | Público | `limit`, `offset` | Videos visibles y listos de la categoría. |
 | `GET` | `/recommendations/home` | Usuario opcional | `limit`, `offset`; bearer token opcional | Recomendaciones generales o personalizadas. |
+| `GET` | `/featured` | Público | Ninguno | `{ "items": [...] }`: hasta cinco elementos destacados habilitados, ordenados por `position`. |
+
+Un elemento destacado tiene `id`, `content_type` (`video`, `live`, `movie` o
+`series`), `content_id`, `header`, `description`, `action_text`, `position`,
+`title`, `image_url`, `channel_id`, `channel_name`, `target_url`, `is_live`,
+`scheduled_for`, `created_at` y `updated_at`.
 
 Los campos de un resultado dependen de `type`. Ejemplo:
 
@@ -458,14 +485,22 @@ subtítulos usa la parte `subtitle`; el audio usa `audio`.
 | `GET` | `/channels/{channelId}/videos` | Público | Videos del canal. |
 | `GET` | `/channels/{channelId}/clips` | Público | Clips del canal. |
 | `GET` | `/channels/{channelId}/music` | Público | Artista y lanzamientos asociados. |
-| `GET` | `/channels/{channelId}/analytics` | Actor de canal | Analíticas del canal. |
+| `GET` | `/channels/{channelId}/analytics` | Público | Analíticas del canal. |
 | `PUT` | `/channels/{channelId}` | Usuario | Actualización multipart del perfil. |
 | `DELETE` | `/channels/{channelId}` | Usuario | Elimina un canal propio. |
+| `GET` | `/channels/{channelId}/block` | Usuario | Query: `blocker_channel_id` (un canal propio). Devuelve `{ "blocked": bool }`. |
+| `POST` | `/channels/{channelId}/block` | Usuario | `blocker_channel_id` como parámetro query o campo JSON. Devuelve `{ "blocked": true }`. |
+| `DELETE` | `/channels/{channelId}/block` | Usuario | `blocker_channel_id` como parámetro query o campo JSON. Devuelve `{ "blocked": false }`. |
 
 Las actualizaciones aceptan `name`, `description`, `avatar`, `background`,
 `remove_avatar`, `remove_background`, `background_position_x`,
 `background_position_y`, `background_scale`, `custom_header_html`,
 `custom_header_css`, `custom_content_html` y `custom_content_css`.
+
+Los bloqueos son entre canales. Un canal bloqueado no puede comentar en los
+videos del canal que lo bloqueó (`403`), y se suprimen sus notificaciones
+existentes y futuras dirigidas al propietario de ese canal. Un canal no puede
+bloquearse a sí mismo.
 
 ## Autenticación y cuenta
 
@@ -494,8 +529,9 @@ curl --fail-with-body \
 | `POST` | `/auth/token` | Público | JSON: `email`, `password`; devuelve un bearer token de 30 días. |
 | `DELETE` | `/auth/token` | Usuario | Revoca el bearer token usado. |
 | `POST` | `/login` | Público | JSON: `email`, `password`. |
-| `POST` | `/oauth/gilid/start` | Público | JSON: `mode` (`login` o `link`), `return_to`. |
+| `POST` | `/oauth/gilid/start` | Público | JSON: `mode` (`login` o `link`), `return_to`, `client` opcional (`web` o `mobile`); los clientes móviles también envían `app_redirect_uri` y un `code_challenge` PKCE. |
 | `POST` | `/oauth/gilid/callback` | Público | JSON: `code` y `state` de autorización. |
+| `POST` | `/oauth/gilid/mobile/exchange` | Público | JSON: `code` de traspaso de un solo uso y `code_verifier` PKCE; devuelve una respuesta de inicio de sesión con `session_token`. |
 | `GET` | `/account/me` | Usuario | Perfil de la cuenta actual. |
 | `PUT` | `/account/default-channel` | Usuario | JSON: `channel_id`. |
 | `PUT` | `/account/music-quality` | Usuario | JSON `quality`: `auto`, `low`, `medium`, `high` o `maximum`. |
@@ -506,6 +542,13 @@ curl --fail-with-body \
 
 La autorización GILid es un flujo de redirección del navegador. Abre la
 `authorize_url` devuelta; no recolectes credenciales de GILid en tu aplicación.
+
+En la app móvil de GilTube, inicia el flujo con `client: "mobile"`, la
+`app_redirect_uri` registrada (`giltube://auth/callback`) y un `code_challenge`
+PKCE S256. El callback devuelve entonces `app_redirect_url` en lugar de una
+sesión; esa URL lleva un `code` de un solo uso válido durante cinco minutos, que
+la app intercambia en `/oauth/gilid/mobile/exchange` con el `code_verifier`
+correspondiente.
 
 ### Passkeys
 
@@ -570,6 +613,29 @@ Los valores válidos de `visibility` son `public`, `private` y `unlisted`.
 | `GET` | `/series-episodes/{videoId}` | Público | Contexto de serie/episodio para un video. |
 | `GET` | `/series-trailers/{videoId}` | Público | Contexto de serie para un tráiler. |
 
+Las respuestas de detalle de películas y series pueden incluir
+`media_capabilities` con `audio_languages`, `caption_languages`, `max_quality`,
+`hdr` y `surround`. `hdr` es `true` cuando la película, o algún episodio de la
+serie, tiene una versión HDR; `surround` es `true` cuando alguno tiene audio 5.1
+o superior.
+
+### Intro de reproducción
+
+Se puede reproducir un breve clip de intro de la marca antes de películas y
+episodios de series.
+
+| Método | Ruta | Acceso | Respuesta/comportamiento |
+| --- | --- | --- | --- |
+| `GET` | `/playback-intro` | Público | Query `video_id` opcional. Devuelve `enabled`, `allow_skip`, `url`, `version`, `size`, `content_type`, `updated_at` y `play`. |
+| `GET`, `HEAD` | `/playback-intro/files/{filename}` | Público | Sirve el archivo de video de la intro. |
+
+`play` solo es `true` cuando hay una intro habilitada y subida y, si se envía
+`video_id`, ese video es una película o un episodio de serie (nunca un tráiler
+ni una carga normal). El nombre del archivo incluye un hash del contenido, así
+que la URL cambia al reemplazar la intro y el archivo puede almacenarse en caché
+indefinidamente. Respeta `allow_skip` al decidir si muestras un control para
+omitirla.
+
 ### Música
 
 | Método | Ruta | Acceso | Respuesta/comportamiento |
@@ -594,26 +660,50 @@ calidad determinada.
 | `GET` | `/live/channels/{channelId}` | Público | Estado en vivo actual del canal. |
 | `GET` | `/live/channels/{channelId}/chat` | Público | `limit` opcional; mensajes recientes. |
 | `POST` | `/live/channels/{channelId}/chat` | Usuario | JSON: `channel_id` del actor y `message` (máximo 500 caracteres). |
+| `GET` | `/live/channels/{channelId}/poll` | Público | Query `channel_id` (actor) opcional añade `selected_option_id`. Devuelve la encuesta más reciente del canal, o `204` si no tiene ninguna. |
+| `POST` | `/live/channels/{channelId}/polls` | Usuario | JSON: `channel_id` (igual al canal de la ruta y propiedad del usuario), `question` (máximo 120 caracteres), `options` (2–4 textos únicos, máximo 80 caracteres cada uno). Devuelve `201` con el `id` de la encuesta. |
+| `POST` | `/live/channels/{channelId}/polls/{pollId}/vote` | Usuario | JSON: `channel_id` del actor, `option_id`. Un voto por canal; devuelve `409` si la encuesta está cerrada o ya se votó. |
+| `POST` | `/live/channels/{channelId}/polls/{pollId}/end` | Usuario | JSON: `channel_id` (el canal en vivo). Solo el propietario del canal puede cerrar una encuesta. |
 | `POST` | `/live/{videoId}/presence` | Público | Registra presencia. |
 | `DELETE` | `/live/{videoId}/presence` | Público | Retira la presencia. |
 | `GET` | `/live/{videoId}/presence/stream` | Público | Eventos enviados por el servidor para presencia. |
 
-El estado puede incluir `status`, `is_live`, `started_at`, `ended_at`,
-`playback_url`, `thumbnail_url`, `watching_now`, `dvr_enabled` y `channel`. Para
-el propietario también puede incluir credenciales de ingestión.
+El estado puede incluir `id`, `status`, `is_live`, `started_at`,
+`scheduled_for`, `ended_at`, `waiting_for_publisher`,
+`adaptive_transcoding_enabled`, `playback_url`, `playback_url_fallback`,
+`thumbnail_url` y `channel`. Si la transcodificación adaptativa está habilitada
+y su playlist multicalidad está en buen estado, `playback_url` apunta a ella; si
+no, apunta a la transmisión directa, que siempre está disponible como
+`playback_url_fallback`. Las respuestas del propietario (`/live/me`) también
+pueden incluir `dvr_enabled`, `has_custom_thumbnail` y credenciales de
+ingestión.
+
+Una encuesta tiene `id`, `question`, `status`, `total_votes`, `created_at`,
+`ended_at`, `creator` (resumen del canal) y `options` (cada una con `id`,
+`text`, `votes` y `percentage`). Crear una encuesta cierra la encuesta activa
+anterior de la transmisión, y las encuestas activas se cierran al detener la
+transmisión.
 
 ### Endpoints del propietario del canal
 
 | Método | Ruta | Acceso | Entrada |
 | --- | --- | --- | --- |
 | `GET` | `/live/me` | Usuario | Query: `channel_id`. |
-| `PUT` | `/live/me/settings` | Usuario | JSON: `channel_id`, `title`, `description`, `dvr_enabled` opcional. |
+| `PUT` | `/live/me/settings` | Usuario | JSON: `channel_id`, `title`, `description` y, opcionales, `dvr_enabled`, `adaptive_transcoding_enabled`, `scheduled_for` (RFC 3339) y `clear_schedule`. |
+| `POST` | `/live/me/thumbnail` | Usuario | Multipart: `channel_id`, imagen `thumbnail`. Devuelve `thumbnail_url` y `has_custom_thumbnail: true`. |
+| `DELETE` | `/live/me/thumbnail` | Usuario | Query: `channel_id`. Elimina la miniatura personalizada del directo. |
 | `POST` | `/live/me/key/rotate` | Usuario | JSON: `channel_id`. Trata la stream key como secreto. |
-| `POST` | `/live/me/start` | Usuario | JSON: `channel_id`, `title`, `description`, `dvr_enabled` opcional. |
+| `POST` | `/live/me/start` | Usuario | JSON: `channel_id`, `title`, `description` y, opcionales, `dvr_enabled` y `adaptive_transcoding_enabled`. |
 | `POST` | `/live/me/stop` | Usuario | JSON: `channel_id`. |
 | `POST` | `/live/me/publisher-presence` | Usuario | JSON: `channel_id`, `enabled`. |
 | `POST` | `/live/me/whip` | Usuario | Solicitud proxy WHIP. |
 | `DELETE` | `/live/me/whip/session` | Usuario | Termina la sesión WHIP. |
+
+`/live/me/start` no siempre pasa a en vivo de inmediato. Su respuesta incluye
+`armed`, `public_live` y, cuando aplica, `scheduled_for` o
+`waiting_for_publisher`: una transmisión con `scheduled_for` futuro queda armada
+para esa hora, y una transmisión programada o que depende del publicador espera
+hasta que el codificador se conecte.
 
 ## Watch parties
 
@@ -622,8 +712,10 @@ el propietario también puede incluir credenciales de ingestión.
 | `GET` | `/watch-parties/public` | Público | Lista las parties públicas. |
 | `GET` | `/watch-parties/{id}` | Público | Estado, participantes, chat, reproducción y cola. |
 | `GET` | `/watch-parties/saved-progress` | Usuario | Query: `media_type` (`movie` o `series`), `media_id`. |
+| `GET` | `/watch-parties/active` | Usuario | `{ "party": ... }` con la party activa más reciente en la que participa el usuario, o `{ "party": null }`. |
 | `POST` | `/watch-parties` | Usuario | Crea una party; cuerpo descrito abajo. |
 | `POST` | `/watch-parties/{id}/join` | Usuario | JSON: `channel_id` opcional. |
+| `POST` | `/watch-parties/{id}/invite` | Usuario | Solo el anfitrión. JSON: `channel_id` a invitar, `actor_channel_id` opcional. Envía una notificación `watch_party_invite`; devuelve `201` `{ "status": "invited" }` o `200` `{ "status": "already_invited" }`. |
 | `POST` | `/watch-parties/{id}/leave` | Usuario | Ninguna |
 | `POST` | `/watch-parties/{id}/save-progress` | Usuario | Ninguna |
 | `POST` | `/watch-parties/{id}/transfer-host` | Usuario | JSON: `user_id`. |
@@ -666,9 +758,15 @@ Todas estas rutas requieren identidad del usuario.
 | `GET` | `/notifications/push/config` | Disponibilidad push y clave pública VAPID. |
 | `POST` | `/notifications/push/subscribe` | Suscripción Push API: `endpoint`, `keys.p256dh`, `keys.auth`. |
 | `POST` | `/notifications/push/unsubscribe` | JSON: `endpoint`. |
+| `GET` | `/notifications/preferences` | `{ "preferences": { "<type>": bool, ... } }`; todos los tipos son `true` por defecto. |
+| `PUT` | `/notifications/preferences` | JSON: `type`, `enabled`. Devuelve el `type` y `enabled` guardados. |
+| `POST` | `/notifications/mobile/register` | JSON: `token` del dispositivo (FCM), `platform` opcional (`android`, por defecto, o `ios`), `device_name` opcional. Devuelve `fcm_enabled`. |
+| `DELETE` | `/notifications/mobile/unregister` | JSON: `token` del dispositivo. |
 
 Los tipos actuales incluyen `comment_video`, `reply_comment`, `like_video`,
-`like_comment` y `live_started`.
+`like_comment`, `live_started`, `new_video`, `video_ready`,
+`watch_party_invite`, `watch_party_host`, `new_subscriber` y
+`featured_content`.
 
 ## Integración publicitaria
 
@@ -683,8 +781,10 @@ se normalizan a una compatible o se rechazan.
 ## API administrativa
 
 Las rutas bajo `/admin` requieren un usuario admin. El registro, la
-planificación y las versiones de workers también validan la sesión bearer. Son
-interfaces operativas, no un contrato estable para terceros.
+planificación, los roles y las versiones de workers también validan la sesión
+bearer. Son interfaces operativas, no un contrato estable para terceros.
+
+La superficie administrativa actual se agrupa así:
 
 | Área | Endpoints |
 | --- | --- |
@@ -694,13 +794,16 @@ interfaces operativas, no un contrato estable para terceros.
 | Moderación de videos | `PUT /admin/videos/{id}/verify` |
 | Metadatos | `GET /admin/metadata/search`, `GET /admin/metadata/details` |
 | Música | `/admin/music/overview`, `/admin/music/artists`, `/admin/music/releases`, `/admin/music/tracks` y acciones de carga, publicación, portada, letras y asociación de videos |
-| Series | `/admin/series`, orden y metadatos de episodios, subtítulos y audio |
+| Contenido destacado | `GET`/`POST /admin/featured`, `PUT`/`DELETE /admin/featured/{id}`, `GET /admin/featured/candidates` (query `type`, `q`, `limit`); como máximo cinco elementos habilitados a la vez |
+| Series | `/admin/series`, `GET /admin/series/{id}` (incluye episodios aún en proceso), orden y metadatos de episodios, subtítulos y audio |
+| Detección de intros | `GET /admin/series/{id}/detect-intros` (estado del trabajo), `POST /admin/series/{id}/detect-intros` (inicio; `409` mientras hay un trabajo en curso) |
+| Intro de reproducción | `GET`, `POST` (multipart `video`: `.mp4`, `.m4v` o `.webm`, máximo 500 MB), `PUT` (JSON `enabled`, `allow_skip`) y `DELETE /admin/playback-intro` |
 | Películas | `/admin/movies`, asignación de tráiler/video, subtítulos y audio |
-| Revisión de intros | `GET /admin/intro-suggestions` y acciones de aprobar/rechazar por ID |
+| Revisión de intros | `GET /admin/intro-suggestions` y acciones de aprobar/rechazar por ID. Las sugerencias incluyen `source` (usuario o detección automática) y `confidence` |
 | Espejos de YouTube | `/admin/youtube-mirrors/channels` y `/admin/youtube-mirrors/import` |
 | Ingestión | `/admin/media-ingests` y acciones de carga, reintento, pausa, vista previa, importación, adjuntos y limpieza |
 | Transcodificación | `/admin/transcode-jobs` y acciones de inicio, reinicio, pausa y cancelación |
-| Workers | `/admin/workers`, versiones, códigos de registro, habilitación/revocación, planificación y eliminación |
+| Workers | `/admin/workers`, versiones, códigos de registro, habilitación/revocación, planificación, asignación de roles (`PUT /admin/workers/{id}/roles`) y eliminación |
 
 Desarrolla clientes administrativos junto con la versión del backend objetivo.
 

@@ -1,31 +1,31 @@
 <template>
-  <div class="fixed inset-0 bg-zinc-950 flex items-center justify-center p-4">
-    <div class="w-full max-w-md">
+  <div class="fixed inset-0 flex items-center justify-center overflow-y-auto bg-zinc-950 p-4">
+    <div class="w-full max-w-sm py-10">
       <div class="mb-6">
-        <NuxtLink :to="localePath('/')" class="inline-flex items-center gap-2 text-gray-400 hover:text-white transition">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <NuxtLink :to="localePath('/')" class="inline-flex items-center gap-1.5 text-sm text-zinc-500 transition hover:text-white">
+          <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
           </svg>
           {{ t('login.backToHome') }}
         </NuxtLink>
       </div>
 
-      <div class="text-center mb-8">
-        <h1 class="text-4xl font-bold text-red-500 mb-2">giltube</h1>
-        <p class="text-gray-400">{{ t('login.title') }}</p>
+      <div class="mb-8">
+        <img src="../assets/logowhsmall.png" alt="GilTube" class="h-8 w-auto" />
+        <h1 class="mt-8 text-2xl font-semibold tracking-tight">{{ t('login.title') }}</h1>
       </div>
 
-      <form @submit.prevent="handleLogin" class="bg-zinc-900 rounded-lg shadow-xl p-8 space-y-6">
+      <form @submit.prevent="handleLogin" class="space-y-4">
         <button
           type="button"
           :disabled="loading || passkeyLoading || gilidLoading"
           @click="handleGilIDLogin"
-          class="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-cyan-500 hover:bg-cyan-400 disabled:bg-gray-600 text-slate-950 disabled:text-white font-semibold py-3 px-4 transition duration-200"
+          class="gt-button gt-button--secondary w-full"
         >
           <img src="../assets/gilservices-logo.png" alt="" class="h-5 w-5 object-contain" />
           <span v-if="gilidSessionProfile" class="flex flex-col items-start leading-tight text-left">
             <span>{{ gilidLoading ? t('login.redirectingGilid') : t('login.continueAs', { username: gilidSessionProfile.username }) }}</span>
-            <span class="text-xs font-medium text-slate-800/80">{{ gilidSessionProfile.email }}</span>
+            <span class="text-xs font-medium text-zinc-400">{{ gilidSessionProfile.email }}</span>
           </span>
           <span v-else>
             {{ gilidLoading ? t('login.redirectingGilid') : t('login.signInWithGilid') }}
@@ -36,20 +36,20 @@
           v-if="gilidSessionProfile"
           type="button"
           :disabled="loading || passkeyLoading || gilidLoading || gilidSwitching"
-          class="w-full text-center text-sm text-cyan-300 hover:text-cyan-200 transition"
+          class="w-full text-center text-sm text-zinc-400 transition hover:text-white"
           @click="handleGilIDSwitchAccount"
         >
           {{ gilidSwitching ? t('login.switchingGilid') : t('login.switchAccountGilid') }}
         </button>
 
-        <div class="flex items-center gap-3 text-xs text-gray-500">
-          <div class="h-px flex-1 bg-zinc-700" />
+        <div class="flex items-center gap-3 py-1 text-xs text-zinc-600">
+          <div class="h-px flex-1 bg-white/[0.08]" />
           <span>{{ t('login.or') }}</span>
-          <div class="h-px flex-1 bg-zinc-700" />
+          <div class="h-px flex-1 bg-white/[0.08]" />
         </div>
 
         <div>
-          <label for="email" class="block text-sm font-medium text-gray-300 mb-2">
+          <label for="email" class="gt-label">
             {{ t('login.emailLabel') }}
           </label>
           <input
@@ -59,12 +59,12 @@
             required
             :placeholder="t('login.emailPlaceholder')"
             autocomplete="email"
-            style="color: white; background-color: rgb(39, 39, 42); border: 1px solid rgb(63, 63, 70); border-radius: 0.5rem; padding: 0.5rem 1rem; width: 100%;"
+            class="gt-input"
           />
         </div>
 
         <div>
-          <label for="password" class="block text-sm font-medium text-gray-300 mb-2">
+          <label for="password" class="gt-label">
             {{ t('login.passwordLabel') }}
           </label>
           <input
@@ -74,22 +74,18 @@
             required
             :placeholder="t('login.passwordPlaceholder')"
             autocomplete="current-password"
-            style="color: white; background-color: rgb(39, 39, 42); border: 1px solid rgb(63, 63, 70); border-radius: 0.5rem; padding: 0.5rem 1rem; width: 100%;"
+            class="gt-input"
           />
         </div>
 
-        <div v-if="error" class="bg-red-900/50 border border-red-500 text-red-200 px-4 py-3 rounded-lg text-sm">
+        <div v-if="error" class="gt-alert">
           {{ error }}
-        </div>
-
-        <div v-if="loading" class="text-center text-gray-400 text-sm">
-          {{ t('login.signingIn') }}
         </div>
 
         <button
           type="submit"
           :disabled="loading"
-          class="w-full bg-red-600 hover:bg-red-700 disabled:bg-gray-600 text-white font-semibold py-2 px-4 rounded-lg transition duration-200"
+          class="gt-button gt-button--primary w-full"
         >
           {{ loading ? t('login.signingIn') : t('login.signIn') }}
         </button>
@@ -98,16 +94,16 @@
           type="button"
           :disabled="loading || passkeyLoading || gilidLoading"
           @click="handlePasskeyLogin"
-          class="w-full bg-cyan-600 hover:bg-cyan-700 disabled:bg-gray-600 text-white font-semibold py-2 px-4 rounded-lg transition duration-200"
+          class="gt-button gt-button--secondary w-full"
         >
           {{ passkeyLoading ? t('login.waitingForPasskey') : t('login.usePasskey') }}
         </button>
       </form>
 
-      <div class="mt-6 text-center">
-        <p class="text-gray-400">
+      <div class="mt-6">
+        <p class="text-sm text-zinc-400">
           {{ t('login.dontHaveAccount') }}
-          <NuxtLink :to="localePath('/register')" class="text-red-500 hover:text-red-400 font-medium">
+          <NuxtLink :to="localePath('/register')" class="font-medium text-white underline-offset-4 hover:underline">
             {{ t('login.signUp') }}
           </NuxtLink>
         </p>

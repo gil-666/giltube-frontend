@@ -63,19 +63,25 @@ The project is designed around the entire media lifecycle:
 - Chunked uploads suitable for large files and Cloudflare request limits.
 - Adaptive HLS playback with source-aware renditions from SD through 4K/8K when available.
 - Video.js controls, manual quality selection, alternate audio, captions, Picture-in-Picture, keyboard controls, and remembered language preferences.
+- HDR playback: when a title has an HDR ladder, HDR-capable displays with HEVC decoding get an HDR toggle in the quality menu, with automatic fallback to SDR if the HDR stream fails.
+- A stats overlay with resolution, rendition bitrate, codecs, buffer health, dropped frames, stalls, network activity, and live latency.
 - Source-aspect-aware encoding and quality badges for landscape, portrait, square, and non-standard resolutions.
 - Upload progress, durable transcode status, resumable encoding, custom thumbnails, generated thumbnails, and downloadable qualities.
 - Mature-content interstitials that stop playback until acknowledged.
+- A timeline clip editor with zoom, trimming handles, preview, and publishing of clips up to 30 seconds.
 - Clips, threaded comments, comment likes, GIF replies, video likes, watch history, and recommendations.
 - Public, unlisted, and private playlists with ordering and continuous queue playback.
 - Search across videos, channels, movies, and series.
+- Related videos on the watch page and channel subscriptions with a dedicated subscriptions feed.
+- A rotating featured-content hero on the home page for videos, live streams, movies, and series.
 - A dedicated not-found state for missing or unavailable videos.
 
 ### Channels and accounts
 
 - Multiple channels under one account with a database-synced default channel.
 - Fast channel switching from desktop and mobile account panels.
-- Channel avatars, backdrops, generated responsive image variants, verification, analytics, and custom HTML/CSS themes.
+- Channel avatars, backdrops, generated responsive image variants, verification, analytics, and custom HTML/CSS themes for the header and content background. Ready-made theme presets live in `docs/channel-theme-presets/`.
+- Subscribe and unsubscribe as the active channel.
 - Separate account and channel identity: switching a channel does not require a second login.
 - Email/password authentication, GilID OAuth integration, and WebAuthn passkeys.
 - Account-level playback-language and music-quality preferences synchronized across devices.
@@ -86,6 +92,10 @@ The project is designed around the entire media lifecycle:
 - Fluid detail windows with sticky artwork/title/quality headers and scrollable metadata.
 - Expandable long synopses and media capability summaries for maximum quality, audio languages, and caption languages.
 - Episode grouping by season, episode reordering, original filename visibility, trailers, intro timing, and community intro-skip suggestions.
+- Automatic intro detection that matches audio across a season's episodes, applies timings anchored to a manually timed episode, and sends the rest to Intro suggestions for review.
+- An optional platform playback intro clip that plays before movies and episodes, with admin-controlled skipping, and is skipped when a viewer clicks through to the next episode.
+- HDR and 5.1 surround badges next to the maximum-quality badge in catalog detail windows.
+- Content ratings with descriptors, resolved automatically from TMDB or set manually by an administrator.
 - Existing user uploads can be linked into the catalog without transferring video ownership.
 - Catalog-linked videos are protected from accidental deletion until the registry relationship is removed.
 - Alternate audio and subtitle tracks can be attached, labeled, made default, downloaded, replaced, delayed, trimmed, and synchronized.
@@ -95,6 +105,8 @@ The project is designed around the entire media lifecycle:
 
 - RTMP and browser-based WHIP publishing through MediaMTX.
 - HLS live playback, live presence, viewer counts, channel chat, detachable chat windows, and stream-key rotation.
+- Scheduled streams with a countdown on the channel's live page, custom stream thumbnails, and optional adaptive live transcoding.
+- Live polls in the chat panel: the streamer creates and ends them, and viewers vote.
 - Optional DVR recording that becomes a normal GilTube VOD after a stream ends.
 - Redis-backed recording leases prevent multiple workers from recording the same live stream.
 - Synchronized watch parties with host controls, shared queues, chat, invitations, visibility settings, and saved progress.
@@ -123,6 +135,9 @@ The project is designed around the entire media lifecycle:
 - User and channel moderation, admin promotion, suspension, bans, and catalog management.
 - Video, movie, series, artist, release, and track editors.
 - Redis-backed transcode jobs with progress, pause/cancel controls, retries, recovery after restart, and completed-rendition detection.
+- Worker management: enrollment codes, downloadable worker releases for Linux, Windows, and macOS, per-worker roles (video transcoding, adaptive live encoding), scheduling toggles, and revocation.
+- Featured-content curation with ordering, custom copy, and optional notifications.
+- Playback-intro upload and settings, plus intro-detection runs and intro-suggestion review for series.
 - Authorized torrent ingest through qBittorrent plus direct single-file and multi-file local ingest.
 - Automatic episode inference from filenames, manual mapping, exclusions, bulk attachment, and post-ingest episode reordering.
 - Audio and subtitle extraction from ingested files, bulk episode linking, timing adjustment, and cross-source synchronization.
@@ -135,7 +150,8 @@ The project is designed around the entire media lifecycle:
 
 - Nuxt server-side rendering for public pages and social metadata.
 - Installable PWA with a custom Workbox service worker, push notifications, and controlled media caching.
-- English and Spanish localization, including admin and media workflows.
+- English and Spanish localization, including admin and media workflows. English is served without a prefix and Spanish under `/es`.
+- Digital Asset Links (`/.well-known/assetlinks.json`) for the GilTube Android app.
 - User-agent-aware mobile navigation with music-specific navigation inside GilTube Music.
 - Desktop, phone, and tablet layouts built as operating interfaces rather than separate demo pages.
 - Accessible labels, focus states, semantic controls, and reduced accidental interaction during swipe gestures.
@@ -209,7 +225,7 @@ Browser chunks
   -> published playback
 ```
 
-The worker does not upscale merely to fill a standard ladder. It determines available outputs from both source dimensions, which lets non-standard 4K media retain the correct quality classification. HDR sources can be tone-mapped to BT.709 for compatible outputs. Interrupted work is resumable: completed variants with valid playlists and segments are skipped on retry.
+The worker does not upscale merely to fill a standard ladder. It determines available outputs from both source dimensions, which lets non-standard 4K media retain the correct quality classification. HDR sources can be tone-mapped to BT.709 for the standard `master.m3u8`. HDR titles also publish a `master-hdr.m3u8` (HEVC Main10, fMP4), which the player only requests on HDR displays whose browser can decode HEVC. Interrupted work is resumable: completed variants with valid playlists and segments are skipped on retry.
 
 ### Music ingest
 
@@ -233,7 +249,7 @@ Media Ingest can inspect a second source, list its audio and subtitle streams, i
 | Layer | Technology |
 | --- | --- |
 | Web application | Nuxt 4, Vue 3, TypeScript |
-| Styling | Tailwind CSS plus scoped component CSS |
+| Styling | Tailwind CSS with a shared zinc neutral scale and the Inter typeface, plus scoped component CSS |
 | Video playback | Video.js, HLS.js, videojs-contrib-quality-levels |
 | Music playback | Native audio element with a global Vue player state |
 | Charts | Chart.js and vue-chartjs |
@@ -254,19 +270,23 @@ This repository contains the Nuxt application. The API and media-worker services
 
 ```text
 giltube-frontend/
+  app.vue                   Application shell: desktop/mobile navigation and global players
   app/
-    components/             Shared UI, players, catalog, ads, and admin tools
-    composables/            Session, mobile navigation, music player, metadata
+    components/             Shared UI, players, clip editor, catalog, live, ads, and admin tools
+    composables/            Music player, metadata, app install, easter eggs
     service/                Typed API clients grouped by product domain
-    utils/                  Media URLs, image variants, formatting helpers
+    utils/                  Media URLs, auth session, playback intro, content ratings, formatting
   assets/                   GilTube, GilTube Music, and Hi-Res branding
+  components/               Locale picker
+  docs/                     Channel theme presets (copy-paste header and content HTML/CSS)
   i18n/locales/             English and Spanish message catalogs
-  layouts/                  Desktop/mobile application shells
-  middleware/               Route access and session behavior
+  layouts/                  Minimal blank layout
+  middleware/               Locale-prefix redirects
   pages/                    File-based Nuxt routes
-  public/                   PWA icons, screenshots, and static assets
+  plugins/                  Client plugins, such as playback-intro audio unlock
+  public/                   PWA icons, screenshots, Android asset links, and static assets
   service-worker/sw.ts      Runtime caching and push-notification behavior
-  nuxt.config.ts            SSR, i18n, PWA, and runtime configuration
+  nuxt.config.ts            SSR, i18n, PWA, Tailwind theme, and runtime configuration
   Dockerfile                Node 22 production image
 ```
 
@@ -280,11 +300,13 @@ giltube-frontend/
 | `/music` | GilTube Music home |
 | `/music/releases/:slug` | Album, EP, or single details |
 | `/music/artists/:slug` | Artist catalog |
-| `/live/:channelId` | Live playback and chat |
+| `/live/:channelId` | Live playback, chat, polls, and scheduled-stream countdown |
+| `/go-live` | Stream setup, scheduling, thumbnails, and stream keys |
 | `/watch-party/:id` | Synchronized room and queue |
+| `/subscriptions` | Subscribed channels and their latest videos |
 | `/dashboard` | Channel video management and analytics |
 | `/my-channels` | Channel switching and editing |
-| `/admin` | Platform, series, movies, ingest, and jobs |
+| `/admin` | Users, channels, videos, series, movies, ingest, jobs, workers, featured content, and playback intro |
 | `/admin/music` | Music rights and catalog administration |
 
 ## Local development
@@ -322,6 +344,8 @@ npm run preview   # Run the production build locally
 npm run generate  # Generate supported static output
 ```
 
+`npm ci` also runs `nuxt prepare` through the `postinstall` script.
+
 There is currently no frontend unit-test or lint script in `package.json`. Backend route and media-capability tests live with the Go service.
 
 ## Runtime configuration
@@ -333,7 +357,7 @@ There is currently no frontend unit-test or lint script in `package.json`. Backe
 | `NUXT_API_INTERNAL_URL` | API URL used by server-side rendering, normally `http://api:8080/api/v1` in Compose |
 | `NUXT_PUBLIC_SITE_URL` | Canonical public origin used for metadata and share previews |
 | `NUXT_PUBLIC_LOCAL_UPLOAD_BASE_URL` | Browser-reachable direct API used by the admin Local Upload option |
-| `VITE_API_BASE_URL` | Build argument retained for deployment compatibility; normal browser API traffic is same-origin `/api/v1` |
+| `VITE_API_BASE_URL` | Build argument (Docker default `/api/v1`) baked in at build time and used as a prefix for some media and upload URLs; normal browser API traffic is same-origin `/api/v1` |
 
 ### Backend service groups
 

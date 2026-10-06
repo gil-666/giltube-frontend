@@ -1,4 +1,5 @@
 import api from './client'
+import { appendContentRating, type ContentRatingInput } from '~/app/utils/contentRating'
 import { downloadAPIFile } from './downloads'
 
 export const GILTUBE_SERIES_CHANNEL_ID = '17e36c9d-4235-4c9c-9c70-1858e538719a'
@@ -150,10 +151,12 @@ export const createSeries = async (data: {
   cast?: string
   channelId?: string
   isFeatured?: boolean
+  explicit?: boolean
   poster?: File | null
   backdrop?: File | null
   posterUrl?: string
   backdropUrl?: string
+  contentRating?: ContentRatingInput | null
 }) => {
   const formData = new FormData()
   formData.append('title', data.title)
@@ -166,10 +169,12 @@ export const createSeries = async (data: {
   if (data.cast) formData.append('cast', data.cast)
   if (data.channelId) formData.append('channel_id', data.channelId)
   if (data.isFeatured) formData.append('is_featured', 'true')
+  if (typeof data.explicit === 'boolean') formData.append('explicit', data.explicit ? 'true' : 'false')
   if (data.posterUrl) formData.append('poster_url', data.posterUrl)
   if (data.backdropUrl) formData.append('backdrop_url', data.backdropUrl)
   if (data.poster) formData.append('poster', data.poster)
   if (data.backdrop) formData.append('backdrop', data.backdrop)
+  appendContentRating(formData, data.contentRating)
 
   const res = await api.post('/admin/series', formData, { timeout: 0 })
   clearSeriesCache()
@@ -187,10 +192,12 @@ export const updateSeries = async (seriesId: string, data: {
   cast?: string
   channelId?: string
   isFeatured?: boolean
+  explicit?: boolean
   poster?: File | null
   backdrop?: File | null
   posterUrl?: string
   backdropUrl?: string
+  contentRating?: ContentRatingInput | null
 }) => {
   const formData = new FormData()
   formData.append('title', data.title)
@@ -203,10 +210,12 @@ export const updateSeries = async (seriesId: string, data: {
   if (data.cast) formData.append('cast', data.cast)
   if (data.channelId) formData.append('channel_id', data.channelId)
   if (data.isFeatured) formData.append('is_featured', 'true')
+  if (typeof data.explicit === 'boolean') formData.append('explicit', data.explicit ? 'true' : 'false')
   if (data.posterUrl) formData.append('poster_url', data.posterUrl)
   if (data.backdropUrl) formData.append('backdrop_url', data.backdropUrl)
   if (data.poster) formData.append('poster', data.poster)
   if (data.backdrop) formData.append('backdrop', data.backdrop)
+  appendContentRating(formData, data.contentRating)
 
   const res = await api.put(`/admin/series/${seriesId}`, formData, { timeout: 0 })
   clearSeriesCache()
@@ -254,6 +263,8 @@ export const updateSeriesEpisode = async (episodeId: string, data: {
   synopsis?: string
   introStartSeconds?: number
   introEndSeconds?: number
+  explicit?: boolean
+  contentWarning?: boolean
 }) => {
   const res = await api.put(`/admin/series/episodes/${episodeId}`, {
     season_number: data.seasonNumber,
@@ -262,6 +273,8 @@ export const updateSeriesEpisode = async (episodeId: string, data: {
     synopsis: data.synopsis || '',
     intro_start_seconds: data.introStartSeconds || 0,
     intro_end_seconds: data.introEndSeconds || 0,
+    ...(typeof data.explicit === 'boolean' ? { explicit: data.explicit } : {}),
+    ...(typeof data.contentWarning === 'boolean' ? { content_warning: data.contentWarning } : {}),
   })
   clearSeriesCache()
   return res.data

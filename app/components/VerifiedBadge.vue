@@ -22,7 +22,7 @@
         @click.stop
       >
         <!-- Header with Close Button -->
-        <div class="flex items-center justify-between p-6 border-b border-zinc-800">
+        <div class="flex items-center justify-between p-6 border-b border-white/[0.07]">
           <h3 class="text-lg font-semibold text-white">{{ t('common.verifiedChannel') }}</h3>
           <button
             @click="isModalOpen = false"

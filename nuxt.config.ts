@@ -5,7 +5,27 @@ const config = {
   tailwindcss: {
     config: {
       // The module's default globs don't cover app/components/**; opt files in here.
-      content: ['./app/components/videoplayer/ClipEditor.vue']
+      content: ['./app/components/videoplayer/ClipEditor.vue'],
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'ui-sans-serif', 'system-ui', '-apple-system', 'Segoe UI', 'Roboto', 'sans-serif'],
+          },
+          // One neutral scale for the whole UI: near-black canvas with evenly
+          // spaced, slightly cool surface steps. gray mirrors zinc so older
+          // markup that mixes the two stays consistent.
+          colors: {
+            zinc: {
+              50: '#fafafb', 100: '#f2f2f4', 200: '#e2e2e6', 300: '#c8c8cf', 400: '#9b9ba5',
+              500: '#6c6c76', 600: '#4a4a52', 700: '#333339', 800: '#232328', 900: '#16161a', 950: '#0c0c0e',
+            },
+            gray: {
+              50: '#fafafb', 100: '#f2f2f4', 200: '#e2e2e6', 300: '#c8c8cf', 400: '#9b9ba5',
+              500: '#6c6c76', 600: '#4a4a52', 700: '#333339', 800: '#232328', 900: '#16161a', 950: '#0c0c0e',
+            },
+          },
+        },
+      },
     }
   },
   pages: true,
@@ -55,12 +75,15 @@ const config = {
     layoutTransition: { name: 'layout-shift' },
     head: {
       link: [
+        { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
+        { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: '' },
+        { rel: 'stylesheet', href: 'https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400..800&display=swap' },
         { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' },
         { rel: 'manifest', href: '/manifest.webmanifest' },
         { rel: 'apple-touch-icon', href: '/icon-192.png' }
       ],
       meta: [
-        { name: 'theme-color', content: '#1f2937' },
+        { name: 'theme-color', content: '#0c0c0e' },
         { name: 'mobile-web-app-capable', content: 'yes' },
         { name: 'apple-mobile-web-app-capable', content: 'yes' },
         { name: 'apple-mobile-web-app-status-bar-style', content: 'black-translucent' },

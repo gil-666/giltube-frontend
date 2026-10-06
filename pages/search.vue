@@ -1,155 +1,145 @@
 <template>
-    <div class="min-h-screen bg-black text-white p-6">
+    <div class="mx-auto min-h-screen w-full max-w-[110rem] bg-zinc-950 px-4 py-6 text-white sm:px-6 lg:px-8 lg:py-8">
         <!-- Search Header -->
         <div class="mb-8">
-            <h1 class="text-3xl font-bold mb-4">{{ t('searchPage.title') }}</h1>
-            <div class="flex items-center gap-2 text-gray-400">
-                <span>{{ t('searchPage.showingResultsFor') }} <span class="text-white font-semibold">{{ searchQuery }}</span></span>
-                <span v-if="totalResults > 0">({{ t('searchPage.resultsCount', { count: totalResults }) }})</span>
-            </div>
+            <h1 class="text-2xl font-semibold tracking-tight sm:text-3xl">{{ searchQuery }}</h1>
+            <p v-if="totalResults > 0" class="mt-1 text-sm text-zinc-500">{{ t('searchPage.resultsCount', { count: totalResults }) }}</p>
         </div>
 
         <!-- Loading State -->
         <div v-if="isLoading" class="flex justify-center py-12">
-            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600"></div>
+            <div class="h-8 w-8 animate-spin rounded-full border-2 border-white/15 border-t-white/70"></div>
         </div>
 
         <!-- Error State -->
-        <div v-else-if="error" class="bg-red-900 border border-red-700 text-red-200 px-4 py-3 rounded-lg">
+        <div v-else-if="error" class="rounded-xl bg-white/[0.04] px-4 py-3 text-zinc-300">
             <p class="font-semibold">{{ t('searchPage.loadErrorTitle') }}</p>
             <p class="text-sm mt-1">{{ error }}</p>
         </div>
 
         <!-- No Results -->
-        <div v-else-if="results.length === 0" class="text-center py-12">
-            <div class="text-gray-400 mb-4">
-                <svg class="w-16 h-16 mx-auto opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div v-else-if="results.length === 0" class="py-16 text-center">
+            <div class="mb-4 text-zinc-600">
+                <svg class="mx-auto h-10 w-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
             </div>
-            <p class="text-lg">{{ t('searchPage.noResults', { query: searchQuery }) }}</p>
-            <p class="text-sm text-gray-500 mt-2">{{ t('searchPage.tryDifferent') }}</p>
+            <p class="text-base text-zinc-200">{{ t('searchPage.noResults', { query: searchQuery }) }}</p>
+            <p class="mt-1 text-sm text-zinc-500">{{ t('searchPage.tryDifferent') }}</p>
         </div>
 
         <!-- Results Grid/List -->
         <div v-else>
             <!-- Videos Section -->
             <div v-if="videos.length > 0" class="mb-12">
-                <h2 class="text-2xl font-bold mb-6">{{ t('searchPage.videos') }}</h2>
-                <div class="motion-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <h2 class="mb-4 text-lg font-semibold tracking-tight">{{ t('searchPage.videos') }}</h2>
+                <div class="motion-grid grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
                     <NuxtLink v-for="video in videos" :key="`video-${video.id}`" :to="localePath(`/video/${video.id}`)"
-                        class="motion-card group cursor-pointer">
-                        <div class="bg-zinc-800 rounded-lg overflow-hidden h-40 mb-3 relative">
-                            <img class="w-full h-full object-cover group-hover:opacity-75 transition"
-                                v-bind="responsiveImage(video.thumbnail, '(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw')" :alt="video.title" />
+                        class="motion-card group block">
+                        <div class="search-thumb relative mb-3 aspect-video overflow-hidden rounded-xl bg-zinc-900">
+                            <img class="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]"
+                                v-bind="responsiveImage(video.thumbnail, '(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw')" alt="" />
                         </div>
-                        <p class="font-semibold line-clamp-2 group-hover:text-red-500 transition">{{ video.title }}</p>
-                        <div class="flex items-center text-zinc-400 gap-1 mt-1">
-                            <NuxtLink :to="localePath(`/channel/${video.channel_id}`)" class="text-sm text-gray-400 hover:text-yellow-400 transition">{{ video.channel }}</NuxtLink>
+                        <p class="line-clamp-2 text-sm font-medium leading-5 text-zinc-100">{{ video.title }}</p>
+                        <p class="mt-1 flex items-center gap-1 text-[13px] text-zinc-400">
+                            <span class="truncate">{{ video.channel }}</span>
                             <VerifiedBadge v-if="video.verified" :verified="true" size="sm" />
-                        </div>
-
-                        <div class="flex items-center gap-2 text-xs text-gray-500 mt-1">
-                            <span>{{ t('searchPage.views', { count: formatViews(video.views || 0) }) }}</span>
-                        </div>
+                        </p>
+                        <p class="text-[13px] text-zinc-500">{{ t('searchPage.views', { count: formatViews(video.views || 0) }) }}</p>
                     </NuxtLink>
                 </div>
             </div>
 
             <!-- Movies Section -->
             <div v-if="movies.length > 0" class="mb-12">
-                <h2 class="text-2xl font-bold mb-6">{{ t('searchPage.movies') }}</h2>
-                <div class="motion-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <h2 class="mb-4 text-lg font-semibold tracking-tight">{{ t('searchPage.movies') }}</h2>
+                <div class="motion-grid grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
                     <NuxtLink
                         v-for="movie in movies"
                         :key="`movie-${movie.id}`"
                         :to="localePath(`/category/movies?movie_id=${movie.id}`)"
-                        class="motion-card group overflow-hidden rounded-2xl border border-red-500/20 bg-zinc-950 transition hover:border-red-400/60 hover:bg-zinc-900"
+                        class="motion-card group block"
                     >
-                        <div class="relative aspect-video overflow-hidden bg-zinc-800">
+                        <div class="search-thumb relative aspect-video overflow-hidden rounded-xl bg-zinc-900">
                             <img
                                 v-if="mediaImage(movie)"
-                                class="h-full w-full object-cover transition duration-300 group-hover:scale-105 group-hover:opacity-80"
+                                class="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]"
                                 v-bind="responsiveImage(mediaImage(movie), '(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw')"
                                 :alt="movie.title"
                             />
                             <div v-else class="flex h-full w-full items-center justify-center text-sm text-zinc-500">
                                 {{ t('searchPage.movie') }}
                             </div>
-                            <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
-                            <span class="absolute left-3 top-3 rounded-full bg-red-600 px-2.5 py-1 text-xs font-black uppercase tracking-wide text-white">
+                            
+                            <span class="absolute left-2 top-2 rounded-md bg-black/75 px-1.5 py-0.5 text-[11px] font-semibold text-zinc-100 backdrop-blur">
                                 {{ t('searchPage.movie') }}
                             </span>
-                            <span v-if="movie.year" class="absolute bottom-3 right-3 rounded bg-black/75 px-2 py-1 text-xs font-bold text-zinc-100">
+                            <span v-if="movie.year" class="absolute bottom-2 right-2 rounded-md bg-black/75 px-1.5 py-0.5 text-[11px] font-semibold text-zinc-100">
                                 {{ movie.year }}
                             </span>
                         </div>
-                        <div class="p-4">
-                            <p class="line-clamp-2 text-lg font-bold text-white transition group-hover:text-red-300">{{ movie.title }}</p>
-                            <p class="mt-2 line-clamp-2 text-sm leading-6 text-zinc-400">{{ movie.description }}</p>
-                        </div>
+                        <p class="mt-3 line-clamp-1 text-sm font-medium text-zinc-100">{{ movie.title }}</p>
+                        <p class="mt-0.5 line-clamp-2 text-[13px] leading-5 text-zinc-500">{{ movie.description }}</p>
                     </NuxtLink>
                 </div>
             </div>
 
             <!-- Series Section -->
             <div v-if="seriesResults.length > 0" class="mb-12">
-                <h2 class="text-2xl font-bold mb-6">{{ t('searchPage.series') }}</h2>
-                <div class="motion-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <h2 class="mb-4 text-lg font-semibold tracking-tight">{{ t('searchPage.series') }}</h2>
+                <div class="motion-grid grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
                     <NuxtLink
                         v-for="series in seriesResults"
                         :key="`series-${series.id}`"
                         :to="localePath(`/category/series?series_id=${series.id}`)"
-                        class="motion-card group overflow-hidden rounded-2xl border border-blue-500/20 bg-zinc-950 transition hover:border-blue-400/60 hover:bg-zinc-900"
+                        class="motion-card group block"
                     >
-                        <div class="relative aspect-video overflow-hidden bg-zinc-800">
+                        <div class="search-thumb relative aspect-video overflow-hidden rounded-xl bg-zinc-900">
                             <img
                                 v-if="mediaImage(series)"
-                                class="h-full w-full object-cover transition duration-300 group-hover:scale-105 group-hover:opacity-80"
+                                class="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]"
                                 v-bind="responsiveImage(mediaImage(series), '(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw')"
                                 :alt="series.title"
                             />
                             <div v-else class="flex h-full w-full items-center justify-center text-sm text-zinc-500">
                                 {{ t('searchPage.seriesOne') }}
                             </div>
-                            <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
-                            <span class="absolute left-3 top-3 rounded-full bg-blue-600 px-2.5 py-1 text-xs font-black uppercase tracking-wide text-white">
+                            
+                            <span class="absolute left-2 top-2 rounded-md bg-black/75 px-1.5 py-0.5 text-[11px] font-semibold text-zinc-100 backdrop-blur">
                                 {{ t('searchPage.seriesOne') }}
                             </span>
-                            <span class="absolute bottom-3 right-3 rounded bg-black/75 px-2 py-1 text-xs font-bold text-zinc-100">
+                            <span class="absolute bottom-2 right-2 rounded-md bg-black/75 px-1.5 py-0.5 text-[11px] font-semibold text-zinc-100">
                                 {{ t('searchPage.seriesMeta', { seasons: series.seasons || 1, episodes: series.episodes || 0 }) }}
                             </span>
                         </div>
-                        <div class="p-4">
-                            <p class="line-clamp-2 text-lg font-bold text-white transition group-hover:text-blue-300">{{ series.title }}</p>
-                            <p class="mt-2 line-clamp-2 text-sm leading-6 text-zinc-400">{{ series.description }}</p>
-                        </div>
+                        <p class="mt-3 line-clamp-1 text-sm font-medium text-zinc-100">{{ series.title }}</p>
+                        <p class="mt-0.5 line-clamp-2 text-[13px] leading-5 text-zinc-500">{{ series.description }}</p>
                     </NuxtLink>
                 </div>
             </div>
 
             <!-- Channels Section -->
             <div v-if="channels.length > 0">
-                <h2 class="text-2xl font-bold mb-6">{{ t('searchPage.channels') }}</h2>
-                <div class="motion-grid space-y-4">
+                <h2 class="mb-4 text-lg font-semibold tracking-tight">{{ t('searchPage.channels') }}</h2>
+                <div class="motion-grid space-y-1">
                     <NuxtLink v-for="channel in channels" :key="`channel-${channel.id}`" :to="localePath(`/channel/${channel.id}`)"
-                        class="motion-card flex items-center gap-4 p-4 bg-zinc-900 rounded-lg hover:bg-zinc-800 transition group">
+                        class="motion-card group -mx-2 flex items-center gap-4 rounded-xl p-2 transition hover:bg-white/[0.04]">
                         <!-- Channel Avatar -->
                         <AvatarFallback
                             :src="channel.avatar"
                             :name="channel.name"
-                            class="h-16 w-16 flex-shrink-0 text-lg"
+                            class="h-14 w-14 flex-shrink-0 text-lg"
                         />
 
                         <!-- Channel Info -->
                         <div class="flex-1 min-w-0">
                             <div class="flex items-center gap-1 flex-wrap">
-                                <p class="text-lg font-semibold group-hover:text-red-500 transition whitespace-nowrap">{{
+                                <p class="whitespace-nowrap text-[15px] font-semibold text-zinc-100">{{
                                     channel.name }}</p>
                                 <VerifiedBadge v-if="channel.verified" :verified="true" size="sm" class="flex-shrink-0" />
                             </div>
-                            <p class="text-sm text-gray-400 line-clamp-1 truncate">{{ channel.description }}</p>
+                            <p class="truncate text-sm text-zinc-500">{{ channel.description }}</p>
                         </div>
                     </NuxtLink>
                 </div>
@@ -159,19 +149,19 @@
         <!-- Pagination -->
         <div v-if="results.length > 0 && totalPages > 1" class="flex justify-center items-center gap-2 mt-12">
             <button @click="previousPage" :disabled="currentPage === 1"
-                class="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 rounded disabled:opacity-50 disabled:cursor-not-allowed transition">
+                class="h-9 rounded-full bg-white/[0.07] px-4 text-sm font-medium transition hover:bg-white/[0.12] disabled:cursor-not-allowed disabled:opacity-40">
                 {{ t('searchPage.previous') }}
             </button>
 
             <div class="flex gap-1">
                 <button v-for="p in pageNumbers" :key="p" @click="goToPage(p)"
-                    :class="['px-3 py-2 rounded transition', p === currentPage ? 'bg-red-600 hover:bg-red-700' : 'bg-zinc-800 hover:bg-zinc-700']">
+                    :class="['h-9 min-w-9 rounded-full px-3 text-sm font-medium transition', p === currentPage ? 'bg-white text-zinc-950' : 'text-zinc-300 hover:bg-white/[0.07]']" :aria-current="p === currentPage ? 'page' : undefined">
                     {{ p }}
                 </button>
             </div>
 
             <button @click="nextPage" :disabled="currentPage === totalPages"
-                class="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 rounded disabled:opacity-50 disabled:cursor-not-allowed transition">
+                class="h-9 rounded-full bg-white/[0.07] px-4 text-sm font-medium transition hover:bg-white/[0.12] disabled:cursor-not-allowed disabled:opacity-40">
                 {{ t('searchPage.next') }}
             </button>
         </div>

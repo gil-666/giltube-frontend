@@ -2,7 +2,7 @@
   <span class="inline-flex align-middle">
     <button
       type="button"
-      class="inline-flex h-7 w-7 items-center justify-center rounded-full border border-zinc-700 bg-zinc-900 text-sm font-bold text-blue-300 transition hover:border-blue-500 hover:bg-blue-950/50"
+      class="inline-flex h-7 w-7 items-center justify-center rounded-full border border-white/10 bg-zinc-900 text-sm font-bold text-zinc-200 transition hover:border-blue-500 hover:bg-blue-950/50"
       :aria-label="title"
       @click="open = true"
     >
@@ -15,7 +15,7 @@
         class="fixed inset-0 z-[10000] flex items-center justify-center bg-black/75 px-4 py-8"
         @click.self="open = false"
       >
-        <section class="w-full max-w-lg rounded-lg border border-zinc-700 bg-zinc-950 p-5 text-white shadow-2xl">
+        <section class="w-full max-w-lg rounded-lg border border-white/10 bg-zinc-950 p-5 text-white shadow-2xl">
           <div class="flex items-start justify-between gap-4">
             <h3 class="text-lg font-semibold">{{ title }}</h3>
             <button

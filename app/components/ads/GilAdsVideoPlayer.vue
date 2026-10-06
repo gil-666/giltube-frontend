@@ -14,7 +14,7 @@
         <div class="gilads-preroll-controls">
           <div class="absolute inset-x-0 top-0 flex items-start justify-between gap-3 bg-gradient-to-b from-black/75 to-transparent p-4">
             <div class="pointer-events-auto flex max-w-[calc(100%-4rem)] items-center gap-2 rounded-full border border-cyan-300/30 bg-black/60 px-3 py-1 text-xs text-cyan-200">
-              <span class="shrink-0 font-semibold uppercase tracking-[0.18em]">{{ t('ads.sponsored') }}</span>
+              <span class="shrink-0 font-medium">{{ t('ads.sponsored') }}</span>
               <span class="truncate font-medium normal-case tracking-normal text-white/85">{{ prerollAd.creative.headline || 'Sponsored video' }}</span>
             </div>
             <button
@@ -94,7 +94,7 @@
         @click.self="showSponsorInfo = false"
       >
         <div class="w-full max-w-md rounded-lg bg-zinc-800" style="z-index: 2147483647 !important; position: relative; overflow: visible;">
-          <div class="flex items-center justify-between border-b border-zinc-700 px-6 py-4">
+          <div class="flex items-center justify-between border-b border-white/10 px-6 py-4">
             <h2 class="text-lg font-semibold text-white">{{ t('ads.about') }}</h2>
             <button type="button" class="text-gray-400 hover:text-white" @click="showSponsorInfo = false">
               <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -105,13 +105,13 @@
 
           <div class="space-y-4 px-6 py-4">
             <div>
-              <p class="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-300/80">{{ t('ads.sponsoredVideo') }}</p>
+              <p class="text-xs font-medium text-cyan-300/80">{{ t('ads.sponsoredVideo') }}</p>
               <h3 class="mt-1 text-base font-semibold text-white">{{ prerollAd.creative.headline || 'Sponsored video' }}</h3>
               <p v-if="prerollAd.creative.body" class="mt-2 text-sm text-zinc-300">{{ prerollAd.creative.body }}</p>
             </div>
 
-            <div v-if="prerollAd.creative.destinationUrl" class="rounded border border-zinc-700 bg-zinc-900 p-3">
-              <p class="text-xs uppercase tracking-[0.18em] text-zinc-500">{{ t('ads.sponsorLink') }}</p>
+            <div v-if="prerollAd.creative.destinationUrl" class="rounded border border-white/10 bg-zinc-900 p-3">
+              <p class="text-xs text-zinc-500">{{ t('ads.sponsorLink') }}</p>
               <p class="mt-1 break-all text-sm text-zinc-200">{{ prerollAd.creative.destinationUrl }}</p>
             </div>
 
@@ -121,7 +121,7 @@
                 :href="prerollAd.creative.destinationUrl"
                 target="_blank"
                 rel="noopener noreferrer"
-                class="rounded bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-700"
+                class="rounded bg-zinc-100 px-4 py-2 text-sm font-semibold text-zinc-950 transition hover:bg-white"
                 @click="handleAdClick"
               >
                 Visit sponsor
@@ -150,6 +150,8 @@
       :clip-mode="clipMode"
       :clip-start-seconds="clipStartSeconds"
       :clip-end-seconds="clipEndSeconds"
+      :content-rating="contentRating"
+      :content-warning="contentWarning"
       @play="$emit('play')"
       @ended="$emit('ended')"
       @next-episode="$emit('nextEpisode')"
@@ -239,6 +241,8 @@ interface Props {
   // (resuming, or arriving via a manual "next episode" click).
   introReady?: boolean
   introSuppressed?: boolean
+  contentRating?: { rating?: string, descriptors?: string[] } | null
+  contentWarning?: '' | 'movie' | 'episode'
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -259,6 +263,8 @@ const props = withDefaults(defineProps<Props>(), {
   introCandidate: false,
   introReady: true,
   introSuppressed: false,
+  contentRating: null,
+  contentWarning: '',
 })
 
 defineEmits<{

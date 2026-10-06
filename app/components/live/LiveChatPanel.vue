@@ -1,7 +1,7 @@
 <template>
     <div class="fixed inset-0 z-[9999] bg-zinc-950 text-white">
         <div class="h-screen w-screen bg-zinc-900 flex flex-col">
-            <div class="sticky top-0 p-3 border-b border-zinc-800 flex items-center justify-between gap-2 bg-zinc-900">
+            <div class="sticky top-0 p-3 border-b border-white/[0.07] flex items-center justify-between gap-2 bg-zinc-900">
                 <div class="min-w-0">
                     <p class="font-semibold truncate">{{ channelName }} Chat</p>
                     <p class="text-xs text-gray-400">{{ t('live.detached') }}</p>
@@ -9,7 +9,7 @@
                 <div class="flex items-center gap-2">
                     <span
                         class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold border"
-                        :class="isLive ? 'bg-red-900 text-red-200 border-red-700' : 'bg-zinc-800 text-zinc-300 border-zinc-700'"
+                        :class="isLive ? 'bg-red-900 text-red-200 border-red-700' : 'bg-zinc-800 text-zinc-300 border-white/10'"
                     >
                         <span class="w-1.5 h-1.5 rounded-full" :class="isLive ? 'bg-red-400 animate-pulse' : 'bg-zinc-500'" />
                         {{ isLive ? 'LIVE' : 'OFFLINE' }}
@@ -48,11 +48,11 @@
                 </div>
             </div>
 
-            <div class="p-3 border-t border-zinc-800 space-y-2">
+            <div class="p-3 border-t border-white/[0.07] space-y-2">
                 <div v-if="isLoggedIn && availableChannels.length > 0" class="space-y-1">
                     <label class="text-xs text-gray-400">{{ t('live.chatAs') }}</label>
                     <select v-model="selectedChatChannelId"
-                        class="w-full bg-zinc-800 border border-zinc-700 rounded px-2 py-1.5 text-sm">
+                        class="w-full bg-zinc-800 border border-white/10 rounded px-2 py-1.5 text-sm">
                         <option v-for="ch in availableChannels" :key="ch.id" :value="ch.id">{{ ch.name }}</option>
                     </select>
                 </div>
@@ -72,9 +72,9 @@
                 <div class="flex gap-2">
                     <input v-model="chatInput" type="text" maxlength="500" :placeholder="t('live.saySomething')"
                         @keydown.enter="sendChatMessage"
-                        class="flex-1 bg-zinc-800 border border-zinc-700 rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-500" />
+                        class="flex-1 bg-zinc-800 border border-white/10 rounded px-3 py-2 text-sm focus:outline-none focus:border-white/30" />
                     <button @click="sendChatMessage" :disabled="chatSending || !canSendChat"
-                        class="px-3 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 rounded text-sm transition">
+                        class="px-3 py-2 bg-zinc-100 hover:bg-white disabled:opacity-50 rounded text-sm transition text-zinc-950">
                         {{ chatSending ? '...' : 'Send' }}
                     </button>
                 </div>

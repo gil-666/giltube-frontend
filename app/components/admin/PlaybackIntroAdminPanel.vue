@@ -10,7 +10,7 @@
     <p v-if="error" class="rounded-lg border border-red-500/30 bg-red-950/40 p-3 text-sm text-red-200">{{ error }}</p>
     <p v-if="message" class="rounded-lg border border-emerald-500/30 bg-emerald-950/30 p-3 text-sm text-emerald-200">{{ message }}</p>
 
-    <div class="grid gap-5 rounded-2xl border border-zinc-800 bg-zinc-950 p-5 lg:grid-cols-2">
+    <div class="grid gap-5 rounded-2xl border border-white/[0.07] bg-zinc-950 p-5 lg:grid-cols-2">
       <div class="space-y-3">
         <p class="text-sm font-semibold text-zinc-300">Current intro</p>
         <video
@@ -22,7 +22,7 @@
           preload="metadata"
           class="aspect-video w-full rounded-xl bg-black"
         />
-        <div v-else class="flex aspect-video w-full items-center justify-center rounded-xl border border-dashed border-zinc-700 text-sm text-zinc-500">
+        <div v-else class="flex aspect-video w-full items-center justify-center rounded-xl border border-dashed border-white/10 text-sm text-zinc-500">
           {{ loading ? 'Loading…' : 'No intro uploaded' }}
         </div>
         <p v-if="intro?.url" class="text-xs text-zinc-500">
@@ -50,7 +50,7 @@
           {{ uploading ? `Uploading ${uploadProgress}%` : 'Upload' }}
         </button>
 
-        <div class="space-y-3 border-t border-zinc-800 pt-4">
+        <div class="space-y-3 border-t border-white/[0.07] pt-4">
           <label class="flex items-center gap-3 text-sm text-zinc-200">
             <input :checked="intro?.enabled" :disabled="!intro?.url || saving" type="checkbox" class="h-4 w-4 accent-red-600" @change="saveSetting('enabled', ($event.target as HTMLInputElement).checked)" />
             Play intro before movies and episodes

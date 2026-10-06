@@ -1,17 +1,17 @@
 <template>
-  <div class="fixed inset-0 bg-zinc-950 flex items-center justify-center p-4">
-    <div class="w-full max-w-md">
+  <div class="fixed inset-0 flex items-center justify-center overflow-y-auto bg-zinc-950 p-4">
+    <div class="w-full max-w-sm py-10">
       <!-- Logo/Header -->
-      <div class="text-center mb-8">
-        <h1 class="text-4xl font-bold text-red-500 mb-2">giltube</h1>
-        <p class="text-gray-400">{{ t('register.title') }}</p>
+      <div class="mb-8">
+        <NuxtLink :to="localePath('/')" aria-label="GilTube"><img src="../assets/logowhsmall.png" alt="GilTube" class="h-8 w-auto" /></NuxtLink>
+        <h1 class="mt-8 text-2xl font-semibold tracking-tight">{{ t('register.title') }}</h1>
       </div>
 
       <!-- Register Form -->
-      <form @submit.prevent="handleRegister" class="bg-zinc-900 rounded-lg shadow-xl p-8 space-y-6">
+      <form @submit.prevent="handleRegister" class="space-y-4">
         <!-- Username Input -->
         <div>
-          <label for="username" class="block text-sm font-medium text-gray-300 mb-2">
+          <label for="username" class="gt-label">
             {{ t('register.usernameLabel') }}
           </label>
           <input
@@ -21,13 +21,13 @@
             required
             :placeholder="t('register.usernamePlaceholder')"
             autocomplete="username"
-            style="color: white; background-color: rgb(39, 39, 42); border: 1px solid rgb(63, 63, 70); border-radius: 0.5rem; padding: 0.5rem 1rem; width: 100%;"
+            class="gt-input"
           />
         </div>
 
         <!-- Email Input -->
         <div>
-          <label for="email" class="block text-sm font-medium text-gray-300 mb-2">
+          <label for="email" class="gt-label">
             {{ t('register.emailLabel') }}
           </label>
           <input
@@ -37,13 +37,13 @@
             required
             :placeholder="t('register.emailPlaceholder')"
             autocomplete="email"
-            style="color: white; background-color: rgb(39, 39, 42); border: 1px solid rgb(63, 63, 70); border-radius: 0.5rem; padding: 0.5rem 1rem; width: 100%;"
+            class="gt-input"
           />
         </div>
 
         <!-- Password Input -->
         <div>
-          <label for="password" class="block text-sm font-medium text-gray-300 mb-2">
+          <label for="password" class="gt-label">
             {{ t('register.passwordLabel') }}
           </label>
           <input
@@ -53,14 +53,14 @@
             required
             :placeholder="t('register.passwordPlaceholder')"
             autocomplete="new-password"
-            style="color: white; background-color: rgb(39, 39, 42); border: 1px solid rgb(63, 63, 70); border-radius: 0.5rem; padding: 0.5rem 1rem; width: 100%;"
+            class="gt-input"
           />
-          <p class="text-gray-500 text-xs mt-1">{{ t('register.passwordHint') }}</p>
+          <p class="mt-1.5 text-xs text-zinc-500">{{ t('register.passwordHint') }}</p>
         </div>
 
         <!-- Confirm Password Input -->
         <div>
-          <label for="confirmPassword" class="block text-sm font-medium text-gray-300 mb-2">
+          <label for="confirmPassword" class="gt-label">
             {{ t('register.confirmPasswordLabel') }}
           </label>
           <input
@@ -70,40 +70,37 @@
             required
             :placeholder="t('register.passwordPlaceholder')"
             autocomplete="new-password"
-            style="color: white; background-color: rgb(39, 39, 42); border: 1px solid rgb(63, 63, 70); border-radius: 0.5rem; padding: 0.5rem 1rem; width: 100%;"
+            class="gt-input"
           />
         </div>
 
         <!-- Error Message -->
-        <div v-if="error" class="bg-red-900/50 border border-red-500 text-red-200 px-4 py-3 rounded-lg text-sm">
+        <div v-if="error" class="gt-alert">
           {{ error }}
         </div>
 
         <!-- Success Message -->
-        <div v-if="success" class="bg-green-900/50 border border-green-500 text-green-200 px-4 py-3 rounded-lg text-sm">
+        <div v-if="success" class="gt-alert gt-alert--success">
           {{ t('register.successMessage') }}
         </div>
 
         <!-- Loading State -->
-        <div v-if="loading" class="text-center text-gray-400 text-sm">
-          {{ t('register.creatingAccount') }}
-        </div>
 
         <!-- Submit Button -->
         <button
           type="submit"
           :disabled="loading"
-          class="w-full bg-red-600 hover:bg-red-700 disabled:bg-gray-600 text-white font-semibold py-2 px-4 rounded-lg transition duration-200"
+          class="gt-button gt-button--primary w-full"
         >
           {{ loading ? t('register.creatingAccount') : t('register.signUp') }}
         </button>
       </form>
 
       <!-- Login Link -->
-      <div class="mt-6 text-center">
-        <p class="text-gray-400">
+      <div class="mt-6">
+        <p class="text-sm text-zinc-400">
           {{ t('register.alreadyHaveAccount') }}
-          <NuxtLink :to="localePath('/login')" class="text-red-500 hover:text-red-400 font-medium">
+          <NuxtLink :to="localePath('/login')" class="font-medium text-white underline-offset-4 hover:underline">
             {{ t('register.signIn') }}
           </NuxtLink>
         </p>

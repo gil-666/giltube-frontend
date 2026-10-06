@@ -12,10 +12,10 @@
       <p class="mt-1 text-sm text-gray-400">{{ t('movieAdmin.subtitle') }}</p>
     </div>
 
-    <div class="rounded-lg border border-zinc-700 bg-zinc-900 p-5">
+    <div class="rounded-lg border border-white/10 bg-zinc-900 p-5">
       <label class="mb-2 block text-sm font-medium text-gray-300">{{ t('movieAdmin.resumeExisting') }}</label>
       <div class="grid gap-3 md:grid-cols-[minmax(0,1fr)_9rem]">
-        <select v-model="selectedMovieId" class="rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-white focus:outline-none focus:border-blue-500" @change="selectExistingMovie">
+        <select v-model="selectedMovieId" class="rounded border border-white/10 bg-zinc-800 px-3 py-2 text-white focus:outline-none focus:border-white/30" @change="selectExistingMovie">
           <option value="">{{ t('movieAdmin.createNewOption') }}</option>
           <option v-for="item in adminMovies" :key="item.id" :value="item.id">
             {{ item.title }}{{ item.video_id ? ` · ${t('movieAdmin.linkedBadge')}` : '' }}
@@ -31,20 +31,20 @@
     <div v-if="movieError" class="rounded border border-red-500/30 bg-red-950/40 p-3 text-sm text-red-100">{{ movieError }}</div>
 
     <div>
-      <form class="space-y-5 rounded-lg border border-zinc-700 bg-zinc-900 p-5" @submit.prevent="handleMovieSubmit">
-        <section class="space-y-3 rounded border border-zinc-800 bg-black/30 p-4">
+      <form class="space-y-5 rounded-lg border border-white/10 bg-zinc-900 p-5" @submit.prevent="handleMovieSubmit">
+        <section class="space-y-3 rounded border border-white/[0.07] bg-black/30 p-4">
           <div class="flex flex-col gap-3 md:flex-row md:items-end">
             <div class="min-w-0 flex-1">
               <label class="mb-2 block text-sm font-medium text-gray-300">{{ t('movieAdmin.metadata.title') }}</label>
-              <input v-model="metadataQuery" :placeholder="t('movieAdmin.metadata.placeholder')" class="w-full rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500" @keydown.enter.prevent="searchMovieMetadata" />
+              <input v-model="metadataQuery" :placeholder="t('movieAdmin.metadata.placeholder')" class="w-full rounded border border-white/10 bg-zinc-800 px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-white/30" @keydown.enter.prevent="searchMovieMetadata" />
             </div>
-            <button type="button" :disabled="metadataSearching || !metadataQuery.trim()" class="rounded bg-blue-600 px-4 py-2 font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50" @click="searchMovieMetadata">
+            <button type="button" :disabled="metadataSearching || !metadataQuery.trim()" class="rounded bg-zinc-100 px-4 py-2 font-semibold text-zinc-950 transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-50" @click="searchMovieMetadata">
               {{ metadataSearching ? t('movieAdmin.metadata.searching') : t('movieAdmin.metadata.search') }}
             </button>
           </div>
 
           <div v-if="metadataResults.length" class="grid gap-3 md:grid-cols-2">
-            <article v-for="result in metadataResults" :key="`${result.source}-${result.source_id}`" class="grid grid-cols-[4.5rem_minmax(0,1fr)] gap-3 rounded border border-zinc-800 bg-zinc-950 p-3">
+            <article v-for="result in metadataResults" :key="`${result.source}-${result.source_id}`" class="grid grid-cols-[4.5rem_minmax(0,1fr)] gap-3 rounded border border-white/[0.07] bg-zinc-950 p-3">
               <img v-if="result.poster_url" :src="result.poster_url" :alt="result.title" class="aspect-[2/3] w-full rounded object-cover" />
               <div v-else class="aspect-[2/3] rounded bg-zinc-800" />
               <div class="min-w-0">
@@ -62,39 +62,41 @@
         <div class="grid gap-4 md:grid-cols-2">
           <div>
             <label class="mb-2 block text-sm font-medium text-gray-300">{{ t('movieAdmin.fields.title') }}</label>
-            <input v-model="movieForm.title" required class="w-full rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-white focus:outline-none focus:border-blue-500" />
+            <input v-model="movieForm.title" required class="w-full rounded border border-white/10 bg-zinc-800 px-3 py-2 text-white focus:outline-none focus:border-white/30" />
           </div>
           <div>
             <label class="mb-2 block text-sm font-medium text-gray-300">{{ t('movieAdmin.fields.slug') }}</label>
-            <input v-model="movieForm.slug" :placeholder="t('movieAdmin.placeholders.slug')" class="w-full rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500" />
+            <input v-model="movieForm.slug" :placeholder="t('movieAdmin.placeholders.slug')" class="w-full rounded border border-white/10 bg-zinc-800 px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-white/30" />
           </div>
           <div>
             <label class="mb-2 block text-sm font-medium text-gray-300">{{ t('movieAdmin.fields.primaryGenre') }}</label>
-            <input v-model="movieForm.genre" required class="w-full rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-white focus:outline-none focus:border-blue-500" />
+            <input v-model="movieForm.genre" required class="w-full rounded border border-white/10 bg-zinc-800 px-3 py-2 text-white focus:outline-none focus:border-white/30" />
           </div>
           <div>
             <label class="mb-2 block text-sm font-medium text-gray-300">{{ t('movieAdmin.fields.releaseYear') }}</label>
-            <input v-model.number="movieForm.releaseYear" min="0" type="number" class="w-full rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-white focus:outline-none focus:border-blue-500" />
+            <input v-model.number="movieForm.releaseYear" min="0" type="number" class="w-full rounded border border-white/10 bg-zinc-800 px-3 py-2 text-white focus:outline-none focus:border-white/30" />
           </div>
         </div>
 
+        <ContentRatingFields v-model="movieRating" />
+
         <div>
           <label class="mb-2 block text-sm font-medium text-gray-300">{{ t('movieAdmin.fields.synopsis') }}</label>
-          <textarea v-model="movieForm.synopsis" rows="4" class="w-full rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-white focus:outline-none focus:border-blue-500" />
+          <textarea v-model="movieForm.synopsis" rows="4" class="w-full rounded border border-white/10 bg-zinc-800 px-3 py-2 text-white focus:outline-none focus:border-white/30" />
         </div>
 
         <div class="grid gap-4 md:grid-cols-3">
           <div>
             <label class="mb-2 block text-sm font-medium text-gray-300">{{ t('movieAdmin.fields.genres') }}</label>
-            <input v-model="movieForm.genres" :placeholder="t('movieAdmin.placeholders.genres')" class="w-full rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500" />
+            <input v-model="movieForm.genres" :placeholder="t('movieAdmin.placeholders.genres')" class="w-full rounded border border-white/10 bg-zinc-800 px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-white/30" />
           </div>
           <div>
             <label class="mb-2 block text-sm font-medium text-gray-300">{{ t('movieAdmin.fields.directors') }}</label>
-            <input v-model="movieForm.directors" :placeholder="t('movieAdmin.placeholders.commaSeparated')" class="w-full rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500" />
+            <input v-model="movieForm.directors" :placeholder="t('movieAdmin.placeholders.commaSeparated')" class="w-full rounded border border-white/10 bg-zinc-800 px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-white/30" />
           </div>
           <div>
             <label class="mb-2 block text-sm font-medium text-gray-300">{{ t('movieAdmin.fields.cast') }}</label>
-            <input v-model="movieForm.cast" :placeholder="t('movieAdmin.placeholders.commaSeparated')" class="w-full rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500" />
+            <input v-model="movieForm.cast" :placeholder="t('movieAdmin.placeholders.commaSeparated')" class="w-full rounded border border-white/10 bg-zinc-800 px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-white/30" />
           </div>
         </div>
 
@@ -102,31 +104,47 @@
           <div>
             <label class="mb-2 block text-sm font-medium text-gray-300">{{ t('movieAdmin.fields.posterImage') }}</label>
             <input type="file" accept="image/*" class="block w-full text-sm text-gray-300 file:mr-3 file:rounded file:border-0 file:bg-zinc-700 file:px-3 file:py-2 file:text-white" @change="onMovieImageSelected($event, 'poster')" />
-            <div v-if="movieForm.posterUrl" class="mt-3 overflow-hidden rounded border border-zinc-800 bg-black/40">
+            <div v-if="movieForm.posterUrl" class="mt-3 overflow-hidden rounded border border-white/[0.07] bg-black/40">
               <img :src="movieForm.posterUrl" :alt="movieForm.title || t('movieAdmin.fields.posterImage')" class="aspect-[2/3] max-h-64 w-full object-contain" />
             </div>
           </div>
           <div>
             <label class="mb-2 block text-sm font-medium text-gray-300">{{ t('movieAdmin.fields.backdropImage') }}</label>
             <input type="file" accept="image/*" class="block w-full text-sm text-gray-300 file:mr-3 file:rounded file:border-0 file:bg-zinc-700 file:px-3 file:py-2 file:text-white" @change="onMovieImageSelected($event, 'backdrop')" />
-            <div v-if="movieForm.backdropUrl" class="mt-3 overflow-hidden rounded border border-zinc-800 bg-black/40">
+            <div v-if="movieForm.backdropUrl" class="mt-3 overflow-hidden rounded border border-white/[0.07] bg-black/40">
               <img :src="movieForm.backdropUrl" :alt="movieForm.title || t('movieAdmin.fields.backdropImage')" class="aspect-video max-h-64 w-full object-cover" />
             </div>
           </div>
         </div>
 
-        <label class="flex items-center gap-3 rounded border border-zinc-700 bg-zinc-800 p-3 text-sm text-gray-300">
+        <label class="flex items-center gap-3 rounded border border-white/10 bg-zinc-800 p-3 text-sm text-gray-300">
           <input v-model="movieForm.isFeatured" type="checkbox" class="h-4 w-4 accent-red-600" />
           {{ t('movieAdmin.featuredToggle') }}
         </label>
 
-        <div v-if="movieVideoId || trailerVideoId" class="grid gap-3 rounded border border-zinc-800 bg-black/30 p-3 text-xs md:grid-cols-2">
+        <label class="flex items-center gap-3 rounded border border-white/10 bg-zinc-800 p-3 text-sm text-gray-300">
+          <input v-model="movieForm.explicit" type="checkbox" class="h-4 w-4 accent-red-600" />
+          <span>
+            {{ t('contentRatingAdmin.explicitMovie') }}
+            <span class="block text-xs text-gray-500">{{ t('contentRatingAdmin.explicitMovieHelp') }}</span>
+          </span>
+        </label>
+
+        <label class="flex items-center gap-3 rounded border border-white/10 bg-zinc-800 p-3 text-sm text-gray-300">
+          <input v-model="movieForm.contentWarning" type="checkbox" class="h-4 w-4 accent-red-600" />
+          <span>
+            {{ t('contentRatingAdmin.warning') }}
+            <span class="block text-xs text-gray-500">{{ t('contentRatingAdmin.warningMovieHelp') }}</span>
+          </span>
+        </label>
+
+        <div v-if="movieVideoId || trailerVideoId" class="grid gap-3 rounded border border-white/[0.07] bg-black/30 p-3 text-xs md:grid-cols-2">
           <div v-if="movieVideoId" class="min-w-0">
-            <span class="font-semibold uppercase tracking-wide text-gray-500">{{ t('movieAdmin.ids.movieVideo') }}</span>
+            <span class="font-medium text-gray-500">{{ t('movieAdmin.ids.movieVideo') }}</span>
             <code class="mt-1 block select-all break-all font-mono text-gray-200">{{ movieVideoId }}</code>
           </div>
           <div v-if="trailerVideoId" class="min-w-0">
-            <span class="font-semibold uppercase tracking-wide text-gray-500">{{ t('movieAdmin.ids.trailerVideo') }}</span>
+            <span class="font-medium text-gray-500">{{ t('movieAdmin.ids.trailerVideo') }}</span>
             <code class="mt-1 block select-all break-all font-mono text-gray-200">{{ trailerVideoId }}</code>
           </div>
         </div>
@@ -142,7 +160,7 @@
       </form>
     </div>
 
-    <div v-if="createdMovieId && movieVideoId" class="space-y-5 rounded-lg border border-zinc-700 bg-zinc-900 p-5">
+    <div v-if="createdMovieId && movieVideoId" class="space-y-5 rounded-lg border border-white/10 bg-zinc-900 p-5">
       <div class="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h3 class="text-lg font-semibold text-white">{{ t('videoEditor.audio.title') }}</h3>
@@ -156,8 +174,8 @@
       <div v-if="movieAudioTracks.length" class="space-y-2">
         <div v-for="track in movieAudioTracks" :key="track.id" class="flex flex-wrap items-center justify-between gap-3 rounded bg-zinc-950 px-3 py-2">
           <div class="grid min-w-0 flex-1 gap-2 sm:grid-cols-[8rem_minmax(0,1fr)]">
-            <input v-model="track.language" :placeholder="t('videoEditor.languagePlaceholder')" class="rounded border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-xs text-white placeholder-gray-500" />
-            <input v-model="track.label" :placeholder="t('videoEditor.languageNamePlaceholder')" class="rounded border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-xs text-white placeholder-gray-500" />
+            <input v-model="track.language" :placeholder="t('videoEditor.languagePlaceholder')" class="rounded border border-white/10 bg-zinc-800 px-3 py-1.5 text-xs text-white placeholder-gray-500" />
+            <input v-model="track.label" :placeholder="t('videoEditor.languageNamePlaceholder')" class="rounded border border-white/10 bg-zinc-800 px-3 py-1.5 text-xs text-white placeholder-gray-500" />
             <p class="text-xs text-gray-500 sm:col-span-2">{{ track.language || 'und' }} · {{ track.default ? t('movieAdmin.subtitles.default') : t('movieAdmin.subtitles.optional') }} · {{ track.delay_ms || 0 }}ms</p>
           </div>
           <div class="flex flex-wrap gap-2">
@@ -179,19 +197,19 @@
           </div>
         </div>
       </div>
-      <p v-else class="rounded border border-zinc-800 bg-black/30 px-4 py-6 text-sm text-gray-500">{{ t('videoEditor.audio.empty') }}</p>
+      <p v-else class="rounded border border-white/[0.07] bg-black/30 px-4 py-6 text-sm text-gray-500">{{ t('videoEditor.audio.empty') }}</p>
 
       <div class="grid gap-3 md:grid-cols-[minmax(0,1fr)_8rem_10rem_8rem_8rem]">
         <input type="file" accept="audio/*,video/*,.mka,.mkv,.mp4,.aac,.mp3,.wav,.flac,.m4a" class="block w-full text-sm text-gray-300 file:mr-3 file:rounded file:border-0 file:bg-zinc-700 file:px-3 file:py-2 file:text-white" @change="onAudioFileSelected" />
-        <input v-model="audioForm.language" :placeholder="t('videoEditor.languagePlaceholder')" class="rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-white placeholder-gray-500" />
-        <input v-model="audioForm.label" :placeholder="t('videoEditor.languageNamePlaceholder')" class="rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-white placeholder-gray-500" />
-        <label class="flex items-center gap-2 rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-xs text-gray-300">
+        <input v-model="audioForm.language" :placeholder="t('videoEditor.languagePlaceholder')" class="rounded border border-white/10 bg-zinc-800 px-3 py-2 text-white placeholder-gray-500" />
+        <input v-model="audioForm.label" :placeholder="t('videoEditor.languageNamePlaceholder')" class="rounded border border-white/10 bg-zinc-800 px-3 py-2 text-white placeholder-gray-500" />
+        <label class="flex items-center gap-2 rounded border border-white/10 bg-zinc-800 px-3 py-2 text-xs text-gray-300">
           <input v-model="audioForm.isDefault" type="checkbox" class="h-4 w-4 accent-red-600" />
           {{ t('movieAdmin.subtitles.default') }}
         </label>
-        <input v-model.number="audioForm.delayMs" type="number" step="100" :placeholder="t('movieAdmin.subtitles.delayMs')" class="rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-white placeholder-gray-500" />
+        <input v-model.number="audioForm.delayMs" type="number" step="100" :placeholder="t('movieAdmin.subtitles.delayMs')" class="rounded border border-white/10 bg-zinc-800 px-3 py-2 text-white placeholder-gray-500" />
       </div>
-      <div v-if="audioForm.file || audioSaving" class="rounded border border-zinc-800 bg-black/30 px-3 py-2 text-xs text-gray-300">
+      <div v-if="audioForm.file || audioSaving" class="rounded border border-white/[0.07] bg-black/30 px-3 py-2 text-xs text-gray-300">
         <p v-if="audioForm.file">
           Selected: <span class="font-semibold text-white">{{ audioForm.file.name }}</span>
           <span class="text-gray-500">({{ formatFileSize(audioForm.file.size) }})</span>
@@ -206,7 +224,7 @@
         <button type="button" :disabled="(!audioForm.file && !audioForm.trackId) || audioSaving" class="rounded bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50" @click="saveAudioTrack()">
           {{ audioSaving ? `${audioUploadProgress}%` : audioForm.trackId ? 'Save audio track' : 'Add audio track' }}
         </button>
-        <button type="button" :disabled="!audioForm.file || audioSaving" class="rounded bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50" @click="saveAudioTrack(true)">
+        <button type="button" :disabled="!audioForm.file || audioSaving" class="rounded bg-zinc-100 px-4 py-2 text-sm font-semibold text-zinc-950 transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-50" @click="saveAudioTrack(true)">
           Local upload
         </button>
         <button v-if="audioForm.trackId" type="button" class="rounded bg-zinc-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-zinc-600" @click="cancelReplaceAudio">
@@ -215,13 +233,13 @@
       </div>
     </div>
 
-    <div v-if="createdMovieId" class="space-y-5 rounded-lg border border-zinc-700 bg-zinc-900 p-5">
+    <div v-if="createdMovieId" class="space-y-5 rounded-lg border border-white/10 bg-zinc-900 p-5">
       <div>
         <h3 class="text-lg font-semibold text-white">{{ t('movieAdmin.trailer.title') }}</h3>
         <p class="mt-1 text-sm text-gray-400">{{ t('movieAdmin.trailer.body') }}</p>
       </div>
       <div class="grid gap-4 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_12rem]">
-        <input v-model="trailerForm.title" :placeholder="t('movieAdmin.placeholders.trailerTitle')" class="rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500" />
+        <input v-model="trailerForm.title" :placeholder="t('movieAdmin.placeholders.trailerTitle')" class="rounded border border-white/10 bg-zinc-800 px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-white/30" />
         <input type="file" accept="video/*" class="block w-full text-sm text-gray-300 file:mr-3 file:rounded file:border-0 file:bg-zinc-700 file:px-3 file:py-2 file:text-white" @change="onTrailerFileSelected" />
         <button type="button" :disabled="!trailerFile || trailerUploading" class="rounded bg-red-600 px-4 py-2 font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50" @click="uploadTrailer">
           {{ trailerUploading ? `${trailerProgress}%` : t('movieAdmin.actions.uploadTrailer') }}
@@ -229,7 +247,7 @@
       </div>
     </div>
 
-    <div v-if="createdMovieId" class="space-y-5 rounded-lg border border-zinc-700 bg-zinc-900 p-5">
+    <div v-if="createdMovieId" class="space-y-5 rounded-lg border border-white/10 bg-zinc-900 p-5">
       <div>
         <div class="flex items-center gap-3">
           <h3 class="text-lg font-semibold text-white">{{ t('movieAdmin.fullMovie.title') }}</h3>
@@ -242,12 +260,12 @@
         <p class="mt-1 text-sm text-gray-400">{{ t('movieAdmin.fullMovie.body') }}</p>
       </div>
       <div class="grid gap-4 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_repeat(3,minmax(0,10rem))]">
-        <input v-model="movieVideoTitle" :placeholder="t('movieAdmin.placeholders.movieVideoTitle')" class="rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500" />
+        <input v-model="movieVideoTitle" :placeholder="t('movieAdmin.placeholders.movieVideoTitle')" class="rounded border border-white/10 bg-zinc-800 px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-white/30" />
         <input type="file" accept="video/*" class="block w-full text-sm text-gray-300 file:mr-3 file:rounded file:border-0 file:bg-zinc-700 file:px-3 file:py-2 file:text-white" @change="onMovieFileSelected" />
         <button type="button" :disabled="!movieFile || movieUploading" class="rounded bg-red-600 px-4 py-2 font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50" @click="uploadMovieVideo()">
           {{ movieUploading ? `${movieUploadProgress}%` : (movieVideoId ? t('movieAdmin.actions.replaceUpload') : t('movieAdmin.actions.upload')) }}
         </button>
-        <button type="button" :disabled="!movieFile || movieUploading" class="rounded bg-blue-600 px-4 py-2 font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50" @click="uploadMovieVideo(true)">
+        <button type="button" :disabled="!movieFile || movieUploading" class="rounded bg-zinc-100 px-4 py-2 font-semibold text-zinc-950 transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-50" @click="uploadMovieVideo(true)">
           {{ t('movieAdmin.actions.localUpload') }}
         </button>
         <button type="button" :disabled="!movieVideoId || movieAttaching" class="rounded bg-green-700 px-4 py-2 font-semibold text-white transition hover:bg-green-600 disabled:cursor-not-allowed disabled:opacity-50" @click="attachMovieVideo">
@@ -256,7 +274,7 @@
       </div>
     </div>
 
-    <div v-if="createdMovieId && movieVideoId" class="space-y-5 rounded-lg border border-zinc-700 bg-zinc-900 p-5">
+    <div v-if="createdMovieId && movieVideoId" class="space-y-5 rounded-lg border border-white/10 bg-zinc-900 p-5">
       <div class="flex flex-wrap items-start justify-between gap-3">
         <div>
           <div class="flex items-center gap-3">
@@ -285,12 +303,12 @@
         </div>
       </div>
 
-      <div class="grid gap-3 rounded border border-zinc-800 bg-black/30 p-3 sm:grid-cols-[minmax(0,1fr)_10rem_10rem] sm:items-end">
+      <div class="grid gap-3 rounded border border-white/[0.07] bg-black/30 p-3 sm:grid-cols-[minmax(0,1fr)_10rem_10rem] sm:items-end">
         <div>
-          <label class="text-xs font-semibold uppercase tracking-wide text-gray-500">{{ t('movieAdmin.subtitles.globalDelay') }}</label>
+          <label class="text-xs font-medium text-gray-500">{{ t('movieAdmin.subtitles.globalDelay') }}</label>
           <p class="mt-1 text-xs text-gray-500">{{ t('movieAdmin.subtitles.globalDelayHelp') }}</p>
         </div>
-        <input v-model.number="globalSubtitleDelayMs" type="number" step="100" :placeholder="t('movieAdmin.subtitles.delayMs')" class="rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-white placeholder-gray-500" />
+        <input v-model.number="globalSubtitleDelayMs" type="number" step="100" :placeholder="t('movieAdmin.subtitles.delayMs')" class="rounded border border-white/10 bg-zinc-800 px-3 py-2 text-white placeholder-gray-500" />
         <button type="button" :disabled="!movieSubtitles.length || subtitleSaving || globalSubtitleDelaySaving" class="rounded bg-blue-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-600 disabled:cursor-not-allowed disabled:opacity-50" @click="applyGlobalSubtitleDelay">
           {{ globalSubtitleDelaySaving ? t('common.saving') : t('movieAdmin.subtitles.applyGlobalDelay') }}
         </button>
@@ -299,12 +317,12 @@
       <div v-if="movieSubtitles.length" class="space-y-2">
         <div v-for="track in movieSubtitles" :key="track.id" class="flex flex-col gap-3 rounded bg-zinc-950 px-3 py-2 sm:flex-row sm:items-center sm:justify-between">
           <div class="grid min-w-0 flex-1 gap-2 sm:grid-cols-[8rem_minmax(0,1fr)]">
-            <input v-model="track.language" :placeholder="t('videoEditor.languagePlaceholder')" class="rounded border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-xs text-white placeholder-gray-500" />
-            <input v-model="track.label" :placeholder="t('videoEditor.languageNamePlaceholder')" class="rounded border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-xs text-white placeholder-gray-500" />
+            <input v-model="track.language" :placeholder="t('videoEditor.languagePlaceholder')" class="rounded border border-white/10 bg-zinc-800 px-3 py-1.5 text-xs text-white placeholder-gray-500" />
+            <input v-model="track.label" :placeholder="t('videoEditor.languageNamePlaceholder')" class="rounded border border-white/10 bg-zinc-800 px-3 py-1.5 text-xs text-white placeholder-gray-500" />
             <p class="text-xs text-gray-500 sm:col-span-2">{{ track.language || 'und' }} · {{ track.default ? t('movieAdmin.subtitles.default') : t('movieAdmin.subtitles.optional') }}</p>
           </div>
           <div class="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
-            <input v-model.number="track.delay_ms" type="number" step="100" :placeholder="t('movieAdmin.subtitles.delayMs')" class="w-full rounded border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-xs text-white placeholder-gray-500 sm:w-28" />
+            <input v-model.number="track.delay_ms" type="number" step="100" :placeholder="t('movieAdmin.subtitles.delayMs')" class="w-full rounded border border-white/10 bg-zinc-800 px-3 py-1.5 text-xs text-white placeholder-gray-500 sm:w-28" />
             <button type="button" :disabled="subtitleSaving" class="rounded bg-blue-700 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-blue-600 disabled:cursor-not-allowed disabled:opacity-50" @click="saveSubtitleMetadata(track)">
               Save title
             </button>
@@ -330,17 +348,17 @@
           </div>
         </div>
       </div>
-      <p v-else class="rounded border border-zinc-800 bg-black/30 px-4 py-6 text-sm text-gray-500">{{ t('movieAdmin.subtitles.empty') }}</p>
+      <p v-else class="rounded border border-white/[0.07] bg-black/30 px-4 py-6 text-sm text-gray-500">{{ t('movieAdmin.subtitles.empty') }}</p>
 
       <div class="grid gap-3 md:grid-cols-[minmax(0,1fr)_8rem_10rem_8rem_8rem]">
         <input type="file" accept=".srt,.ass,.vtt,text/vtt" class="block w-full text-sm text-gray-300 file:mr-3 file:rounded file:border-0 file:bg-zinc-700 file:px-3 file:py-2 file:text-white" @change="onSubtitleFileSelected" />
-        <input v-model="subtitleForm.language" :placeholder="t('videoEditor.languagePlaceholder')" class="rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-white placeholder-gray-500" />
-        <input v-model="subtitleForm.label" :placeholder="t('videoEditor.languageNamePlaceholder')" class="rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-white placeholder-gray-500" />
-        <label class="flex items-center gap-2 rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-xs text-gray-300">
+        <input v-model="subtitleForm.language" :placeholder="t('videoEditor.languagePlaceholder')" class="rounded border border-white/10 bg-zinc-800 px-3 py-2 text-white placeholder-gray-500" />
+        <input v-model="subtitleForm.label" :placeholder="t('videoEditor.languageNamePlaceholder')" class="rounded border border-white/10 bg-zinc-800 px-3 py-2 text-white placeholder-gray-500" />
+        <label class="flex items-center gap-2 rounded border border-white/10 bg-zinc-800 px-3 py-2 text-xs text-gray-300">
           <input v-model="subtitleForm.isDefault" type="checkbox" class="h-4 w-4 accent-red-600" />
           {{ t('movieAdmin.subtitles.default') }}
         </label>
-        <input v-model.number="subtitleForm.delayMs" type="number" step="100" :placeholder="t('movieAdmin.subtitles.delayMs')" class="rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-white placeholder-gray-500" />
+        <input v-model.number="subtitleForm.delayMs" type="number" step="100" :placeholder="t('movieAdmin.subtitles.delayMs')" class="rounded border border-white/10 bg-zinc-800 px-3 py-2 text-white placeholder-gray-500" />
       </div>
       <div class="flex flex-wrap gap-2">
         <button type="button" :disabled="(!subtitleForm.file && !subtitleForm.trackId) || subtitleSaving" class="rounded bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50" @click="saveSubtitle">
@@ -352,7 +370,7 @@
       </div>
     </div>
 
-    <div v-if="createdMovieId" class="space-y-5 rounded-lg border border-zinc-700 bg-zinc-900 p-5">
+    <div v-if="createdMovieId" class="space-y-5 rounded-lg border border-white/10 bg-zinc-900 p-5">
       <div class="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
         <div>
           <h3 class="text-lg font-semibold text-white">{{ t('movieAdmin.library.title') }}</h3>
@@ -366,19 +384,19 @@
       <input
         v-model="existingVideosQuery"
         :placeholder="t('movieAdmin.placeholders.searchLibrary')"
-        class="w-full rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
+        class="w-full rounded border border-white/10 bg-zinc-800 px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-white/30"
       />
 
-      <div v-if="existingVideosLoading" class="rounded border border-zinc-800 bg-black/30 px-4 py-6 text-sm text-gray-400">
+      <div v-if="existingVideosLoading" class="rounded border border-white/[0.07] bg-black/30 px-4 py-6 text-sm text-gray-400">
         {{ t('movieAdmin.library.loading') }}
       </div>
 
-      <div v-else-if="!filteredExistingMovieVideos.length" class="rounded border border-zinc-800 bg-black/30 px-4 py-6 text-sm text-gray-400">
+      <div v-else-if="!filteredExistingMovieVideos.length" class="rounded border border-white/[0.07] bg-black/30 px-4 py-6 text-sm text-gray-400">
         {{ t('movieAdmin.library.empty') }}
       </div>
 
       <div v-else class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-        <article v-for="video in filteredExistingMovieVideos" :key="video.id" class="overflow-hidden rounded-lg border border-zinc-800 bg-black/30">
+        <article v-for="video in filteredExistingMovieVideos" :key="video.id" class="overflow-hidden rounded-lg border border-white/[0.07] bg-black/30">
           <div class="aspect-video overflow-hidden bg-zinc-950">
             <img v-if="video.thumbnail_url" :src="withBaseUrl(video.thumbnail_url)" :alt="video.title" class="h-full w-full object-cover" />
             <div v-else class="flex h-full items-center justify-center text-sm text-gray-500">{{ t('playlists.noThumbnail') }}</div>
@@ -431,6 +449,8 @@ import { createMovie, deleteMovie, deleteMovieAudioTrack, deleteMovieSubtitle, d
 import { getAdminVideos } from '~/app/service/videos'
 import { resolveMediaUrl } from '~/app/utils/media'
 import AdminHelpButton from './AdminHelpButton.vue'
+import ContentRatingFields from './ContentRatingFields.vue'
+import { contentRatingInputFrom, emptyContentRatingInput } from '~/app/utils/contentRating'
 
 const localUploadBaseURL = useLocalUploadBaseURL()
 const moviesChannelId = GILTUBE_MOVIES_CHANNEL_ID
@@ -501,6 +521,7 @@ const trailerForm = ref({
   title: '',
 })
 
+const movieRating = ref(emptyContentRatingInput())
 const movieForm = ref({
   title: '',
   slug: '',
@@ -511,6 +532,8 @@ const movieForm = ref({
   cast: '',
   releaseYear: 0,
   isFeatured: false,
+  explicit: false,
+  contentWarning: false,
   poster: null as File | null,
   backdrop: null as File | null,
   posterUrl: '',
@@ -570,6 +593,7 @@ const resetMovieWorkspace = () => {
   movieUploadProgress.value = 0
   metadataQuery.value = ''
   metadataResults.value = []
+  movieRating.value = emptyContentRatingInput()
   movieForm.value = {
     title: '',
     slug: '',
@@ -580,6 +604,8 @@ const resetMovieWorkspace = () => {
     cast: '',
     releaseYear: 0,
     isFeatured: false,
+    explicit: false,
+    contentWarning: false,
     poster: null,
     backdrop: null,
     posterUrl: '',
@@ -640,6 +666,7 @@ const hydrateMovieWorkspace = async (movieId: string) => {
     trailerVideoId.value = item.trailer_video_id || ''
     movieVideoId.value = item.video_id || ''
     movieVideoTitle.value = item.video?.title || item.title || ''
+    movieRating.value = contentRatingInputFrom(item)
     movieForm.value = {
       title: item.title || '',
       slug: item.slug || '',
@@ -650,6 +677,8 @@ const hydrateMovieWorkspace = async (movieId: string) => {
       cast: listToText(item.cast),
       releaseYear: item.release_year || 0,
       isFeatured: !!item.is_featured,
+      explicit: !!item.explicit,
+      contentWarning: !!item.content_warning,
       poster: null,
       backdrop: null,
       posterUrl: item.poster_url || '',
@@ -706,11 +735,15 @@ const handleCreateMovie = async () => {
       releaseYear: movieForm.value.releaseYear,
       channelId: moviesChannelId,
       isFeatured: movieForm.value.isFeatured,
+      explicit: movieForm.value.explicit,
+      contentWarning: movieForm.value.contentWarning,
       poster: movieForm.value.poster,
       backdrop: movieForm.value.backdrop,
       posterUrl: movieForm.value.posterUrl,
       backdropUrl: movieForm.value.backdropUrl,
+      contentRating: movieRating.value,
     })
+    movieRating.value.dirty = false
     createdMovieId.value = created.id
     selectedMovieId.value = created.id
     trailerForm.value.title = `${movieForm.value.title} ${t('movieAdmin.defaults.trailerSuffix')}`
@@ -750,6 +783,7 @@ const applyMovieMetadata = (result: MediaMetadataResult) => {
   movieForm.value.directors = result.directors.join(', ')
   movieForm.value.cast = result.cast.join(', ')
   movieForm.value.releaseYear = result.release_year || movieForm.value.releaseYear
+  if (result.source === 'tmdb' && Number(result.source_id) > 0) movieRating.value.tmdbId = Number(result.source_id)
   movieForm.value.posterUrl = result.poster_url || movieForm.value.posterUrl
   movieForm.value.backdropUrl = result.backdrop_url || movieForm.value.backdropUrl
   movieForm.value.poster = null
@@ -780,12 +814,16 @@ const saveMovieDetails = async () => {
       releaseYear: movieForm.value.releaseYear,
       channelId: moviesChannelId,
       isFeatured: movieForm.value.isFeatured,
+      explicit: movieForm.value.explicit,
+      contentWarning: movieForm.value.contentWarning,
       poster: movieForm.value.poster,
       backdrop: movieForm.value.backdrop,
       posterUrl: movieForm.value.posterUrl,
       backdropUrl: movieForm.value.backdropUrl,
       videoId: movieVideoId.value,
+      contentRating: movieRating.value,
     })
+    movieRating.value.dirty = false
     if (updated.poster_url) movieForm.value.posterUrl = updated.poster_url
     if (updated.backdrop_url) movieForm.value.backdropUrl = updated.backdrop_url
     movieForm.value.poster = null
@@ -916,6 +954,8 @@ const attachMovieVideo = async () => {
       releaseYear: movieForm.value.releaseYear,
       channelId: moviesChannelId,
       isFeatured: movieForm.value.isFeatured,
+      explicit: movieForm.value.explicit,
+      contentWarning: movieForm.value.contentWarning,
       posterUrl: movieForm.value.posterUrl,
       backdropUrl: movieForm.value.backdropUrl,
       videoId: movieVideoId.value,

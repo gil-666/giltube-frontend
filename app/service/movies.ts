@@ -1,4 +1,5 @@
 import api from './client'
+import { appendContentRating, type ContentRatingInput } from '~/app/utils/contentRating'
 import { downloadAPIFile } from './downloads'
 
 const CHUNK_SIZE = 50 * 1024 * 1024
@@ -95,10 +96,13 @@ export const createMovie = async (data: {
   releaseYear?: number
   channelId?: string
   isFeatured?: boolean
+  explicit?: boolean
+  contentWarning?: boolean
   poster?: File | null
   backdrop?: File | null
   posterUrl?: string
   backdropUrl?: string
+  contentRating?: ContentRatingInput | null
 }) => {
   const formData = new FormData()
   formData.append('title', data.title)
@@ -111,10 +115,13 @@ export const createMovie = async (data: {
   if (data.releaseYear) formData.append('release_year', String(data.releaseYear))
   if (data.channelId) formData.append('channel_id', data.channelId)
   if (data.isFeatured) formData.append('is_featured', 'true')
+  if (typeof data.explicit === 'boolean') formData.append('explicit', data.explicit ? 'true' : 'false')
+  if (typeof data.contentWarning === 'boolean') formData.append('content_warning', data.contentWarning ? 'true' : 'false')
   if (data.posterUrl) formData.append('poster_url', data.posterUrl)
   if (data.backdropUrl) formData.append('backdrop_url', data.backdropUrl)
   if (data.poster) formData.append('poster', data.poster)
   if (data.backdrop) formData.append('backdrop', data.backdrop)
+  appendContentRating(formData, data.contentRating)
 
   const res = await api.post('/admin/movies', formData, { timeout: 0 })
   clearMovieCache()
@@ -132,11 +139,14 @@ export const updateMovie = async (movieId: string, data: {
   releaseYear?: number
   channelId?: string
   isFeatured?: boolean
+  explicit?: boolean
+  contentWarning?: boolean
   poster?: File | null
   backdrop?: File | null
   posterUrl?: string
   backdropUrl?: string
   videoId?: string
+  contentRating?: ContentRatingInput | null
 }) => {
   const formData = new FormData()
   formData.append('title', data.title)
@@ -149,11 +159,14 @@ export const updateMovie = async (movieId: string, data: {
   if (data.releaseYear) formData.append('release_year', String(data.releaseYear))
   if (data.channelId) formData.append('channel_id', data.channelId)
   if (data.isFeatured) formData.append('is_featured', 'true')
+  if (typeof data.explicit === 'boolean') formData.append('explicit', data.explicit ? 'true' : 'false')
+  if (typeof data.contentWarning === 'boolean') formData.append('content_warning', data.contentWarning ? 'true' : 'false')
   if (data.posterUrl) formData.append('poster_url', data.posterUrl)
   if (data.backdropUrl) formData.append('backdrop_url', data.backdropUrl)
   if (data.videoId) formData.append('video_id', data.videoId)
   if (data.poster) formData.append('poster', data.poster)
   if (data.backdrop) formData.append('backdrop', data.backdrop)
+  appendContentRating(formData, data.contentRating)
 
   const res = await api.put(`/admin/movies/${movieId}`, formData, { timeout: 0 })
   clearMovieCache()

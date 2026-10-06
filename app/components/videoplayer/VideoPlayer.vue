@@ -153,6 +153,20 @@
         {{ episodeLabel }}
       </div> -->
 
+      <div ref="contentRatingOverlay" class="content-card-stack" aria-live="polite">
+        <div class="content-rating-overlay content-warning-card" :class="{ 'is-visible': contentCardStage === 'warning' }">
+          <span v-if="props.contentWarning" class="content-rating-overlay__descriptors">
+            {{ props.contentWarning === 'episode' ? t('contentRating.warningEpisode') : t('contentRating.warningMovie') }}
+          </span>
+        </div>
+        <div class="content-rating-overlay" :class="{ 'is-visible': contentCardStage === 'rating' }">
+          <template v-if="contentRatingText.rating">
+            <span class="content-rating-overlay__rating">{{ contentRatingText.rating }}</span>
+            <span v-if="contentRatingText.descriptors" class="content-rating-overlay__descriptors">{{ contentRatingText.descriptors }}</span>
+          </template>
+        </div>
+      </div>
+
       <div ref="seriesActionsOverlay" class="series-player-actions flex items-center justify-end gap-3">
         <button
           v-if="showSkipIntroButton"
@@ -215,6 +229,10 @@ interface Props {
   disablePictureInPictureToggle?: boolean
   disableFullscreenToggle?: boolean
   lockAdaptiveQuality?: boolean
+  // Shown briefly when a movie or episode starts: { rating: 'TV-MA', descriptors: ['violence'] }
+  contentRating?: { rating?: string, descriptors?: string[] } | null
+  // Disturbing-content notice shown before the rating card: 'movie' | 'episode'
+  contentWarning?: '' | 'movie' | 'episode'
 }
 
 const emit = defineEmits<{
@@ -245,7 +263,9 @@ const props = withDefaults(defineProps<Props>(), {
   clipEndSeconds: 0,
   disablePictureInPictureToggle: false,
   disableFullscreenToggle: false,
-  lockAdaptiveQuality: false
+  lockAdaptiveQuality: false,
+  contentRating: null,
+  contentWarning: '',
 })
 
 type PresenceViewer = {
@@ -310,6 +330,52 @@ const shortcutOverlaySymbol = ref('')
 const shortcutOverlaySide = ref<'center' | 'left' | 'right'>('center')
 const progressBarOverlay = ref<HTMLElement | null>(null)
 const seriesActionsOverlay = ref<HTMLElement | null>(null)
+const contentRatingOverlay = ref<HTMLElement | null>(null)
+// '' → 'warning' (5s, only when flagged) → 'rating' (7s, when rated) → ''
+const contentCardStage = ref<'' | 'warning' | 'rating'>('')
+let contentRatingShown = false
+let contentRatingTimer: ReturnType<typeof setTimeout> | null = null
+
+const contentRatingText = computed(() => {
+  const rating = String(props.contentRating?.rating || '').trim()
+  const descriptors = (props.contentRating?.descriptors || [])
+    .map((key) => t(`contentRating.descriptors.${key}`))
+    .join(', ')
+  return { rating, descriptors }
+})
+
+const hideContentRating = () => {
+  contentCardStage.value = ''
+  if (contentRatingTimer) {
+    clearTimeout(contentRatingTimer)
+    contentRatingTimer = null
+  }
+}
+
+const showContentRatingCard = () => {
+  if (!contentRatingText.value.rating) {
+    hideContentRating()
+    return
+  }
+  contentCardStage.value = 'rating'
+  contentRatingTimer = setTimeout(() => {
+    contentCardStage.value = ''
+    contentRatingTimer = null
+  }, 7000)
+}
+
+const showContentRatingOnce = () => {
+  const hasWarning = Boolean(props.contentWarning)
+  if (contentRatingShown || props.standby || (!hasWarning && !contentRatingText.value.rating)) return
+  contentRatingShown = true
+  if (contentRatingTimer) clearTimeout(contentRatingTimer)
+  if (!hasWarning) {
+    showContentRatingCard()
+    return
+  }
+  contentCardStage.value = 'warning'
+  contentRatingTimer = setTimeout(showContentRatingCard, 5000)
+}
 const mobilePiPOverlay = ref<HTMLElement | null>(null)
 const isPictureInPictureSupported = ref(false)
 const hasClipRange = computed(() => {
@@ -1887,6 +1953,13 @@ const attachProgressBarOverlay = () => {
   }
 }
 
+const attachContentRatingOverlay = () => {
+  if (!player || !contentRatingOverlay.value) return
+  const playerEl = player.el?.() as HTMLElement | undefined
+  if (!playerEl || contentRatingOverlay.value.parentElement === playerEl) return
+  playerEl.appendChild(contentRatingOverlay.value)
+}
+
 const attachSeriesActionsOverlay = () => {
   if (!player || !seriesActionsOverlay.value) return
   const playerEl = player.el?.() as HTMLElement | undefined
@@ -2883,10 +2956,14 @@ onMounted(async () => {
       syncClipTimeDisplays()
       attachProgressBarOverlay()
       attachSeriesActionsOverlay()
+      attachContentRatingOverlay()
       attachPlayerMenusOverlay()
       player.el().addEventListener('contextmenu', handlePlayerContextMenu)
       player.on('waiting', countStall)
-      player.on('playing', () => { hasStartedPlayback = true })
+      player.on('playing', () => {
+        hasStartedPlayback = true
+        showContentRatingOnce()
+      })
       player.on('loadstart', () => {
         stallCount = 0
         rescueCount = 0
@@ -3021,6 +3098,7 @@ onMounted(async () => {
       player.on('fullscreenchange', attachPlayerMenusOverlay)
       player.on('fullscreenchange', closeContextMenu)
       player.on('fullscreenchange', attachSeriesActionsOverlay)
+      player.on('fullscreenchange', attachContentRatingOverlay)
       player.on('fullscreenchange', attachMobilePiPOverlay)
       player.on('play', syncUltrawideFullscreenClass)
       player.on('pause', syncUltrawideFullscreenClass)
@@ -3098,6 +3176,10 @@ onBeforeUnmount(() => {
     if (seriesActionsOverlay.value?.parentElement) {
       seriesActionsOverlay.value.parentElement.removeChild(seriesActionsOverlay.value)
     }
+    if (contentRatingOverlay.value?.parentElement) {
+      contentRatingOverlay.value.parentElement.removeChild(contentRatingOverlay.value)
+    }
+    hideContentRating()
     if (mobilePiPOverlay.value?.parentElement) {
       mobilePiPOverlay.value.parentElement.removeChild(mobilePiPOverlay.value)
     }
@@ -3193,6 +3275,10 @@ watch(
   () => props.src,
   (newSrc) => {
     if (player && newSrc && props.status === 'ready') {
+      // A new title gets its own rating card; an HDR/quality swap does not
+      // change src, so it never re-shows.
+      contentRatingShown = false
+      hideContentRating()
       resetPlayerSourceState()
       hasAppliedInitialStartTime = false
       lastProgressEmitAt = 0
@@ -3207,6 +3293,15 @@ watch(
     if (newStatus === 'processing' && player) {
       player.pause()
     }
+  }
+)
+
+// Resuming or starting over skips the playback intro, so the feature can be
+// playing before the page has loaded its rating; show the card on arrival.
+watch(
+  () => [contentRatingText.value.rating, props.contentWarning],
+  ([rating, warning]) => {
+    if ((rating || warning) && player && !player.paused?.()) showContentRatingOnce()
   }
 )
 
@@ -3506,6 +3601,96 @@ watch(
 :deep(.video-js.giltube-controls-locked .vjs-progress-control),
 :deep(.video-js.giltube-controls-locked .vjs-big-play-button) {
   opacity: 0.45 !important;
+}
+
+.content-card-stack {
+  position: absolute;
+  left: 1.25rem;
+  top: 1.25rem;
+  z-index: 85;
+  width: min(32rem, calc(100% - 2.5rem));
+  pointer-events: none;
+}
+
+/* Both cards share one spot so the warning crossfades into the rating. */
+.content-rating-overlay {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: flex;
+  width: max-content;
+  max-width: 100%;
+  align-items: stretch;
+  gap: 0.75rem;
+  border-left: 3px solid #e50914;
+  background: linear-gradient(90deg, rgb(0 0 0 / 0.62), rgb(0 0 0 / 0));
+  padding: 0.45rem 2.5rem 0.45rem 0.8rem;
+  color: #fff;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateX(-0.5rem);
+  transition: opacity 400ms ease, transform 400ms ease;
+}
+
+.content-rating-overlay.is-visible {
+  opacity: 1;
+  transform: none;
+}
+
+.content-rating-overlay__rating {
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.content-rating-overlay__descriptors {
+  align-self: center;
+  font-size: 0.85rem;
+  line-height: 1.25;
+  color: rgb(255 255 255 / 0.85);
+}
+
+.content-warning-card {
+  max-width: min(26rem, 100%);
+}
+
+.content-warning-card .content-rating-overlay__descriptors {
+  font-size: 0.95rem;
+  line-height: 1.35;
+  color: #fff;
+}
+
+:deep(.video-js .content-card-stack) {
+  position: absolute;
+  left: 1.25rem;
+  top: 1.25rem;
+}
+
+:deep(.video-js.vjs-fullscreen .content-card-stack) {
+  left: 2.5rem;
+  top: 2.5rem;
+  transform-origin: left top;
+  scale: 1.35;
+}
+
+@media (max-width: 640px) {
+  .content-card-stack {
+    left: 0.75rem;
+    top: 0.75rem;
+  }
+  .content-rating-overlay {
+    padding-right: 1.5rem;
+  }
+  .content-warning-card .content-rating-overlay__descriptors {
+    font-size: 0.8rem;
+  }
+  .content-rating-overlay__rating {
+    font-size: 0.9rem;
+  }
+  .content-rating-overlay__descriptors {
+    font-size: 0.75rem;
+  }
 }
 
 .series-player-actions {

@@ -4,13 +4,14 @@
 
   <main v-else class="flex-1">
     <div class="p-6">
-      <h1 class="mb-6 text-2xl font-bold">{{ categoryName }}</h1>
+      <h1 class="mb-6 text-2xl font-semibold tracking-tight">{{ categoryName }}</h1>
 
       <div class="grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
         <div v-for="video in videos" :key="video.id">
           <NuxtLink :to="localePath(`/video/${video.id}`)">
-            <div class="relative aspect-video overflow-hidden rounded-xl bg-zinc-800">
+            <div class="relative aspect-video overflow-hidden rounded-xl bg-zinc-800 ring-1 ring-white/[0.06]">
               <img class="h-full w-full object-cover" v-bind="responsiveImage(getThumbnailUrl(video), '(min-width: 1024px) 25vw, (min-width: 768px) 33vw, (min-width: 640px) 50vw, 100vw')" :alt="video.title" loading="lazy" decoding="async" />
+              <span v-if="isVideo8K(video.width) || isVideo4K(video.width)" class="absolute right-2 top-2 rounded-md bg-black/70 px-1.5 py-0.5 text-[11px] font-semibold tracking-wide text-white backdrop-blur">{{ isVideo8K(video.width) ? '8K' : '4K' }}</span>
               <div v-if="videoProgressPercent(video.id) > 0" class="absolute inset-x-0 bottom-0 h-1 bg-black/55">
                 <div class="h-full bg-red-600" :style="{ width: `${videoProgressPercent(video.id)}%` }" />
               </div>
@@ -24,13 +25,9 @@
             />
             <div class="min-w-0">
               <NuxtLink :to="localePath(`/video/${video.id}`)">
-                <div class="flex items-center gap-1">
-                  <h3 class="line-clamp-2 text-sm font-semibold">{{ video.title }}</h3>
-                  <span v-if="isVideo8K(video.width)" class="shrink-0 border border-gray-500 bg-gray-900 p-0.5 text-xs font-semibold text-gray-200">8K</span>
-                  <span v-if="isVideo4K(video.width)" class="shrink-0 border border-gray-500 bg-gray-900 p-0.5 text-xs font-semibold text-gray-200">4K</span>
-                </div>
+                <h3 class="line-clamp-2 text-sm font-semibold leading-snug">{{ video.title }}</h3>
               </NuxtLink>
-              <NuxtLink :to="localePath(`/channel/${video.channel.id}`)" class="flex items-center gap-1 text-xs text-zinc-400 transition hover:text-yellow-400">
+              <NuxtLink :to="localePath(`/channel/${video.channel.id}`)" class="flex items-center gap-1 text-xs text-zinc-400 transition hover:text-white">
                 {{ video.channel.name }}
                 <VerifiedBadge :verified="video.channel?.verified || false" size="sm" />
               </NuxtLink>
@@ -43,7 +40,7 @@
       <div ref="sentinelElement" class="mt-10 h-1" />
 
       <div v-if="isLoading" class="mt-8 flex justify-center">
-        <div class="h-8 w-8 animate-spin rounded-full border-b-2 border-t-2 border-blue-500" />
+        <div class="h-8 w-8 animate-spin rounded-full border-2 border-white/15 border-t-white/70" />
       </div>
 
       <div v-if="!hasMore && videos.length > 0" class="mt-8 text-center text-zinc-400">
@@ -294,7 +291,14 @@ const loadCategoryMetadata = () => {
     }
   }
 
-  if (!categoryName.value) categoryName.value = route.params.slug
+  if (!categoryName.value) {
+    // Categories are cached by the shell; before that, show a readable slug.
+    categoryName.value = String(route.params.slug || '')
+      .split('-')
+      .filter(Boolean)
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ')
+  }
 }
 
 onMounted(async () => {

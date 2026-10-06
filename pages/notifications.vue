@@ -3,8 +3,7 @@
     <div class="max-w-4xl mx-auto">
       <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
         <div>
-          <h1 class="text-2xl font-bold">{{ t('notifications.title') }}</h1>
-          <p class="text-sm text-gray-400 mt-1">{{ t('notifications.subtitle') }}</p>
+          <h1 class="text-2xl font-semibold tracking-tight">{{ t('notifications.title') }}</h1>
         </div>
         <div class="flex items-center gap-2">
           <button
@@ -15,14 +14,14 @@
           </button>
           <button
             @click="markAllRead"
-            class="px-3 py-2 bg-blue-600 hover:bg-blue-700 rounded text-sm transition"
+            class="px-3 py-2 bg-zinc-100 hover:bg-white rounded text-sm transition text-zinc-950"
           >
             {{ t('notifications.markAllRead') }}
           </button>
         </div>
       </div>
 
-      <div class="bg-zinc-900 border border-zinc-800 rounded-lg p-4 mb-6">
+      <div class="bg-zinc-900 border border-white/[0.07] rounded-lg p-4 mb-6">
         <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
           <div>
             <p class="font-semibold text-sm">{{ t('notifications.pushTitle') }}</p>
@@ -33,7 +32,7 @@
               v-if="!isPushEnabled"
               @click="enablePush"
               :disabled="pushBusy || !pushConfig.enabled || !pushConfig.send_enabled"
-              class="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-40 disabled:cursor-not-allowed rounded text-sm transition"
+              class="h-9 rounded-full bg-zinc-100 px-4 text-sm font-semibold text-zinc-950 transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-40"
             >
               {{ pushBusy ? t('notifications.working') : t('notifications.enablePush') }}
             </button>
@@ -57,7 +56,7 @@
           @click="unreadOnly = false; reloadFromStart()"
           :class="[
             'px-3 py-1.5 rounded text-sm transition',
-            !unreadOnly ? 'bg-blue-600 text-white' : 'bg-zinc-800 hover:bg-zinc-700 text-gray-300'
+            !unreadOnly ? 'bg-zinc-100 text-zinc-950' : 'bg-zinc-800 hover:bg-zinc-700 text-gray-300'
           ]"
         >
           {{ t('notifications.all') }}
@@ -66,7 +65,7 @@
           @click="unreadOnly = true; reloadFromStart()"
           :class="[
             'px-3 py-1.5 rounded text-sm transition',
-            unreadOnly ? 'bg-blue-600 text-white' : 'bg-zinc-800 hover:bg-zinc-700 text-gray-300'
+            unreadOnly ? 'bg-zinc-100 text-zinc-950' : 'bg-zinc-800 hover:bg-zinc-700 text-gray-300'
           ]"
         >
           {{ t('notifications.unreadOnly') }}
@@ -74,7 +73,7 @@
       </div>
 
       <div v-if="loading" class="py-12 text-center text-gray-400">{{ t('notifications.loading') }}</div>
-      <div v-else-if="items.length === 0" class="py-12 text-center text-gray-500 border border-zinc-800 rounded-lg">
+      <div v-else-if="items.length === 0" class="py-12 text-center text-gray-500 border border-white/[0.07] rounded-lg">
         {{ t('notifications.empty') }}
       </div>
       <div v-else class="space-y-3">
@@ -83,7 +82,7 @@
           :key="item.id"
           :to="localizedItemUrl(item.url)"
           class="block border rounded-lg transition"
-          :class="item.is_read ? 'bg-zinc-900 border-zinc-800 hover:border-zinc-700' : 'bg-zinc-900 border-blue-700 hover:border-blue-500'"
+          :class="item.is_read ? 'bg-transparent border-white/[0.07] hover:bg-white/[0.03]' : 'bg-white/[0.05] border-white/15 hover:bg-white/[0.07]'"
           @click="markRead(item)"
         >
           <div class="p-4 flex items-start justify-between gap-4">
@@ -104,7 +103,7 @@
             </div>
             <button
               @click.prevent="toggleRead(item)"
-              class="px-2 py-1 text-xs rounded border border-zinc-700 hover:bg-zinc-800"
+              class="px-2 py-1 text-xs rounded border border-white/10 hover:bg-zinc-800"
             >
               {{ item.is_read ? t('notifications.markUnread') : t('notifications.markRead') }}
             </button>

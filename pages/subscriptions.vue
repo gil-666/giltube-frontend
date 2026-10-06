@@ -2,8 +2,7 @@
   <main class="min-h-screen bg-zinc-950 px-4 py-8 text-white sm:px-6 lg:px-8">
     <div class="mx-auto max-w-[100rem]">
       <header class="mb-8">
-        <h1 class="text-3xl font-black sm:text-4xl">{{ t('subscriptions.title') }}</h1>
-        <p class="mt-2 text-sm text-zinc-400">{{ t('subscriptions.subtitle') }}</p>
+        <h1 class="text-2xl font-semibold tracking-tight">{{ t('subscriptions.title') }}</h1>
       </header>
 
       <div v-if="loading" class="space-y-10" aria-hidden="true">
@@ -22,10 +21,16 @@
         </section>
       </div>
 
-      <div v-else-if="error" class="rounded-lg border border-red-900 bg-red-950/40 p-5 text-red-100">{{ error }}</div>
+      <div v-else-if="needsChannel" class="rounded-xl border border-white/[0.07] bg-zinc-900/60 px-6 py-12 text-center">
+        <h2 class="text-xl font-semibold">{{ t('subscriptions.needsChannelTitle') }}</h2>
+        <p class="mt-2 text-sm text-zinc-400">{{ t('subscriptions.needsChannelBody') }}</p>
+        <NuxtLink :to="localePath('/create-channel')" class="mt-5 inline-flex rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-black hover:bg-zinc-200">{{ t('subscriptions.createChannel') }}</NuxtLink>
+      </div>
 
-      <div v-else-if="!channels.length" class="rounded-lg border border-zinc-800 bg-zinc-900/60 px-6 py-12 text-center">
-        <h2 class="text-xl font-bold">{{ t('subscriptions.emptyTitle') }}</h2>
+      <div v-else-if="error" class="rounded-xl border border-red-500/20 bg-red-500/[0.06] p-5 text-sm text-red-200">{{ error }}</div>
+
+      <div v-else-if="!channels.length" class="rounded-lg border border-white/[0.07] bg-zinc-900/60 px-6 py-12 text-center">
+        <h2 class="text-xl font-semibold">{{ t('subscriptions.emptyTitle') }}</h2>
         <p class="mt-2 text-sm text-zinc-400">{{ t('subscriptions.emptyBody') }}</p>
         <NuxtLink :to="localePath('/search')" class="mt-5 inline-flex rounded-full bg-white px-5 py-2.5 text-sm font-bold text-black hover:bg-zinc-200">{{ t('subscriptions.findChannels') }}</NuxtLink>
       </div>
@@ -34,7 +39,7 @@
         <section v-for="row in channelRows" :key="row.channel.id" class="subscription-row">
           <div class="mb-4 flex items-center justify-between gap-4">
             <NuxtLink :to="localePath(`/channel/${row.channel.id}`)" class="group flex min-w-0 items-center gap-3">
-              <div class="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full border border-zinc-700 bg-zinc-800 text-base font-black">
+              <div class="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full border border-white/10 bg-zinc-800 text-base font-semibold">
                 <img v-if="row.channel.avatar_url" :src="resolveAvatarUrl(row.channel.avatar_url)" :alt="row.channel.name" class="h-full w-full object-cover" loading="lazy">
                 <span v-else>{{ row.channel.name.charAt(0).toUpperCase() }}</span>
               </div>
@@ -61,7 +66,7 @@
               </NuxtLink>
             </div>
           </div>
-          <p v-else class="rounded-lg border border-zinc-800 bg-zinc-900/50 px-5 py-7 text-sm text-zinc-400">{{ t('subscriptions.channelNoUploads', { channel: row.channel.name }) }}</p>
+          <p v-else class="rounded-lg border border-white/[0.07] bg-zinc-900/50 px-5 py-7 text-sm text-zinc-400">{{ t('subscriptions.channelNoUploads', { channel: row.channel.name }) }}</p>
         </section>
       </div>
     </div>
@@ -84,6 +89,7 @@ const channels = ref<any[]>([])
 const videos = ref<any[]>([])
 const loading = ref(true)
 const error = ref('')
+const needsChannel = ref(false)
 const rowElements: Record<string, HTMLElement> = {}
 
 const channelRows = computed(() => channels.value.map((channel) => ({
@@ -111,6 +117,11 @@ onMounted(async () => {
     return
   }
   const actorChannelID = activeSubscriptionChannelID()
+  if (!actorChannelID) {
+    needsChannel.value = true
+    loading.value = false
+    return
+  }
   try {
     const [channelData, feed] = await Promise.all([
       listSubscribedChannels(actorChannelID),

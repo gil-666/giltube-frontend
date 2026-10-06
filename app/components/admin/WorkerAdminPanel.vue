@@ -8,7 +8,7 @@
       <div class="flex gap-2">
         <button
           type="button"
-          class="inline-flex h-10 items-center gap-2 rounded-md border border-zinc-700 bg-zinc-900 px-3 text-sm font-semibold text-zinc-200 transition hover:border-zinc-600 hover:bg-zinc-800 disabled:opacity-50"
+          class="inline-flex h-10 items-center gap-2 rounded-md border border-white/10 bg-zinc-900 px-3 text-sm font-semibold text-zinc-200 transition hover:border-zinc-600 hover:bg-zinc-800 disabled:opacity-50"
           :disabled="loading"
           @click="loadWorkers"
         >
@@ -27,14 +27,14 @@
       </div>
     </header>
 
-    <div class="grid grid-cols-3 divide-x divide-zinc-800 border-y border-zinc-800 py-3">
+    <div class="grid grid-cols-3 divide-x divide-white/[0.07] border-y border-white/[0.07] py-3">
       <div class="px-3 first:pl-0">
         <p class="text-xs font-semibold uppercase text-zinc-500">{{ t('admin.workers.online') }}</p>
         <p class="mt-1 text-2xl font-bold text-emerald-400">{{ onlineCount }}</p>
       </div>
       <div class="px-3">
         <p class="text-xs font-semibold uppercase text-zinc-500">{{ t('admin.workers.gpu') }}</p>
-        <p class="mt-1 text-2xl font-bold text-blue-400">{{ gpuCount }}</p>
+        <p class="mt-1 text-2xl font-bold text-zinc-200">{{ gpuCount }}</p>
       </div>
       <div class="px-3">
         <p class="text-xs font-semibold uppercase text-zinc-500">{{ t('admin.workers.activeJobs') }}</p>
@@ -44,16 +44,16 @@
 
     <p v-if="error" class="rounded-md border border-red-900 bg-red-950/40 p-3 text-sm text-red-200">{{ error }}</p>
     <div v-if="loading && workers.length === 0" class="grid gap-3 lg:grid-cols-2">
-      <div v-for="index in 4" :key="index" class="h-44 animate-pulse rounded-md border border-zinc-800 bg-zinc-900/60" />
+      <div v-for="index in 4" :key="index" class="h-44 animate-pulse rounded-md border border-white/[0.07] bg-zinc-900/60" />
     </div>
-    <div v-else-if="workers.length === 0" class="border-y border-zinc-800 py-12 text-center text-sm text-zinc-400">
+    <div v-else-if="workers.length === 0" class="border-y border-white/[0.07] py-12 text-center text-sm text-zinc-400">
       {{ t('admin.workers.empty') }}
     </div>
 
     <div v-else class="grid gap-3 lg:grid-cols-2">
-      <article v-for="worker in workers" :key="worker.id" class="rounded-md border border-zinc-800 bg-zinc-950 p-4">
+      <article v-for="worker in workers" :key="worker.id" class="rounded-md border border-white/[0.07] bg-zinc-950 p-4">
         <div class="flex items-start gap-3">
-          <span class="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-md border border-zinc-700 bg-zinc-900 text-zinc-300">
+          <span class="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-md border border-white/10 bg-zinc-900 text-zinc-300">
             <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="14" rx="2" stroke-width="2"/><path stroke-width="2" d="M8 21h8M12 18v3M7 9h2m2 0h6M7 13h5" /></svg>
             <span :class="statusDotClass(worker.status)" class="absolute -bottom-1 -right-1 h-3 w-3 rounded-full border-2 border-zinc-950" />
           </span>
@@ -62,7 +62,7 @@
               <h3 class="truncate text-base font-bold text-white">{{ worker.name }}</h3>
               <span :class="statusBadgeClass(worker.status)" class="rounded px-1.5 py-0.5 text-[10px] font-bold uppercase">{{ t(`admin.workers.statuses.${worker.status}`) }}</span>
               <span v-if="!worker.managed" class="rounded bg-zinc-800 px-1.5 py-0.5 text-[10px] font-bold uppercase text-zinc-400">{{ t('admin.workers.local') }}</span>
-              <span v-if="worker.is_primary" class="rounded bg-blue-950 px-1.5 py-0.5 text-[10px] font-bold uppercase text-blue-300">{{ t('admin.workers.primary') }}</span>
+              <span v-if="worker.is_primary" class="rounded bg-blue-950 px-1.5 py-0.5 text-[10px] font-bold uppercase text-zinc-200">{{ t('admin.workers.primary') }}</span>
               <span v-if="worker.fallback_active" class="rounded bg-amber-950 px-1.5 py-0.5 text-[10px] font-bold uppercase text-amber-300">{{ t('admin.workers.fallbackActive') }}</span>
             </div>
             <p class="mt-0.5 truncate text-xs text-zinc-500">{{ worker.id }}</p>
@@ -80,7 +80,7 @@
 
         <dl class="mt-4 grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
           <div><dt class="text-xs text-zinc-500">{{ t('admin.workers.system') }}</dt><dd class="mt-0.5 capitalize text-zinc-200">{{ worker.platform }} · {{ worker.arch }}</dd></div>
-          <div><dt class="text-xs text-zinc-500">{{ t('admin.workers.encoder') }}</dt><dd class="mt-0.5 flex items-center gap-1.5 text-zinc-200"><span v-if="worker.is_gpu" class="rounded bg-blue-950 px-1.5 py-0.5 text-[10px] font-bold text-blue-300">GPU</span>{{ worker.encoder }}</dd></div>
+          <div><dt class="text-xs text-zinc-500">{{ t('admin.workers.encoder') }}</dt><dd class="mt-0.5 flex items-center gap-1.5 text-zinc-200"><span v-if="worker.is_gpu" class="rounded bg-blue-950 px-1.5 py-0.5 text-[10px] font-bold text-zinc-200">GPU</span>{{ worker.encoder }}</dd></div>
           <div>
             <dt class="text-xs text-zinc-500">{{ t('admin.workers.roles') }}</dt>
             <dd class="mt-1">
@@ -88,7 +88,7 @@
                 v-if="worker.managed && !worker.is_primary"
                 :value="worker.roles[0] || 'transcode'"
                 :disabled="worker.disabled || !!worker.current_job || updatingWorker === worker.id"
-                class="w-full rounded-md border border-zinc-700 bg-zinc-900 px-2 py-1.5 text-xs font-semibold text-zinc-100 outline-none transition focus:border-red-500 disabled:cursor-not-allowed disabled:opacity-50"
+                class="w-full rounded-md border border-white/10 bg-zinc-900 px-2 py-1.5 text-xs font-semibold text-zinc-100 outline-none transition focus:border-white/30 disabled:cursor-not-allowed disabled:opacity-50"
                 @change="changeRole(worker, ($event.target as HTMLSelectElement).value)"
               >
                 <option value="transcode">{{ t('admin.workers.roleVideo') }}</option>
@@ -101,7 +101,7 @@
           <div><dt class="text-xs text-zinc-500">{{ t('admin.workers.lastSeen') }}</dt><dd class="mt-0.5 text-zinc-200">{{ formatRelative(worker.last_seen) }}</dd></div>
         </dl>
 
-        <div v-if="!worker.disabled" class="mt-4 flex items-center justify-between gap-4 border-t border-zinc-800 pt-3">
+        <div v-if="!worker.disabled" class="mt-4 flex items-center justify-between gap-4 border-t border-white/[0.07] pt-3">
           <div>
             <p class="text-sm font-semibold text-zinc-200">{{ t('admin.workers.acceptJobs') }}</p>
             <p class="mt-0.5 text-xs text-zinc-500">{{ worker.fallback_active ? t('admin.workers.fallbackHelp') : t('admin.workers.acceptJobsHelp') }}</p>
@@ -131,7 +131,7 @@
           </button>
         </div>
 
-        <div v-if="worker.current_job" class="mt-4 border-t border-zinc-800 pt-3">
+        <div v-if="worker.current_job" class="mt-4 border-t border-white/[0.07] pt-3">
           <div class="flex items-center justify-between gap-3 text-xs">
             <span class="truncate font-semibold text-zinc-200">{{ worker.current_job.video_title || worker.current_job.video_id }}</span>
             <span class="shrink-0 tabular-nums text-zinc-400">{{ worker.current_job.progress }}%</span>
@@ -139,7 +139,7 @@
           <div class="mt-2 h-1.5 overflow-hidden rounded-full bg-zinc-800"><div class="h-full rounded-full bg-red-500 transition-all" :style="{ width: `${worker.current_job.progress}%` }" /></div>
         </div>
 
-        <div v-if="worker.disabled" class="mt-4 flex gap-2 border-t border-zinc-800 pt-3">
+        <div v-if="worker.disabled" class="mt-4 flex gap-2 border-t border-white/[0.07] pt-3">
           <button type="button" class="rounded-md bg-zinc-800 px-3 py-2 text-xs font-bold text-white transition hover:bg-zinc-700" @click="enable(worker)">{{ t('admin.workers.enable') }}</button>
           <button type="button" class="rounded-md px-3 py-2 text-xs font-bold text-red-300 transition hover:bg-red-950" @click="remove(worker)">{{ t('common.delete') }}</button>
         </div>
@@ -147,16 +147,16 @@
     </div>
 
     <div v-if="codeModalOpen" class="fixed inset-0 z-[80] flex items-center justify-center bg-black/80 p-4" @click.self="closeCodeModal">
-      <div class="max-h-[calc(100dvh-2rem)] w-full max-w-lg overflow-y-auto rounded-md border border-zinc-700 bg-zinc-950 shadow-2xl">
-        <header class="flex items-start justify-between gap-4 border-b border-zinc-800 p-5">
+      <div class="max-h-[calc(100dvh-2rem)] w-full max-w-lg overflow-y-auto rounded-md border border-white/10 bg-zinc-950 shadow-2xl">
+        <header class="flex items-start justify-between gap-4 border-b border-white/[0.07] p-5">
           <div><h3 class="text-xl font-bold text-white">{{ t('admin.workers.enrollTitle') }}</h3><p class="mt-1 text-sm text-zinc-400">{{ t('admin.workers.enrollSubtitle') }}</p></div>
           <button type="button" class="rounded-md p-2 text-zinc-400 hover:bg-zinc-800 hover:text-white" :aria-label="t('common.close')" @click="closeCodeModal">X</button>
         </header>
         <div class="space-y-5 p-5">
           <div>
             <p class="text-xs font-bold uppercase text-zinc-500">{{ t('admin.workers.download') }}</p>
-            <div v-if="releasesLoading" class="mt-2 h-16 animate-pulse rounded-md border border-zinc-800 bg-zinc-900" />
-            <div v-else-if="recommendedRelease" class="mt-2 flex items-center gap-3 rounded-md border border-zinc-700 bg-zinc-900 p-3">
+            <div v-if="releasesLoading" class="mt-2 h-16 animate-pulse rounded-md border border-white/[0.07] bg-zinc-900" />
+            <div v-else-if="recommendedRelease" class="mt-2 flex items-center gap-3 rounded-md border border-white/10 bg-zinc-900 p-3">
               <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-zinc-800 text-zinc-300">
                 <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v12m0 0 4-4m-4 4-4-4M4 19h16" /></svg>
               </span>
@@ -168,14 +168,14 @@
             </div>
             <details v-if="otherReleases.length" class="mt-2">
               <summary class="cursor-pointer text-xs font-semibold text-zinc-400 hover:text-white">{{ t('admin.workers.otherPlatforms') }}</summary>
-              <div class="mt-2 divide-y divide-zinc-800 rounded-md border border-zinc-800">
+              <div class="mt-2 divide-y divide-white/[0.07] rounded-md border border-white/[0.07]">
                 <div v-for="release in otherReleases" :key="release.filename" class="flex items-center gap-3 px-3 py-2.5">
                   <div class="min-w-0 flex-1"><p class="text-sm font-semibold capitalize text-zinc-200">{{ osLabel(release.os) }} · {{ archLabel(release.arch) }}</p><p class="truncate text-[11px] text-zinc-500">{{ formatBytes(release.size) }} · SHA-256 {{ release.sha256.slice(0, 12) }}…</p></div>
                   <button type="button" class="rounded-md p-2 text-zinc-400 hover:bg-zinc-800 hover:text-white disabled:opacity-50" :disabled="downloadingFilename === release.filename" :title="t('admin.workers.downloadButton')" @click="downloadRelease(release)"><svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v12m0 0 4-4m-4 4-4-4M4 19h16" /></svg></button>
                 </div>
               </div>
             </details>
-            <div v-if="recommendedRelease" class="mt-3 rounded-md border border-zinc-800 bg-black p-3">
+            <div v-if="recommendedRelease" class="mt-3 rounded-md border border-white/[0.07] bg-black p-3">
               <div class="flex items-center justify-between gap-3">
                 <p class="text-xs font-bold uppercase text-zinc-500">{{ t('admin.workers.headlessDownload') }}</p>
                 <button type="button" class="shrink-0 rounded-md px-2 py-1 text-xs font-bold text-zinc-300 hover:bg-zinc-800 hover:text-white" @click="copyWgetCommand">
@@ -188,7 +188,7 @@
           </div>
           <div>
             <p class="text-xs font-bold uppercase text-zinc-500">{{ t('admin.workers.oneTimeCode') }}</p>
-            <div class="mt-2 flex items-center gap-2 rounded-md border border-zinc-700 bg-black p-3">
+            <div class="mt-2 flex items-center gap-2 rounded-md border border-white/10 bg-black p-3">
               <code class="min-w-0 flex-1 break-all text-base font-bold text-white">{{ enrollmentCode }}</code>
               <button type="button" class="shrink-0 rounded-md bg-zinc-800 px-3 py-2 text-xs font-bold text-white hover:bg-zinc-700" @click="copyCode">{{ copied ? t('admin.workers.copied') : t('admin.workers.copy') }}</button>
             </div>
@@ -199,7 +199,7 @@
             <li class="flex gap-3"><span class="font-bold text-red-400">2</span><span>{{ t('admin.workers.stepRun') }}</span></li>
             <li class="flex gap-3"><span class="font-bold text-red-400">3</span><span>{{ t('admin.workers.stepEnter') }}</span></li>
           </ol>
-          <p class="border-t border-zinc-800 pt-4 text-xs text-zinc-500">{{ t('admin.workers.networkNote') }}</p>
+          <p class="border-t border-white/[0.07] pt-4 text-xs text-zinc-500">{{ t('admin.workers.networkNote') }}</p>
         </div>
       </div>
     </div>

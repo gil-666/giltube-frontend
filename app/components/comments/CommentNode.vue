@@ -19,7 +19,7 @@
             <div class="flex-1 min-w-0">
                 <div class="flex items-center justify-between gap-2">
                     <div @click="onNavigateToChannel(comment.channel.id)"
-                        class="flex items-center gap-1 cursor-pointer hover:text-yellow-400 transition">
+                        class="flex items-center gap-1 cursor-pointer hover:text-white transition">
                         <p class="font-semibold text-xs">{{ comment.channel.name }}</p>
                         <VerifiedBadge :verified="comment.channel.verified" size="sm" />
                     </div>
@@ -36,7 +36,7 @@
 
                 <div v-if="parentComment" class="mt-1">
                     <button @click="onJumpToComment(comment.parent_comment_id || '')"
-                        class="text-xs text-blue-400 hover:text-blue-300 transition">
+                        class="text-xs text-zinc-200 hover:text-white transition">
                         @{{ parentComment.channel.name }}
                     </button>
                 </div>
@@ -49,7 +49,7 @@
                             v-for="preview in videoPreviewList"
                             :key="preview.id"
                             :to="localePath(`/video/${preview.id}`)"
-                            class="group flex items-center gap-2 rounded-md border border-zinc-700 bg-zinc-800/80 p-2 transition hover:bg-zinc-700/80"
+                            class="group flex items-center gap-2 rounded-md border border-white/10 bg-zinc-800/80 p-2 transition hover:bg-zinc-700/80"
                         >
                             <img
                                 v-if="getVideoThumbnailUrl(preview.thumbnail_url)"
@@ -65,7 +65,7 @@
                             </div>
 
                             <div class="min-w-0 flex-1">
-                                <p class="text-[11px] font-semibold text-zinc-100 truncate group-hover:text-yellow-300 transition">
+                                <p class="text-[11px] font-semibold text-zinc-100 truncate group-hover:text-white transition">
                                     {{ preview.title }}
                                 </p>
                                 <p class="text-[10px] text-zinc-400 truncate">
@@ -86,26 +86,26 @@
                         @click="onToggleCommentLike(comment.id, !comment.liked_by_actor)"
                         :disabled="!!togglingCommentLikeMap[comment.id]"
                         class="text-xs transition disabled:opacity-50 disabled:cursor-not-allowed"
-                        :class="comment.liked_by_actor ? 'text-pink-400 hover:text-pink-300' : 'text-gray-400 hover:text-gray-200'"
+                        :class="comment.liked_by_actor ? 'text-red-400 hover:text-red-300' : 'text-gray-400 hover:text-gray-200'"
                     >
                         {{ comment.liked_by_actor ? '♥' : '♡' }} {{ comment.likes_count || 0 }}
                     </button>
                     <button v-if="isLoggedIn" @click="isReplying = !isReplying"
-                        class="text-xs text-blue-400 hover:text-blue-300 transition">
+                        class="text-xs text-zinc-200 hover:text-white transition">
                         {{ isReplying ? t('video.cancel') : t('commentNode.reply') }}
                     </button>
                 </div>
 
                 <div v-if="isReplying" class="comment-reply-composer mt-2 bg-zinc-800 rounded p-2">
                     <textarea v-model="replyText" :placeholder="t('commentNode.writeReply')" maxlength="500" rows="2"
-                        class="w-full bg-zinc-700 border border-zinc-600 rounded px-2 py-1 text-white text-xs focus:outline-none focus:border-blue-500 resize-none" />
+                        class="w-full bg-zinc-700 border border-zinc-600 rounded px-2 py-1 text-white text-xs focus:outline-none focus:border-white/30 resize-none" />
                     <div class="flex justify-end gap-2 mt-2">
                         <button @click="cancelReply"
                             class="px-2 py-1 text-xs text-gray-300 hover:text-white transition">
                             {{ t('video.cancel') }}
                         </button>
                         <button @click="submitReply" :disabled="!replyText.trim() || postingReplyMap[comment.id]"
-                            class="px-3 py-1 text-xs bg-blue-600 hover:bg-blue-700 rounded transition disabled:opacity-50 disabled:cursor-not-allowed">
+                            class="px-3 py-1 text-xs bg-zinc-100 hover:bg-white rounded transition disabled:opacity-50 disabled:cursor-not-allowed text-zinc-950">
                             {{ postingReplyMap[comment.id] ? t('video.posting') : t('commentNode.reply') }}
                         </button>
                     </div>
@@ -127,7 +127,7 @@
                 <div
                     v-show="isRepliesExpanded"
                     :class="[
-                        'mt-3 w-full min-w-0 space-y-2 border-l border-zinc-700',
+                        'mt-3 w-full min-w-0 space-y-2 border-l border-white/10',
                         depth === 0 ? 'pl-3' : 'pl-0'
                     ]"
                 >

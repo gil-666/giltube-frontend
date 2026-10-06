@@ -1,6 +1,6 @@
 <template>
   <div :class="containerClass">
-    <section class="space-y-5 rounded-2xl border border-zinc-700 bg-zinc-900 p-5">
+    <section class="space-y-5 rounded-2xl border border-white/10 bg-zinc-900 p-5">
       <div class="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h3 class="text-lg font-semibold text-white">{{ t('videoEditor.audio.title') }}</h3>
@@ -14,8 +14,8 @@
       <div v-if="audioTracks.length" class="space-y-2">
         <div v-for="track in audioTracks" :key="track.id" class="flex flex-wrap items-center justify-between gap-3 rounded bg-zinc-950 px-3 py-2">
           <div class="grid min-w-0 flex-1 gap-2 sm:grid-cols-[8rem_minmax(0,1fr)]">
-            <input v-model="track.language" :placeholder="t('videoEditor.languagePlaceholder')" class="rounded border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-xs text-white placeholder-gray-500" />
-            <input v-model="track.label" :placeholder="t('videoEditor.languageNamePlaceholder')" class="rounded border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-xs text-white placeholder-gray-500" />
+            <input v-model="track.language" :placeholder="t('videoEditor.languagePlaceholder')" class="rounded border border-white/10 bg-zinc-800 px-3 py-1.5 text-xs text-white placeholder-gray-500" />
+            <input v-model="track.label" :placeholder="t('videoEditor.languageNamePlaceholder')" class="rounded border border-white/10 bg-zinc-800 px-3 py-1.5 text-xs text-white placeholder-gray-500" />
             <p class="text-xs text-gray-500 sm:col-span-2">{{ track.language || 'und' }} · {{ track.default ? t('movieAdmin.subtitles.default') : t('movieAdmin.subtitles.optional') }} · {{ track.delay_ms || 0 }}ms</p>
           </div>
           <div class="flex flex-wrap gap-2">
@@ -37,17 +37,17 @@
           </div>
         </div>
       </div>
-      <p v-else class="rounded border border-zinc-800 bg-black/30 px-4 py-6 text-sm text-gray-500">{{ t('videoEditor.audio.empty') }}</p>
+      <p v-else class="rounded border border-white/[0.07] bg-black/30 px-4 py-6 text-sm text-gray-500">{{ t('videoEditor.audio.empty') }}</p>
 
       <div class="grid gap-3 sm:grid-cols-2 2xl:grid-cols-[minmax(0,1fr)_7rem_9rem_7rem_7rem]">
         <input type="file" accept="audio/*,video/*,.mka,.mkv,.mp4,.aac,.mp3,.wav,.flac,.m4a" class="block w-full text-sm text-gray-300 file:mr-3 file:rounded file:border-0 file:bg-zinc-700 file:px-3 file:py-2 file:text-white sm:col-span-2 2xl:col-span-1" @change="onAudioFileSelected" />
-        <input v-model="audioForm.language" :placeholder="t('videoEditor.languagePlaceholder')" class="rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-white placeholder-gray-500" />
-        <input v-model="audioForm.label" :placeholder="t('videoEditor.languageNamePlaceholder')" class="rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-white placeholder-gray-500" />
-        <label class="flex items-center gap-2 rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-xs text-gray-300">
+        <input v-model="audioForm.language" :placeholder="t('videoEditor.languagePlaceholder')" class="rounded border border-white/10 bg-zinc-800 px-3 py-2 text-white placeholder-gray-500" />
+        <input v-model="audioForm.label" :placeholder="t('videoEditor.languageNamePlaceholder')" class="rounded border border-white/10 bg-zinc-800 px-3 py-2 text-white placeholder-gray-500" />
+        <label class="flex items-center gap-2 rounded border border-white/10 bg-zinc-800 px-3 py-2 text-xs text-gray-300">
           <input v-model="audioForm.isDefault" type="checkbox" class="h-4 w-4 accent-red-600" />
           {{ t('movieAdmin.subtitles.default') }}
         </label>
-        <input v-model.number="audioForm.delayMs" type="number" step="100" :placeholder="t('movieAdmin.subtitles.delayMs')" class="rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-white placeholder-gray-500" />
+        <input v-model.number="audioForm.delayMs" type="number" step="100" :placeholder="t('movieAdmin.subtitles.delayMs')" class="rounded border border-white/10 bg-zinc-800 px-3 py-2 text-white placeholder-gray-500" />
       </div>
       <p class="text-xs text-gray-500">{{ t('videoEditor.audio.delayHelp') }}</p>
       <div class="flex flex-wrap gap-2">
@@ -60,7 +60,7 @@
       </div>
     </section>
 
-    <section class="space-y-5 rounded-2xl border border-zinc-700 bg-zinc-900 p-5">
+    <section class="space-y-5 rounded-2xl border border-white/10 bg-zinc-900 p-5">
       <div class="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h3 class="text-lg font-semibold text-white">{{ t('videoEditor.subtitles.title') }}</h3>
@@ -79,12 +79,12 @@
       <div v-if="subtitles.length" class="mt-3 space-y-2">
         <div v-for="track in subtitles" :key="track.id" class="flex flex-col gap-3 rounded bg-zinc-950 px-3 py-2 sm:flex-row sm:items-center sm:justify-between">
           <div class="grid min-w-0 flex-1 gap-2 sm:grid-cols-[8rem_minmax(0,1fr)]">
-            <input v-model="track.language" :placeholder="t('videoEditor.languagePlaceholder')" class="rounded border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-xs text-white placeholder-gray-500" />
-            <input v-model="track.label" :placeholder="t('videoEditor.languageNamePlaceholder')" class="rounded border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-xs text-white placeholder-gray-500" />
+            <input v-model="track.language" :placeholder="t('videoEditor.languagePlaceholder')" class="rounded border border-white/10 bg-zinc-800 px-3 py-1.5 text-xs text-white placeholder-gray-500" />
+            <input v-model="track.label" :placeholder="t('videoEditor.languageNamePlaceholder')" class="rounded border border-white/10 bg-zinc-800 px-3 py-1.5 text-xs text-white placeholder-gray-500" />
             <p class="text-xs text-gray-500 sm:col-span-2">{{ track.language || 'und' }} · {{ track.default ? t('movieAdmin.subtitles.default') : t('movieAdmin.subtitles.optional') }}</p>
           </div>
           <div class="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
-            <input v-model.number="track.delay_ms" type="number" step="100" :placeholder="t('movieAdmin.subtitles.delayMs')" class="w-full rounded border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-xs text-white placeholder-gray-500 sm:w-28" />
+            <input v-model.number="track.delay_ms" type="number" step="100" :placeholder="t('movieAdmin.subtitles.delayMs')" class="w-full rounded border border-white/10 bg-zinc-800 px-3 py-1.5 text-xs text-white placeholder-gray-500 sm:w-28" />
             <button v-if="!track.default || hasDuplicateSubtitleDefaults" type="button" :disabled="subtitleSaving" class="rounded bg-emerald-700 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-emerald-600 disabled:cursor-not-allowed disabled:opacity-50" @click="makeSubtitleDefault(track)">
               {{ track.default ? t('movieAdmin.subtitles.keepOnlyDefault') : t('movieAdmin.subtitles.makeDefault') }}
             </button>
@@ -106,17 +106,17 @@
           </div>
         </div>
       </div>
-      <p v-else class="mt-3 rounded border border-zinc-800 bg-black/30 px-4 py-6 text-sm text-gray-500">{{ t('movieAdmin.subtitles.empty') }}</p>
+      <p v-else class="mt-3 rounded border border-white/[0.07] bg-black/30 px-4 py-6 text-sm text-gray-500">{{ t('movieAdmin.subtitles.empty') }}</p>
 
       <div class="mt-4 grid gap-3 sm:grid-cols-2 2xl:grid-cols-[minmax(0,1fr)_7rem_9rem_7rem_7rem]">
         <input type="file" accept=".srt,.ass,.vtt,text/vtt" class="block w-full text-sm text-gray-300 file:mr-3 file:rounded file:border-0 file:bg-zinc-700 file:px-3 file:py-2 file:text-white sm:col-span-2 2xl:col-span-1" @change="onSubtitleFileSelected" />
-        <input v-model="subtitleForm.language" :placeholder="t('videoEditor.languagePlaceholder')" class="rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-white placeholder-gray-500" />
-        <input v-model="subtitleForm.label" :placeholder="t('videoEditor.languageNamePlaceholder')" class="rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-white placeholder-gray-500" />
-        <label class="flex items-center gap-2 rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-xs text-gray-300">
+        <input v-model="subtitleForm.language" :placeholder="t('videoEditor.languagePlaceholder')" class="rounded border border-white/10 bg-zinc-800 px-3 py-2 text-white placeholder-gray-500" />
+        <input v-model="subtitleForm.label" :placeholder="t('videoEditor.languageNamePlaceholder')" class="rounded border border-white/10 bg-zinc-800 px-3 py-2 text-white placeholder-gray-500" />
+        <label class="flex items-center gap-2 rounded border border-white/10 bg-zinc-800 px-3 py-2 text-xs text-gray-300">
           <input v-model="subtitleForm.isDefault" type="checkbox" class="h-4 w-4 accent-red-600" />
           {{ t('movieAdmin.subtitles.default') }}
         </label>
-        <input v-model.number="subtitleForm.delayMs" type="number" step="100" :placeholder="t('movieAdmin.subtitles.delayMs')" class="rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-white placeholder-gray-500" />
+        <input v-model.number="subtitleForm.delayMs" type="number" step="100" :placeholder="t('movieAdmin.subtitles.delayMs')" class="rounded border border-white/10 bg-zinc-800 px-3 py-2 text-white placeholder-gray-500" />
       </div>
       <div class="mt-3 flex flex-wrap gap-2">
         <button type="button" :disabled="(!subtitleForm.file && !subtitleForm.trackId) || subtitleSaving" class="rounded bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50" @click="saveSubtitleTrack">

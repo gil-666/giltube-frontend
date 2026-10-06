@@ -3,7 +3,7 @@
     <div v-if="isOpen" class="fixed inset-0 bg-black/50 flex items-center justify-center" style="z-index: 2147483647 !important; pointer-events: auto; overflow: visible;" @click.self="closeModal">
       <div class="bg-zinc-800 rounded-lg max-w-md w-full mx-4" style="z-index: 2147483647 !important; position: relative; overflow: visible;">
         <!-- Header -->
-        <div class="flex items-center justify-between px-6 py-4 border-b border-zinc-700">
+        <div class="flex items-center justify-between px-6 py-4 border-b border-white/10">
           <h2 class="text-lg font-semibold text-white">{{ t('playlists.addToPlaylist') }}</h2>
           <button @click="closeModal" class="text-gray-400 hover:text-white">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -20,14 +20,14 @@
 
           <div v-else-if="playlists.length === 0" class="text-center py-8">
             <p class="text-gray-400 mb-4">{{ t('playlists.noPlaylists') }}</p>
-            <button @click="emitCreateNew" class="px-4 py-2 bg-red-600 hover:bg-red-700 rounded text-white">
+            <button @click="emitCreateNew" class="px-4 py-2 bg-zinc-100 hover:bg-white rounded text-zinc-950">
               {{ t('playlists.createNew') }}
             </button>
           </div>
 
           <div v-else class="space-y-2 max-h-96 overflow-y-auto">
             <button v-for="playlist in playlists" :key="playlist.id" @click="selectPlaylist(playlist)" 
-              class="w-full text-left p-3 rounded border border-zinc-700 hover:border-red-500 hover:bg-zinc-700 transition">
+              class="w-full text-left p-3 rounded border border-white/10 hover:border-red-500 hover:bg-zinc-700 transition">
               <div class="font-medium text-white">{{ playlist.title }}</div>
               <div class="text-sm text-gray-400">{{ playlist.video_count }} {{ t('playlists.videos') }}</div>
             </button>

@@ -1,12 +1,12 @@
 <template>
   <main class="mx-auto max-w-[96rem] px-3 py-5 sm:px-6 sm:py-8">
-    <header class="mb-7 flex flex-col gap-4 border-b border-zinc-800 pb-6 sm:flex-row sm:items-end sm:justify-between">
+    <header class="mb-7 flex flex-col gap-4 border-b border-white/[0.07] pb-6 sm:flex-row sm:items-end sm:justify-between">
       <div>
         <NuxtLink :to="localePath('/admin')" class="text-sm text-zinc-400 hover:text-white">{{ t('musicAdmin.back') }}</NuxtLink>
         <h1 class="mt-2 text-3xl font-bold text-white">{{ t('musicAdmin.title') }}</h1>
         <p class="mt-1 text-sm text-zinc-400">{{ t('musicAdmin.subtitle') }}</p>
       </div>
-      <NuxtLink :to="localePath('/music')" class="rounded-md border border-zinc-700 px-4 py-2 text-center text-sm font-semibold text-white hover:bg-zinc-800">
+      <NuxtLink :to="localePath('/music')" class="rounded-md border border-white/10 px-4 py-2 text-center text-sm font-semibold text-white hover:bg-zinc-800">
         {{ t('musicAdmin.openMusic') }}
       </NuxtLink>
     </header>
@@ -25,7 +25,7 @@
       <div v-if="notice" class="mb-5 border border-emerald-900 bg-emerald-950/30 px-4 py-3 text-sm text-emerald-200">{{ notice }}</div>
       <div v-if="actionError" class="mb-5 border border-red-900 bg-red-950/30 px-4 py-3 text-sm text-red-200">{{ actionError }}</div>
 
-      <nav class="mb-5 flex border-b border-zinc-800" :aria-label="t('musicAdmin.sections')">
+      <nav class="mb-5 flex border-b border-white/[0.07]" :aria-label="t('musicAdmin.sections')">
         <button v-for="item in tabs" :key="item.id" type="button" :class="{ active: tab === item.id }" @click="tab = item.id">
           {{ item.label }} <span>{{ item.count }}</span>
         </button>

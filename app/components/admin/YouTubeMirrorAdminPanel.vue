@@ -14,7 +14,7 @@
       </p>
     </div>
 
-    <section class="rounded-lg border border-zinc-700 bg-zinc-900 p-5">
+    <section class="rounded-lg border border-white/10 bg-zinc-900 p-5">
       <div class="flex items-center gap-3">
         <h3 class="text-lg font-semibold text-white">{{ t('youtubeMirrorAdmin.import.title') }}</h3>
         <AdminHelpButton
@@ -31,12 +31,12 @@
         <input
           v-model="importForm.url"
           placeholder="https://www.youtube.com/watch?v=..."
-          class="rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-white placeholder-gray-500 focus:border-blue-500 focus:outline-none"
+          class="rounded border border-white/10 bg-zinc-800 px-3 py-2 text-white placeholder-gray-500 focus:border-white/30 focus:outline-none"
         />
         <select
           v-model="importForm.giltubeChannelId"
           :disabled="importForm.createNewChannel"
-          class="rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-white focus:border-blue-500 focus:outline-none"
+          class="rounded border border-white/10 bg-zinc-800 px-3 py-2 text-white focus:border-white/30 focus:outline-none"
         >
           <option value="">{{ t('youtubeMirrorAdmin.import.useMappedChannel') }}</option>
           <option v-for="channel in channels" :key="channel.id" :value="channel.id">
@@ -46,19 +46,19 @@
       </div>
 
       <div class="mt-4 flex flex-wrap items-center gap-3">
-        <label class="inline-flex items-center gap-2 rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-gray-300">
+        <label class="inline-flex items-center gap-2 rounded border border-white/10 bg-zinc-800 px-3 py-2 text-sm text-gray-300">
           <input v-model="importForm.explicit" type="checkbox" class="h-4 w-4 accent-red-600" />
           {{ t('youtubeMirrorAdmin.import.explicit') }}
         </label>
-        <label class="inline-flex items-center gap-2 rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-gray-300">
+        <label class="inline-flex items-center gap-2 rounded border border-white/10 bg-zinc-800 px-3 py-2 text-sm text-gray-300">
           <input v-model="importForm.hidden" type="checkbox" class="h-4 w-4 accent-red-600" />
           {{ t('youtubeMirrorAdmin.import.hidden') }}
         </label>
-        <label class="inline-flex items-center gap-2 rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-gray-300">
+        <label class="inline-flex items-center gap-2 rounded border border-white/10 bg-zinc-800 px-3 py-2 text-sm text-gray-300">
           <input v-model="importForm.createNewChannel" type="checkbox" class="h-4 w-4 accent-red-600" />
           {{ t('youtubeMirrorAdmin.import.createNewChannel') }}
         </label>
-        <label class="inline-flex items-center gap-2 rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-gray-300">
+        <label class="inline-flex items-center gap-2 rounded border border-white/10 bg-zinc-800 px-3 py-2 text-sm text-gray-300">
           <input v-model="importForm.copyChannelInfo" type="checkbox" class="h-4 w-4 accent-red-600" />
           {{ t('youtubeMirrorAdmin.import.copyChannelInfo') }}
         </label>
@@ -92,7 +92,7 @@
       </div>
     </section>
 
-    <section class="rounded-lg border border-zinc-700 bg-zinc-900 p-5">
+    <section class="rounded-lg border border-white/10 bg-zinc-900 p-5">
       <div class="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
         <div>
           <div class="flex items-center gap-3">
@@ -116,31 +116,31 @@
         <input
           v-model="mappingForm.youtubeChannelId"
           :placeholder="t('youtubeMirrorAdmin.mappings.youtubeChannelId')"
-          class="rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-white placeholder-gray-500 focus:border-blue-500 focus:outline-none"
+          class="rounded border border-white/10 bg-zinc-800 px-3 py-2 text-white placeholder-gray-500 focus:border-white/30 focus:outline-none"
         />
         <input
           v-model="mappingForm.youtubeChannelTitle"
           :placeholder="t('youtubeMirrorAdmin.mappings.youtubeChannelName')"
-          class="rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-white placeholder-gray-500 focus:border-blue-500 focus:outline-none"
+          class="rounded border border-white/10 bg-zinc-800 px-3 py-2 text-white placeholder-gray-500 focus:border-white/30 focus:outline-none"
         />
         <select
           v-model="mappingForm.giltubeChannelId"
           :disabled="mappingForm.createNewChannel"
-          class="rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-white focus:border-blue-500 focus:outline-none"
+          class="rounded border border-white/10 bg-zinc-800 px-3 py-2 text-white focus:border-white/30 focus:outline-none"
         >
           <option value="">{{ t('youtubeMirrorAdmin.mappings.selectGilTubeChannel') }}</option>
           <option v-for="channel in channels" :key="channel.id" :value="channel.id">
             {{ channel.name }}
           </option>
         </select>
-        <label class="inline-flex items-center gap-2 rounded border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-gray-300">
+        <label class="inline-flex items-center gap-2 rounded border border-white/10 bg-zinc-800 px-3 py-2 text-sm text-gray-300">
           <input v-model="mappingForm.createNewChannel" type="checkbox" class="h-4 w-4 accent-red-600" />
           {{ t('youtubeMirrorAdmin.mappings.createNew') }}
         </label>
         <button
           type="button"
           :disabled="savingMapping || !canSaveMapping"
-          class="rounded bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+          class="rounded bg-zinc-100 px-4 py-2 text-sm font-semibold text-zinc-950 transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-50"
           @click="saveMapping"
         >
           {{ savingMapping ? t('common.saving') : t('common.save') }}
@@ -151,14 +151,14 @@
         {{ mappingError }}
       </div>
 
-      <div class="mt-5 overflow-hidden rounded border border-zinc-800">
+      <div class="mt-5 overflow-hidden rounded border border-white/[0.07]">
         <div v-if="loadingMappings" class="bg-black/30 px-4 py-8 text-center text-sm text-gray-400">
           {{ t('youtubeMirrorAdmin.mappings.loading') }}
         </div>
         <div v-else-if="!mappings.length" class="bg-black/30 px-4 py-8 text-center text-sm text-gray-500">
           {{ t('youtubeMirrorAdmin.mappings.empty') }}
         </div>
-        <div v-else class="divide-y divide-zinc-800">
+        <div v-else class="divide-y divide-white/[0.07]">
           <article
             v-for="mapping in mappings"
             :key="mapping.youtube_channel_id"
@@ -170,7 +170,7 @@
             </div>
             <div class="min-w-0">
               <p class="text-sm text-gray-400">{{ t('youtubeMirrorAdmin.mappings.mirrorsTo') }}</p>
-              <p class="truncate font-semibold text-blue-300">{{ mapping.giltube_channel_name || mapping.giltube_channel_id }}</p>
+              <p class="truncate font-semibold text-zinc-200">{{ mapping.giltube_channel_name || mapping.giltube_channel_id }}</p>
               <code class="mt-1 block select-all break-all text-xs text-gray-500">{{ mapping.giltube_channel_id }}</code>
             </div>
             <div class="flex gap-2 md:justify-end">

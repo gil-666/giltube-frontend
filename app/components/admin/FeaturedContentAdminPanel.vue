@@ -8,43 +8,43 @@
     <p v-if="error" class="rounded-lg border border-red-500/30 bg-red-950/40 p-3 text-sm text-red-200">{{ error }}</p>
     <p v-if="message" class="rounded-lg border border-emerald-500/30 bg-emerald-950/30 p-3 text-sm text-emerald-200">{{ message }}</p>
 
-    <form class="grid gap-4 rounded-2xl border border-zinc-800 bg-zinc-950 p-5 lg:grid-cols-2" @submit.prevent="save">
+    <form class="grid gap-4 rounded-2xl border border-white/[0.07] bg-zinc-950 p-5 lg:grid-cols-2" @submit.prevent="save">
       <label class="grid gap-2 text-sm font-semibold text-zinc-300">
         Content type
-        <select v-model="form.content_type" class="rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2.5 text-white" @change="searchCandidates">
+        <select v-model="form.content_type" class="rounded-xl border border-white/10 bg-zinc-900 px-3 py-2.5 text-white" @change="searchCandidates">
           <option value="video">Video</option><option value="live">Live stream</option><option value="movie">Movie</option><option value="series">Series</option>
         </select>
       </label>
       <label class="grid gap-2 text-sm font-semibold text-zinc-300">
         Find content
-        <input v-model="candidateQuery" class="rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2.5 text-white" placeholder="Search by title or channel" @input="queueSearch" />
+        <input v-model="candidateQuery" class="rounded-xl border border-white/10 bg-zinc-900 px-3 py-2.5 text-white" placeholder="Search by title or channel" @input="queueSearch" />
       </label>
       <label class="grid gap-2 text-sm font-semibold text-zinc-300 lg:col-span-2">
         Selected content
-        <select v-model="form.content_id" required class="rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2.5 text-white">
+        <select v-model="form.content_id" required class="rounded-xl border border-white/10 bg-zinc-900 px-3 py-2.5 text-white">
           <option value="" disabled>Select content…</option>
           <option v-for="candidate in candidates" :key="candidate.id" :value="candidate.id">{{ candidate.title }}{{ candidate.channel_name ? ` — ${candidate.channel_name}` : '' }}</option>
         </select>
       </label>
       <label v-if="form.content_type === 'live'" class="grid gap-2 text-sm font-semibold text-zinc-300">
         Scheduled start
-        <input v-model="form.scheduled_for" type="datetime-local" class="rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2.5 text-white" />
+        <input v-model="form.scheduled_for" type="datetime-local" class="rounded-xl border border-white/10 bg-zinc-900 px-3 py-2.5 text-white" />
       </label>
       <label class="grid gap-2 text-sm font-semibold text-zinc-300">
         Slot (1–5)
-        <input v-model.number="form.position" type="number" min="1" max="5" required class="rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2.5 text-white" />
+        <input v-model.number="form.position" type="number" min="1" max="5" required class="rounded-xl border border-white/10 bg-zinc-900 px-3 py-2.5 text-white" />
       </label>
       <label class="grid gap-2 text-sm font-semibold text-zinc-300">
         Header
-        <input v-model="form.header" maxlength="100" class="rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2.5 text-white" placeholder="Featured, Premiere, Coming soon…" />
+        <input v-model="form.header" maxlength="100" class="rounded-xl border border-white/10 bg-zinc-900 px-3 py-2.5 text-white" placeholder="Featured, Premiere, Coming soon…" />
       </label>
       <label class="grid gap-2 text-sm font-semibold text-zinc-300">
         Action button text
-        <input v-model="form.action_text" maxlength="40" class="rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2.5 text-white" placeholder="Play" />
+        <input v-model="form.action_text" maxlength="40" class="rounded-xl border border-white/10 bg-zinc-900 px-3 py-2.5 text-white" placeholder="Play" />
       </label>
       <label class="grid gap-2 text-sm font-semibold text-zinc-300 lg:col-span-2">
         Custom description
-        <textarea v-model="form.description" rows="3" maxlength="500" class="rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2.5 text-white" />
+        <textarea v-model="form.description" rows="3" maxlength="500" class="rounded-xl border border-white/10 bg-zinc-900 px-3 py-2.5 text-white" />
       </label>
       <label class="flex items-center gap-3 text-sm text-zinc-200"><input v-model="form.enabled" type="checkbox" class="h-4 w-4 accent-red-600" /> Show this slot</label>
       <label class="flex items-center gap-3 text-sm text-zinc-200"><input v-model="form.notifications_enabled" type="checkbox" class="h-4 w-4 accent-red-600" /> Send featured notifications</label>
@@ -55,17 +55,17 @@
     </form>
 
     <div class="grid gap-3">
-      <article v-for="item in items" :key="item.id" class="flex flex-col gap-4 rounded-2xl border border-zinc-800 bg-zinc-950 p-4 sm:flex-row sm:items-center">
+      <article v-for="item in items" :key="item.id" class="flex flex-col gap-4 rounded-2xl border border-white/[0.07] bg-zinc-950 p-4 sm:flex-row sm:items-center">
         <img :src="mediaURL(item.image_url)" :alt="item.title" class="aspect-video w-full rounded-xl bg-black object-cover sm:w-48" />
         <div class="min-w-0 flex-1">
-          <p class="text-xs font-bold uppercase tracking-widest text-red-300">Slot {{ item.position + 1 }} · {{ item.content_type }}</p>
+          <p class="text-xs font-medium text-zinc-400">Slot {{ item.position + 1 }} · {{ item.content_type }}</p>
           <h3 class="mt-1 truncate text-lg font-bold text-white">{{ item.header || item.title }}</h3>
           <p class="truncate text-sm text-zinc-400">{{ item.title }} · {{ item.channel_name }}</p>
           <p class="mt-2 text-xs text-zinc-500">{{ item.enabled ? 'Visible' : 'Hidden' }} · Notifications {{ item.notifications_enabled ? 'on' : 'off' }}</p>
         </div>
         <div class="flex gap-2"><button class="rounded-lg bg-zinc-800 px-3 py-2 text-sm font-semibold" @click="edit(item)">Edit</button><button class="rounded-lg bg-red-950 px-3 py-2 text-sm font-semibold text-red-200" @click="remove(item)">Delete</button></div>
       </article>
-      <p v-if="!loading && !items.length" class="rounded-2xl border border-dashed border-zinc-800 p-8 text-center text-zinc-500">No featured content yet.</p>
+      <p v-if="!loading && !items.length" class="rounded-2xl border border-dashed border-white/[0.07] p-8 text-center text-zinc-500">No featured content yet.</p>
     </div>
   </section>
 </template>

@@ -3,10 +3,10 @@
     <!-- Header -->
     <div class="flex items-center justify-between mb-8">
       <div>
-        <h1 class="text-3xl font-bold text-white">{{ t('playlists.myPlaylists') }}</h1>
-        <p class="text-gray-400 mt-2">{{ playlists.length }} {{ t('playlists.playlists') }}</p>
+        <h1 class="text-2xl font-semibold tracking-tight text-white">{{ t('playlists.myPlaylists') }}</h1>
+        <p class="mt-1 text-sm text-zinc-500">{{ playlists.length }} {{ t('playlists.playlists') }}</p>
       </div>
-      <button v-if="isLoggedIn" @click="openCreateModal" class="px-6 py-3 bg-red-600 hover:bg-red-700 rounded-lg text-white font-medium transition">
+      <button v-if="isLoggedIn" @click="openCreateModal" class="px-6 py-3 bg-zinc-100 hover:bg-white rounded-lg text-zinc-950 font-medium transition">
         + {{ t('playlists.createPlaylist') }}
       </button>
     </div>
@@ -18,7 +18,7 @@
       </svg>
       <h3 class="text-xl font-medium text-gray-300 mb-2">{{ t('playlists.noPlaylistsYet') }}</h3>
       <p class="text-gray-400 mb-6">{{ t('playlists.createYourFirst') }}</p>
-      <button v-if="isLoggedIn" @click="openCreateModal" class="px-6 py-2 bg-red-600 hover:bg-red-700 rounded text-white transition">
+      <button v-if="isLoggedIn" @click="openCreateModal" class="px-6 py-2 bg-zinc-100 hover:bg-white rounded text-zinc-950 transition">
         {{ t('playlists.createPlaylist') }}
       </button>
     </div>
@@ -56,7 +56,7 @@
           <h3 class="font-semibold text-white truncate">{{ playlist.title }}</h3>
           <p v-if="playlist.description" class="text-gray-400 text-sm line-clamp-2 mt-1">{{ playlist.description }}</p>
 
-          <div class="flex items-center gap-3 mt-4 pt-4 border-t border-zinc-700">
+          <div class="flex items-center gap-3 mt-4 pt-4 border-t border-white/10">
             <AvatarFallback
               :src="creatorAvatarUrl"
               :name="t('common.you')"
@@ -69,7 +69,7 @@
           </div>
           
           <!-- Actions -->
-          <div class="flex gap-2 mt-4 pt-4 border-t border-zinc-700">
+          <div class="flex gap-2 mt-4 pt-4 border-t border-white/10">
             <button @click.prevent="editPlaylist(playlist)" class="flex-1 px-3 py-1 text-sm bg-zinc-700 hover:bg-zinc-600 rounded text-gray-300 transition">
               {{ t('common.edit') }}
             </button>

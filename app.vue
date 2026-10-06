@@ -18,40 +18,37 @@
     </div>
 
     <!-- Offline Indicator -->
-    <div ref="offlineRef" v-if="offlineMode" class="w-full bg-yellow-600 text-white px-4 py-2 fixed text-center text-sm font-semibold"
-      :style="{ zIndex: 80 }">
+    <div ref="offlineRef" v-if="offlineMode" class="shell-banner fixed justify-center" :style="{ zIndex: 80 }">
+      <span class="shell-banner__dot is-warn" aria-hidden="true" />
       {{ t('app.offline') }}
     </div>
 
     <!-- Account Status Banner -->
     <div ref="statusRef" v-if="userStatus === 'suspended'"
-      class="w-full bg-yellow-600 text-white px-4 py-3 fixed flex items-center justify-between" :style="{ zIndex: 70 }">
-      <span class="text-sm font-semibold">{{ t('app.suspended') }}</span>
-      <button @click="dismissAccountStatus"
-        class="px-3 py-1 bg-yellow-700 hover:bg-yellow-800 rounded text-sm transition">
-        {{ t('app.dismiss') }}
+      class="shell-banner fixed" :style="{ zIndex: 70 }">
+      <span class="flex items-center gap-2.5"><span class="shell-banner__dot is-warn" aria-hidden="true" />{{ t('app.suspended') }}</span>
+      <button @click="dismissAccountStatus" class="shell-banner__close" :aria-label="t('app.gilidDismiss')">
+        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-width="2" d="M6 6l12 12M18 6 6 18" /></svg>
       </button>
     </div>
 
     <!-- Banned Account Banner -->
     <div ref="statusRef" v-if="userStatus === 'banned'"
-      class="w-full bg-red-600 text-white px-4 py-3 fixed flex items-center justify-between" :style="{ zIndex: 70 }">
-      <span class="text-sm font-semibold">{{ t('app.banned') }}</span>
-      <button @click="handleBannedLogout" class="px-3 py-1 bg-red-700 hover:bg-red-800 rounded text-sm transition">
+      class="shell-banner fixed" :style="{ zIndex: 70 }">
+      <span class="flex items-center gap-2.5"><span class="shell-banner__dot is-danger" aria-hidden="true" />{{ t('app.banned') }}</span>
+      <button @click="handleBannedLogout" class="shell-banner__button">
         {{ t('app.logout') }}
       </button>
     </div>
 
     <!-- App Update Notification -->
-    <div ref="updateRef" v-if="showUpdatePrompt" class="w-full bg-blue-600 text-white px-4 py-3 fixed flex items-center justify-between"
-      :style="{ zIndex: 70 }">
-      <span class="text-sm font-semibold">{{ t('app.updateAvailable') }}</span>
+    <div ref="updateRef" v-if="showUpdatePrompt" class="shell-banner fixed" :style="{ zIndex: 70 }">
+      <span class="flex items-center gap-2.5"><span class="shell-banner__dot is-info" aria-hidden="true" />{{ t('app.updateAvailable') }}</span>
       <div class="flex gap-2">
-        <button @click="dismissUpdate" class="px-3 py-1 bg-blue-700 hover:bg-blue-800 rounded text-sm transition">
+        <button @click="dismissUpdate" class="shell-banner__button shell-banner__button--quiet">
           {{ t('app.later') }}
         </button>
-        <button @click="handleUpdateApp"
-          class="px-3 py-1 bg-white text-blue-600 hover:bg-gray-200 rounded text-sm font-semibold transition">
+        <button @click="handleUpdateApp" class="shell-banner__button">
           {{ t('app.updateNow') }}
         </button>
       </div>
@@ -61,14 +58,14 @@
     <div
       ref="passkeyRef"
       v-if="showPasskeyPrompt && isLoggedIn && route.path !== '/account-settings'"
-      class="w-full bg-cyan-700 text-white px-4 py-3 fixed flex items-center justify-between"
+      class="shell-banner fixed"
       :style="{ zIndex: 70 }"
     >
-      <div class="flex items-center gap-3 text-sm font-semibold">
-        <span>{{ t('app.securePasskey') }}</span>
+      <div class="flex items-center gap-3">
+        <span class="flex items-center gap-2.5"><span class="shell-banner__dot is-info" aria-hidden="true" />{{ t('app.securePasskey') }}</span>
         <NuxtLink
           to="/account-settings#passkeys"
-          class="underline underline-offset-2 hover:text-cyan-100"
+          class="font-medium text-white underline underline-offset-4"
           @click="showPasskeyPrompt = false"
         >
           {{ t('app.addPasskey') }}
@@ -76,10 +73,10 @@
       </div>
       <button
         @click="dismissPasskeyPrompt"
-        class="px-2 py-1 bg-cyan-800 hover:bg-cyan-900 rounded text-sm transition"
-        aria-label="Dismiss passkey banner"
+        class="shell-banner__close"
+        :aria-label="t('app.gilidDismiss')"
       >
-        X
+        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-width="2" d="M6 6l12 12M18 6 6 18" /></svg>
       </button>
     </div>
 
@@ -87,8 +84,8 @@
     <header v-if="!shouldHideTopBar"
       class="flex items-center justify-between border-b fixed left-0 right-0 transition-all duration-300"
       :class="[
-        headerScrolled ? 'bg-zinc-950/50 backdrop-blur-md border-zinc-700 shadow-[0_8px_24px_rgba(0,0,0,0.35)]' : 'bg-zinc-950 border-zinc-800',
-        isCompactMobileWatchTopBar ? 'h-10 px-3' : 'h-16 px-4'
+        headerScrolled ? 'bg-zinc-950/80 backdrop-blur-xl border-white/[0.06]' : 'bg-zinc-950 border-transparent',
+        isCompactMobileWatchTopBar ? 'h-10 px-3' : 'h-16 gap-4 px-3 md:px-4'
       ]"
       :style="{ top: notificationBarHeight + 'px', zIndex: 60 }">
       <div class="flex items-center gap-3">
@@ -104,9 +101,9 @@
           </svg>
           <span v-if="!isMobileDevice" class="music-return-label">GilTube</span>
         </NuxtLink>
-        <button v-else-if="!isMobileDevice" @click="isSidebarOpen = !isSidebarOpen" class="p-2 hover:bg-zinc-800 rounded transition" :class="{ 'md:hidden': !useCollapsibleDesktopSidebar }">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+        <button v-else-if="!isMobileDevice" @click="isSidebarOpen = !isSidebarOpen" class="shell-icon-button" :class="{ 'md:hidden': !useCollapsibleDesktopSidebar }" :aria-label="t('app.menu')">
+          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 7h16M4 12h16M4 17h16" />
           </svg>
         </button>
         <div class="relative inline-flex">
@@ -131,31 +128,35 @@
               @error="handleSabrinaLogoError"
             />
             <span v-else-if="activeEasterEgg?.id === 'sabrina-tube' && canApplyEasterEggTheme" class="sabrina-brand-text">SabrinaTube</span>
-            <img v-else src="./assets/logowhsmall.png" alt="GilTube" :class="isCompactMobileWatchTopBar ? 'h-6 object-contain' : 'h-8 object-contain md:h-14'" />
+            <img v-else src="./assets/logowhsmall.png" alt="GilTube" :class="isCompactMobileWatchTopBar ? 'h-6 object-contain' : 'h-7 object-contain md:h-8'" />
           </button>
           <!-- <span
             class="absolute -top-1.5 -right-1 md:top-0 md:-right-2 bg-red-600 text-white text-[10px] md:text-xs font-bold px-0.5 md:px-1.5 py-0 rounded">BETA</span> -->
         </div>
       </div>
 
-      <div v-if="!isMobileDevice" ref="desktopSearchRef" class="relative hidden w-1/3 md:block">
-        <input v-model="searchQuery" type="text" :placeholder="isMusicRoute ? 'Search music' : t('app.searchPlaceholder')"
+      <div v-if="!isMobileDevice" ref="desktopSearchRef" class="relative hidden w-full max-w-xl md:block">
+        <svg class="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m21 21-4.35-4.35M17 10.5a6.5 6.5 0 1 1-13 0 6.5 6.5 0 0 1 13 0Z" />
+        </svg>
+        <input v-model="searchQuery" type="search" :placeholder="isMusicRoute ? t('app.search') : t('app.searchPlaceholder')"
+          :aria-label="t('app.search')"
           @focus="openSearchSuggestions"
           @keydown.enter="handleDesktopSearch()"
-          class="w-full bg-zinc-900 px-4 py-2 rounded-full focus:outline-none text-white placeholder-gray-500" />
+          class="shell-search-input" />
         <div
           v-if="!isMusicRoute && shouldShowSearchSuggestions"
-          class="search-suggestions-scrollbar absolute left-0 right-0 top-11 max-h-[28rem] overflow-y-auto rounded-2xl border border-zinc-700 bg-zinc-950 shadow-2xl shadow-black/60"
+          class="search-suggestions-scrollbar absolute left-0 right-0 top-12 max-h-[28rem] overflow-y-auto rounded-xl border border-white/[0.08] bg-zinc-900 p-1 shadow-2xl shadow-black/60"
           :style="{ zIndex: 9999 }"
         >
           <button
             v-for="item in searchSuggestions"
             :key="`${item.type}-${item.id}`"
             type="button"
-            class="flex w-full items-center gap-3 px-4 py-3 text-left transition hover:bg-zinc-800"
+            class="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left transition hover:bg-white/[0.06]"
             @mousedown.prevent="goToSearchSuggestion(item)"
           >
-            <div class="h-10 w-14 shrink-0 overflow-hidden rounded bg-zinc-800">
+            <div class="h-10 w-16 shrink-0 overflow-hidden rounded-md bg-zinc-800">
               <img v-if="suggestionImage(item)" :src="suggestionImage(item)" :alt="suggestionTitle(item)" class="h-full w-full object-cover" />
               <div v-else class="flex h-full w-full items-center justify-center text-xs text-zinc-500">{{ suggestionIcon(item) }}</div>
             </div>
@@ -163,17 +164,17 @@
               <p class="truncate text-sm font-semibold text-white">{{ suggestionTitle(item) }}</p>
               <p class="truncate text-xs text-zinc-400">{{ suggestionMeta(item) }}</p>
             </div>
-            <span class="rounded-full bg-zinc-800 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-zinc-300">
+            <span class="text-xs text-zinc-500">
               {{ suggestionTypeLabel(item.type) }}
             </span>
           </button>
           <button
             v-if="searchQuery.trim()"
             type="button"
-            class="flex w-full items-center gap-3 border-t border-zinc-800 px-4 py-3 text-left text-sm font-semibold text-zinc-200 transition hover:bg-zinc-800"
+            class="mt-1 flex w-full items-center gap-3 rounded-lg border-t border-white/[0.06] px-3 py-2.5 text-left text-sm text-zinc-300 transition hover:bg-white/[0.06]"
             @mousedown.prevent="handleDesktopSearch()"
           >
-            <span>⌕</span>
+            <svg class="h-4 w-4 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m21 21-4.35-4.35M17 10.5a6.5 6.5 0 1 1-13 0 6.5 6.5 0 0 1 13 0Z" /></svg>
             <span>{{ t('app.searchAllFor', { query: searchQuery.trim() }) }}</span>
           </button>
         </div>
@@ -234,7 +235,7 @@
           <button
             type="button"
             @click="toggleUploadDropdown"
-            class="flex h-9 w-9 items-center justify-center rounded-full bg-red-600 text-white transition hover:bg-red-700"
+            class="shell-icon-button"
             :aria-label="t('app.create')"
             :aria-expanded="uploadDropdownOpen"
           >
@@ -246,7 +247,7 @@
           <Transition name="menu-pop">
             <div
               v-if="uploadDropdownOpen"
-              class="absolute right-0 top-11 w-56 origin-top-right overflow-hidden rounded-xl border border-zinc-700 bg-zinc-950 shadow-2xl shadow-black/50"
+              class="absolute right-0 top-11 w-56 origin-top-right overflow-hidden rounded-xl border border-white/10 bg-zinc-950 shadow-2xl shadow-black/50"
               :style="{ zIndex: 9999 }"
             >
               <NuxtLink
@@ -265,7 +266,7 @@
 
               <NuxtLink
                 :to="localePath('/go-live')"
-                class="flex items-center gap-3 border-t border-zinc-800 px-4 py-3 text-sm text-gray-100 transition hover:bg-zinc-800"
+                class="flex items-center gap-3 border-t border-white/[0.07] px-4 py-3 text-sm text-gray-100 transition hover:bg-zinc-800"
                 @click="uploadDropdownOpen = false"
               >
                 <span class="flex h-9 w-9 items-center justify-center rounded-lg bg-zinc-800 text-zinc-200">
@@ -293,7 +294,7 @@
         <div v-if="isLoggedIn && !isMobileDevice" class="relative" ref="notificationDropdownRef">
           <button
             @click="toggleNotificationsDropdown"
-            class="relative p-2 hover:bg-zinc-800 rounded transition"
+            class="shell-icon-button relative"
             :aria-label="t('app.notifications')"
           >
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -301,7 +302,7 @@
             </svg>
             <span
               v-if="unreadNotificationCount > 0"
-              class="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-red-600 text-white text-[10px] leading-[18px] text-center font-bold"
+              class="absolute right-0.5 top-0.5 h-[16px] min-w-[16px] rounded-full bg-red-600 px-1 text-center text-[10px] font-semibold leading-[16px] text-white ring-2 ring-zinc-950"
             >
               {{ unreadNotificationCount > 99 ? '99+' : unreadNotificationCount }}
             </span>
@@ -310,14 +311,14 @@
           <Transition name="menu-pop">
             <div
               v-if="notificationsDropdownOpen"
-              class="fixed top-14 right-2 left-2 w-auto max-w-none origin-top-right overflow-hidden rounded-lg border border-zinc-700 bg-zinc-900 shadow-xl sm:absolute sm:left-auto sm:right-0 sm:w-96"
+              class="fixed top-14 right-2 left-2 w-auto max-w-none origin-top-right overflow-hidden rounded-lg border border-white/10 bg-zinc-900 shadow-xl sm:absolute sm:left-auto sm:right-0 sm:w-96"
               :style="{ zIndex: 9999 }"
             >
-            <div class="px-4 py-3 border-b border-zinc-700 flex items-center justify-between">
+            <div class="px-4 py-3 border-b border-white/10 flex items-center justify-between">
               <p class="text-sm font-semibold">{{ t('app.notifications') }}</p>
               <button
                 @click="markAllPreviewNotificationsRead"
-                class="text-xs text-blue-400 hover:text-blue-300 transition"
+                class="text-xs text-zinc-200 hover:text-white transition"
               >
                 {{ t('app.markAllRead') }}
               </button>
@@ -334,7 +335,7 @@
                 v-for="item in notificationPreview"
                 :key="item.id"
                 :to="localizedNotificationUrl(item.url)"
-                class="block px-4 py-3 border-b border-zinc-800 hover:bg-zinc-800 transition"
+                class="block px-4 py-3 border-b border-white/[0.07] hover:bg-zinc-800 transition"
                 @click="handleNotificationClick(item.id)"
               >
                 <p class="text-sm" :class="item.is_read ? 'text-gray-300' : 'text-white font-semibold'">
@@ -344,8 +345,8 @@
               </NuxtLink>
             </div>
 
-            <div class="px-4 py-3 bg-zinc-950 border-t border-zinc-700">
-              <NuxtLink :to="localePath('/notifications')" class="text-sm text-blue-400 hover:text-blue-300" @click="notificationsDropdownOpen = false">
+            <div class="px-4 py-3 bg-zinc-950 border-t border-white/10">
+              <NuxtLink :to="localePath('/notifications')" class="text-sm text-zinc-200 hover:text-white" @click="notificationsDropdownOpen = false">
                 {{ t('app.viewAllNotifications') }}
               </NuxtLink>
             </div>
@@ -357,7 +358,7 @@
         <!-- <button
           v-if="canInstall"
           @click="promptInstall"
-          class="px-3 py-1.5 bg-green-600 hover:bg-green-700 rounded-full transition text-sm font-semibold flex items-center gap-2"
+          class="px-3 py-1.5 bg-zinc-100 hover:bg-white rounded-full transition text-sm font-semibold flex items-center gap-2 text-zinc-950"
         >
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
@@ -368,15 +369,15 @@
         <!-- User Menu -->
         <div v-if="isLoggedIn && !isMobileDevice" class="relative">
           <button @click="toggleAccountDropdown"
-            class="flex items-center gap-2 px-3 py-2 hover:bg-zinc-800 rounded transition">
+            class="ml-1 flex items-center rounded-full p-0.5 transition hover:ring-2 hover:ring-white/15" :aria-label="t('app.currentAccount')">
             <!-- Profile Picture Circle -->
             <div
-              class="w-8 h-8 rounded-full bg-zinc-700 flex items-center justify-center text-xs text-gray-300 font-bold border border-zinc-600 overflow-hidden">
+              class="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-zinc-800 text-xs font-semibold text-zinc-300">
               <img v-if="activeChannelAvatar && !avatarLoadFailed" :src="activeChannelAvatar" :alt="displayName"
                 class="w-full h-full object-cover" @error="avatarLoadFailed = true" />
               <span v-else>{{ displayName.charAt(0).toUpperCase() }}</span>
             </div>
-            <span class="hidden md:inline text-sm text-gray-300">{{ displayName }}</span>
+
             <!-- <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="dropdownOpen ? 'M19 14l-7 7m0 0l-7-7m7 7V3' : 'M19 14l-7-7m0 0L5 14m7-7v11'" />
             </svg> -->
@@ -386,7 +387,7 @@
         <button
           v-else-if="isLoggedIn && isMobileDevice && !isCompactMobileWatchTopBar"
           type="button"
-          class="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border border-zinc-700 bg-zinc-800 text-sm font-bold text-zinc-200 transition hover:border-zinc-500 hover:bg-zinc-700"
+          class="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border border-white/10 bg-zinc-800 text-sm font-bold text-zinc-200 transition hover:border-zinc-500 hover:bg-zinc-700"
           :aria-label="t('app.currentAccount')"
           @click="toggleAccountDropdown"
         >
@@ -401,7 +402,7 @@
         </button>
 
         <!-- Login Link (when not logged in) -->
-        <NuxtLink v-else-if="!isMobileDevice" :to="localePath('/login')" class="px-4 py-2 bg-red-600 hover:bg-red-700 rounded transition">
+        <NuxtLink v-else-if="!isMobileDevice" :to="localePath('/login')" class="shell-signin">
           {{ t('app.login') }}
         </NuxtLink>
       </div>
@@ -419,9 +420,9 @@
 
     <!-- Mobile Expanded Search Bar -->
     <div v-if="!shouldHideHeader && isMobileDevice" v-show="showSearchBar"
-      class="fixed left-0 right-0 border-b border-zinc-800 bg-zinc-950/95 shadow-2xl shadow-black/40 backdrop-blur-xl" :style="{ zIndex: 61, top: `${mobileSearchTopOffset}px` }">
+      class="fixed left-0 right-0 border-b border-white/[0.07] bg-zinc-950/95 shadow-2xl shadow-black/40 backdrop-blur-xl" :style="{ zIndex: 61, top: `${mobileSearchTopOffset}px` }">
       <div ref="mobileSearchRef" class="px-3 py-3">
-        <div class="flex items-center gap-2 rounded-2xl border border-zinc-700 bg-zinc-900/90 px-3 py-2.5 shadow-inner shadow-black/30">
+        <div class="flex items-center gap-2 rounded-2xl border border-white/10 bg-zinc-900/90 px-3 py-2.5 shadow-inner shadow-black/30">
           <svg class="h-5 w-5 shrink-0 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>
@@ -454,7 +455,7 @@
         </div>
         <div
           v-if="shouldShowSearchSuggestions"
-          class="search-suggestions-scrollbar mt-2 max-h-[min(62vh,28rem)] overflow-y-auto rounded-2xl border border-zinc-800 bg-black/90 p-1 shadow-2xl shadow-black/70"
+          class="search-suggestions-scrollbar mt-2 max-h-[min(62vh,28rem)] overflow-y-auto rounded-2xl border border-white/[0.07] bg-black/90 p-1 shadow-2xl shadow-black/70"
           :style="{ zIndex: 9999 }"
         >
           <button
@@ -472,14 +473,14 @@
               <p class="truncate text-sm font-semibold text-white">{{ suggestionTitle(item) }}</p>
               <p class="truncate text-xs text-zinc-400">{{ suggestionMeta(item) }}</p>
             </div>
-            <span class="shrink-0 rounded-full bg-zinc-800/90 px-2 py-1 text-[9px] font-bold uppercase tracking-wide text-zinc-300">
+            <span class="shrink-0 rounded-full bg-zinc-800/90 px-2 py-1 text-[9px] font-medium text-zinc-300">
               {{ suggestionTypeLabel(item.type) }}
             </span>
           </button>
           <button
             v-if="searchQuery.trim()"
             type="button"
-            class="mt-1 flex w-full items-center gap-3 border-t border-zinc-800 px-3 py-3 text-left text-sm font-semibold text-zinc-200 transition hover:bg-zinc-900"
+            class="mt-1 flex w-full items-center gap-3 border-t border-white/[0.07] px-3 py-3 text-left text-sm font-semibold text-zinc-200 transition hover:bg-zinc-900"
             @mousedown.prevent="handleMobileSearch()"
           >
             <span>⌕</span>
@@ -505,85 +506,79 @@
 
         <!-- Sidebar -->
         <aside v-if="!shouldHideSidebar"
-          class="w-60 border-r transition-transform duration-300 fixed left-0 overflow-hidden"
+          class="w-60 border-r border-white/[0.06] bg-zinc-950 transition-transform duration-300 fixed left-0 overflow-hidden"
           :class="{
             '-translate-x-full': !isSidebarOpen,
             'translate-x-0': isSidebarOpen,
             'md:-translate-x-full': useCollapsibleDesktopSidebar && !isSidebarOpen,
             'md:translate-x-0': !useCollapsibleDesktopSidebar || isSidebarOpen,
-            'md:transition-none': !useCollapsibleDesktopSidebar,
-            'bg-zinc-950/50 backdrop-blur-md border-zinc-700 shadow-[0_8px_24px_rgba(0,0,0,0.35)]': headerScrolled,
-            'bg-zinc-950 border-zinc-800': !headerScrolled
+            'md:transition-none': !useCollapsibleDesktopSidebar
           }"
           :style="{ top: (notificationBarHeight + 64) + 'px', bottom: 0, height: `calc(100dvh - ${notificationBarHeight + 64}px)`, zIndex: 50 }">
-          <nav class="flex h-full min-h-0 flex-col p-4">
-            <div class="shrink-0 space-y-3">
-              <NuxtLink :to="localePath('/')" class="hover:bg-zinc-800 p-2 rounded cursor-pointer block">{{ t('app.home') }}</NuxtLink>
+          <nav class="shell-nav flex h-full min-h-0 flex-col px-3 py-4">
+            <div class="shrink-0 space-y-0.5">
               <NuxtLink
-                :to="localePath('/music')"
-                class="flex items-center gap-2 rounded p-2 font-semibold text-rose-300 transition hover:bg-zinc-800 hover:text-white"
-                :class="{ 'bg-zinc-800 text-white': normalizedRoutePath.startsWith('/music') }"
+                v-for="item in primaryNavItems"
+                :key="item.to"
+                :to="localePath(item.to)"
+                class="shell-nav-link"
+                :class="{ 'is-active': item.active }"
               >
-                <svg class="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 18V5l10-2v13M9 18a3 3 0 1 1-3-3h3v3Zm10-2a3 3 0 1 1-3-3h3v3Z" />
+                <svg class="shell-nav-icon" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" :d="item.icon" />
                 </svg>
-                <span class="min-w-0 flex-1 truncate">{{ t('app.giltubeMusic') }}</span>
-              </NuxtLink>
-              <NuxtLink v-if="isLoggedIn" :to="localePath('/subscriptions')"
-                class="flex items-center gap-2 rounded p-2 font-semibold text-red-300 transition hover:bg-zinc-800 hover:text-white"
-                :class="{ 'bg-zinc-800 text-white': normalizedRoutePath.startsWith('/subscriptions') }">
-                <svg class="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 20v-2a5 5 0 0 1 10 0v2M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm7-7v4m2-2h-4" />
-                </svg>
-                <span>{{ t('app.subscriptions') }}</span>
-              </NuxtLink>
-              <!-- Dashboard (only when logged in) -->
-              <NuxtLink v-if="isLoggedIn" :to="localePath('/dashboard')"
-                class="hover:bg-zinc-800 p-2 rounded cursor-pointer block text-blue-400 font-semibold">{{ t('app.dashboard') }}
-              </NuxtLink>
-              <NuxtLink v-if="isLoggedIn" :to="localePath('/notifications')"
-                class="hover:bg-zinc-800 p-2 rounded cursor-pointer block text-indigo-300 font-semibold">{{ t('app.notifications') }}
-              </NuxtLink>
-              <NuxtLink v-if="isLoggedIn" :to="localePath('/playlists')"
-                class="hover:bg-zinc-800 p-2 rounded cursor-pointer block text-purple-400 font-semibold">{{ t('playlists.myPlaylists') }}
-              </NuxtLink>
-              <!-- My Channel (only when signed into a channel, not personal) -->
-              <NuxtLink v-if="activeAccount !== 'personal' && activeAccount !== userId && isLoggedIn"
-                :to="localePath(`/channel/${activeAccount}`)"
-                class="hover:bg-zinc-800 p-2 rounded cursor-pointer block text-yellow-400 font-semibold">{{ t('app.myChannel') }}
+                <span class="truncate">{{ item.label }}</span>
               </NuxtLink>
             </div>
 
-            <!-- Categories Divider -->
-            <div class="mt-3 flex min-h-0 flex-1 flex-col border-t border-zinc-700 pt-3">
-              <p class="text-xs text-gray-500 font-semibold px-2 mb-2">{{ t('app.categories') }}</p>
-              <div class="giltube-sidebar-category-scroll min-h-0 flex-1 space-y-1 overflow-y-auto">
-                <NuxtLink :to="localePath('/')"
-                  class="w-full text-left px-2 py-1.5 rounded text-sm transition hover:bg-zinc-800 text-gray-300 block"
-                  :class="{ 'bg-blue-600 text-white': route.path === '/' && !route.params.slug }">
-                  {{ t('app.allVideos') }}
-                </NuxtLink>
-                <NuxtLink v-for="category in categoriesWithVideos" :key="category.id" :to="localePath(`/category/${category.slug}`)"
-                  class="w-full text-left px-2 py-1.5 rounded text-sm transition hover:bg-zinc-800 text-gray-300 block"
-                  :class="{ 'bg-blue-600 text-white': route.params.slug === category.slug }">
-                  {{ category.name }}
+            <div v-if="isLoggedIn" class="mt-4 shrink-0 border-t border-white/[0.06] pt-4">
+              <p class="shell-nav-heading">{{ t('app.you') }}</p>
+              <div class="space-y-0.5">
+                <NuxtLink
+                  v-for="item in personalNavItems"
+                  :key="item.to"
+                  :to="localePath(item.to)"
+                  class="shell-nav-link"
+                  :class="{ 'is-active': item.active }"
+                >
+                  <svg class="shell-nav-icon" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" :d="item.icon" />
+                  </svg>
+                  <span class="truncate">{{ item.label }}</span>
                 </NuxtLink>
               </div>
             </div>
 
-            <!-- Language Selector at Bottom -->
-            <div class="mt-3 shrink-0 border-t border-zinc-700 pt-3">
-              <p class="text-xs text-gray-500 font-semibold px-2 mb-2">{{ t('app.language') }}</p>
-              <select
-                :value="locale"
-                @change="onLocaleChange"
-                class="w-full bg-zinc-900 border border-zinc-700 rounded px-2 py-2 text-sm text-white focus:outline-none focus:border-blue-500"
-                :aria-label="t('app.language')"
-              >
-                <option v-for="item in locales" :key="item.code" :value="item.code">
-                  {{ item.code === 'en' ? '🇺🇸 English (US)' : '🇲🇽 Español (México)' }}
-                </option>
-              </select>
+            <div v-if="exploreCategories.length" class="mt-4 flex min-h-0 flex-1 flex-col border-t border-white/[0.06] pt-4">
+              <p class="shell-nav-heading">{{ t('app.categories') }}</p>
+              <div class="giltube-sidebar-category-scroll min-h-0 flex-1 space-y-0.5 overflow-y-auto">
+                <NuxtLink
+                  v-for="category in exploreCategories"
+                  :key="category.id"
+                  :to="localePath(`/category/${category.slug}`)"
+                  class="shell-nav-link shell-nav-link--quiet"
+                  :class="{ 'is-active': route.params.slug === category.slug }"
+                >
+                  {{ category.name }}
+                </NuxtLink>
+              </div>
+            </div>
+            <div v-else class="flex-1" />
+
+            <div class="mt-4 flex shrink-0 items-center justify-between border-t border-white/[0.06] px-2 pt-4">
+              <span class="text-xs text-zinc-500">{{ t('app.language') }}</span>
+              <div class="shell-locale-toggle" role="group" :aria-label="t('app.language')">
+                <button
+                  v-for="item in locales"
+                  :key="item.code"
+                  type="button"
+                  :class="{ 'is-active': locale === item.code }"
+                  :aria-pressed="locale === item.code"
+                  @click="setLocale(item.code)"
+                >
+                  {{ item.code.toUpperCase() }}
+                </button>
+              </div>
             </div>
           </nav>
         </aside>
@@ -600,7 +595,7 @@
 
     <nav
       v-if="isMobileDevice && !shouldHideHeader"
-      class="mobile-bottom-nav fixed inset-x-0 bottom-0 z-[70] border-t border-zinc-800 bg-zinc-950/95 px-2 pt-1.5 shadow-[0_-10px_30px_rgba(0,0,0,0.45)] backdrop-blur-xl"
+      class="mobile-bottom-nav fixed inset-x-0 bottom-0 z-[70] border-t border-white/[0.07] bg-zinc-950/95 px-2 pt-1.5 shadow-[0_-10px_30px_rgba(0,0,0,0.45)] backdrop-blur-xl"
       style="padding-bottom: max(env(safe-area-inset-bottom), 0.4rem);"
       aria-label="Mobile navigation"
     >
@@ -706,7 +701,7 @@
     <Transition name="menu-pop">
       <div
         v-if="isMobileDevice && mobileCreateOpen && !shouldHideHeader"
-        class="mobile-create-menu fixed inset-x-3 z-[72] overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-950 shadow-2xl shadow-black/60"
+        class="mobile-create-menu fixed inset-x-3 z-[72] overflow-hidden rounded-2xl border border-white/[0.07] bg-zinc-950 shadow-2xl shadow-black/60"
         style="bottom: calc(5.1rem + env(safe-area-inset-bottom, 0px));"
       >
         <NuxtLink
@@ -724,7 +719,7 @@
         </NuxtLink>
         <NuxtLink
           :to="localePath('/go-live')"
-          class="flex items-center gap-3 border-t border-zinc-800 px-4 py-3 text-sm font-semibold text-zinc-100 transition hover:bg-zinc-900"
+          class="flex items-center gap-3 border-t border-white/[0.07] px-4 py-3 text-sm font-semibold text-zinc-100 transition hover:bg-zinc-900"
           @click="mobileCreateOpen = false"
         >
           <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-zinc-900 text-zinc-200">
@@ -749,7 +744,7 @@
     <Transition name="mobile-sheet">
       <section
         v-if="isMobileDevice && mobileMoreOpen && !shouldHideHeader"
-        class="mobile-more-sheet fixed inset-x-0 bottom-0 z-[95] flex max-h-[84dvh] flex-col rounded-t-2xl border border-zinc-800 bg-zinc-950 text-white shadow-2xl"
+        class="mobile-more-sheet fixed inset-x-0 bottom-0 z-[95] flex max-h-[84dvh] flex-col rounded-t-2xl border border-white/[0.07] bg-zinc-950 text-white shadow-2xl"
         style="padding-bottom: max(env(safe-area-inset-bottom), 0.75rem);"
         aria-label="Mobile menu"
       >
@@ -764,7 +759,7 @@
               @click="openMobileAccountPanel"
             >
               <div
-                class="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full border border-zinc-700 bg-zinc-800 text-sm font-bold text-zinc-200"
+                class="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full border border-white/10 bg-zinc-800 text-sm font-bold text-zinc-200"
               >
                 <img
                   v-if="isLoggedIn && activeChannelAvatar && !avatarLoadFailed"
@@ -805,27 +800,27 @@
             </NuxtLink>
 
             <div class="grid grid-cols-3 gap-2">
-              <NuxtLink :to="localePath('/music')" class="mobile-sheet-action text-red-300" @click="mobileMoreOpen = false">
+              <NuxtLink :to="localePath('/music')" class="mobile-sheet-action" @click="mobileMoreOpen = false">
                 <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10.75 12 4l9 6.75V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1v-9.25Z" /></svg>
                 <span>{{ t('app.musicHome') }}</span>
               </NuxtLink>
-              <NuxtLink :to="localePath('/music/search')" class="mobile-sheet-action text-blue-300" @click="mobileMoreOpen = false">
+              <NuxtLink :to="localePath('/music/search')" class="mobile-sheet-action" @click="mobileMoreOpen = false">
                 <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m21 21-4.35-4.35m1.35-5.15a6.5 6.5 0 1 1-13 0 6.5 6.5 0 0 1 13 0Z" /></svg>
                 <span>{{ t('app.search') }}</span>
               </NuxtLink>
-              <NuxtLink :to="localePath('/music/library')" class="mobile-sheet-action text-purple-300" @click="mobileMoreOpen = false">
+              <NuxtLink :to="localePath('/music/library')" class="mobile-sheet-action" @click="mobileMoreOpen = false">
                 <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 4h14a1 1 0 0 1 1 1v15H4V5a1 1 0 0 1 1-1Zm3 0v16m4-16v16" /></svg>
                 <span>{{ t('app.library') }}</span>
               </NuxtLink>
-              <button type="button" class="mobile-sheet-action text-green-300" :disabled="!shellMusicTrack" @click="openShellMusicPlayer">
+              <button type="button" class="mobile-sheet-action" :disabled="!shellMusicTrack" @click="openShellMusicPlayer">
                 <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 18V5l10-2v13M9 18a3 3 0 1 1-3-3h3v3Zm10-2a3 3 0 1 1-3-3h3v3Z" /></svg>
                 <span>{{ t('app.nowPlaying') }}</span>
               </button>
-              <NuxtLink v-if="isLoggedIn" :to="localePath('/account-settings')" class="mobile-sheet-action text-cyan-300" @click="mobileMoreOpen = false">
+              <NuxtLink v-if="isLoggedIn" :to="localePath('/account-settings')" class="mobile-sheet-action" @click="mobileMoreOpen = false">
                 <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.3 4.3h3.4l.6 2.2c.5.2 1 .5 1.4.8l2.2-.6 1.7 3-1.6 1.6a6 6 0 0 1 0 1.4l1.6 1.6-1.7 3-2.2-.6c-.4.3-.9.6-1.4.8l-.6 2.2h-3.4l-.6-2.2c-.5-.2-1-.5-1.4-.8l-2.2.6-1.7-3L6 12.7a6 6 0 0 1 0-1.4L4.4 9.7l1.7-3 2.2.6c.4-.3.9-.6 1.4-.8l.6-2.2Z" /></svg>
                 <span>{{ t('app.accountSettings') }}</span>
               </NuxtLink>
-              <NuxtLink v-if="userType === 'admin'" to="/admin/music" class="mobile-sheet-action text-yellow-300" @click="mobileMoreOpen = false">
+              <NuxtLink v-if="userType === 'admin'" to="/admin/music" class="mobile-sheet-action" @click="mobileMoreOpen = false">
                 <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 19V9m5 10V5m5 14v-7m5 7V3" /></svg>
                 <span>{{ t('app.musicAdmin') }}</span>
               </NuxtLink>
@@ -843,23 +838,23 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 18V5l10-2v13M9 18a3 3 0 1 1-3-3h3v3Zm10-2a3 3 0 1 1-3-3h3v3Z" />
             </svg>
             <span>{{ t('app.giltubeMusic') }}</span>
-            <span class="rounded bg-rose-500 px-1.5 py-0.5 text-[9px] font-black leading-none text-white">NEW</span>
+            <span class="rounded bg-rose-500 px-1.5 py-0.5 text-[9px] font-semibold leading-none text-white">NEW</span>
           </NuxtLink>
 
           <div class="grid grid-cols-3 gap-2">
-            <NuxtLink v-if="isLoggedIn" :to="localePath('/dashboard')" class="mobile-sheet-action text-blue-300" @click="mobileMoreOpen = false">
+            <NuxtLink v-if="isLoggedIn" :to="localePath('/dashboard')" class="mobile-sheet-action" @click="mobileMoreOpen = false">
               <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 0 1 1-1h5a1 1 0 0 1 1 1v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5Zm9 0a1 1 0 0 1 1-1h5a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-5a1 1 0 0 1-1-1V5ZM4 15a1 1 0 0 1 1-1h5a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-4Zm9-3a1 1 0 0 1 1-1h5a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1h-5a1 1 0 0 1-1-1v-7Z" />
               </svg>
               <span>{{ t('app.dashboard') }}</span>
             </NuxtLink>
-            <NuxtLink v-if="isLoggedIn" :to="localePath('/subscriptions')" class="mobile-sheet-action text-red-300" @click="mobileMoreOpen = false">
+            <NuxtLink v-if="isLoggedIn" :to="localePath('/subscriptions')" class="mobile-sheet-action" @click="mobileMoreOpen = false">
               <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 20v-2a5 5 0 0 1 10 0v2M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm7-7v4m2-2h-4" />
               </svg>
               <span>{{ t('app.subscriptions') }}</span>
             </NuxtLink>
-            <NuxtLink v-if="isLoggedIn" :to="localePath('/notifications')" class="mobile-sheet-action text-indigo-300" @click="mobileMoreOpen = false">
+            <NuxtLink v-if="isLoggedIn" :to="localePath('/notifications')" class="mobile-sheet-action" @click="mobileMoreOpen = false">
               <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.4-1.4A2 2 0 0 1 18 14.2V11a6 6 0 1 0-12 0v3.2c0 .53-.21 1.04-.59 1.42L4 17h5m6 0v1a3 3 0 1 1-6 0v-1m6 0H9" />
               </svg>
@@ -868,33 +863,33 @@
                 {{ unreadNotificationCount > 99 ? '99+' : unreadNotificationCount }}
               </span>
             </NuxtLink>
-            <NuxtLink v-if="isLoggedIn" :to="localePath('/playlists')" class="mobile-sheet-action text-purple-300" @click="mobileMoreOpen = false">
+            <NuxtLink v-if="isLoggedIn" :to="localePath('/playlists')" class="mobile-sheet-action" @click="mobileMoreOpen = false">
               <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" />
               </svg>
               <span>{{ t('playlists.myPlaylists') }}</span>
             </NuxtLink>
-            <NuxtLink v-if="activeAccount !== 'personal' && activeAccount !== userId && isLoggedIn" :to="localePath(`/channel/${activeAccount}`)" class="mobile-sheet-action text-yellow-300" @click="mobileMoreOpen = false">
+            <NuxtLink v-if="activeAccount !== 'personal' && activeAccount !== userId && isLoggedIn" :to="localePath(`/channel/${activeAccount}`)" class="mobile-sheet-action" @click="mobileMoreOpen = false">
               <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 6h14a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2Z" />
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 21h6M12 18v3" />
               </svg>
               <span>{{ t('app.myChannel') }}</span>
             </NuxtLink>
-            <NuxtLink v-if="userType === 'admin'" to="/admin" class="mobile-sheet-action text-purple-300" @click="mobileMoreOpen = false">
+            <NuxtLink v-if="userType === 'admin'" to="/admin" class="mobile-sheet-action" @click="mobileMoreOpen = false">
               <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3 4 6v6c0 5 3.4 7.5 8 9 4.6-1.5 8-4 8-9V6l-8-3Z" />
               </svg>
               <span>{{ t('app.adminPanel') }}</span>
             </NuxtLink>
-            <NuxtLink v-if="isLoggedIn" :to="localePath('/account-settings')" class="mobile-sheet-action text-cyan-300" @click="mobileMoreOpen = false">
+            <NuxtLink v-if="isLoggedIn" :to="localePath('/account-settings')" class="mobile-sheet-action" @click="mobileMoreOpen = false">
               <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.3 4.3h3.4l.6 2.2c.5.2 1 .5 1.4.8l2.2-.6 1.7 3-1.6 1.6a6 6 0 0 1 0 1.4l1.6 1.6-1.7 3-2.2-.6c-.4.3-.9.6-1.4.8l-.6 2.2h-3.4l-.6-2.2c-.5-.2-1-.5-1.4-.8l-2.2.6-1.7-3L6 12.7a6 6 0 0 1 0-1.4L4.4 9.7l1.7-3 2.2.6c.4-.3.9-.6 1.4-.8l.6-2.2Z" />
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z" />
               </svg>
               <span>{{ t('app.accountSettings') }}</span>
             </NuxtLink>
-            <NuxtLink v-if="isLoggedIn" :to="localePath('/my-channels')" class="mobile-sheet-action text-yellow-300" @click="mobileMoreOpen = false">
+            <NuxtLink v-if="isLoggedIn" :to="localePath('/my-channels')" class="mobile-sheet-action" @click="mobileMoreOpen = false">
               <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 20v-2a5 5 0 0 1 10 0v2" />
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z" />
@@ -902,13 +897,13 @@
               </svg>
               <span>{{ t('app.manageChannels') }}</span>
             </NuxtLink>
-            <NuxtLink v-if="!isLoggedIn" :to="localePath('/login')" class="mobile-sheet-action text-red-300" @click="mobileMoreOpen = false">
+            <NuxtLink v-if="!isLoggedIn" :to="localePath('/login')" class="mobile-sheet-action" @click="mobileMoreOpen = false">
               <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3" />
               </svg>
               <span>{{ t('app.login') }}</span>
             </NuxtLink>
-            <button type="button" class="mobile-sheet-action mobile-sheet-action-wide text-blue-300" @click="openMobileCategories">
+            <button type="button" class="mobile-sheet-action mobile-sheet-action-wide text-zinc-200" @click="openMobileCategories">
               <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5h7v7H4V5Zm9 0h7v7h-7V5ZM4 14h7v5H4v-5Zm9 0h7v5h-7v-5Z" />
               </svg>
@@ -917,12 +912,12 @@
           </div>
           </template>
 
-          <div class="mt-5 border-t border-zinc-800 pt-4">
+          <div class="mt-5 border-t border-white/[0.07] pt-4">
             <p class="px-1 text-xs font-semibold uppercase text-zinc-500">{{ t('app.language') }}</p>
             <select
               :value="locale"
               @change="onLocaleChange"
-              class="mt-2 w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white focus:border-blue-500 focus:outline-none"
+              class="mt-2 w-full rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-sm text-white focus:border-white/30 focus:outline-none"
               :aria-label="t('app.language')"
             >
               <option v-for="item in locales" :key="item.code" :value="item.code">
@@ -950,7 +945,7 @@
         aria-label="Browse by category"
       >
         <div
-          class="shrink-0 border-b border-zinc-800 bg-zinc-950/95 px-4 pb-3 pt-4 backdrop-blur-xl"
+          class="shrink-0 border-b border-white/[0.07] bg-zinc-950/95 px-4 pb-3 pt-4 backdrop-blur-xl"
           :style="{ paddingTop: `calc(${notificationBarHeight}px + env(safe-area-inset-top, 0px) + 0.75rem)` }"
         >
           <div class="flex items-center justify-between gap-3">
@@ -973,7 +968,7 @@
           <NuxtLink
             :to="localePath('/')"
             class="mb-1 block rounded-xl px-4 py-3 text-base font-semibold text-zinc-200 transition hover:bg-zinc-900"
-            :class="{ 'bg-blue-600 text-white': route.path === '/' && !route.params.slug }"
+            :class="{ 'bg-zinc-100 text-zinc-950': route.path === '/' && !route.params.slug }"
             @click="mobileCategoriesOpen = false"
           >
             {{ t('app.allVideos') }}
@@ -983,7 +978,7 @@
             :key="category.id"
             :to="localePath(`/category/${category.slug}`)"
             class="mb-1 block rounded-xl px-4 py-3 text-base font-semibold text-zinc-200 transition hover:bg-zinc-900"
-            :class="{ 'bg-blue-600 text-white': route.params.slug === category.slug }"
+            :class="{ 'bg-zinc-100 text-zinc-950': route.params.slug === category.slug }"
             @click="mobileCategoriesOpen = false"
           >
             {{ category.name }}
@@ -994,15 +989,14 @@
 
   </div>
 
-  <!-- Locale Picker Modal (shown only on first visit) -->
-  <LocalePickerModal />
+
   <div
     v-if="activeWatchParty && !isInsideWatchPartyRoute && !isWatchPartyWidgetDismissed"
     class="fixed bottom-4 right-4 z-[90] w-[min(22rem,calc(100vw-2rem))] rounded-xl border border-red-500/40 bg-zinc-950/95 p-4 text-white shadow-2xl backdrop-blur"
   >
     <div class="flex items-start justify-between gap-4">
       <div class="min-w-0">
-        <p class="text-xs font-semibold uppercase tracking-[0.18em] text-red-300">Watch party running</p>
+        <p class="text-xs font-medium text-zinc-400">Watch party running</p>
         <p class="mt-1 truncate text-sm font-semibold">{{ activeWatchParty.title || 'Watch party' }}</p>
       </div>
       <button
@@ -1043,15 +1037,15 @@
     v-if="showGilIDLinkModal"
     class="giltube-modal-overlay bg-black/70 backdrop-blur-sm flex items-center justify-center p-4"
   >
-    <div class="w-full max-w-lg rounded-2xl border border-cyan-800 bg-zinc-950 shadow-2xl">
-      <div class="border-b border-zinc-800 px-6 py-5">
+    <div class="w-full max-w-md rounded-2xl border border-white/[0.08] bg-zinc-900 shadow-2xl shadow-black/60">
+      <div class="border-b border-white/[0.07] px-6 py-5">
         <div class="flex items-center gap-3">
           <img src="./assets/gilservices-logo.png" alt="GilServices" class="h-10 w-10 rounded-lg object-contain bg-white/5 p-1" />
-          <p class="text-xs font-semibold uppercase tracking-[0.2em] text-cyan-300">{{ t('login.gilidNetworkBadge') }}</p>
+          <p class="text-xs font-medium text-zinc-400">{{ t('login.gilidNetworkBadge') }}</p>
         </div>
-        <h2 class="mt-3 text-2xl font-bold text-white">{{ t('app.gilidLinkTitle') }}</h2>
-        <p class="mt-3 text-sm leading-6 text-zinc-300">{{ t('app.gilidLinkBody') }}</p>
-        <p class="mt-3 text-sm text-cyan-200">{{ t('app.gilidLinkPasskeyNote') }}</p>
+        <h2 class="mt-4 text-xl font-semibold text-white">{{ t('app.gilidLinkTitle') }}</h2>
+        <p class="mt-2 text-sm leading-6 text-zinc-400">{{ t('app.gilidLinkBody') }}</p>
+        <p class="mt-2 text-sm leading-6 text-zinc-400">{{ t('app.gilidLinkPasskeyNote') }}</p>
       </div>
 
       <div class="px-6 py-5">
@@ -1059,16 +1053,16 @@
           <input
             v-model="hideGilIDPromptPermanently"
             type="checkbox"
-            class="mt-1 h-4 w-4 rounded border-zinc-600 bg-zinc-900 text-cyan-500 focus:ring-cyan-500"
+            class="mt-0.5 h-4 w-4 rounded border-zinc-600 bg-zinc-900 accent-white"
           />
           <span>{{ t('app.gilidDontShowAgain') }}</span>
         </label>
       </div>
 
-      <div class="flex flex-col-reverse gap-3 border-t border-zinc-800 px-6 py-5 sm:flex-row sm:justify-end">
+      <div class="flex flex-col-reverse gap-3 border-t border-white/[0.07] px-6 py-5 sm:flex-row sm:justify-end">
         <button
           type="button"
-          class="rounded-lg border border-zinc-700 px-4 py-2 text-sm font-medium text-zinc-200 transition hover:border-zinc-500 hover:bg-zinc-900"
+          class="gt-button gt-button--secondary"
           @click="dismissGilIDLinkModal"
         >
           {{ t('app.gilidDismiss') }}
@@ -1076,7 +1070,7 @@
         <button
           type="button"
           :disabled="gilidLinking"
-          class="inline-flex items-center justify-center gap-2 rounded-lg bg-cyan-500 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-cyan-400 disabled:bg-zinc-700 disabled:text-zinc-300"
+          class="gt-button gt-button--primary"
           @click="startGilIDLink"
         >
           <img src="./assets/gilservices-logo.png" alt="" class="h-4 w-4 object-contain" />
@@ -1104,14 +1098,14 @@
       :style="accountDropdownStyle"
     >
       <section
-        class="flex min-h-0 w-full max-w-md flex-col overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-950 text-white shadow-2xl shadow-black/70"
+        class="flex min-h-0 w-full max-w-md flex-col overflow-hidden rounded-2xl border border-white/[0.07] bg-zinc-950 text-white shadow-2xl shadow-black/70"
         :class="isMobileDevice ? 'max-h-[min(82dvh,42rem)]' : 'max-h-[min(34rem,calc(100dvh-5rem))]'"
         @click.stop
       >
-        <div class="shrink-0 border-b border-zinc-800 p-4">
+        <div class="shrink-0 border-b border-white/[0.07] p-4">
           <div class="flex items-start justify-between gap-3">
             <div class="flex min-w-0 items-center gap-3">
-              <div class="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full border border-zinc-700 bg-zinc-800 text-lg font-black text-zinc-200">
+              <div class="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full border border-white/10 bg-zinc-800 text-lg font-semibold text-zinc-200">
                 <img
                   v-if="activeChannelAvatar && !avatarLoadFailed"
                   :src="activeChannelAvatar"
@@ -1122,7 +1116,7 @@
                 <span v-else>{{ displayName.charAt(0).toUpperCase() }}</span>
               </div>
               <div class="min-w-0">
-                <h2 class="mt-1 truncate text-xl font-black">{{ displayName }}</h2>
+                <h2 class="mt-1 truncate text-xl font-semibold">{{ displayName }}</h2>
                 <p v-if="displayName !== username" class="mt-1 truncate text-xs text-zinc-500">{{ username }}</p>
               </div>
             </div>
@@ -1157,7 +1151,7 @@
           </button>
 
           <template v-if="channels.length > 0">
-            <p class="mt-2 px-3 py-2 text-xs font-bold uppercase tracking-[0.14em] text-zinc-500">{{ t('app.yourChannels') }}</p>
+            <p class="mt-2 px-3 py-2 text-xs font-medium text-zinc-500">{{ t('app.yourChannels') }}</p>
             <button
               v-for="channel in channels"
               :key="channel.id"
@@ -1196,11 +1190,11 @@
           </template>
         </div>
 
-        <div v-if="!isMobileDevice" class="grid shrink-0 gap-2 border-t border-zinc-800 p-3">
+        <div v-if="!isMobileDevice" class="grid shrink-0 gap-2 border-t border-white/[0.07] p-3">
           <NuxtLink
             v-if="userType === 'admin'"
             to="/admin"
-            class="account-panel-action text-purple-300"
+            class="account-panel-action"
             @click="dropdownOpen = false"
           >
             {{ t('app.adminPanel') }}
@@ -1209,12 +1203,12 @@
             <NuxtLink :to="localePath('/my-channels')" class="account-panel-action text-yellow-300" @click="dropdownOpen = false">
               {{ t('app.manageChannels') }}
             </NuxtLink>
-            <NuxtLink :to="localePath('/account-settings')" class="account-panel-action text-cyan-300" @click="dropdownOpen = false">
+            <NuxtLink :to="localePath('/account-settings')" class="account-panel-action" @click="dropdownOpen = false">
               {{ t('app.accountSettings') }}
             </NuxtLink>
           </div>
           <div class="grid gap-2 sm:grid-cols-2">
-            <NuxtLink :to="localePath('/create-channel')" class="account-panel-action text-green-300" @click="dropdownOpen = false">
+            <NuxtLink :to="localePath('/create-channel')" class="account-panel-action" @click="dropdownOpen = false">
               {{ t('app.createChannel') }}
             </NuxtLink>
             <button type="button" class="account-panel-action text-red-300" @click="handleLogout">
@@ -1668,6 +1662,46 @@ const applyDefaultChannelSelection = (channelList = [], defaultChannelID = '') =
   localStorage.setItem('default_channel_id', defaultChannel.id)
   saveActiveAccount(defaultChannel.id, defaultChannel.name)
 }
+
+// Sidebar navigation. Icons are 24px outline paths so every entry matches.
+const navIcons = {
+  home: 'M3.75 10.5 12 3.75l8.25 6.75V19.5a.75.75 0 0 1-.75.75h-4.5v-6h-6v6h-4.5a.75.75 0 0 1-.75-.75V10.5Z',
+  movies: 'M4.5 5.25h15a.75.75 0 0 1 .75.75v12a.75.75 0 0 1-.75.75h-15a.75.75 0 0 1-.75-.75V6a.75.75 0 0 1 .75-.75ZM8.25 5.25v13.5M15.75 5.25v13.5M3.75 9.75h4.5M3.75 14.25h4.5M15.75 9.75h4.5M15.75 14.25h4.5',
+  series: 'M3.75 7.5h16.5v11.25H3.75V7.5ZM8.25 3.75 12 7.5l3.75-3.75',
+  music: 'M9 18V5.25l10.5-1.5V16.5M9 18a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Zm10.5-1.5a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Z',
+  subscriptions: 'M3.75 6.75h16.5M5.25 3.75h13.5M3.75 9.75h16.5v10.5H3.75V9.75Zm6.75 2.625v5.25L14.625 15l-4.125-2.625Z',
+  playlists: 'M3.75 6h10.5M3.75 10.5h10.5M3.75 15h6.75m6-3.75v8.25m0 0-2.25-2.25m2.25 2.25 2.25-2.25',
+  notifications: 'M14.25 18.75a2.25 2.25 0 0 1-4.5 0M18 15.75H6l1.5-2.25V10.5a4.5 4.5 0 0 1 9 0v3l1.5 2.25Z',
+  dashboard: 'M3.75 4.5h6.75v6.75H3.75V4.5Zm9.75 0h6.75v4.5H13.5V4.5Zm0 7.5h6.75v7.5H13.5V12Zm-9.75 2.25h6.75v5.25H3.75v-5.25Z',
+  channel: 'M15.75 7.5a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.5 20.25a7.5 7.5 0 0 1 15 0',
+}
+
+const isNavActive = (path) => path === '/'
+  ? normalizedRoutePath.value === '/'
+  : normalizedRoutePath.value === path || normalizedRoutePath.value.startsWith(`${path}/`)
+
+const primaryNavItems = computed(() => [
+  { to: '/', label: t('app.home'), icon: navIcons.home, active: isNavActive('/') },
+  { to: '/category/movies', label: t('app.movies'), icon: navIcons.movies, active: isNavActive('/category/movies') },
+  { to: '/category/series', label: t('app.series'), icon: navIcons.series, active: isNavActive('/category/series') },
+  { to: '/music', label: t('app.music'), icon: navIcons.music, active: isNavActive('/music') },
+])
+
+const personalNavItems = computed(() => {
+  const items = [
+    { to: '/subscriptions', label: t('app.subscriptions'), icon: navIcons.subscriptions },
+    { to: '/playlists', label: t('app.playlists'), icon: navIcons.playlists },
+    { to: '/notifications', label: t('app.notifications'), icon: navIcons.notifications },
+    { to: '/dashboard', label: t('app.dashboard'), icon: navIcons.dashboard },
+  ]
+  if (activeAccount.value !== 'personal' && activeAccount.value !== userId.value) {
+    items.push({ to: `/channel/${activeAccount.value}`, label: t('app.myChannel'), icon: navIcons.channel })
+  }
+  return items.map((item) => ({ ...item, active: isNavActive(item.to) }))
+})
+
+// Movies, series and music have their own entries above.
+const exploreCategories = computed(() => categoriesWithVideos.value.filter((category) => !['movies', 'series', 'music'].includes(category.slug)))
 
 const categoriesWithVideos = computed(() => {
   return categories.value.filter(cat => ['series', 'movies'].includes(cat.slug) || (cat.video_count || 0) > 0)
@@ -2508,6 +2542,339 @@ if (process.client) {
 </script>
 
 <style global>
+/* ---------- Design foundation ---------- */
+:root {
+  color-scheme: dark;
+  --gt-canvas: #0c0c0e;
+  --gt-surface: #16161a;
+  --gt-surface-raised: #1d1d22;
+  --gt-line: rgba(255, 255, 255, 0.07);
+  --gt-line-strong: rgba(255, 255, 255, 0.13);
+  --gt-text: #f2f2f4;
+  --gt-text-muted: #9b9ba5;
+  --gt-text-faint: #6c6c76;
+  --gt-accent: #e5252a;
+  --gt-radius: 12px;
+}
+
+html,
+body {
+  background: var(--gt-canvas);
+  color: var(--gt-text);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  font-feature-settings: 'cv11', 'ss01', 'ss03';
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+h1, h2, h3 {
+  letter-spacing: -0.015em;
+}
+
+::selection {
+  background: rgba(229, 37, 42, 0.35);
+  color: #fff;
+}
+
+:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.55);
+  outline-offset: 2px;
+}
+
+* {
+  scrollbar-color: rgba(255, 255, 255, 0.14) transparent;
+  scrollbar-width: thin;
+}
+
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+*::-webkit-scrollbar-thumb {
+  border: 3px solid transparent;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.14);
+  background-clip: padding-box;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* ---------- Shell ---------- */
+.shell-icon-button {
+  display: inline-flex;
+  height: 2.25rem;
+  width: 2.25rem;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  color: #c8c8cf;
+  transition: background-color 150ms ease, color 150ms ease;
+}
+
+.shell-icon-button:hover {
+  background: rgba(255, 255, 255, 0.07);
+  color: #fff;
+}
+
+.shell-search-input {
+  height: 2.5rem;
+  width: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  background: rgba(22, 22, 26, 0.85);
+  padding: 0 1rem 0 2.5rem;
+  color: #fff;
+  font-size: 0.875rem;
+  transition: border-color 150ms ease, background-color 150ms ease;
+}
+
+.shell-search-input::placeholder {
+  color: #6c6c76;
+}
+
+.shell-search-input:hover {
+  border-color: rgba(255, 255, 255, 0.13);
+}
+
+.shell-search-input:focus {
+  border-color: rgba(255, 255, 255, 0.22);
+  background: #16161a;
+  outline: none;
+}
+
+.shell-search-input::-webkit-search-cancel-button {
+  display: none;
+}
+
+.shell-signin {
+  display: inline-flex;
+  height: 2.25rem;
+  align-items: center;
+  border-radius: 999px;
+  background: #f2f2f4;
+  padding: 0 1rem;
+  color: #0c0c0e;
+  font-size: 0.875rem;
+  font-weight: 600;
+  transition: background-color 150ms ease;
+}
+
+.shell-signin:hover {
+  background: #fff;
+}
+
+.shell-nav-heading {
+  margin: 0 0 0.375rem;
+  padding: 0 0.75rem;
+  color: #6c6c76;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.shell-nav-link {
+  display: flex;
+  height: 2.375rem;
+  align-items: center;
+  gap: 0.875rem;
+  border-radius: 0.625rem;
+  padding: 0 0.75rem;
+  color: #c8c8cf;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: background-color 150ms ease, color 150ms ease;
+}
+
+.shell-nav-link:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: #fff;
+}
+
+.shell-nav-link.is-active {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+}
+
+.shell-nav-link--quiet {
+  height: 2rem;
+  color: #9b9ba5;
+  font-weight: 400;
+}
+
+.shell-nav-icon {
+  height: 1.25rem;
+  width: 1.25rem;
+  flex-shrink: 0;
+}
+
+.shell-nav-link.is-active .shell-nav-icon {
+  color: var(--gt-accent);
+}
+
+.shell-locale-toggle {
+  display: inline-flex;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  padding: 2px;
+}
+
+.shell-locale-toggle button {
+  border-radius: 999px;
+  padding: 0.125rem 0.5rem;
+  color: #9b9ba5;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  transition: background-color 150ms ease, color 150ms ease;
+}
+
+.shell-locale-toggle button.is-active {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+/* ---------- Banners ---------- */
+.shell-banner {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  background: #16161a;
+  padding: 0.625rem 1rem;
+  color: #e2e2e6;
+  font-size: 0.875rem;
+}
+
+.shell-banner__dot {
+  display: inline-block;
+  height: 0.5rem;
+  width: 0.5rem;
+  flex-shrink: 0;
+  border-radius: 999px;
+}
+
+.shell-banner__dot.is-info { background: #60a5fa; }
+.shell-banner__dot.is-warn { background: #fbbf24; }
+.shell-banner__dot.is-danger { background: #ef4444; }
+
+.shell-banner__button {
+  height: 1.875rem;
+  border-radius: 999px;
+  background: #f2f2f4;
+  padding: 0 0.875rem;
+  color: #0c0c0e;
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.shell-banner__button--quiet {
+  background: rgba(255, 255, 255, 0.07);
+  color: #e2e2e6;
+}
+
+.shell-banner__close {
+  display: inline-flex;
+  height: 1.875rem;
+  width: 1.875rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  color: #9b9ba5;
+}
+
+.shell-banner__close:hover {
+  background: rgba(255, 255, 255, 0.07);
+  color: #fff;
+}
+
+/* ---------- Forms ---------- */
+.gt-label {
+  display: block;
+  margin-bottom: 0.375rem;
+  color: #c8c8cf;
+  font-size: 0.8125rem;
+  font-weight: 500;
+}
+
+.gt-input {
+  height: 2.75rem;
+  width: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 0.625rem;
+  background: rgba(255, 255, 255, 0.03);
+  padding: 0 0.875rem;
+  color: #fff;
+  font-size: 0.9375rem;
+  transition: border-color 150ms ease, background-color 150ms ease;
+}
+
+.gt-input::placeholder {
+  color: #6c6c76;
+}
+
+.gt-input:focus {
+  border-color: rgba(255, 255, 255, 0.28);
+  background: rgba(255, 255, 255, 0.05);
+  outline: none;
+}
+
+.gt-button {
+  display: inline-flex;
+  height: 2.75rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 0.625rem;
+  padding: 0 1rem;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  transition: background-color 150ms ease, border-color 150ms ease, opacity 150ms ease;
+}
+
+.gt-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.gt-button--primary {
+  background: #f2f2f4;
+  color: #0c0c0e;
+}
+
+.gt-button--primary:hover:not(:disabled) {
+  background: #fff;
+}
+
+.gt-button--secondary {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+  color: #f2f2f4;
+}
+
+.gt-button--secondary:hover:not(:disabled) {
+  border-color: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.gt-alert {
+  border-radius: 0.625rem;
+  background: rgba(239, 68, 68, 0.1);
+  padding: 0.75rem 0.875rem;
+  color: #fca5a5;
+  font-size: 0.875rem;
+}
+
+.gt-alert--success {
+  background: rgba(34, 197, 94, 0.1);
+  color: #86efac;
+}
+
 .search-suggestions-scrollbar {
   scrollbar-color: rgba(113, 113, 122, 0.85) transparent;
   scrollbar-width: thin;
@@ -3542,12 +3909,13 @@ if (process.client) {
   justify-content: center;
   gap: 0.35rem;
   border-radius: 0.75rem;
-  background: rgb(24 24 27);
+  background: rgb(255 255 255 / 0.04);
+  color: rgb(228 228 231);
   padding: 0.65rem 0.45rem;
   text-align: center;
   font-size: 0.72rem;
   line-height: 1.05rem;
-  font-weight: 800;
+  font-weight: 500;
   transition:
     background-color 150ms ease,
     color 150ms ease;

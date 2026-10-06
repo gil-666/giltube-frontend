@@ -1,26 +1,22 @@
 <template>
   <main class="min-h-screen overflow-x-hidden bg-zinc-950 text-white">
-    <div class="mx-auto max-w-8xl px-6 py-8 lg:py-10">
+    <div class="mx-auto max-w-[110rem] px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
       <div v-if="isLoading" class="space-y-8">
-        <div class="rounded-2xl border border-white/10 bg-white/5 p-5">
-          <div class="aspect-video animate-pulse rounded-xl bg-white/10" />
-          <div class="mt-4 h-5 w-2/5 animate-pulse rounded bg-white/10" />
-          <div class="mt-2 h-4 w-1/3 animate-pulse rounded bg-white/10" />
-        </div>
-        <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-6">
-          <div v-for="n in 8" :key="n" class="rounded-2xl border border-white/10 bg-white/5 p-4">
-            <div class="aspect-video animate-pulse rounded-xl bg-white/10" />
-            <div class="mt-3 h-4 w-4/5 animate-pulse rounded bg-white/10" />
-            <div class="mt-2 h-3 w-2/5 animate-pulse rounded bg-white/10" />
+        <div class="home-hero animate-pulse bg-white/[0.04]" />
+        <div class="grid gap-x-4 gap-y-8 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5">
+          <div v-for="n in 10" :key="n">
+            <div class="aspect-video animate-pulse rounded-xl bg-white/[0.06]" />
+            <div class="mt-3 h-4 w-4/5 animate-pulse rounded bg-white/[0.06]" />
+            <div class="mt-2 h-3 w-2/5 animate-pulse rounded bg-white/[0.06]" />
           </div>
         </div>
       </div>
 
-      <div v-else-if="loadError && featuredItems.length === 0" class="rounded-2xl border border-red-500/20 bg-red-500/10 p-5 text-red-100">
+      <div v-else-if="loadError && featuredItems.length === 0" class="rounded-xl border border-white/[0.07] bg-white/[0.03] p-6 text-sm text-zinc-300">
         {{ loadError }}
       </div>
 
-      <div v-else-if="!isSabrinaTube && !secondaryHomeLoading && featuredItems.length === 0 && recommendedVideos.length === 0 && publicWatchParties.length === 0 && homeMovies.length === 0 && homeSeries.length === 0" class="rounded-2xl border border-white/10 bg-white/5 p-8 text-center">
+      <div v-else-if="!isSabrinaTube && !secondaryHomeLoading && featuredItems.length === 0 && recommendedVideos.length === 0 && publicWatchParties.length === 0 && homeMovies.length === 0 && homeSeries.length === 0" class="rounded-xl border border-white/[0.07] bg-white/[0.03] p-10 text-center">
         <h2 class="text-xl font-semibold">{{ t('home.noVideos') }}</h2>
         <p class="mt-2 text-sm text-zinc-400">{{ t('home.noVideosBody') }}</p>
         <NuxtLink :to="localePath('/upload')" class="mt-5 inline-flex rounded-full bg-white px-4 py-2 text-sm font-medium text-zinc-950 hover:bg-zinc-200">
@@ -28,75 +24,61 @@
         </NuxtLink>
       </div>
 
-      <div v-else class="home-sections space-y-8">
-		<section v-if="featuredItems.length" class="featured-hero relative isolate min-h-[22rem] overflow-hidden rounded-3xl border border-white/10 bg-black shadow-2xl sm:min-h-[30rem]">
-		  <Transition name="featured-fade" mode="out-in">
-			<div :key="activeFeatured.id" class="absolute inset-0">
-			  <img :src="featuredImage(activeFeatured)" :alt="activeFeatured.title" class="h-full w-full object-cover" />
-			  <div class="absolute inset-0 bg-gradient-to-r from-black via-black/75 to-black/10" />
-			  <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/20" />
-			</div>
-		  </Transition>
-		  <div class="relative z-10 flex min-h-[22rem] max-w-3xl flex-col justify-end p-6 sm:min-h-[30rem] sm:p-10 lg:p-14">
-			<p class="text-xs font-black uppercase tracking-[0.28em] text-red-300">{{ activeFeatured.header || featuredEyebrow(activeFeatured) }}</p>
-			<h1 class="mt-3 text-3xl font-black tracking-tight sm:text-5xl">{{ activeFeatured.title }}</h1>
-			<p v-if="activeFeatured.description" class="mt-3 line-clamp-3 max-w-2xl text-sm leading-6 text-zinc-200 sm:text-base">{{ activeFeatured.description }}</p>
-			<p v-if="activeFeatured.content_type === 'live' && activeFeatured.scheduled_for && !activeFeatured.is_live" class="mt-3 text-sm font-bold text-zinc-200">Live {{ formatFeaturedDate(activeFeatured.scheduled_for) }}</p>
-			<div class="mt-6 flex items-center gap-3">
-			  <NuxtLink :to="localePath(activeFeatured.target_url)" class="inline-flex rounded-full bg-white px-6 py-3 text-sm font-black text-black transition hover:bg-zinc-200">{{ activeFeatured.action_text }}</NuxtLink>
-			  <span v-if="activeFeatured.is_live" class="rounded-full bg-red-600 px-3 py-1.5 text-xs font-black uppercase tracking-wider">Live now</span>
-			</div>
-		  </div>
-		  <div v-if="featuredItems.length > 1" class="absolute bottom-5 right-5 z-20 flex gap-2">
-			<button v-for="(item,index) in featuredItems" :key="item.id" type="button" :aria-label="`Show featured item ${index+1}`" class="h-2.5 rounded-full transition-all" :class="index===featuredIndex?'w-8 bg-white':'w-2.5 bg-white/45 hover:bg-white/75'" @click="featuredIndex=index" />
-		  </div>
-		</section>
+      <div v-else class="home-sections space-y-10 lg:space-y-12">
+        <section v-if="featuredItems.length" class="home-hero" :aria-label="activeFeatured.title">
+          <Transition name="featured-fade" mode="out-in">
+            <div :key="activeFeatured.id" class="absolute inset-0">
+              <img :src="featuredImage(activeFeatured)" :alt="activeFeatured.title" class="h-full w-full object-cover" fetchpriority="high" />
+              <div class="home-hero__shade" />
+            </div>
+          </Transition>
+          <div class="relative z-10 flex h-full max-w-2xl flex-col justify-end p-6 sm:p-10 lg:p-12">
+            <p v-if="featuredEyebrow(activeFeatured)" class="home-hero__eyebrow" :class="{ 'is-live': activeFeatured.is_live }">
+              <span v-if="activeFeatured.is_live" class="home-live-dot" aria-hidden="true" />
+              {{ featuredEyebrow(activeFeatured) }}
+            </p>
+            <h1 class="text-3xl font-bold leading-tight sm:text-5xl">{{ activeFeatured.title }}</h1>
+            <p v-if="activeFeatured.description" class="mt-3 line-clamp-2 max-w-xl text-sm leading-6 text-zinc-300 sm:text-base">{{ activeFeatured.description }}</p>
+            <p v-if="activeFeatured.content_type === 'live' && activeFeatured.scheduled_for && !activeFeatured.is_live" class="mt-3 text-sm text-zinc-300">{{ formatFeaturedDate(activeFeatured.scheduled_for) }}</p>
+            <div class="mt-6">
+              <NuxtLink :to="localePath(activeFeatured.target_url)" class="home-hero__action">
+                <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M6 4.75v10.5a.75.75 0 0 0 1.16.63l8-5.25a.75.75 0 0 0 0-1.26l-8-5.25A.75.75 0 0 0 6 4.75Z" /></svg>
+                {{ activeFeatured.action_text || t('home.play') }}
+              </NuxtLink>
+            </div>
+          </div>
+          <div v-if="featuredItems.length > 1" class="absolute bottom-6 right-6 z-20 flex gap-1.5">
+            <button
+              v-for="(item, index) in featuredItems"
+              :key="item.id"
+              type="button"
+              :aria-label="t('home.showSlide', { index: index + 1 })"
+              :aria-current="index === featuredIndex"
+              class="h-1.5 rounded-full transition-all"
+              :class="index === featuredIndex ? 'w-6 bg-white' : 'w-1.5 bg-white/40 hover:bg-white/70'"
+              @click="featuredIndex = index"
+            />
+          </div>
+        </section>
+
         <section v-if="isSabrinaTube && (sabrinaVideosLoading || sabrinaVideos.length > 0)" class="sabrina-video-shelf">
           <div class="mb-4 flex items-end justify-between gap-4">
             <div>
               <p class="sabrina-video-shelf__eyebrow">{{ t('home.sabrinaSpotlight') }}</p>
               <h2 class="text-xl font-semibold">{{ t('home.sabrinaRecommendations') }}</h2>
             </div>
-            <div class="hidden items-center gap-2 sm:flex">
-              <button
-                type="button"
-                class="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/5 text-lg text-white transition hover:bg-white/10"
-                :aria-label="t('home.scrollSabrinaLeft')"
-                @click="scrollCarousel('sabrina', -1)"
-              >
-                ‹
-              </button>
-              <button
-                type="button"
-                class="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/5 text-lg text-white transition hover:bg-white/10"
-                :aria-label="t('home.scrollSabrinaRight')"
-                @click="scrollCarousel('sabrina', 1)"
-              >
-                ›
-              </button>
-            </div>
+            <ShelfArrows carousel="sabrina" />
           </div>
           <div class="-mx-6 px-6 sm:mx-0 sm:px-0">
-            <div
-              v-if="sabrinaVideosLoading"
-              class="sabrina-video-grid homepage-carousel overflow-hidden pb-3"
-              aria-hidden="true"
-            >
+            <div v-if="sabrinaVideosLoading" class="sabrina-video-grid homepage-carousel overflow-hidden pb-3" aria-hidden="true">
               <div v-for="n in 12" :key="n" class="sabrina-video-grid__item">
-                <div class="h-full overflow-hidden rounded-2xl border border-white/10 bg-white/5">
-                  <div class="aspect-video animate-pulse bg-white/10" />
-                  <div class="space-y-2 p-4">
-                    <div class="h-4 w-4/5 animate-pulse rounded bg-white/10" />
-                    <div class="h-3 w-2/5 animate-pulse rounded bg-white/10" />
-                  </div>
+                <div class="w-full">
+                  <div class="aspect-video animate-pulse rounded-xl bg-white/[0.06]" />
+                  <div class="mt-3 h-4 w-4/5 animate-pulse rounded bg-white/[0.06]" />
                 </div>
               </div>
             </div>
-            <div
-              v-else
-              :ref="setCarouselRef('sabrina')"
-              class="sabrina-video-grid homepage-carousel overflow-x-auto scroll-smooth pb-3"
-            >
+            <div v-else :ref="setCarouselRef('sabrina')" class="sabrina-video-grid homepage-carousel overflow-x-auto scroll-smooth pb-3">
               <div v-for="(video, index) in sabrinaVideos" :key="video.id" class="sabrina-video-grid__item">
                 <VideoTile :video="video" :eager="index < 2" class="h-full" />
               </div>
@@ -105,333 +87,72 @@
         </section>
 
         <section v-if="continueWatchingItems.length > 0">
-          <div class="mb-4 flex items-center justify-between gap-4">
-            <div>
-              <h2 class="text-lg font-semibold">{{ t('home.continueWatching') }}</h2>
-              <p class="text-sm text-zinc-400">{{ t('home.continueWatchingBody') }}</p>
-            </div>
-            <div class="hidden items-center gap-2 xl:flex">
-              <button
-                type="button"
-                class="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/5 text-lg text-white transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
-                @click="scrollCarousel('continue', -1)"
-              >
-                ‹
-              </button>
-              <button
-                type="button"
-                class="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/5 text-lg text-white transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
-                @click="scrollCarousel('continue', 1)"
-              >
-                ›
-              </button>
-            </div>
-          </div>
-          <div class="-mx-6 px-6 sm:mx-0 sm:px-0">
-            <div :ref="setCarouselRef('continue')" class="homepage-carousel flex snap-x gap-4 overflow-x-auto scroll-smooth pb-3 sm:gap-5 xl:gap-6">
-              <div v-for="(item, index) in continueWatchingItems" :key="item.video.id" class="homepage-carousel-item homepage-carousel-item--wide shrink-0 snap-start">
-                <ContinueTile :item="item" :eager="index === 0" class="h-full" />
-              </div>
+          <ShelfHeader :title="t('home.continueWatching')" carousel="continue" />
+          <div :ref="setCarouselRef('continue')" class="homepage-carousel">
+            <div v-for="(item, index) in continueWatchingItems" :key="item.video.id" class="homepage-carousel-item homepage-carousel-item--wide">
+              <ContinueTile :item="item" :eager="index === 0" />
             </div>
           </div>
         </section>
 
         <section v-if="moviesHomeLoading || homeMovies.length > 0">
-          <div class="mb-4 flex items-center justify-between gap-4">
-            <div>
-              <h2 class="text-lg font-semibold">{{ t('home.movies') }}</h2>
-              <p class="text-sm text-zinc-400">{{ t('home.moviesBody') }}</p>
-            </div>
-            <div class="flex items-center gap-3">
-              <NuxtLink :to="localePath('/category/movies')" class="text-sm font-medium text-zinc-300 hover:text-white">{{ t('home.viewAll') }}</NuxtLink>
-              <div class="hidden items-center gap-2 xl:flex">
-                <button
-                  type="button"
-                  class="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/5 text-lg text-white transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
-                  :disabled="moviesHomeLoading"
-                  @click="scrollCarousel('movies', -1)"
-                >
-                  ‹
-                </button>
-                <button
-                  type="button"
-                  class="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/5 text-lg text-white transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
-                  :disabled="moviesHomeLoading"
-                  @click="scrollCarousel('movies', 1)"
-                >
-                  ›
-                </button>
-              </div>
+          <ShelfHeader :title="t('home.movies')" :href="localePath('/category/movies')" carousel="movies" :disabled="moviesHomeLoading" />
+          <div v-if="moviesHomeLoading" class="homepage-carousel overflow-hidden" aria-hidden="true">
+            <div v-for="n in 8" :key="n" class="homepage-carousel-item homepage-carousel-item--poster">
+              <div class="aspect-[2/3] w-full animate-pulse rounded-xl bg-white/[0.06]" />
             </div>
           </div>
-          <div class="-mx-6 px-6 sm:mx-0 sm:px-0">
-            <div v-if="moviesHomeLoading" aria-hidden="true" class="homepage-carousel flex snap-x gap-4 overflow-hidden pb-3 sm:gap-5 xl:gap-6">
-              <div v-for="n in 8" :key="n" class="homepage-carousel-item homepage-carousel-item--poster shrink-0 snap-start">
-                <div class="aspect-[2/3] w-full animate-pulse rounded-2xl border border-white/10 bg-white/5" />
-              </div>
-            </div>
-            <div v-else :ref="setCarouselRef('movies')" class="homepage-carousel flex snap-x gap-4 overflow-x-auto scroll-smooth pb-3 sm:gap-5 xl:gap-6">
-              <div v-for="movie in homeMovies" :key="movie.id" class="homepage-carousel-item homepage-carousel-item--poster shrink-0 snap-start">
-                <MediaPosterTile :item="movie" class="h-full" />
-              </div>
+          <div v-else :ref="setCarouselRef('movies')" class="homepage-carousel">
+            <div v-for="movie in homeMovies" :key="movie.id" class="homepage-carousel-item homepage-carousel-item--poster">
+              <MediaPosterTile :item="movie" />
             </div>
           </div>
         </section>
 
         <section v-if="seriesHomeLoading || homeSeries.length > 0">
-          <div class="mb-4 flex items-center justify-between gap-4">
-            <div>
-              <h2 class="text-lg font-semibold">{{ t('home.series') }}</h2>
-              <p class="text-sm text-zinc-400">{{ t('home.seriesBody') }}</p>
-            </div>
-            <div class="flex items-center gap-3">
-              <NuxtLink :to="localePath('/category/series')" class="text-sm font-medium text-zinc-300 hover:text-white">{{ t('home.viewAll') }}</NuxtLink>
-              <div class="hidden items-center gap-2 xl:flex">
-                <button
-                  type="button"
-                  class="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/5 text-lg text-white transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
-                  :disabled="seriesHomeLoading"
-                  @click="scrollCarousel('series', -1)"
-                >
-                  ‹
-                </button>
-                <button
-                  type="button"
-                  class="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/5 text-lg text-white transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
-                  :disabled="seriesHomeLoading"
-                  @click="scrollCarousel('series', 1)"
-                >
-                  ›
-                </button>
-              </div>
+          <ShelfHeader :title="t('home.series')" :href="localePath('/category/series')" carousel="series" :disabled="seriesHomeLoading" />
+          <div v-if="seriesHomeLoading" class="homepage-carousel overflow-hidden" aria-hidden="true">
+            <div v-for="n in 8" :key="n" class="homepage-carousel-item homepage-carousel-item--poster">
+              <div class="aspect-[2/3] w-full animate-pulse rounded-xl bg-white/[0.06]" />
             </div>
           </div>
-          <div class="-mx-6 px-6 sm:mx-0 sm:px-0">
-            <div v-if="seriesHomeLoading" aria-hidden="true" class="homepage-carousel flex snap-x gap-4 overflow-hidden pb-3 sm:gap-5 xl:gap-6">
-              <div v-for="n in 8" :key="n" class="homepage-carousel-item homepage-carousel-item--poster shrink-0 snap-start">
-                <div class="aspect-[2/3] w-full animate-pulse rounded-2xl border border-white/10 bg-white/5" />
-              </div>
-            </div>
-            <div v-else :ref="setCarouselRef('series')" class="homepage-carousel flex snap-x gap-4 overflow-x-auto scroll-smooth pb-3 sm:gap-5 xl:gap-6">
-              <div v-for="series in homeSeries" :key="series.id" class="homepage-carousel-item homepage-carousel-item--poster shrink-0 snap-start">
-                <MediaPosterTile :item="series" class="h-full" />
-              </div>
+          <div v-else :ref="setCarouselRef('series')" class="homepage-carousel">
+            <div v-for="series in homeSeries" :key="series.id" class="homepage-carousel-item homepage-carousel-item--poster">
+              <MediaPosterTile :item="series" />
             </div>
           </div>
         </section>
 
         <section v-if="publicWatchParties.length > 0">
-          <div class="mb-4 flex items-center justify-between gap-4">
-            <div>
-              <h2 class="text-lg font-semibold">{{ t('home.watchParties') }}</h2>
-              <p class="text-sm text-zinc-400">{{ t('home.watchPartiesBody') }}</p>
-            </div>
-            <div class="hidden items-center gap-2 xl:flex">
-              <button
-                type="button"
-                class="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/5 text-lg text-white transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
-                @click="scrollCarousel('watch-parties', -1)"
-              >
-                â€¹
-              </button>
-              <button
-                type="button"
-                class="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/5 text-lg text-white transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
-                @click="scrollCarousel('watch-parties', 1)"
-              >
-                â€º
-              </button>
-            </div>
-          </div>
-          <div class="grid gap-6 sm:grid-cols-2 md:grid-cols-3 xl:hidden">
-            <WatchPartyTile v-for="party in publicWatchParties" :key="party.id" :party="party" />
-          </div>
-          <div class="hidden xl:block">
-            <div :ref="setCarouselRef('watch-parties')" class="homepage-carousel flex gap-6 overflow-x-auto scroll-smooth pb-2">
-              <div v-for="party in publicWatchParties" :key="party.id" class="homepage-carousel-item shrink-0">
-                <WatchPartyTile :party="party" class="h-full" />
-              </div>
+          <ShelfHeader :title="t('home.watchParties')" carousel="watch-parties" />
+          <div :ref="setCarouselRef('watch-parties')" class="homepage-carousel">
+            <div v-for="party in publicWatchParties" :key="party.id" class="homepage-carousel-item">
+              <WatchPartyTile :party="party" />
             </div>
           </div>
         </section>
 
         <section v-if="liveStreams.length > 0">
-          <div class="mb-4 flex items-center justify-between gap-4">
-            <div>
-              <h2 class="text-lg font-semibold">{{ t('home.nowLive') }}</h2>
-              <p class="text-sm text-zinc-400">{{ t('home.nowLiveBody') }}</p>
-            </div>
-            <div class="hidden items-center gap-2 xl:flex">
-              <button
-                type="button"
-                class="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/5 text-lg text-white transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
-                @click="scrollCarousel('live', -1)"
-              >
-                ‹
-              </button>
-              <button
-                type="button"
-                class="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/5 text-lg text-white transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
-                @click="scrollCarousel('live', 1)"
-              >
-                ›
-              </button>
+          <ShelfHeader :title="t('home.nowLive')" carousel="live" />
+          <div :ref="setCarouselRef('live')" class="homepage-carousel">
+            <div v-for="video in liveStreams" :key="video.id" class="homepage-carousel-item">
+              <VideoTile :video="video" :live-href="localePath(`/live/${video.channel?.id}`)" />
             </div>
           </div>
-          <div class="grid gap-6 sm:grid-cols-2 md:grid-cols-3 xl:hidden">
-            <VideoTile
-              v-for="video in liveStreams.slice(0, 6)"
-              :key="video.channel_id"
-              :video="video"
-              :live-href="localePath(`/live/${video.channel?.id}`)"
-            />
-          </div>
-          <div class="hidden xl:block">
-            <div :ref="setCarouselRef('live')" class="homepage-carousel flex gap-6 overflow-x-auto scroll-smooth pb-2">
-              <div v-for="video in liveStreams" :key="video.id" class="homepage-carousel-item shrink-0">
-                <VideoTile :video="video" :live-href="localePath(`/live/${video.channel?.id}`)" class="h-full" />
-              </div>
+        </section>
+
+        <section v-for="shelf in videoShelves" :key="shelf.key">
+          <ShelfHeader :title="shelf.title" :carousel="shelf.key" />
+          <div :ref="setCarouselRef(shelf.key)" class="homepage-carousel">
+            <div v-for="(video, index) in shelf.videos" :key="video.id" class="homepage-carousel-item">
+              <VideoTile :video="video" :eager="shelf.key === 'recommended' && index === 0" />
             </div>
           </div>
         </section>
 
         <section>
-          <div class="mb-4 flex items-center justify-between gap-4">
-            <h2 class="text-lg font-semibold">{{ t('home.recommended') }}</h2>
-            <div class="hidden items-center gap-2 xl:flex">
-              <button
-                type="button"
-                class="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/5 text-lg text-white transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
-                @click="scrollCarousel('recommended', -1)"
-              >
-                ‹
-              </button>
-              <button
-                type="button"
-                class="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/5 text-lg text-white transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
-                @click="scrollCarousel('recommended', 1)"
-              >
-                ›
-              </button>
-            </div>
-          </div>
-          <div class="grid gap-6 sm:grid-cols-2 md:grid-cols-3 xl:hidden">
-            <VideoTile v-for="(video, index) in recommendedVideos" :key="video.id" :video="video" :eager="index === 0" />
-          </div>
-          <div class="hidden xl:block">
-            <div :ref="setCarouselRef('recommended')" class="homepage-carousel flex gap-6 overflow-x-auto scroll-smooth pb-2">
-              <div v-for="(video, index) in recommendedVideos" :key="video.id" class="homepage-carousel-item shrink-0">
-                <VideoTile :video="video" :eager="index === 0" class="h-full" />
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section>
-          <div class="mb-4 flex items-center justify-between gap-4">
-            <div>
-              <h3 class="text-lg font-semibold">{{ t('home.trending') }}</h3>
-            </div>
-            <div class="hidden items-center gap-2 xl:flex">
-              <button
-                type="button"
-                class="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/5 text-lg text-white transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
-                @click="scrollCarousel('trending', -1)"
-              >
-                ‹
-              </button>
-              <button
-                type="button"
-                class="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/5 text-lg text-white transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
-                @click="scrollCarousel('trending', 1)"
-              >
-                ›
-              </button>
-            </div>
-          </div>
-          <div class="grid gap-6 sm:grid-cols-2 md:grid-cols-3 xl:hidden">
-            <VideoTile v-for="video in trendingVideos" :key="video.id" :video="video" />
-          </div>
-          <div class="hidden xl:block">
-            <div :ref="setCarouselRef('trending')" class="homepage-carousel flex gap-6 overflow-x-auto scroll-smooth pb-2">
-              <div v-for="video in trendingVideos" :key="video.id" class="homepage-carousel-item shrink-0">
-                <VideoTile :video="video" class="h-full" />
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section>
-          <div class="mb-4 flex items-center justify-between gap-4">
-              <h3 class="text-lg font-semibold">{{ t('home.trustedChannels') }}</h3>
-            <div class="hidden items-center gap-2 xl:flex">
-              <button
-                type="button"
-                class="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/5 text-lg text-white transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
-                @click="scrollCarousel('trusted', -1)"
-              >
-                ‹
-              </button>
-              <button
-                type="button"
-                class="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/5 text-lg text-white transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
-                @click="scrollCarousel('trusted', 1)"
-              >
-                ›
-              </button>
-            </div>
-          </div>
-          <div class="grid gap-6 sm:grid-cols-2 md:grid-cols-3 xl:hidden">
-            <VideoTile v-for="video in trustedVideos" :key="video.id" :video="video" />
-          </div>
-          <div class="hidden xl:block">
-            <div :ref="setCarouselRef('trusted')" class="homepage-carousel flex gap-6 overflow-x-auto scroll-smooth pb-2">
-              <div v-for="video in trustedVideos" :key="video.id" class="homepage-carousel-item shrink-0">
-                <VideoTile :video="video" class="h-full" />
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section>
-          <div class="mb-4 flex items-center justify-between gap-4">
-              <h3 class="text-lg font-semibold">{{ t('home.recentUploads') }}</h3>
-            <div class="hidden items-center gap-2 xl:flex">
-              <button
-                type="button"
-                class="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/5 text-lg text-white transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
-                @click="scrollCarousel('fresh', -1)"
-              >
-                ‹
-              </button>
-              <button
-                type="button"
-                class="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/5 text-lg text-white transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
-                @click="scrollCarousel('fresh', 1)"
-              >
-                ›
-              </button>
-            </div>
-          </div>
-          <div class="grid gap-6 sm:grid-cols-2 md:grid-cols-3 xl:hidden">
-            <VideoTile v-for="video in freshVideos" :key="video.id" :video="video" />
-          </div>
-          <div class="hidden xl:block">
-            <div :ref="setCarouselRef('fresh')" class="homepage-carousel flex gap-6 overflow-x-auto scroll-smooth pb-2">
-              <div v-for="video in freshVideos" :key="video.id" class="homepage-carousel-item shrink-0">
-                <VideoTile :video="video" class="h-full" />
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section>
-          <div class="mb-4 flex items-end justify-between">
-            <div>
-              <h3 class="text-lg font-semibold">{{ t('home.allVideos') }}</h3>
-            </div>
-          </div>
-          <div class="grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
+          <ShelfHeader :title="t('home.allVideos')" />
+          <div class="grid gap-x-4 gap-y-8 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5">
             <template v-for="item in browseGridItems" :key="item.key">
               <GilAdsBanner
                 v-if="item.type === 'ad'"
@@ -452,9 +173,6 @@
             <div class="h-8 w-8 animate-spin rounded-full border-b-2 border-t-2 border-white/60" />
           </div>
 
-          <div v-if="!hasMore && browseVideos.length > 0" class="mt-6 text-center text-sm text-zinc-400">
-            {{ t('home.noMoreVideos') }}
-          </div>
         </section>
       </div>
     </div>
@@ -523,7 +241,12 @@ const homeFeedCacheTTL = 5 * 60 * 1000
 const isChannelLive = (channelId) => liveChannelIds.value.has(channelId)
 const activeFeatured = computed(() => featuredItems.value[featuredIndex.value] || featuredItems.value[0] || {})
 const featuredImage = (item) => imageVariantUrl(item?.image_url, 'lg') || resolveMediaUrl(item?.image_url, '/videos/placeholder-thumbnail.jpg')
-const featuredEyebrow = (item) => item?.content_type === 'live' ? (item?.is_live ? 'Live now' : 'Upcoming live') : item?.content_type === 'video' ? 'Featured' : 'Now available'
+// Only say something when it adds information: a custom header, or live state.
+const featuredEyebrow = (item) => {
+  if (item?.header) return item.header
+  if (item?.content_type === 'live') return item?.is_live ? t('home.live') : t('home.upcoming')
+  return ''
+}
 const formatFeaturedDate = (value) => new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }).format(new Date(value))
 const loadFeatured = async () => { try { featuredItems.value = await listFeaturedContent() } catch (err) { console.warn('Featured content unavailable:', err); featuredItems.value = [] } }
 
@@ -535,6 +258,53 @@ const setCarouselRef = (key) => (element) => {
 
   carouselContainers[key] = element
 }
+
+const videoShelves = computed(() => [
+  { key: 'recommended', title: t('home.recommended'), videos: recommendedVideos.value },
+  { key: 'trending', title: t('home.trending'), videos: trendingVideos.value },
+  { key: 'trusted', title: t('home.trustedChannels'), videos: trustedVideos.value },
+  { key: 'fresh', title: t('home.recentUploads'), videos: freshVideos.value },
+].filter((shelf) => shelf.videos.length > 0))
+
+const chevron = (direction) => h('svg', { class: 'h-4 w-4', fill: 'none', stroke: 'currentColor', viewBox: '0 0 24 24', 'aria-hidden': 'true' }, [
+  h('path', { 'stroke-linecap': 'round', 'stroke-linejoin': 'round', 'stroke-width': '2', d: direction < 0 ? 'm15 18-6-6 6-6' : 'm9 18 6-6-6-6' }),
+])
+
+const ShelfArrows = defineComponent({
+  name: 'ShelfArrows',
+  props: { carousel: { type: String, required: true }, disabled: { type: Boolean, default: false } },
+  setup(props) {
+    return () => h('div', { class: 'hidden items-center gap-1 md:flex' }, [-1, 1].map((direction) => h('button', {
+      type: 'button',
+      class: 'shelf-arrow',
+      disabled: props.disabled,
+      'aria-label': direction < 0 ? t('home.previous') : t('home.next'),
+      onClick: () => scrollCarousel(props.carousel, direction),
+    }, [chevron(direction)])))
+  },
+})
+
+// Row title with an optional "View all" link and scroll arrows.
+const ShelfHeader = defineComponent({
+  name: 'ShelfHeader',
+  props: {
+    title: { type: String, required: true },
+    href: { type: String, default: '' },
+    carousel: { type: String, default: '' },
+    disabled: { type: Boolean, default: false },
+  },
+  setup(props) {
+    return () => h('div', { class: 'mb-4 flex items-center justify-between gap-4' }, [
+      props.href
+        ? h(NuxtLink, { to: props.href, class: 'shelf-title group' }, () => [
+            h('h2', props.title),
+            h('span', { class: 'shelf-title__more' }, [t('home.viewAll'), chevron(1)]),
+          ])
+        : h('h2', { class: 'shelf-title' }, props.title),
+      props.carousel ? h(ShelfArrows, { carousel: props.carousel, disabled: props.disabled }) : null,
+    ])
+  },
+})
 
 const scrollCarousel = (key, direction) => {
   const element = carouselContainers[key]
@@ -1108,31 +878,26 @@ const MediaPosterTile = defineComponent({
     },
   },
   setup(props) {
-    return () => h('article', { class: 'motion-card group h-full w-full min-w-0 overflow-hidden rounded-2xl border border-white/10 bg-white/5' }, [
-      h(NuxtLink, {
-        to: props.item.href || '/',
-        class: 'block',
-        onPointerenter: props.item.prefetch,
-        onFocus: props.item.prefetch,
-        onTouchstart: props.item.prefetch,
-      }, () => [
-        h('div', { class: 'relative aspect-[2/3] bg-black' }, [
-          h('img', {
-            src: getMediaImage(props.item),
-            srcset: getMediaImageSrcset(props.item) || undefined,
-            sizes: capDensity('(min-width: 1280px) 14rem, 42vw'),
-            alt: props.item.title,
-            loading: 'lazy',
-            decoding: 'async',
-            class: 'h-full w-full object-cover transition duration-200 group-hover:scale-[1.03]',
-          }),
-          h('div', { class: 'absolute inset-0 bg-gradient-to-t from-black/85 via-black/10 to-transparent opacity-90' }),
-          h('div', { class: 'absolute inset-x-0 bottom-0 p-3' }, [
-            h('h3', { class: 'line-clamp-2 text-sm font-semibold text-white' }, props.item.title),
-            props.item.meta ? h('p', { class: 'mt-1 line-clamp-1 text-xs text-zinc-300' }, props.item.meta) : null,
-          ]),
-        ]),
+    return () => h(NuxtLink, {
+      to: props.item.href || '/',
+      class: 'tile group block w-full min-w-0',
+      onPointerenter: props.item.prefetch,
+      onFocus: props.item.prefetch,
+      onTouchstart: props.item.prefetch,
+    }, () => [
+      h('div', { class: 'tile-media aspect-[2/3]' }, [
+        h('img', {
+          src: getMediaImage(props.item),
+          srcset: getMediaImageSrcset(props.item) || undefined,
+          sizes: capDensity('(min-width: 1280px) 12rem, 42vw'),
+          alt: props.item.title,
+          loading: props.eager ? 'eager' : 'lazy',
+          decoding: 'async',
+          class: 'tile-image',
+        }),
       ]),
+      h('h3', { class: 'mt-2.5 line-clamp-1 text-sm font-medium text-zinc-100' }, props.item.title),
+      props.item.meta ? h('p', { class: 'mt-0.5 line-clamp-1 text-xs text-zinc-500' }, props.item.meta) : null,
     ])
   },
 })
@@ -1144,40 +909,32 @@ const ContinueTile = defineComponent({
       type: Object,
       required: true,
     },
+    eager: {
+      type: Boolean,
+      default: false,
+    },
   },
   setup(props) {
     const progressPercent = () => getContinueProgressPercent(props.item)
 
-    return () => h('article', { class: 'continue-watching-card motion-card group h-full w-full min-w-0 overflow-hidden rounded-2xl border border-red-500/20 bg-red-950/15' }, [
-      h(NuxtLink, { to: continueLink(props.item), class: 'block' }, () => [
-        h('div', { class: 'relative aspect-video bg-black' }, [
-          h('img', {
-            src: getContinueImage(props.item),
-            srcset: getContinueImageSrcset(props.item) || undefined,
-            sizes: capDensity('(min-width: 1280px) 24rem, 85vw'),
-            alt: continueTitle(props.item),
-            loading: props.eager ? 'eager' : 'lazy',
-            decoding: 'async',
-            fetchpriority: props.eager ? 'high' : 'auto',
-            class: 'h-full w-full object-cover transition duration-200 group-hover:scale-[1.02]',
-          }),
-          h('div', { class: 'absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent' }),
-          progressPercent() > 0
-            ? h('div', { class: 'absolute inset-x-0 bottom-0 h-1 bg-black/55' }, [
-                h('div', {
-                  class: 'h-full bg-red-600',
-                  style: { width: `${progressPercent()}%` },
-                }),
-              ])
-            : null,
-        ]),
+    return () => h(NuxtLink, { to: continueLink(props.item), class: 'tile group block w-full min-w-0' }, () => [
+      h('div', { class: 'tile-media aspect-video' }, [
+        h('img', {
+          src: getContinueImage(props.item),
+          srcset: getContinueImageSrcset(props.item) || undefined,
+          sizes: capDensity('(min-width: 1280px) 22rem, 85vw'),
+          alt: continueTitle(props.item),
+          loading: props.eager ? 'eager' : 'lazy',
+          decoding: 'async',
+          fetchpriority: props.eager ? 'high' : 'auto',
+          class: 'tile-image',
+        }),
+        progressPercent() > 0
+          ? h('div', { class: 'tile-progress' }, [h('div', { style: { width: `${progressPercent()}%` } })])
+          : null,
       ]),
-      h('div', { class: 'p-4' }, [
-        h(NuxtLink, { to: continueLink(props.item), class: 'block' }, () => [
-          h('h3', { class: 'line-clamp-2 text-sm font-semibold text-white' }, continueTitle(props.item)),
-        ]),
-        h('p', { class: 'mt-1 line-clamp-1 text-xs text-zinc-400' }, continueSubtitle(props.item)),
-      ]),
+      h('h3', { class: 'mt-3 line-clamp-1 text-sm font-medium text-zinc-100' }, continueTitle(props.item)),
+      h('p', { class: 'mt-0.5 line-clamp-1 text-xs text-zinc-500' }, continueSubtitle(props.item)),
     ])
   },
 })
@@ -1214,64 +971,57 @@ const VideoTile = defineComponent({
     const is8K = () => isVideo8K(props.video.width)
     const progressPercent = () => getVideoProgressPercent(props.video.id)
 
-    return () => h('article', { class: 'motion-card group h-full w-full min-w-0 overflow-hidden rounded-2xl border border-white/10 bg-white/5' }, [
-      h(NuxtLink, { to: getVideoLink(), class: 'block' }, () => [
-        h('div', { class: 'relative aspect-video bg-black' }, [
+    const qualityBadge = () => is8K() ? '8K' : is4K() ? '4K' : ''
+
+    return () => h('article', { class: 'tile group w-full min-w-0' }, [
+      h(NuxtLink, { to: getVideoLink(), class: 'block', tabindex: '-1', 'aria-hidden': 'true' }, () => [
+        h('div', { class: 'tile-media aspect-video' }, [
           h('img', {
             src: getThumbnailUrl(props.video),
             srcset: getVideoImageSrcset(props.video) || undefined,
-            sizes: capDensity('(min-width: 1280px) 16rem, (min-width: 640px) 50vw, 100vw'),
-            alt: props.video.title,
+            sizes: capDensity('(min-width: 1280px) 20rem, (min-width: 640px) 50vw, 100vw'),
+            alt: '',
             loading: props.eager ? 'eager' : 'lazy',
             decoding: 'async',
             fetchpriority: props.eager ? 'high' : 'auto',
-            class: 'h-full w-full object-cover transition duration-200 group-hover:scale-[1.02]',
+            class: 'tile-image',
           }),
-          is8K()
-            ? h('div', { class: 'absolute right-2 top-2 rounded border border-green-700 bg-green-900 px-1.5 py-0.5 text-xs font-semibold text-green-200' }, '8K')
-            : is4K()
-              ? h('div', { class: 'absolute right-2 top-2 rounded border border-green-700 bg-green-900 px-1.5 py-0.5 text-xs font-semibold text-green-200' }, '4K')
+          isLiveCard()
+            ? h('span', { class: 'tile-badge tile-badge--live' }, [h('span', { class: 'home-live-dot' }), t('home.live')])
+            : qualityBadge()
+              ? h('span', { class: 'tile-badge' }, qualityBadge())
               : null,
           progressPercent() > 0
-            ? h('div', { class: 'absolute inset-x-0 bottom-0 h-1 bg-black/55' }, [
-                h('div', {
-                  class: 'h-full bg-red-600',
-                  style: { width: `${progressPercent()}%` },
-                }),
-              ])
+            ? h('div', { class: 'tile-progress' }, [h('div', { style: { width: `${progressPercent()}%` } })])
             : null,
         ]),
       ]),
-      h('div', { class: 'p-4' }, [
-        h('div', { class: 'flex gap-3' }, [
-          h(NuxtLink, { to: getChannelLink(), class: 'relative block h-9 w-9 shrink-0 overflow-hidden rounded-full bg-zinc-700' }, () => [
-            h(AvatarFallback, {
-              src: props.video.channel?.avatar_url || '',
-              name: props.video.channel?.name || 'Channel',
-              class: 'h-full w-full text-xs',
-            }),
-            isChannelLive(props.video.channel?.id)
-              ? h('span', {
-                  class: 'absolute inset-x-0 bottom-0 flex justify-center bg-red-600/95 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-white',
-                }, 'LIVE')
-              : null,
+      h('div', { class: 'mt-3 flex gap-3' }, [
+        h(NuxtLink, { to: getChannelLink(), class: 'relative block h-9 w-9 shrink-0 overflow-hidden rounded-full bg-zinc-800', 'aria-label': props.video.channel?.name || '' }, () => [
+          h(AvatarFallback, {
+            src: props.video.channel?.avatar_url || '',
+            name: props.video.channel?.name || 'Channel',
+            class: 'h-full w-full text-xs',
+          }),
+          isChannelLive(props.video.channel?.id)
+            ? h('span', { class: 'absolute inset-0 rounded-full ring-2 ring-inset ring-red-500' })
+            : null,
+        ]),
+        h('div', { class: 'min-w-0 flex-1' }, [
+          h(NuxtLink, { to: getVideoLink(), class: 'block' }, () => [
+            h('h3', { class: 'line-clamp-2 text-sm font-medium leading-5 text-zinc-100 group-hover:text-white' }, props.video.title),
           ]),
-          h('div', { class: 'min-w-0 flex-1' }, [
-            h(NuxtLink, { to: getVideoLink(), class: 'block' }, () => [
-              h('h3', { class: 'line-clamp-2 text-sm font-medium leading-5 text-white' }, props.video.title),
-            ]),
-            h(NuxtLink, { to: getChannelLink(), class: 'mt-1 flex items-center gap-1 text-xs text-zinc-400 hover:text-white' }, () => [
-              h('span', props.video.channel.name),
-              h(VerifiedBadge, { verified: props.video.channel?.verified || false, size: 'sm' }),
-            ]),
-            h(
-              'p',
-              { class: 'mt-2 text-xs text-zinc-500' },
-              isLiveCard()
-                ? t('home.liveStats', { count: Number(props.video.watching_now || 0), started: getLiveStartedAgo(props.video.started_at) })
-                : t('home.videoStats', { views: formatViews(props.video.views), time: getTimeAgo(props.video.created_at) })
-            ),
+          h(NuxtLink, { to: getChannelLink(), class: 'mt-1 flex items-center gap-1 text-[13px] text-zinc-400 transition hover:text-zinc-200' }, () => [
+            h('span', { class: 'truncate' }, props.video.channel?.name || ''),
+            h(VerifiedBadge, { verified: props.video.channel?.verified || false, size: 'sm' }),
           ]),
+          h(
+            'p',
+            { class: 'text-[13px] text-zinc-500' },
+            isLiveCard()
+              ? t('home.liveStats', { count: Number(props.video.watching_now || 0), started: getLiveStartedAgo(props.video.started_at) })
+              : t('home.videoStats', { views: formatViews(props.video.views), time: getTimeAgo(props.video.created_at) })
+          ),
         ]),
       ]),
     ])
@@ -1289,30 +1039,24 @@ const WatchPartyTile = defineComponent({
   setup(props) {
     const partyLink = () => localePath(`/watch-party/${props.party.id}`)
 
-    return () => h('article', { class: 'motion-card group h-full w-full min-w-0 overflow-hidden rounded-2xl border border-red-500/25 bg-red-950/20' }, [
-      h(NuxtLink, { to: partyLink(), class: 'block' }, () => [
-        h('div', { class: 'relative aspect-video bg-black' }, [
-          h('img', {
-            src: getWatchPartyThumbnailUrl(props.party),
-            srcset: getImageSrcset(props.party?.thumbnail_url) || undefined,
-            sizes: capDensity('(min-width: 1280px) 24rem, (min-width: 640px) 50vw, 100vw'),
-            alt: props.party.video_title || props.party.title || 'Watch party',
-            loading: 'lazy',
-            decoding: 'async',
-            class: 'h-full w-full object-cover transition duration-200 group-hover:scale-[1.02]',
-          }),
-          h('div', { class: 'absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent' }),
-          h('span', { class: 'absolute left-3 top-3 rounded-full bg-red-600 px-2 py-1 text-xs font-bold uppercase tracking-wide text-white' }, 'Live party'),
-          h('div', { class: 'absolute inset-x-0 bottom-0 p-4' }, [
-            h('h3', { class: 'line-clamp-2 text-sm font-semibold text-white' }, props.party.title || props.party.video_title || 'Watch party'),
-            h('p', { class: 'mt-1 text-xs text-zinc-300' }, `${Number(props.party.participant_count || 0)} watching together`),
-          ]),
-        ]),
+    return () => h(NuxtLink, { to: partyLink(), class: 'tile group block w-full min-w-0' }, () => [
+      h('div', { class: 'tile-media aspect-video' }, [
+        h('img', {
+          src: getWatchPartyThumbnailUrl(props.party),
+          srcset: getImageSrcset(props.party?.thumbnail_url) || undefined,
+          sizes: capDensity('(min-width: 1280px) 20rem, (min-width: 640px) 50vw, 100vw'),
+          alt: '',
+          loading: 'lazy',
+          decoding: 'async',
+          class: 'tile-image',
+        }),
+        h('span', { class: 'tile-badge tile-badge--live' }, [h('span', { class: 'home-live-dot' }), t('home.watchParty')]),
       ]),
-      h('div', { class: 'p-4' }, [
-        h('p', { class: 'line-clamp-1 text-sm text-zinc-300' }, props.party.video_title || ''),
-        h('p', { class: 'mt-1 line-clamp-1 text-xs text-zinc-500' }, props.party.channel_name || ''),
-      ]),
+      h('h3', { class: 'mt-3 line-clamp-2 text-sm font-medium leading-5 text-zinc-100' }, props.party.title || props.party.video_title || t('home.watchParty')),
+      h('p', { class: 'mt-0.5 line-clamp-1 text-[13px] text-zinc-500' }, [
+        t('home.watching', { count: Number(props.party.participant_count || 0) }),
+        props.party.channel_name ? ` · ${props.party.channel_name}` : '',
+      ].join('')),
     ])
   },
 })
@@ -1344,34 +1088,63 @@ onUnmounted(() => {
 
 <style scoped>
 .homepage-carousel {
+  display: flex;
+  gap: 1rem;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  scroll-snap-type: x mandatory;
+  scroll-padding-inline: 1rem;
+  margin-inline: -1rem;
+  padding-inline: 1rem;
+  padding-bottom: 0.25rem;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
 }
-
-.home-sections > section {
-  content-visibility: auto;
-  contain-intrinsic-size: auto 24rem;
-}
-
-.featured-fade-enter-active,.featured-fade-leave-active { transition: opacity .35s ease; }
-.featured-fade-enter-from,.featured-fade-leave-to { opacity: 0; }
 
 .homepage-carousel::-webkit-scrollbar {
   display: none;
 }
 
+@media (min-width: 640px) {
+  .homepage-carousel {
+    margin-inline: 0;
+    padding-inline: 0;
+    scroll-padding-inline: 0;
+  }
+}
+
+.home-sections > section {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 22rem;
+}
+
+.home-sections > .home-hero {
+  content-visibility: visible;
+}
+
+.featured-fade-enter-active,
+.featured-fade-leave-active {
+  transition: opacity 0.4s ease;
+}
+
+.featured-fade-enter-from,
+.featured-fade-leave-to {
+  opacity: 0;
+}
+
 .homepage-carousel-item {
   display: flex;
-  width: clamp(13rem, 18vw, 18rem);
-  align-self: stretch;
+  flex-shrink: 0;
+  width: clamp(15rem, 19vw, 20rem);
+  scroll-snap-align: start;
 }
 
 .homepage-carousel-item--wide {
-  width: clamp(18rem, 28vw, 22rem);
+  width: clamp(17rem, 24vw, 22rem);
 }
 
 .homepage-carousel-item--poster {
-  width: clamp(9rem, 11vw, 11.5rem);
+  width: clamp(8.5rem, 10.5vw, 11rem);
 }
 
 .sabrina-video-shelf {
@@ -1404,25 +1177,197 @@ onUnmounted(() => {
 }
 
 @media (max-width: 640px) {
-  .homepage-carousel {
-    padding-bottom: 0.75rem;
-  }
-
   .homepage-carousel-item {
-    width: min(74vw, 19rem);
+    width: min(78vw, 19rem);
   }
 
   .homepage-carousel-item--wide {
-    width: min(76vw, 22rem);
+    width: min(80vw, 22rem);
   }
 
   .homepage-carousel-item--poster {
-    width: min(42vw, 10.5rem);
+    width: min(40vw, 10rem);
   }
 
   .sabrina-video-grid {
     grid-auto-columns: min(74vw, 19rem);
     gap: 1rem;
   }
+}
+</style>
+
+<style>
+/* Home tiles and shelves are render-function components, so their classes
+   cannot be scoped to this page. */
+.home-hero {
+  position: relative;
+  isolation: isolate;
+  height: clamp(22rem, 46vw, 34rem);
+  overflow: hidden;
+  border-radius: 1.25rem;
+  background: #000;
+}
+
+.home-hero__shade {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, rgba(12, 12, 14, 0.92) 0%, rgba(12, 12, 14, 0.55) 40%, rgba(12, 12, 14, 0) 72%),
+    linear-gradient(0deg, rgba(12, 12, 14, 0.85) 0%, rgba(12, 12, 14, 0) 45%);
+}
+
+.home-hero__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+  color: #c8c8cf;
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.home-hero__eyebrow.is-live {
+  color: #fca5a5;
+}
+
+.home-hero__action {
+  display: inline-flex;
+  height: 2.75rem;
+  align-items: center;
+  gap: 0.5rem;
+  border-radius: 999px;
+  background: #fff;
+  padding: 0 1.375rem 0 1.125rem;
+  color: #0c0c0e;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  transition: transform 150ms ease, background-color 150ms ease;
+}
+
+.home-hero__action:hover {
+  background: #e2e2e6;
+}
+
+.home-hero__action:active {
+  transform: scale(0.98);
+}
+
+.home-live-dot {
+  display: inline-block;
+  height: 0.4375rem;
+  width: 0.4375rem;
+  flex-shrink: 0;
+  border-radius: 999px;
+  background: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.25);
+}
+
+.shelf-title {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  color: #f2f2f4;
+  font-size: 1.125rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.shelf-title__more {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.125rem;
+  color: #6c6c76;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  letter-spacing: 0;
+  transition: color 150ms ease;
+}
+
+.shelf-title:hover .shelf-title__more {
+  color: #e2e2e6;
+}
+
+.shelf-arrow {
+  display: inline-flex;
+  height: 2rem;
+  width: 2rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  color: #9b9ba5;
+  transition: background-color 150ms ease, color 150ms ease;
+}
+
+.shelf-arrow:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.07);
+  color: #fff;
+}
+
+.shelf-arrow:disabled {
+  opacity: 0.35;
+}
+
+.tile-media {
+  position: relative;
+  overflow: hidden;
+  border-radius: 0.75rem;
+  background: #16161a;
+}
+
+.tile-media::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+  pointer-events: none;
+}
+
+.tile-image {
+  height: 100%;
+  width: 100%;
+  object-fit: cover;
+  transition: transform 300ms cubic-bezier(0.2, 0, 0, 1), filter 300ms ease;
+}
+
+.tile:hover .tile-image {
+  transform: scale(1.03);
+}
+
+.tile-badge {
+  position: absolute;
+  bottom: 0.5rem;
+  right: 0.5rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  border-radius: 0.375rem;
+  background: rgba(12, 12, 14, 0.82);
+  padding: 0.1875rem 0.4375rem;
+  color: #f2f2f4;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  backdrop-filter: blur(6px);
+}
+
+.tile-badge--live {
+  left: 0.5rem;
+  right: auto;
+  top: 0.5rem;
+  bottom: auto;
+}
+
+.tile-progress {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  height: 3px;
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.tile-progress > div {
+  height: 100%;
+  background: #e5252a;
 }
 </style>

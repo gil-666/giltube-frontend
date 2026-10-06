@@ -1,6 +1,6 @@
 <template>
   <div class="mx-auto max-w-[96rem]">
-    <div v-if="!isLoading && analytics" class="bg-zinc-900 rounded-lg p-6 mb-8 border border-zinc-800">
+    <div v-if="!isLoading && analytics" class="bg-zinc-900 rounded-lg p-6 mb-8 border border-white/[0.07]">
       <!-- Header -->
       <h2 class="text-2xl font-bold mb-6">{{ t('channelMetrics.title') }}</h2>
 
@@ -30,7 +30,7 @@
                 <span>{{ formatPercent(analytics.average_completion_rate) }}</span>
               </div>
               <div class="h-2 overflow-hidden rounded-full bg-zinc-700">
-                <div class="h-full rounded-full bg-blue-500" :style="{ width: formatPercent(analytics.average_completion_rate) }" />
+                <div class="h-full rounded-full bg-zinc-100 text-zinc-950" :style="{ width: formatPercent(analytics.average_completion_rate) }" />
               </div>
             </div>
             <div>
@@ -91,7 +91,7 @@
     </div>
 
     <!-- Loading State -->
-    <div v-else-if="isLoading" class="bg-zinc-900 rounded-lg p-6 mb-8 border border-zinc-800 text-center">
+    <div v-else-if="isLoading" class="bg-zinc-900 rounded-lg p-6 mb-8 border border-white/[0.07] text-center">
       <div class="inline-block">
         <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mb-2"></div>
         <p class="text-gray-400 text-sm">{{ t('channelMetrics.loading') }}</p>

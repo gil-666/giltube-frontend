@@ -3,15 +3,14 @@
     <div class="mx-auto flex min-h-screen w-full max-w-7xl flex-col px-4 py-5 sm:px-6" :class="{ 'max-lg:min-h-dvh max-lg:p-0': isLoggedIn && activeTab === 'in-app' }">
       <div class="mb-5 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between" :class="{ 'max-lg:hidden': isLoggedIn && activeTab === 'in-app' }">
         <div>
-          <h1 class="mt-2 text-4xl font-black tracking-tight sm:text-5xl">{{ t('goLive.title') }}</h1>
-          <p class="mt-2 max-w-2xl text-gray-400">{{ t('goLive.subtitle') }}</p>
+          <h1 class="mt-2 text-2xl font-semibold tracking-tight sm:text-3xl">{{ t('goLive.title') }}</h1>
         </div>
 
       </div>
 
-      <div v-if="!isLoggedIn" class="rounded-3xl border border-zinc-800 bg-zinc-950/80 p-6 shadow-2xl">
+      <div v-if="!isLoggedIn" class="rounded-3xl border border-white/[0.07] bg-zinc-950/80 p-6 shadow-2xl">
         <p class="text-gray-300">{{ t('goLive.loginRequired') }}</p>
-        <NuxtLink :to="localePath('/login')" class="mt-4 inline-flex rounded-full bg-red-600 px-5 py-2.5 font-semibold transition hover:bg-red-500">
+        <NuxtLink :to="localePath('/login')" class="mt-4 inline-flex rounded-full bg-zinc-100 px-5 py-2.5 font-semibold transition hover:bg-white text-zinc-950">
           {{ t('goLive.signIn') }}
         </NuxtLink>
       </div>
@@ -22,7 +21,7 @@
             <span class="mb-2 block text-sm font-semibold text-gray-300">{{ t('goLive.channel') }}</span>
             <select
               v-model="selectedChannelId"
-              class="w-full rounded-2xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-white outline-none transition focus:border-red-500"
+              class="w-full rounded-2xl border border-white/10 bg-zinc-900 px-4 py-3 text-white outline-none transition focus:border-white/30"
             >
               <option disabled value="">{{ t('goLive.selectChannel') }}</option>
               <option v-for="ch in channels" :key="ch.id" :value="ch.id">{{ ch.name }}</option>
@@ -34,12 +33,12 @@
               v-model="title"
               type="text"
               maxlength="120"
-              class="w-full rounded-2xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-white outline-none transition focus:border-red-500"
+              class="w-full rounded-2xl border border-white/10 bg-zinc-900 px-4 py-3 text-white outline-none transition focus:border-white/30"
             />
           </label>
-          <div class="rounded-2xl border border-zinc-800 bg-black/30 px-4 py-3">
-            <p class="text-xs font-bold uppercase tracking-[0.25em] text-gray-500">{{ t('goLive.status') }}</p>
-            <p class="mt-1 text-lg font-black" :class="isLive ? 'text-emerald-400' : 'text-gray-300'">
+          <div class="rounded-2xl border border-white/[0.07] bg-black/30 px-4 py-3">
+            <p class="text-xs font-medium text-gray-500">{{ t('goLive.status') }}</p>
+            <p class="mt-1 text-lg font-semibold" :class="isLive ? 'text-emerald-400' : 'text-gray-300'">
               {{ isLive ? t('goLive.live') : t('goLive.offline') }}
             </p>
           </div>
@@ -49,34 +48,34 @@
               v-model="description"
               rows="2"
               maxlength="400"
-              class="w-full rounded-2xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-white outline-none transition focus:border-red-500"
+              class="w-full rounded-2xl border border-white/10 bg-zinc-900 px-4 py-3 text-white outline-none transition focus:border-white/30"
             />
           </label>
-          <label class="flex items-center gap-3 rounded-2xl border border-zinc-800 bg-black/30 px-4 py-3 lg:col-span-2">
+          <label class="flex items-center gap-3 rounded-2xl border border-white/[0.07] bg-black/30 px-4 py-3 lg:col-span-2">
             <input v-model="dvrEnabled" type="checkbox" class="h-4 w-4 accent-red-600" />
               <span>
-              <span class="block text-sm font-black text-white">{{ t('goLive.dvrRecording') }}</span>
+              <span class="block text-sm font-semibold text-white">{{ t('goLive.dvrRecording') }}</span>
               <span class="block text-xs text-gray-400">{{ t('goLive.dvrHelper') }}</span>
             </span>
           </label>
-          <label class="flex items-center gap-3 rounded-2xl border border-zinc-800 bg-black/30 px-4 py-3 lg:col-span-2">
+          <label class="flex items-center gap-3 rounded-2xl border border-white/[0.07] bg-black/30 px-4 py-3 lg:col-span-2">
             <input v-model="adaptiveTranscodingEnabled" type="checkbox" class="h-4 w-4 accent-red-600" />
             <span>
-              <span class="block text-sm font-black text-white">{{ t('goLive.adaptiveTranscoding') }}</span>
+              <span class="block text-sm font-semibold text-white">{{ t('goLive.adaptiveTranscoding') }}</span>
               <span class="block text-xs text-gray-400">{{ t('goLive.adaptiveTranscodingHelper') }}</span>
             </span>
           </label>
 		  <label class="block lg:col-span-2">
 			<span class="mb-2 block text-sm font-semibold text-gray-300">Scheduled start (optional)</span>
-			<input v-model="scheduledFor" type="datetime-local" class="w-full rounded-2xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-white outline-none transition focus:border-red-500" />
+			<input v-model="scheduledFor" type="datetime-local" class="w-full rounded-2xl border border-white/10 bg-zinc-900 px-4 py-3 text-white outline-none transition focus:border-white/30" />
 		  </label>
-		  <div class="grid gap-3 rounded-2xl border border-zinc-800 bg-black/30 p-4 lg:col-span-2 sm:grid-cols-[12rem_minmax(0,1fr)] sm:items-center">
+		  <div class="grid gap-3 rounded-2xl border border-white/[0.07] bg-black/30 p-4 lg:col-span-2 sm:grid-cols-[12rem_minmax(0,1fr)] sm:items-center">
 			<div class="aspect-video overflow-hidden rounded-xl bg-zinc-900">
 			  <img v-if="live?.thumbnail_url" :src="resolveMediaUrl(live.thumbnail_url)" alt="Live stream thumbnail" class="h-full w-full object-cover" />
 			  <div v-else class="flex h-full items-center justify-center text-xs text-zinc-500">No custom thumbnail</div>
 			</div>
 			<div>
-			  <p class="text-sm font-black text-white">Live stream thumbnail</p>
+			  <p class="text-sm font-semibold text-white">Live stream thumbnail</p>
 			  <p class="mt-1 text-xs text-zinc-400">Shown on featured banners, live listings, and notifications. A 16:9 image works best.</p>
 			  <div class="mt-3 flex flex-wrap gap-2">
 				<label class="cursor-pointer rounded-lg bg-zinc-700 px-3 py-2 text-xs font-bold hover:bg-zinc-600">
@@ -91,7 +90,7 @@
             <button
               type="button"
               :disabled="savingSettings || !selectedChannelId"
-              class="w-full rounded-2xl bg-blue-600 px-4 py-3 text-sm font-black text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
+              class="w-full rounded-2xl bg-zinc-100 px-4 py-3 text-sm font-semibold text-zinc-950 transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-50"
               @click="saveSettings"
             >
               {{ savingSettings ? t('goLive.saving') : t('goLive.saveSettings') }}
@@ -131,10 +130,10 @@
               class="absolute inset-0 z-40 flex items-center justify-center bg-black/72 p-6 text-center backdrop-blur-sm lg:hidden"
             >
               <div class="max-w-sm rounded-3xl border border-white/15 bg-zinc-950/90 p-5 shadow-2xl">
-                <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl border border-red-300/25 bg-red-500/15 text-xs font-black uppercase tracking-[0.18em] text-red-100">
+                <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl border border-red-300/25 bg-red-500/15 text-xs font-medium text-red-100">
                   {{ t('goLive.rotate') }}
                 </div>
-                <h2 class="mt-4 text-2xl font-black">{{ t('goLive.turnPhoneSideways') }}</h2>
+                <h2 class="mt-4 text-2xl font-semibold">{{ t('goLive.turnPhoneSideways') }}</h2>
                 <p class="mt-2 text-sm text-zinc-300">
                   {{ t('goLive.landscapeRequired') }}
                 </p>
@@ -143,16 +142,16 @@
 
             <div v-if="!localStream" class="absolute inset-0 flex flex-col items-center justify-center bg-[radial-gradient(circle_at_center,_rgba(239,68,68,0.18),_rgba(0,0,0,0.92)_55%)] p-6 text-center">
               <div class="rounded-full border border-white/15 bg-white/10 px-4 py-2 text-sm font-semibold text-white/80">{{ t('goLive.cameraPreview') }}</div>
-              <h2 class="mt-5 text-3xl font-black">{{ t('goLive.startFromBrowser') }}</h2>
+              <h2 class="mt-5 text-3xl font-semibold">{{ t('goLive.startFromBrowser') }}</h2>
               <p class="mt-2 max-w-md text-sm text-gray-300">{{ t('goLive.browserLiveHelper') }}</p>
-              <button type="button" class="mt-6 rounded-full bg-red-600 px-6 py-3 font-bold shadow-lg shadow-red-950/50 transition hover:bg-red-500" @click="startPreview">
+              <button type="button" class="mt-6 rounded-full bg-zinc-100 px-6 py-3 font-bold shadow-lg transition hover:bg-white text-zinc-950" @click="startPreview">
                 {{ t('goLive.enableCamera') }}
               </button>
             </div>
 
             <button
               type="button"
-              class="mobile-live-back-button absolute left-4 top-4 z-50 rounded-full border border-white/15 bg-black/55 px-4 py-2 text-sm font-black text-white shadow-lg backdrop-blur transition hover:bg-white/15 lg:hidden"
+              class="mobile-live-back-button absolute left-4 top-4 z-50 rounded-full border border-white/15 bg-black/55 px-4 py-2 text-sm font-semibold text-white shadow-lg backdrop-blur transition hover:bg-white/15 lg:hidden"
               :aria-label="t('goLive.back')"
               :title="t('goLive.back')"
               @click="leaveInAppStreamer"
@@ -170,7 +169,7 @@
               <span v-if="localStream" class="rounded-full border border-white/15 bg-black/55 px-3 py-1 text-xs font-bold backdrop-blur">
                 {{ t('goLive.dragToFrame') }}
               </span>
-              <span v-if="inAppPublishing" class="rounded-full bg-red-600 px-3 py-1 text-xs font-black uppercase tracking-widest shadow-lg shadow-red-950/50">
+              <span v-if="inAppPublishing" class="rounded-full bg-red-600 px-3 py-1 text-xs font-medium shadow-lg shadow-red-950/50">
                 {{ t('goLive.live') }}
               </span>
             </div>
@@ -271,44 +270,44 @@
                 <div v-if="streamSettingsOpen" class="mt-3 max-h-[68dvh] overflow-y-auto overscroll-contain rounded-2xl border border-white/10 bg-black/55 p-3 backdrop-blur">
                   <div class="mb-4 grid gap-3 border-b border-white/10 pb-4 lg:hidden">
                     <label class="block">
-                      <span class="mb-1 block text-xs font-bold uppercase tracking-[0.18em] text-gray-400">{{ t('goLive.channel') }}</span>
+                      <span class="mb-1 block text-xs font-medium text-gray-400">{{ t('goLive.channel') }}</span>
                       <select
                         v-model="selectedChannelId"
-                        class="w-full rounded-xl border border-white/10 bg-black/70 px-3 py-2 text-sm text-white outline-none focus:border-red-400"
+                        class="w-full rounded-xl border border-white/10 bg-black/70 px-3 py-2 text-sm text-white outline-none focus:border-white/30"
                       >
                         <option disabled value="">{{ t('goLive.selectChannel') }}</option>
                         <option v-for="ch in channels" :key="ch.id" :value="ch.id">{{ ch.name }}</option>
                       </select>
                     </label>
                     <label class="block">
-                      <span class="mb-1 block text-xs font-bold uppercase tracking-[0.18em] text-gray-400">{{ t('goLive.liveTitle') }}</span>
+                      <span class="mb-1 block text-xs font-medium text-gray-400">{{ t('goLive.liveTitle') }}</span>
                       <input
                         v-model="title"
                         type="text"
                         maxlength="120"
-                        class="w-full rounded-xl border border-white/10 bg-black/70 px-3 py-2 text-sm text-white outline-none focus:border-red-400"
+                        class="w-full rounded-xl border border-white/10 bg-black/70 px-3 py-2 text-sm text-white outline-none focus:border-white/30"
                       />
                     </label>
                     <label class="block">
-                      <span class="mb-1 block text-xs font-bold uppercase tracking-[0.18em] text-gray-400">{{ t('goLive.description') }}</span>
+                      <span class="mb-1 block text-xs font-medium text-gray-400">{{ t('goLive.description') }}</span>
                       <textarea
                         v-model="description"
                         rows="2"
                         maxlength="400"
-                        class="w-full resize-none rounded-xl border border-white/10 bg-black/70 px-3 py-2 text-sm text-white outline-none focus:border-red-400"
+                        class="w-full resize-none rounded-xl border border-white/10 bg-black/70 px-3 py-2 text-sm text-white outline-none focus:border-white/30"
                       />
                     </label>
                     <label class="flex items-center gap-3 rounded-xl border border-white/10 bg-black/55 px-3 py-2">
                       <input v-model="dvrEnabled" type="checkbox" class="h-4 w-4 accent-red-500" />
                       <span>
-                        <span class="block text-sm font-black text-white">{{ t('goLive.dvrRecording') }}</span>
+                        <span class="block text-sm font-semibold text-white">{{ t('goLive.dvrRecording') }}</span>
                         <span class="block text-xs text-gray-400">{{ t('goLive.dvrShortHelper') }}</span>
                       </span>
                     </label>
                     <label class="flex items-center gap-3 rounded-xl border border-white/10 bg-black/55 px-3 py-2">
                       <input v-model="adaptiveTranscodingEnabled" type="checkbox" class="h-4 w-4 accent-red-500" />
                       <span>
-                        <span class="block text-sm font-black text-white">{{ t('goLive.adaptiveTranscoding') }}</span>
+                        <span class="block text-sm font-semibold text-white">{{ t('goLive.adaptiveTranscoding') }}</span>
                         <span class="block text-xs text-gray-400">{{ t('goLive.adaptiveTranscodingShortHelper') }}</span>
                       </span>
                     </label>
@@ -319,7 +318,7 @@
                       <button
                         type="button"
                         :disabled="savingSettings || !selectedChannelId"
-                        class="ml-auto rounded-full bg-white px-4 py-2 text-xs font-black text-black transition hover:bg-zinc-200 disabled:opacity-40"
+                        class="ml-auto rounded-full bg-white px-4 py-2 text-xs font-semibold text-black transition hover:bg-zinc-200 disabled:opacity-40"
                         @click="saveSettings"
                       >
                         {{ savingSettings ? t('goLive.saving') : t('goLive.saveSettings') }}
@@ -327,7 +326,7 @@
                     </div>
                   </div>
                   <div class="mb-3 flex flex-wrap items-center gap-2">
-                    <span class="text-xs font-bold uppercase tracking-[0.22em] text-gray-400">{{ t('goLive.orientation') }}</span>
+                    <span class="text-xs font-medium text-gray-400">{{ t('goLive.orientation') }}</span>
                     <button
                       type="button"
                       :disabled="inAppPublishing"
@@ -361,8 +360,8 @@
                 </div>
 
                 <form v-if="inAppPublishing" class="mt-3 flex gap-2 lg:hidden" @submit.prevent="sendChatMessage">
-                  <input v-model="chatInput" maxlength="500" :placeholder="t('goLive.replyToChat')" class="min-w-0 flex-1 rounded-full border border-white/10 bg-black/60 px-4 py-2 text-sm outline-none backdrop-blur focus:border-red-400" />
-                  <button type="submit" :disabled="chatSending || !canSendChat" class="rounded-full bg-white px-4 py-2 text-sm font-black text-black disabled:opacity-40">{{ t('live.send') }}</button>
+                  <input v-model="chatInput" maxlength="500" :placeholder="t('goLive.replyToChat')" class="min-w-0 flex-1 rounded-full border border-white/10 bg-black/60 px-4 py-2 text-sm outline-none backdrop-blur focus:border-white/30" />
+                  <button type="submit" :disabled="chatSending || !canSendChat" class="rounded-full bg-white px-4 py-2 text-sm font-semibold text-black disabled:opacity-40">{{ t('live.send') }}</button>
                 </form>
                 <p v-if="chatError" class="mt-2 rounded-full bg-red-950/70 px-3 py-1 text-xs font-semibold text-red-100 lg:hidden">{{ chatError }}</p>
               </div>
@@ -371,7 +370,7 @@
 
           <aside class="hidden min-h-0 flex-col overflow-hidden rounded-[2rem] border border-white/10 bg-zinc-950/90 shadow-2xl lg:flex">
             <div class="border-b border-white/10 p-4">
-              <p class="text-lg font-black">{{ t('live.liveChat') }}</p>
+              <p class="text-lg font-semibold">{{ t('live.liveChat') }}</p>
               <p class="text-sm text-gray-400">{{ t('goLive.chatHelper') }}</p>
             </div>
             <div ref="chatListRef" class="min-h-0 flex-1 space-y-3 overflow-y-auto p-4">
@@ -384,8 +383,8 @@
             </div>
             <form class="border-t border-white/10 p-4" @submit.prevent="sendChatMessage">
               <div class="flex gap-2">
-                <input v-model="chatInput" maxlength="500" :placeholder="t('goLive.replyToChat')" class="min-w-0 flex-1 rounded-full border border-zinc-700 bg-zinc-900 px-4 py-2 text-sm outline-none focus:border-red-500" />
-                <button type="submit" :disabled="chatSending || !canSendChat" class="rounded-full bg-red-600 px-4 py-2 text-sm font-black disabled:opacity-40">{{ t('live.send') }}</button>
+                <input v-model="chatInput" maxlength="500" :placeholder="t('goLive.replyToChat')" class="min-w-0 flex-1 rounded-full border border-white/10 bg-zinc-900 px-4 py-2 text-sm outline-none focus:border-white/30" />
+                <button type="submit" :disabled="chatSending || !canSendChat" class="rounded-full bg-zinc-100 px-4 py-2 text-sm font-semibold disabled:opacity-40 text-zinc-950">{{ t('live.send') }}</button>
               </div>
               <p v-if="chatError" class="mt-2 text-xs text-red-400">{{ chatError }}</p>
             </form>
@@ -394,26 +393,26 @@
 
         <section v-else class="mx-auto w-full max-w-4xl space-y-5 rounded-3xl border border-white/10 bg-zinc-950/80 p-5 shadow-2xl">
           <div class="grid gap-3 md:grid-cols-2">
-            <div class="rounded-2xl border border-zinc-800 bg-zinc-900 p-4">
-              <p class="text-xs text-gray-400 uppercase tracking-wide">{{ t('goLive.started') }}</p>
+            <div class="rounded-2xl border border-white/[0.07] bg-zinc-900 p-4">
+              <p class="text-xs text-gray-400">{{ t('goLive.started') }}</p>
               <p class="mt-1 text-sm text-gray-200">{{ live?.started_at ? formatDate(live.started_at) : t('goLive.notLive') }}</p>
             </div>
-            <div class="rounded-2xl border border-zinc-800 bg-zinc-900 p-4">
-              <p class="text-xs text-gray-400 uppercase tracking-wide">{{ t('goLive.publisherPresence') }}</p>
+            <div class="rounded-2xl border border-white/[0.07] bg-zinc-900 p-4">
+              <p class="text-xs text-gray-400">{{ t('goLive.publisherPresence') }}</p>
               <label class="mt-2 inline-flex items-center gap-2">
                 <input v-model="publisherPresenceEnabled" type="checkbox" :disabled="savingPublisherPresence" class="h-4 w-4 accent-red-600" @change="updatePublisherPresence" />
                 <span class="text-sm">{{ t('goLive.enabled') }}</span>
               </label>
             </div>
-            <div class="rounded-2xl border border-zinc-800 bg-zinc-900 p-4">
-              <p class="text-xs text-gray-400 uppercase tracking-wide">{{ t('goLive.dvrRecording') }}</p>
+            <div class="rounded-2xl border border-white/[0.07] bg-zinc-900 p-4">
+              <p class="text-xs text-gray-400">{{ t('goLive.dvrRecording') }}</p>
               <label class="mt-2 inline-flex items-center gap-2">
                 <input v-model="dvrEnabled" type="checkbox" class="h-4 w-4 accent-red-600" />
                 <span class="text-sm">{{ t('goLive.saveLiveAsVideo') }}</span>
               </label>
             </div>
-            <div class="rounded-2xl border border-zinc-800 bg-zinc-900 p-4">
-              <p class="text-xs text-gray-400 uppercase tracking-wide">{{ t('goLive.adaptiveTranscoding') }}</p>
+            <div class="rounded-2xl border border-white/[0.07] bg-zinc-900 p-4">
+              <p class="text-xs text-gray-400">{{ t('goLive.adaptiveTranscoding') }}</p>
               <label class="mt-2 inline-flex items-center gap-2">
                 <input v-model="adaptiveTranscodingEnabled" type="checkbox" class="h-4 w-4 accent-red-600" />
                 <span class="text-sm">{{ t('goLive.adaptiveTranscodingShortHelper') }}</span>
@@ -421,49 +420,49 @@
             </div>
           </div>
 
-          <div class="rounded-2xl border border-zinc-800 bg-zinc-900 p-4 space-y-4">
+          <div class="rounded-2xl border border-white/[0.07] bg-zinc-900 p-4 space-y-4">
             <div>
-              <p class="text-xs text-gray-400 uppercase tracking-wide">{{ t('goLive.publicIngestUrl') }}</p>
+              <p class="text-xs text-gray-400">{{ t('goLive.publicIngestUrl') }}</p>
               <p class="mt-1 break-all text-sm">{{ live?.ingest_url || '-' }}</p>
             </div>
             <div>
-              <p class="text-xs text-gray-400 uppercase tracking-wide">{{ t('goLive.streamKey') }}</p>
+              <p class="text-xs text-gray-400">{{ t('goLive.streamKey') }}</p>
               <div class="mt-1 flex flex-wrap items-center gap-2">
-                <input :type="showStreamKey ? 'text' : 'password'" :value="live?.stream_key || ''" readonly class="min-w-0 flex-1 rounded bg-black/40 border border-zinc-700 px-3 py-2 text-sm" />
+                <input :type="showStreamKey ? 'text' : 'password'" :value="live?.stream_key || ''" readonly class="min-w-0 flex-1 rounded bg-black/40 border border-white/10 px-3 py-2 text-sm" />
                 <button type="button" class="rounded bg-zinc-700 px-3 py-2 text-xs font-bold transition hover:bg-zinc-600" @click="showStreamKey = !showStreamKey">{{ showStreamKey ? t('goLive.hide') : t('goLive.show') }}</button>
                 <button type="button" class="rounded bg-zinc-700 px-3 py-2 text-xs font-bold transition hover:bg-zinc-600" @click="copyValue(live?.stream_key || '')">{{ t('goLive.copy') }}</button>
               </div>
             </div>
             <div v-if="live?.ingest_url_lan">
-              <p class="text-xs text-gray-400 uppercase tracking-wide">{{ t('goLive.lanIngestUrl') }}</p>
+              <p class="text-xs text-gray-400">{{ t('goLive.lanIngestUrl') }}</p>
               <div class="mt-1 flex gap-2">
-                <input type="text" :value="live?.ingest_url_lan || ''" readonly class="min-w-0 flex-1 rounded bg-black/40 border border-zinc-700 px-3 py-2 text-sm" />
+                <input type="text" :value="live?.ingest_url_lan || ''" readonly class="min-w-0 flex-1 rounded bg-black/40 border border-white/10 px-3 py-2 text-sm" />
                 <button type="button" class="rounded bg-zinc-700 px-3 py-2 text-xs font-bold transition hover:bg-zinc-600" @click="copyValue(live?.ingest_url_lan || '')">{{ t('goLive.copy') }}</button>
               </div>
             </div>
             <div>
-              <p class="text-xs text-gray-400 uppercase tracking-wide">{{ t('goLive.playbackUrl') }}</p>
+              <p class="text-xs text-gray-400">{{ t('goLive.playbackUrl') }}</p>
               <div class="mt-1 flex gap-2">
-                <input type="text" :value="live?.playback_url || ''" readonly class="min-w-0 flex-1 rounded bg-black/40 border border-zinc-700 px-3 py-2 text-sm" />
+                <input type="text" :value="live?.playback_url || ''" readonly class="min-w-0 flex-1 rounded bg-black/40 border border-white/10 px-3 py-2 text-sm" />
                 <button type="button" class="rounded bg-zinc-700 px-3 py-2 text-xs font-bold transition hover:bg-zinc-600" @click="copyValue(live?.playback_url || '')">{{ t('goLive.copy') }}</button>
               </div>
             </div>
           </div>
 
           <div class="flex flex-wrap gap-2">
-            <button type="button" :disabled="savingSettings || !selectedChannelId" class="rounded-full bg-blue-600 px-4 py-2 font-bold transition hover:bg-blue-500 disabled:opacity-50" @click="saveSettings">
+            <button type="button" :disabled="savingSettings || !selectedChannelId" class="rounded-full bg-zinc-100 px-4 py-2 font-bold transition hover:bg-white disabled:opacity-50 text-zinc-950" @click="saveSettings">
               {{ savingSettings ? t('goLive.saving') : t('goLive.saveSettings') }}
             </button>
-            <button type="button" :disabled="saving || !selectedChannelId" class="rounded-full bg-green-600 px-4 py-2 font-bold transition hover:bg-green-500 disabled:opacity-50" @click="startStream">
+            <button type="button" :disabled="saving || !selectedChannelId" class="rounded-full bg-zinc-100 px-4 py-2 font-bold transition hover:bg-white disabled:opacity-50 text-zinc-950" @click="startStream">
               {{ saving && pendingAction === 'start' ? t('goLive.starting') : t('goLive.goLive') }}
             </button>
             <button type="button" :disabled="saving || !selectedChannelId" class="rounded-full bg-zinc-700 px-4 py-2 font-bold transition hover:bg-zinc-600 disabled:opacity-50" @click="stopStream">
               {{ saving && pendingAction === 'stop' ? t('goLive.stopping') : t('goLive.endStream') }}
             </button>
-            <button type="button" :disabled="saving || !selectedChannelId" class="rounded-full bg-red-600 px-4 py-2 font-bold transition hover:bg-red-500 disabled:opacity-50" @click="rotateKey">
+            <button type="button" :disabled="saving || !selectedChannelId" class="rounded-full bg-zinc-100 px-4 py-2 font-bold transition hover:bg-white disabled:opacity-50 text-zinc-950" @click="rotateKey">
               {{ saving && pendingAction === 'rotate' ? t('goLive.rotating') : t('goLive.rotateStreamKey') }}
             </button>
-            <NuxtLink v-if="selectedChannelId" :to="localePath(`/live/${selectedChannelId}`)" class="rounded-full bg-blue-600 px-4 py-2 font-bold transition hover:bg-blue-500">
+            <NuxtLink v-if="selectedChannelId" :to="localePath(`/live/${selectedChannelId}`)" class="rounded-full bg-zinc-100 px-4 py-2 font-bold transition hover:bg-white text-zinc-950">
               {{ t('goLive.openWatchPage') }}
             </NuxtLink>
             <button v-if="selectedChannelId" type="button" class="rounded-full bg-zinc-700 px-4 py-2 font-bold transition hover:bg-zinc-600" @click="openChatPopup">
@@ -584,7 +583,7 @@ const tabButtonClass = (active: boolean) => [
 
 const orientationButtonClass = (active: boolean) => [
   'rounded-full px-3 py-1.5 text-xs font-black transition',
-  active ? 'bg-red-600 text-white shadow shadow-red-950/40' : 'bg-white/10 text-gray-200 hover:bg-white/20'
+  active ? 'bg-zinc-100 text-zinc-950 shadow' : 'bg-white/10 text-gray-200 hover:bg-white/20'
 ]
 
 const clampFrame = (value: number) => Math.min(100, Math.max(0, value))

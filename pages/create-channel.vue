@@ -1,11 +1,11 @@
 <template>
   <div class="fixed inset-0 overflow-y-auto bg-zinc-950 p-6 text-white">
     <div class="max-w-2xl mx-auto">
-      <h1 class="text-4xl font-bold mb-8">{{ t('createChannelPage.title') }}</h1>
+      <h1 class="mb-8 text-2xl font-semibold tracking-tight">{{ t('createChannelPage.title') }}</h1>
 
       <div v-if="!isLoggedIn" class="bg-red-900 text-white p-4 rounded mb-6">
         <p>{{ t('createChannelPage.loginRequired') }}</p>
-        <NuxtLink :to="localePath('/login')" class="text-blue-400 hover:underline">{{ t('createChannelPage.goToLogin') }}</NuxtLink>
+        <NuxtLink :to="localePath('/login')" class="text-zinc-200 hover:underline">{{ t('createChannelPage.goToLogin') }}</NuxtLink>
       </div>
 
       <form v-else @submit.prevent="handleCreateChannel" class="space-y-6">
@@ -17,7 +17,7 @@
             type="text"
             :placeholder="t('createChannelPage.channelNamePlaceholder')"
             required
-            class="w-full bg-zinc-900 border border-zinc-700 rounded px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
+            class="w-full bg-zinc-900 border border-white/10 rounded px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-white/30"
           />
         </div>
 
@@ -28,7 +28,7 @@
             v-model="form.description"
             :placeholder="t('createChannelPage.descriptionPlaceholder')"
             rows="5"
-            class="w-full bg-zinc-900 border border-zinc-700 rounded px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
+            class="w-full bg-zinc-900 border border-white/10 rounded px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-white/30"
           />
         </div>
 
@@ -39,12 +39,12 @@
             type="file"
             accept="image/*"
             @change="onAvatarSelected"
-            class="w-full bg-zinc-900 border border-zinc-700 rounded px-4 py-2 text-white"
+            class="w-full bg-zinc-900 border border-white/10 rounded px-4 py-2 text-white"
           />
           <p class="text-xs text-gray-400 mt-1">{{ t('createChannelPage.avatarHelper') }}</p>
           <!-- Avatar Preview -->
           <div v-if="avatarPreview" class="mt-3 flex items-center gap-3">
-            <img :src="avatarPreview" :alt="t('common.avatarPreview')" class="w-12 h-12 rounded-full object-cover border border-zinc-700" />
+            <img :src="avatarPreview" :alt="t('common.avatarPreview')" class="w-12 h-12 rounded-full object-cover border border-white/10" />
             <button
               type="button"
               @click="clearAvatar"
@@ -62,11 +62,11 @@
             type="file"
             accept="image/*"
             @change="onBackgroundSelected"
-            class="w-full bg-zinc-900 border border-zinc-700 rounded px-4 py-2 text-white"
+            class="w-full bg-zinc-900 border border-white/10 rounded px-4 py-2 text-white"
           />
           <p class="text-xs text-gray-400 mt-1">{{ t('createChannelPage.backgroundHelper') }}</p>
           <div v-if="backgroundPreview" class="mt-3 space-y-2">
-            <div class="relative h-32 overflow-hidden rounded-lg border border-zinc-700 bg-zinc-800">
+            <div class="relative h-32 overflow-hidden rounded-lg border border-white/10 bg-zinc-800">
               <img :src="backgroundPreview" :alt="t('common.backgroundPreview')" class="h-full w-full object-cover" />
               <div class="absolute inset-0 bg-black/55" />
             </div>
@@ -95,7 +95,7 @@
           <button
             type="submit"
             :disabled="isCreating"
-            class="px-6 py-2 bg-red-600 hover:bg-red-700 rounded font-medium transition disabled:opacity-50 disabled:cursor-not-allowed"
+            class="px-6 py-2 bg-zinc-100 hover:bg-white rounded font-medium transition disabled:opacity-50 disabled:cursor-not-allowed text-zinc-950"
           >
             {{ isCreating ? t('createChannelPage.creating') : t('createChannelPage.submit') }}
           </button>

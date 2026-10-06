@@ -17,7 +17,7 @@
 
   <div
     v-else
-    class="min-h-screen bg-black text-white flex flex-col lg:flex-row p-3 gap-4 sm:p-4 lg:p-4 lg:gap-5"
+    class="mx-auto flex min-h-screen w-full max-w-[112rem] flex-col gap-5 bg-zinc-950 p-3 text-white sm:p-4 lg:flex-row lg:gap-6 lg:px-6 lg:py-5"
     :class="{ 'mobile-watch-layout': isMobileWatchDevice }"
   >
     
@@ -44,6 +44,8 @@
           :clip-mode="isClipMode"
           :clip-start-seconds="clipPlaybackStart"
           :clip-end-seconds="clipPlaybackEnd"
+          :content-rating="playingContentRating"
+          :content-warning="playingContentWarning"
           @play="onVideoPlay"
           @progress="handleWatchProgress"
           @seeked="handleWatchSeeked"
@@ -68,68 +70,61 @@
       <!-- Video Info -->
       <div v-if="video" class="mt-3">
         <!-- Processing Message -->
-        <div v-if="video.status === 'processing'" class="bg-yellow-900 border border-yellow-700 text-yellow-200 px-4 py-3 rounded-lg mb-4">
+        <div v-if="video.status === 'processing'" class="mb-4 rounded-xl border border-amber-400/20 bg-amber-400/10 px-4 py-3 text-amber-100">
           <p class="font-semibold">{{ t('video.videoProcessing') }}</p>
           <p class="text-sm mt-1">{{ t('video.processingMessage') }}</p>
         </div>
 
-        <h1 class="text-2xl font-bold">{{ watchDisplayTitle }}</h1>
+        <h1 class="text-xl font-semibold leading-snug text-zinc-50 sm:text-[1.375rem]">{{ watchDisplayTitle }}</h1>
 
+        <p class="mt-1.5 text-sm text-zinc-400">
+          {{ formatViews(video.views) }} {{ t('video.views') }} · {{ getTimeAgo(video.created_at) }}
+        </p>
         <!-- Badges Container - Horizontally Scrollable -->
-        <div v-if="video.explicit || is4K || is8K || isPlayingHDR || (video.categories && video.categories.length > 0)" class="mt-3 flex gap-2 overflow-x-auto pb-2">
+        <div v-if="video.explicit || is4K || is8K || isPlayingHDR || (video.categories && video.categories.length > 0)" class="mt-3 flex gap-1.5 overflow-x-auto pb-1">
           <!-- Explicit Content Warning Badge -->
-          <div v-if="video.explicit" class="inline-flex flex-shrink-0 items-center gap-2 bg-red-900 text-red-200 px-3 py-1.5 rounded-full border border-red-700">
-            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+          <div v-if="video.explicit" class="watch-chip watch-chip--warn">
+            <svg class="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 20 20">
               <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
             </svg>
-            <span class="text-xs font-semibold whitespace-nowrap">{{ t('video.explicitBadge') }}</span>
+            <span>{{ t('video.explicitBadge') }}</span>
           </div>
           <!-- 8K Badge -->
-          <div v-if="is8K" class="inline-flex flex-shrink-0 items-center gap-2 bg-green-900 text-green-200 px-3 py-1.5 rounded-full border border-green-700">
-            <span class="text-xs font-semibold whitespace-nowrap">{{ t('video.eightKBadge') }}</span>
-          </div>
+          <span v-if="is8K" class="watch-chip watch-chip--strong">{{ t('video.eightKBadge') }}</span>
           <!-- 4K Badge -->
-          <div v-if="is4K" class="inline-flex flex-shrink-0 items-center gap-2 bg-green-900 text-green-200 px-3 py-1.5 rounded-full border border-green-700">
-            <span class="text-xs font-semibold whitespace-nowrap">{{ t('video.fourKBadge') }}</span>
-          </div>
+          <span v-if="is4K" class="watch-chip watch-chip--strong">{{ t('video.fourKBadge') }}</span>
           <!-- HDR Badge: only while the HDR ladder is actually playing -->
-          <div v-if="isPlayingHDR" class="inline-flex flex-shrink-0 items-center gap-2 bg-yellow-900 text-yellow-200 px-3 py-1.5 rounded-full border border-yellow-700">
-            <span class="text-xs font-semibold whitespace-nowrap">{{ t('video.hdrBadge') }}</span>
-          </div>
+          <span v-if="isPlayingHDR" class="watch-chip watch-chip--hdr">{{ t('video.hdrBadge') }}</span>
 
           <!-- Category Badges -->
           <NuxtLink
             v-for="category in video.categories"
             :key="category.id"
             :to="localePath(`/category/${category.slug}`)"
-            class="inline-flex flex-shrink-0 items-center px-3 py-1.5 bg-blue-900 hover:bg-blue-800 text-blue-200 rounded-full text-xs font-semibold transition border border-blue-700 whitespace-nowrap"
+            class="watch-chip watch-chip--link"
           >
             {{ category.name }}
           </NuxtLink>
         </div>
         
         <!-- Views and Date -->
-        <div class="flex gap-4 text-sm text-gray-400 mt-3">
-          <span>{{ formatViews(video.views) }} {{ t('video.views') }}</span>
-          <span>{{ getTimeAgo(video.created_at) }}</span>
-        </div>
-        <div v-if="video.clip" class="mt-3 rounded-lg border border-red-500/30 bg-red-950/30 p-3 text-sm text-red-100">
+        <div v-if="video.clip" class="mt-3 rounded-xl bg-white/[0.04] p-3 text-sm text-zinc-200">
           <p class="font-semibold">Clipped by {{ clipAttributionName }}</p>
-          <NuxtLink :to="originalVideoLink" class="mt-1 inline-flex text-red-200 underline-offset-4 hover:underline">
+          <NuxtLink :to="originalVideoLink" class="mt-1 inline-flex text-zinc-400 underline-offset-4 hover:text-white hover:underline">
             Go to original video: {{ video.clip.original_video_title || "Original video" }}
           </NuxtLink>
         </div>
 
         <div class="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <NuxtLink :to="localePath(`/channel/${video.channel?.id}`)" class="flex min-w-0 items-center gap-4 rounded-lg p-1 transition hover:bg-zinc-800 sm:pr-4">
+          <NuxtLink :to="localePath(`/channel/${video.channel?.id}`)" class="group flex min-w-0 items-center gap-3">
             <AvatarFallback
               :src="video.channel?.avatar_url"
               :name="video.channel?.name || 'Channel'"
-              class="h-9 w-9 shrink-0 text-xs"
+              class="h-10 w-10 shrink-0 text-xs"
             />
             <div class="min-w-0">
               <div class="flex items-center gap-2">
-                <p class="truncate text-sm font-medium text-gray-100">{{ video.channel.name }}</p>
+                <p class="truncate text-[15px] font-semibold text-zinc-100 group-hover:text-white">{{ video.channel.name }}</p>
                 <VerifiedBadge :verified="video.channel?.verified || false" size="md" />
               </div>
             </div>
@@ -141,20 +136,23 @@
               @click="toggleLike"
               :disabled="!isLoggedIn || isToggglingLike"
               :class="{
-                'bg-red-600 hover:bg-red-700': isLiked,
-                'bg-zinc-700 hover:bg-zinc-600': !isLiked,
-                'opacity-50 cursor-not-allowed': !isLoggedIn || isToggglingLike
+                'is-active': isLiked,
+                'cursor-not-allowed opacity-50': !isLoggedIn || isToggglingLike
               }"
-              class="watch-action-button flex items-center gap-2 px-4 py-2 rounded-lg transition text-sm font-medium"
+              class="watch-action-button watch-pill"
+              :aria-pressed="isLiked"
+              :aria-label="t('video.like')"
             >
-              <span>{{ isLiked ? '❤️' : '🤍' }}</span>
+              <svg class="h-[18px] w-[18px]" viewBox="0 0 24 24" :fill="isLiked ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.49-2.1-4.5-4.69-4.5-1.94 0-3.6 1.13-4.31 2.73-.72-1.6-2.38-2.73-4.31-2.73C5.1 3.75 3 5.76 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
+              </svg>
               <span>{{ likes }}</span>
             </button>
 
             <button
               v-if="isLoggedIn && canCreateClip"
               @click="startClipMode"
-              class="watch-action-button flex items-center gap-2 px-4 py-2 rounded-lg transition text-sm font-medium bg-zinc-700 hover:bg-zinc-600"
+              class="watch-action-button watch-pill"
               :title="t('video.clip.create')"
             >
               <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -170,16 +168,16 @@
             <button
               v-if="isLoggedIn"
               @click="showAddToPlaylist = true"
-              class="watch-action-button flex items-center gap-2 px-4 py-2 rounded-lg transition text-sm font-medium bg-zinc-700 hover:bg-zinc-600"
+              class="watch-action-button watch-pill"
               :title="t('video.addPlaylist')"
             >
-              <span class="text-lg font-bold">+</span>
+              <svg class="h-[18px] w-[18px]" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6h10.5M3.75 10.5h10.5M3.75 15h6.75M17.25 12v7.5M13.5 15.75H21" /></svg>
               <span>{{ t('playlists.addVideoButton') }}</span>
             </button>
 
             <button
               @click="shareVideo"
-              class="watch-action-button flex items-center gap-2 px-4 py-2 rounded-lg transition text-sm font-medium bg-zinc-700 hover:bg-zinc-600"
+              class="watch-action-button watch-pill"
               :title="t('video.share')"
             >
               <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -194,7 +192,7 @@
               v-if="isClipVideo && (video.status === 'ready' || video.status === 'published')"
               @click="downloadCurrentVideo"
               :disabled="isDownloadingVideo"
-              class="watch-action-button flex items-center gap-2 px-4 py-2 rounded-lg transition text-sm font-medium bg-zinc-700 hover:bg-zinc-600 disabled:cursor-not-allowed disabled:opacity-60"
+              class="watch-action-button watch-pill disabled:cursor-not-allowed disabled:opacity-60"
               :title="t('video.download')"
             >
               <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -208,7 +206,7 @@
             <button
               v-if="isLoggedIn && !isClipVideo"
               @click="showWatchPartyDialog = true"
-              class="flex items-center gap-2 px-4 py-2 rounded-lg transition text-sm font-medium bg-red-700 hover:bg-red-600"
+              class="watch-action-button watch-pill"
               :title="t('watchParty.startButton')"
             >
               <span>{{ t('watchParty.startButton') }}</span>
@@ -217,20 +215,20 @@
             <div v-if="hasOverflowActions" class="relative">
               <button
                 type="button"
-                class="watch-action-button flex h-10 w-10 items-center justify-center rounded-lg bg-zinc-700 text-xl font-bold transition hover:bg-zinc-600"
+                class="watch-action-button watch-pill watch-pill--icon"
                 :aria-label="t('video.moreActions')"
                 @click="showVideoActionMenu = !showVideoActionMenu"
               >
-                ⋯
+                <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.6" /><circle cx="12" cy="12" r="1.6" /><circle cx="19" cy="12" r="1.6" /></svg>
               </button>
               <div
                 v-if="showVideoActionMenu"
-                class="absolute right-0 z-30 mt-2 w-64 overflow-hidden rounded-xl border border-zinc-700 bg-zinc-950 shadow-2xl shadow-black/60"
+                class="absolute right-0 z-30 mt-2 w-64 overflow-hidden rounded-xl border border-white/[0.08] bg-zinc-900 p-1 shadow-2xl shadow-black/60"
               >
                 <button
                   v-if="canSuggestIntro"
                   type="button"
-                  class="block w-full px-4 py-3 text-left text-sm text-zinc-100 transition hover:bg-zinc-800"
+                  class="block w-full rounded-lg px-3 py-2.5 text-left text-sm text-zinc-100 transition hover:bg-white/[0.06]"
                   @click="openIntroSuggestionDialog"
                 >
                   {{ t('video.introSuggestion.menu') }}
@@ -242,7 +240,7 @@
 
         <p v-if="downloadStatus" class="mt-2 text-sm text-blue-300">{{ downloadStatus }}</p>
 
-        <div v-if="descriptionBlocks.length" class="watch-description mt-3 rounded-lg border border-zinc-800 bg-zinc-950/70 p-4 text-sm leading-6 text-gray-300">
+        <div v-if="descriptionBlocks.length" class="watch-description mt-4 rounded-xl bg-white/[0.04] p-4 text-sm leading-6 text-zinc-300">
           <div
             class="relative space-y-3"
             :class="{
@@ -273,13 +271,13 @@
 
             <div
               v-if="!isDescriptionExpanded && descriptionIsLong"
-              class="pointer-events-none absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-zinc-950/95 to-transparent"
+              class="pointer-events-none absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-[#1a1a1e] to-transparent"
             />
           </div>
           <button
             v-if="descriptionIsLong"
             type="button"
-            class="mt-3 text-sm font-semibold text-blue-400 transition hover:text-blue-300"
+            class="mt-2 text-sm font-semibold text-zinc-100 transition hover:text-white"
             @click="isDescriptionExpanded = !isDescriptionExpanded"
           >
             {{ isDescriptionExpanded ? t('video.showLess') : t('video.showMore') }}
@@ -356,9 +354,9 @@
           </div>
         </section>
 
-        <section v-if="trailerSeries" class="mt-6 rounded-lg border border-red-500/30 bg-zinc-900 p-4">
+        <section v-if="trailerSeries" class="watch-media-card mt-6">
           <div class="flex flex-col gap-4 sm:flex-row">
-            <div class="w-32 shrink-0 overflow-hidden rounded bg-zinc-800">
+            <div class="w-24 shrink-0 overflow-hidden rounded-lg bg-zinc-800 sm:w-28">
               <img
                 v-bind="responsiveImage(getTrailerSeriesPosterUrl(trailerSeries.poster_url), '128px')"
                 :alt="trailerSeries.title"
@@ -366,13 +364,13 @@
               />
             </div>
             <div class="min-w-0 flex-1">
-              <p class="text-xs font-semibold uppercase tracking-[0.18em] text-red-300">{{ t('watchPage.seriesTrailer') }}</p>
-              <h2 class="mt-1 text-2xl font-bold text-white">{{ trailerSeries.title }}</h2>
-              <p class="mt-2 line-clamp-3 text-sm leading-6 text-gray-300">{{ trailerSeries.synopsis }}</p>
+              <p class="text-xs font-medium text-zinc-400">{{ t('watchPage.seriesTrailer') }}</p>
+              <h2 class="mt-1 text-lg font-semibold text-white">{{ trailerSeries.title }}</h2>
+              <p class="mt-1.5 line-clamp-3 text-sm leading-6 text-zinc-400">{{ trailerSeries.synopsis }}</p>
               <NuxtLink
                 v-if="trailerSeries.first_episode"
                 :to="localePath(`/video/${trailerSeries.first_episode.video_id}?series_id=${trailerSeries.id}&index=0`)"
-                class="mt-4 inline-flex rounded bg-red-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-red-700"
+                class="watch-pill watch-pill--primary mt-4"
               >
                 {{ t('watchPage.watchSeries') }}
               </NuxtLink>
@@ -380,9 +378,9 @@
           </div>
         </section>
 
-        <section v-if="currentSeries && currentSeriesEpisode" class="mt-6 rounded-lg border border-red-500/30 bg-zinc-900 p-4">
+        <section v-if="currentSeries && currentSeriesEpisode" class="watch-media-card mt-6">
           <div class="flex flex-col gap-4 sm:flex-row">
-            <div class="w-32 shrink-0 overflow-hidden rounded bg-zinc-800">
+            <div class="w-24 shrink-0 overflow-hidden rounded-lg bg-zinc-800 sm:w-28">
               <img
                 v-bind="responsiveImage(getTrailerSeriesPosterUrl(currentSeries.poster_url), '128px')"
                 :alt="currentSeries.title"
@@ -390,12 +388,15 @@
               />
             </div>
             <div class="min-w-0 flex-1">
-              <p class="text-xs font-semibold uppercase tracking-[0.18em] text-red-300">{{ currentSeries.title }}</p>
-              <h2 class="mt-1 text-2xl font-bold text-white">{{ currentSeriesEpisode.title }}</h2>
-              <p class="mt-2 line-clamp-3 text-sm leading-6 text-gray-300">{{ currentSeriesEpisode.description }}</p>
+              <p class="flex items-center gap-2 text-xs font-medium text-zinc-400">
+                <span>{{ currentSeries.title }}</span>
+                <span v-if="currentSeries.content_rating?.rating" class="watch-rating-badge">{{ currentSeries.content_rating.rating }}</span>
+              </p>
+              <h2 class="mt-1 text-lg font-semibold text-white">{{ currentSeriesEpisode.title }}</h2>
+              <p class="mt-1.5 line-clamp-3 text-sm leading-6 text-zinc-400">{{ currentSeriesEpisode.description }}</p>
               <NuxtLink
                 :to="localePath(`/category/series?series_id=${currentSeries.id}`)"
-                class="mt-4 inline-flex rounded bg-red-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-red-700"
+                class="watch-pill watch-pill--primary mt-4"
               >
                 {{ t('watchPage.viewSeries') }}
               </NuxtLink>
@@ -403,9 +404,9 @@
           </div>
         </section>
 
-        <section v-if="trailerMovie" class="mt-6 rounded-lg border border-red-500/30 bg-zinc-900 p-4">
+        <section v-if="trailerMovie" class="watch-media-card mt-6">
           <div class="flex flex-col gap-4 sm:flex-row">
-            <div class="w-32 shrink-0 overflow-hidden rounded bg-zinc-800">
+            <div class="w-24 shrink-0 overflow-hidden rounded-lg bg-zinc-800 sm:w-28">
               <img
                 v-bind="responsiveImage(getTrailerSeriesPosterUrl(trailerMovie.poster_url || trailerMovie.backdrop_url), '128px')"
                 :alt="trailerMovie.title"
@@ -413,13 +414,13 @@
               />
             </div>
             <div class="min-w-0 flex-1">
-              <p class="text-xs font-semibold uppercase tracking-[0.18em] text-red-300">{{ t('watchPage.movieTrailer') }}</p>
-              <h2 class="mt-1 text-2xl font-bold text-white">{{ trailerMovie.title }}</h2>
-              <p class="mt-2 line-clamp-3 text-sm leading-6 text-gray-300">{{ trailerMovie.synopsis }}</p>
+              <p class="text-xs font-medium text-zinc-400">{{ t('watchPage.movieTrailer') }}</p>
+              <h2 class="mt-1 text-lg font-semibold text-white">{{ trailerMovie.title }}</h2>
+              <p class="mt-1.5 line-clamp-3 text-sm leading-6 text-zinc-400">{{ trailerMovie.synopsis }}</p>
               <NuxtLink
                 v-if="trailerMovie.video_id"
                 :to="localePath(`/video/${trailerMovie.video_id}?movie_id=${trailerMovie.id}`)"
-                class="mt-4 inline-flex rounded bg-red-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-red-700"
+                class="watch-pill watch-pill--primary mt-4"
               >
                 {{ t('watchPage.watchMovie') }}
               </NuxtLink>
@@ -427,9 +428,9 @@
           </div>
         </section>
 
-        <section v-if="currentMovie" class="mt-6 rounded-lg border border-red-500/30 bg-zinc-900 p-4">
+        <section v-if="currentMovie" class="watch-media-card mt-6">
           <div class="flex flex-col gap-4 sm:flex-row">
-            <div class="w-32 shrink-0 overflow-hidden rounded bg-zinc-800">
+            <div class="w-24 shrink-0 overflow-hidden rounded-lg bg-zinc-800 sm:w-28">
               <img
                 v-bind="responsiveImage(getTrailerSeriesPosterUrl(currentMovie.poster_url || currentMovie.backdrop_url), '128px')"
                 :alt="currentMovie.title"
@@ -437,12 +438,15 @@
               />
             </div>
             <div class="min-w-0 flex-1">
-              <p class="text-xs font-semibold uppercase tracking-[0.18em] text-red-300">{{ t('watchPage.movieLabel') }}</p>
-              <h2 class="mt-1 text-2xl font-bold text-white">{{ currentMovie.title }}</h2>
-              <p class="mt-2 line-clamp-3 text-sm leading-6 text-gray-300">{{ currentMovie.synopsis || video?.description }}</p>
+              <p class="flex items-center gap-2 text-xs font-medium text-zinc-400">
+                <span>{{ t('watchPage.movieLabel') }}</span>
+                <span v-if="currentMovie.content_rating?.rating" class="watch-rating-badge">{{ currentMovie.content_rating.rating }}</span>
+              </p>
+              <h2 class="mt-1 text-lg font-semibold text-white">{{ currentMovie.title }}</h2>
+              <p class="mt-1.5 line-clamp-3 text-sm leading-6 text-zinc-400">{{ currentMovie.synopsis || video?.description }}</p>
               <NuxtLink
                 :to="localePath(`/category/movies?movie_id=${currentMovie.id}`)"
-                class="mt-4 inline-flex rounded bg-red-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-red-700"
+                class="watch-pill watch-pill--primary mt-4"
               >
                 {{ t('watchPage.viewMovie') }}
               </NuxtLink>
@@ -451,19 +455,19 @@
         </section>
       </div>
 
-        <section v-if="clipsOfThisVideo.length" class="mt-6 rounded-lg border border-zinc-800 bg-zinc-950/70 p-4">
+        <section v-if="clipsOfThisVideo.length" class="mt-8">
           <div class="mb-4 flex items-center justify-between gap-3">
-            <h2 class="text-lg font-bold">{{ t('video.clip.clips') }}</h2>
-            <span class="text-xs font-semibold uppercase tracking-[0.18em] text-zinc-500">{{ clipsOfThisVideo.length }} clips</span>
+            <h2 class="text-lg font-semibold">{{ t('video.clip.clips') }}</h2>
+            <span class="text-sm text-zinc-500">{{ clipsOfThisVideo.length }}</span>
           </div>
           <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
             <NuxtLink v-for="clip in clipsOfThisVideo" :key="clip.id" :to="clipVideoLink(clip.id)" class="group min-w-0">
-              <div class="relative aspect-video overflow-hidden rounded-lg bg-zinc-800">
+              <div class="relative aspect-video overflow-hidden rounded-xl bg-zinc-800">
                 <img loading="lazy" decoding="async" v-if="clip.thumbnail_url" v-bind="responsiveImage(resolveMediaUrl(clip.thumbnail_url), '(min-width: 1024px) 16vw, (min-width: 640px) 30vw, 50vw')" :alt="clip.title" class="h-full w-full object-cover transition group-hover:opacity-80" />
                 <div v-else class="flex h-full w-full items-center justify-center text-xs text-zinc-500">{{ t('video.clip.noThumbnail') }}</div>
                 <span class="absolute bottom-2 right-2 rounded bg-black/80 px-1.5 py-0.5 text-[11px] font-bold text-white">{{ formatClipDuration(clip) }}</span>
               </div>
-              <p class="mt-2 line-clamp-2 text-sm font-semibold text-zinc-200 group-hover:text-red-300">{{ clip.title }}</p>
+              <p class="mt-2 line-clamp-2 text-sm font-medium text-zinc-200 group-hover:text-white">{{ clip.title }}</p>
               <p class="mt-1 text-xs text-zinc-500">Clipped by {{ clip.clip?.clipped_by_channel || clip.clip?.clipped_by_username || "User" }}</p>
             </NuxtLink>
           </div>
@@ -567,18 +571,18 @@
 
       <!-- Mobile Playlist Queue -->
       <div v-if="isQueuePlayback && playlistVideos.length > 0" class="mt-8 lg:hidden">
-        <div class="bg-zinc-900 rounded-lg p-4 mb-3">
+        <div class="mb-3 rounded-xl bg-white/[0.04] p-4">
           <div class="flex items-center justify-between gap-3 mb-2">
             <div>
-              <h2 class="text-lg font-bold">{{ queueHeading }}</h2>
-              <NuxtLink :to="queueSourceLink" class="text-red-400 hover:text-red-300 text-sm truncate block">
+              <h2 class="text-base font-semibold">{{ queueHeading }}</h2>
+              <NuxtLink :to="queueSourceLink" class="block truncate text-sm text-zinc-400 hover:text-white">
                 {{ currentPlaylistName }}
               </NuxtLink>
             </div>
             <button
               v-if="playlistVideos.length > 3"
               @click="isPlaylistQueueExpanded = !isPlaylistQueueExpanded"
-              class="shrink-0 px-3 py-2 bg-zinc-800 hover:bg-zinc-700 rounded text-xs font-semibold transition"
+              class="watch-pill shrink-0 text-xs"
             >
               {{ isPlaylistQueueExpanded ? 'Show less' : 'Show all' }}
             </button>
@@ -593,14 +597,11 @@
             v-for="item in playlistQueueVideos"
             :key="`${item.video.id}-${item.index}`"
             :to="queueVideoLink(item.video.id, item.index)"
-            :class="{
-              'bg-red-900 border-red-500 border': item.index === currentVideoIndex,
-              'bg-zinc-800 hover:bg-zinc-700': item.index !== currentVideoIndex
-            }"
-            class="block p-3 rounded-lg transition group"
+            :class="item.index === currentVideoIndex ? 'bg-white/[0.08]' : 'hover:bg-white/[0.04]'"
+            class="group block rounded-xl p-2 transition"
           >
             <div class="flex gap-3 min-w-0">
-              <div class="w-16 h-12 flex-shrink-0 bg-zinc-700 rounded overflow-hidden relative">
+              <div class="relative aspect-video w-28 flex-shrink-0 overflow-hidden rounded-lg bg-zinc-800">
                 <img loading="lazy" decoding="async"
                   v-if="item.video.thumbnail_url"
                   v-bind="responsiveImage(item.video.thumbnail_url, '64px')"
@@ -610,13 +611,13 @@
                 <div v-else class="w-full h-full flex items-center justify-center text-gray-400 text-xs">
                   {{ t('playlists.noThumbnail') }}
                 </div>
-                <div class="absolute top-0.5 left-0.5 bg-black bg-opacity-70 px-1 py-0.5 rounded text-xs font-bold text-white">
+                <div class="watch-thumb-badge watch-thumb-badge--start">
                   {{ isPlayingFromSeries ? `S${item.video.season_number} E${item.video.episode_number}` : item.index + 1 }}
                 </div>
               </div>
 
               <div class="flex-1 min-w-0">
-                <p class="text-xs font-semibold line-clamp-2 group-hover:text-red-300 transition">
+                <p class="line-clamp-2 text-sm font-medium leading-5 text-zinc-100">
                   {{ item.video.title }}
                 </p>
                 <p class="text-xs text-gray-500 mt-1">
@@ -629,11 +630,11 @@
       </div>
 
       <!-- Comments Section -->
-      <div v-if="video" class="mt-8 border-t border-zinc-700 pt-6">
-        <h2 class="text-xl font-bold mb-6">{{ t('video.comments') }}</h2>
+      <div v-if="video" class="mt-8">
+        <h2 class="mb-5 text-lg font-semibold">{{ t('video.comments') }}</h2>
 
         <!-- Comment Form -->
-        <div v-if="isLoggedIn && (userChannels.length > 0 || (activeAccount !== userId && activeAccount !== 'personal'))" class="comment-composer mb-6 bg-zinc-900 p-4 rounded">
+        <div v-if="isLoggedIn && (userChannels.length > 0 || (activeAccount !== userId && activeAccount !== 'personal'))" class="comment-composer mb-6 rounded-xl bg-white/[0.04] p-4">
           <!-- Channel Selector (if on personal account and have channels) -->
           <div v-if="(activeAccount === userId || activeAccount === 'personal') && userChannels.length > 0" class="mb-3">
             <label class="text-xs text-gray-400 block mb-2">{{ t('video.commentAs') }}</label>
@@ -690,19 +691,19 @@
         </div>
 
         <!-- Login prompt for non-logged-in users -->
-        <div v-else-if="!isLoggedIn" class="mb-6 bg-zinc-900 p-4 rounded text-center">
-          <p class="text-gray-400 mb-3 text-sm">{{ t('video.signInToComment') }}</p>
-          <NuxtLink :to="localePath('/login')" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded transition text-sm">
+        <div v-else-if="!isLoggedIn" class="mb-6 flex items-center justify-between gap-4 rounded-xl bg-white/[0.04] px-4 py-3">
+          <p class="text-sm text-zinc-400">{{ t('video.signInToComment') }}</p>
+          <NuxtLink :to="localePath('/login')" class="watch-pill watch-pill--primary shrink-0">
             {{ t('app.login') }}
           </NuxtLink>
         </div>
 
         <!-- Personal account - clickable area to show dialog (only if no channels) -->
-        <div v-else-if="(activeAccount === 'personal' || activeAccount === userId) && userChannels.length === 0" class="mb-6 bg-blue-900 border border-blue-700 p-4 rounded text-center">
-          <p class="text-blue-300 text-sm mb-3">{{ t('video.createChannelToComment') }}</p>
+        <div v-else-if="(activeAccount === 'personal' || activeAccount === userId) && userChannels.length === 0" class="mb-6 flex items-center justify-between gap-4 rounded-xl bg-white/[0.04] px-4 py-3">
+          <p class="text-sm text-zinc-400">{{ t('video.createChannelToComment') }}</p>
           <NuxtLink
             :to="localePath('/create-channel')"
-            class="inline-block px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded transition text-sm font-semibold"
+            class="watch-pill watch-pill--primary shrink-0"
             @click="showCreateChannelDialog = false"
           >
             {{ t('video.createChannel') }}
@@ -711,7 +712,7 @@
 
         <!-- Comments List -->
         <div class="w-full min-w-0 space-y-4">
-          <div v-if="comments.length === 0" class="text-center text-gray-500 py-6 text-sm">
+          <div v-if="comments.length === 0" class="py-6 text-sm text-zinc-500">
             {{ t('video.noComments') }}
           </div>
 
@@ -741,7 +742,7 @@
     </div>
 
     <!-- Mobile Related Videos -->
-    <div v-if="relatedVideos.length > 0" class="lg:hidden mt-8 px-4">
+    <div v-if="relatedItems.length > 0" class="lg:hidden mt-8 px-4">
       <GilAdsBanner
         :placement="GILADS_PLACEMENTS.videoSidebarSquare"
         type="banner"
@@ -751,7 +752,7 @@
         :fallback-title="t('video.sponsorFallback')"
         class="mb-5"
       />
-      <h2 class="text-lg font-bold mb-4">{{ t('video.relatedVideos') }}</h2>
+      <h2 class="mb-3 text-base font-semibold">{{ t('video.relatedVideos') }}</h2>
 
       <div class="relative">
         <button
@@ -766,9 +767,9 @@
         <div ref="carouselContainer" class="overflow-x-auto pb-2 px-8" style="scrollbar-width: none; -ms-overflow-style: none;">
           <div class="flex gap-3 whitespace-nowrap" style="-webkit-overflow-scrolling: touch;">
             <NuxtLink
-              v-for="relatedVideo in relatedVideos"
+              v-for="relatedVideo in relatedItems"
               :key="relatedVideo.id"
-              :to="localePath(`/video/${relatedVideo.id}`)"
+              :to="relatedItemLink(relatedVideo)"
               class="inline-block hover:opacity-80 transition flex-shrink-0"
             >
               <div class="bg-zinc-800 rounded overflow-hidden w-40 aspect-video mb-1.5 relative">
@@ -777,18 +778,20 @@
                   v-bind="responsiveImage(resolveMediaUrl(relatedVideo.thumbnail_url), '160px')"
                   :alt="relatedVideo.title"
                 />
-                <div v-if="isVideo8K(relatedVideo.width)" class="absolute top-1 right-1 bg-green-900 text-green-200 px-1.5 py-0.5 rounded text-xs font-semibold border border-green-700">{{ t('video.eightKBadge') }}</div>
-                <div v-if="isVideo4K(relatedVideo.width)" class="absolute top-1 right-1 bg-green-900 text-green-200 px-1.5 py-0.5 rounded text-xs font-semibold border border-green-700">{{ t('video.fourKBadge') }}</div>
+                <span v-if="relatedVideo.kind" class="watch-thumb-badge watch-thumb-badge--kind">{{ relatedVideo.kindLabel }}</span>
+                <div v-if="isVideo8K(relatedVideo.width)" class="watch-thumb-badge">{{ t('video.eightKBadge') }}</div>
+                <div v-if="isVideo4K(relatedVideo.width)" class="watch-thumb-badge">{{ t('video.fourKBadge') }}</div>
                 <div v-if="videoProgressPercent(relatedVideo.id) > 0" class="absolute inset-x-0 bottom-0 h-1 bg-black/55">
                   <div class="h-full bg-red-600" :style="{ width: `${videoProgressPercent(relatedVideo.id)}%` }" />
                 </div>
               </div>
               <p class="text-xs font-semibold line-clamp-2 w-40">{{ relatedVideo.title }}</p>
-              <div class="flex items-center gap-1">
-                <NuxtLink :to="localePath(`/channel/${relatedVideo.channel?.id}`)" class="text-xs text-gray-400 hover:text-yellow-400 transition">{{ relatedVideo.channel?.name }}</NuxtLink>
+              <div v-if="!relatedVideo.kind" class="flex items-center gap-1">
+                <NuxtLink :to="localePath(`/channel/${relatedVideo.channel?.id}`)" class="text-xs text-zinc-400 transition hover:text-zinc-200">{{ relatedVideo.channel?.name }}</NuxtLink>
                 <VerifiedBadge :verified="relatedVideo.channel?.verified || false" size="sm" />
               </div>
-              <p class="text-xs text-gray-500">{{ formatViews(relatedVideo.views) }} views</p>
+              <p v-if="!relatedVideo.kind" class="text-xs text-gray-500">{{ formatViews(relatedVideo.views) }} {{ t('video.views') }}</p>
+              <p v-else class="text-xs text-zinc-400">{{ relatedVideo.meta }}</p>
             </NuxtLink>
           </div>
         </div>
@@ -805,7 +808,7 @@
     </div>
 
     <!-- Right: Sidebar (full width on mobile as carousel, wider on tablet, sidebar on lg) -->
-    <div class="hidden lg:block w-full md:w-full lg:w-64 lg:flex-shrink-0">
+    <div class="hidden w-full lg:block lg:w-[22rem] lg:flex-shrink-0 xl:w-[25rem]">
       <div class="md:sticky md:top-6">
         <GilAdsBanner
           :placement="GILADS_PLACEMENTS.videoSidebarSquare"
@@ -820,7 +823,7 @@
         <!-- Playlist Queue (when playing from playlist) -->
         <div v-if="isQueuePlayback && playlistVideos.length > 0" class="px-4 md:px-0">
           <div
-            class="relative bg-zinc-900 rounded-lg p-4 mb-4 cursor-pointer border border-transparent hover:border-zinc-700 transition"
+            class="relative mb-4 cursor-pointer rounded-xl bg-white/[0.04] p-4 transition hover:bg-white/[0.06]"
             role="button"
             tabindex="0"
             @click="isPlaylistQueueExpanded = !isPlaylistQueueExpanded"
@@ -837,8 +840,8 @@
             </div>
 
             <div class="min-w-0 pr-12">
-              <h2 class="text-lg font-bold">{{ queueHeading }}</h2>
-              <NuxtLink :to="queueSourceLink" class="text-red-400 hover:text-red-300 text-sm truncate block">
+              <h2 class="text-base font-semibold">{{ queueHeading }}</h2>
+              <NuxtLink :to="queueSourceLink" class="block truncate text-sm text-zinc-400 hover:text-white">
                 {{ currentPlaylistName }}
               </NuxtLink>
               <div class="mt-2 flex flex-wrap items-center gap-2 text-xs text-gray-400">
@@ -849,22 +852,19 @@
             </div>
           </div>
 
-          <h3 class="text-sm font-semibold text-gray-400 mb-3 uppercase tracking-wide">{{ t('playlists.upNext') }}</h3>
+          <h3 class="mb-2 text-sm font-medium text-zinc-400">{{ t('playlists.upNext') }}</h3>
           
           <div class="space-y-2">
             <NuxtLink
               v-for="item in playlistQueueVideos"
               :key="`${item.video.id}-${item.index}`"
               :to="queueVideoLink(item.video.id, item.index)"
-              :class="{
-                'bg-red-900 border-red-500 border': item.index === currentVideoIndex,
-                'bg-zinc-800 hover:bg-zinc-700': item.index !== currentVideoIndex
-              }"
-              class="block p-3 rounded-lg transition group"
+              :class="item.index === currentVideoIndex ? 'bg-white/[0.08]' : 'hover:bg-white/[0.04]'"
+              class="group block rounded-xl p-2 transition"
             >
               <div class="flex gap-3 min-w-0">
                 <!-- Thumbnail -->
-                <div class="w-16 h-12 flex-shrink-0 bg-zinc-700 rounded overflow-hidden relative">
+                <div class="relative aspect-video w-28 flex-shrink-0 overflow-hidden rounded-lg bg-zinc-800">
                   <img loading="lazy" decoding="async"
                     v-if="item.video.thumbnail_url"
                     v-bind="responsiveImage(item.video.thumbnail_url, '64px')"
@@ -875,14 +875,14 @@
                     {{ t('playlists.noThumbnail') }}
                   </div>
                   <!-- Video index badge -->
-                  <div class="absolute top-0.5 left-0.5 bg-black bg-opacity-70 px-1 py-0.5 rounded text-xs font-bold text-white">
+                  <div class="watch-thumb-badge watch-thumb-badge--start">
                     {{ isPlayingFromSeries ? `S${item.video.season_number} E${item.video.episode_number}` : item.index + 1 }}
                   </div>
                 </div>
 
                 <!-- Video Info -->
                 <div class="flex-1 min-w-0">
-                  <p class="text-xs font-semibold line-clamp-2 group-hover:text-red-300 transition">
+                  <p class="line-clamp-2 text-sm font-medium leading-5 text-zinc-100">
                     {{ item.video.title }}
                   </p>
                   <p class="text-xs text-gray-500 mt-1">
@@ -896,7 +896,7 @@
 
         <!-- Related Videos -->
         <div v-else class="px-4 md:px-0">
-          <h2 class="text-lg font-bold mb-4">{{ t('video.relatedVideos') }}</h2>
+          <h2 class="mb-3 text-base font-semibold">{{ t('video.relatedVideos') }}</h2>
           
           <!-- Mobile: Horizontal Carousel (hidden on md and above) -->
           <div class="md:hidden relative">
@@ -912,9 +912,9 @@
             <div ref="carouselContainer" class="overflow-x-auto pb-2 px-8" style="scrollbar-width: none; -ms-overflow-style: none;">
               <div class="flex gap-3 whitespace-nowrap" style="-webkit-overflow-scrolling: touch;">
                 <NuxtLink
-                  v-for="relatedVideo in relatedVideos"
+                  v-for="relatedVideo in relatedItems"
                   :key="relatedVideo.id"
-                  :to="localePath(`/video/${relatedVideo.id}`)"
+                  :to="relatedItemLink(relatedVideo)"
                   class="inline-block hover:opacity-80 transition flex-shrink-0"
                 >
                   <div class="bg-zinc-800 rounded overflow-hidden w-40 aspect-video mb-1.5 relative">
@@ -923,18 +923,20 @@
                       v-bind="responsiveImage(resolveMediaUrl(relatedVideo.thumbnail_url), '160px')"
                       :alt="relatedVideo.title"
                     />
-                    <div v-if="isVideo8K(relatedVideo.width)" class="absolute top-1 right-1 bg-green-900 text-green-200 px-1.5 py-0.5 rounded text-xs font-semibold border border-green-700">{{ t('video.eightKBadge') }}</div>
-                    <div v-if="isVideo4K(relatedVideo.width)" class="absolute top-1 right-1 bg-green-900 text-green-200 px-1.5 py-0.5 rounded text-xs font-semibold border border-green-700">{{ t('video.fourKBadge') }}</div>
+                    <span v-if="relatedVideo.kind" class="watch-thumb-badge watch-thumb-badge--kind">{{ relatedVideo.kindLabel }}</span>
+                    <div v-if="isVideo8K(relatedVideo.width)" class="watch-thumb-badge">{{ t('video.eightKBadge') }}</div>
+                    <div v-if="isVideo4K(relatedVideo.width)" class="watch-thumb-badge">{{ t('video.fourKBadge') }}</div>
                     <div v-if="videoProgressPercent(relatedVideo.id) > 0" class="absolute inset-x-0 bottom-0 h-1 bg-black/55">
                       <div class="h-full bg-red-600" :style="{ width: `${videoProgressPercent(relatedVideo.id)}%` }" />
                     </div>
                   </div>
                   <p class="text-xs font-semibold line-clamp-2 w-40">{{ relatedVideo.title }}</p>
-                  <div class="flex items-center gap-1">
-                    <NuxtLink :to="localePath(`/channel/${relatedVideo.channel?.id}`)" class="text-xs text-gray-400 hover:text-yellow-400 transition">{{ relatedVideo.channel?.name }}</NuxtLink>
+                  <div v-if="!relatedVideo.kind" class="flex items-center gap-1">
+                    <NuxtLink :to="localePath(`/channel/${relatedVideo.channel?.id}`)" class="text-xs text-zinc-400 transition hover:text-zinc-200">{{ relatedVideo.channel?.name }}</NuxtLink>
                     <VerifiedBadge :verified="relatedVideo.channel?.verified || false" size="sm" />
                   </div>
-                  <p class="text-xs text-gray-500">{{ formatViews(relatedVideo.views) }} views</p>
+                  <p v-if="!relatedVideo.kind" class="text-xs text-gray-500">{{ formatViews(relatedVideo.views) }} {{ t('video.views') }}</p>
+                  <p v-else class="text-xs text-zinc-400">{{ relatedVideo.meta }}</p>
                 </NuxtLink>
               </div>
             </div>
@@ -952,9 +954,9 @@
           <!-- Tablet: 2x2 Grid (shown on md to lg) -->
           <div class="hidden md:grid lg:hidden grid-cols-2 gap-2">
             <NuxtLink
-              v-for="relatedVideo in relatedVideos"
+              v-for="relatedVideo in relatedItems"
               :key="relatedVideo.id"
-              :to="localePath(`/video/${relatedVideo.id}`)"
+              :to="relatedItemLink(relatedVideo)"
               class="block hover:opacity-80 transition"
             >
               <div class="bg-zinc-800 rounded overflow-hidden w-full aspect-video mb-2 relative">
@@ -963,47 +965,52 @@
                   v-bind="responsiveImage(resolveMediaUrl(relatedVideo.thumbnail_url), '50vw')"
                   :alt="relatedVideo.title"
                 />
-                <div v-if="isVideo8K(relatedVideo.width)" class="absolute top-1 right-1 bg-green-900 text-green-200 px-1.5 py-0.5 rounded text-xs font-semibold border border-green-700">{{ t('video.eightKBadge') }}</div>
-                <div v-if="isVideo4K(relatedVideo.width)" class="absolute top-1 right-1 bg-green-900 text-green-200 px-1.5 py-0.5 rounded text-xs font-semibold border border-green-700">{{ t('video.fourKBadge') }}</div>
+                <span v-if="relatedVideo.kind" class="watch-thumb-badge watch-thumb-badge--kind">{{ relatedVideo.kindLabel }}</span>
+                <div v-if="isVideo8K(relatedVideo.width)" class="watch-thumb-badge">{{ t('video.eightKBadge') }}</div>
+                <div v-if="isVideo4K(relatedVideo.width)" class="watch-thumb-badge">{{ t('video.fourKBadge') }}</div>
                 <div v-if="videoProgressPercent(relatedVideo.id) > 0" class="absolute inset-x-0 bottom-0 h-1 bg-black/55">
                   <div class="h-full bg-red-600" :style="{ width: `${videoProgressPercent(relatedVideo.id)}%` }" />
                 </div>
               </div>
               <p class="text-sm font-semibold line-clamp-2">{{ relatedVideo.title }}</p>
-              <div class="flex items-center gap-1">
-                <NuxtLink :to="localePath(`/channel/${relatedVideo.channel?.id}`)" class="text-xs text-gray-400 hover:text-yellow-400 transition">{{ relatedVideo.channel?.name }}</NuxtLink>
+              <div v-if="!relatedVideo.kind" class="flex items-center gap-1">
+                <NuxtLink :to="localePath(`/channel/${relatedVideo.channel?.id}`)" class="text-xs text-zinc-400 transition hover:text-zinc-200">{{ relatedVideo.channel?.name }}</NuxtLink>
                 <VerifiedBadge :verified="relatedVideo.channel?.verified || false" size="sm" />
               </div>
-              <p class="text-xs text-gray-500">{{ formatViews(relatedVideo.views) }} views</p>
+              <p v-if="!relatedVideo.kind" class="text-xs text-gray-500">{{ formatViews(relatedVideo.views) }} {{ t('video.views') }}</p>
+              <p v-else class="text-xs text-zinc-400">{{ relatedVideo.meta }}</p>
             </NuxtLink>
           </div>
           
-          <!-- Desktop: Vertical List (shown on lg and above) -->
-          <div class="hidden lg:block space-y-3">
+          <!-- Desktop: compact rows -->
+          <div class="hidden space-y-1 lg:block">
             <NuxtLink
-              v-for="relatedVideo in relatedVideos"
+              v-for="relatedVideo in relatedItems"
               :key="relatedVideo.id"
-              :to="localePath(`/video/${relatedVideo.id}`)"
-              class="block hover:opacity-80 transition"
+              :to="relatedItemLink(relatedVideo)"
+              class="group -mx-1.5 flex gap-3 rounded-xl p-1.5 transition hover:bg-white/[0.04]"
             >
-              <div class="bg-zinc-800 rounded overflow-hidden aspect-video mb-1.5 relative">
+              <div class="relative aspect-video w-40 shrink-0 overflow-hidden rounded-lg bg-zinc-800">
                 <img loading="lazy" decoding="async"
-                  class="w-full h-full object-cover"
-                  v-bind="responsiveImage(resolveMediaUrl(relatedVideo.thumbnail_url), '256px')"
-                  :alt="relatedVideo.title"
+                  class="h-full w-full object-cover"
+                  v-bind="responsiveImage(resolveMediaUrl(relatedVideo.thumbnail_url), '160px')"
+                  alt=""
                 />
-                <div v-if="isVideo8K(relatedVideo.width)" class="absolute top-1 right-1 bg-green-900 text-green-200 px-1.5 py-0.5 rounded text-xs font-semibold border border-green-700">{{ t('video.eightKBadge') }}</div>
-                <div v-if="isVideo4K(relatedVideo.width)" class="absolute top-1 right-1 bg-green-900 text-green-200 px-1.5 py-0.5 rounded text-xs font-semibold border border-green-700">{{ t('video.fourKBadge') }}</div>
-                <div v-if="videoProgressPercent(relatedVideo.id) > 0" class="absolute inset-x-0 bottom-0 h-1 bg-black/55">
+                <span v-if="relatedVideo.kind" class="watch-thumb-badge watch-thumb-badge--kind">{{ relatedVideo.kindLabel }}</span>
+                <span v-if="isVideo8K(relatedVideo.width) || isVideo4K(relatedVideo.width)" class="watch-thumb-badge">{{ isVideo8K(relatedVideo.width) ? t('video.eightKBadge') : t('video.fourKBadge') }}</span>
+                <div v-if="videoProgressPercent(relatedVideo.id) > 0" class="absolute inset-x-0 bottom-0 h-[3px] bg-white/20">
                   <div class="h-full bg-red-600" :style="{ width: `${videoProgressPercent(relatedVideo.id)}%` }" />
                 </div>
               </div>
-              <p class="text-xs font-semibold line-clamp-2">{{ relatedVideo.title }}</p>
-              <div class="flex items-center gap-1">
-                <NuxtLink :to="localePath(`/channel/${relatedVideo.channel?.id}`)" class="text-xs text-gray-400 hover:text-yellow-400 transition">{{ relatedVideo.channel?.name }}</NuxtLink>
-                <VerifiedBadge :verified="relatedVideo.channel?.verified || false" size="sm" />
+              <div class="min-w-0 flex-1 py-0.5">
+                <p class="line-clamp-2 text-sm font-medium leading-5 text-zinc-100">{{ relatedVideo.title }}</p>
+                <p v-if="!relatedVideo.kind" class="mt-1 flex items-center gap-1 text-xs text-zinc-400">
+                  <span class="truncate">{{ relatedVideo.channel?.name }}</span>
+                  <VerifiedBadge :verified="relatedVideo.channel?.verified || false" size="sm" />
+                </p>
+                <p v-if="!relatedVideo.kind" class="text-xs text-zinc-500">{{ formatViews(relatedVideo.views) }} {{ t('video.views') }}</p>
+                <p v-else class="text-xs text-zinc-400">{{ relatedVideo.meta }}</p>
               </div>
-              <p class="text-xs text-gray-500">{{ formatViews(relatedVideo.views) }} views</p>
             </NuxtLink>
           </div>
         </div>
@@ -1192,7 +1199,7 @@ import CommentNode from '~/app/components/comments/CommentNode.vue'
 import GiphyPicker from '~/app/components/GiphyPicker.vue'
 import AddToPlaylistModal from '~/app/components/AddToPlaylistModal.vue'
 import { GILADS_PLACEMENTS } from '~/app/service/gilads'
-import { getVideo, getRelatedVideos, incrementViews, likeVideo, unlikeVideo, checkIfLiked, getWatchProgress, getWatchProgressMap, saveWatchProgress, createVideoClip, getVideoClips, downloadVideo as downloadVideoService } from '~/app/service/videos'
+import { getVideo, getRelatedVideos, getRelatedMedia, incrementViews, likeVideo, unlikeVideo, checkIfLiked, getWatchProgress, getWatchProgressMap, saveWatchProgress, createVideoClip, getVideoClips, downloadVideo as downloadVideoService } from '~/app/service/videos'
 import { getSeries, getSeriesEpisodeContext, getSeriesTrailerContext, suggestSeriesEpisodeIntro } from '~/app/service/series'
 import { getMovieVideoContext, getMovieTrailerContext } from '~/app/service/movies'
 import { consumePlaybackIntroSkip, skipPlaybackIntroFor } from '~/app/service/playbackIntro'
@@ -1288,6 +1295,43 @@ const currentMusicTrack = ref<MusicTrack | null>(null)
 const showSidebar = ref(true)
 
 const relatedVideos = ref<any[]>([])
+const relatedMedia = ref<any[]>([])
+
+const mediaRatingLabel = (media: any) => media?.content_rating?.rating || ''
+
+const toRelatedMediaItem = (media: any) => {
+  const isSeries = media.kind === 'series'
+  const details = [
+    isSeries
+      ? (media.seasons > 1 ? t('video.relatedSeasons', { count: media.seasons }, media.seasons) : t('video.relatedEpisodes', { count: media.episode_count }, media.episode_count))
+      : (media.release_year ? String(media.release_year) : ''),
+    mediaRatingLabel(media),
+  ].filter(Boolean)
+  return {
+    id: `${media.kind}:${media.id}`,
+    kind: media.kind,
+    kindLabel: isSeries ? t('video.relatedSeries') : t('video.relatedMovie'),
+    title: media.title,
+    thumbnail_url: media.backdrop_url || media.poster_url,
+    meta: details.join(' · '),
+    href: isSeries ? `/category/series?series_id=${media.id}` : `/category/movies?movie_id=${media.id}`,
+  }
+}
+
+// Movies and whole series are woven into the related list: every third slot,
+// starting at the top when the current video is itself a movie or episode.
+const relatedItems = computed(() => {
+  const media = relatedMedia.value.map(toRelatedMediaItem)
+  if (!media.length) return relatedVideos.value
+  const items = [...relatedVideos.value]
+  const start = currentMovie.value || currentSeries.value ? 0 : 1
+  media.forEach((item, index) => {
+    items.splice(Math.min(start + index * 3, items.length), 0, item)
+  })
+  return items
+})
+
+const relatedItemLink = (item: any) => localePath(item.kind ? item.href : `/video/${item.id}`)
 const watchProgressByVideoId = ref<Record<string, any>>({})
 const carouselContainer = ref<HTMLElement | null>(null)
 
@@ -1417,6 +1461,19 @@ const queueSourceLink = computed(() => {
   if (isPlayingFromSeries.value) return localePath('/category/series')
   return localePath(`/playlists/${currentPlaylistId.value}`)
 })
+// Only the feature itself gets the rating card, never its trailer.
+const playingContentRating = computed(() => {
+  if (currentMovie.value && currentMovie.value.video_id === id) return currentMovie.value.content_rating || null
+  if (currentSeries.value && currentSeriesEpisode.value) return currentSeries.value.content_rating || null
+  return null
+})
+
+const playingContentWarning = computed<'' | 'movie' | 'episode'>(() => {
+  if (currentMovie.value && currentMovie.value.video_id === id) return currentMovie.value.content_warning ? 'movie' : ''
+  if (currentSeriesEpisode.value?.content_warning) return 'episode'
+  return ''
+})
+
 const currentSeriesEpisode = computed(() => {
   if (!isPlayingFromSeries.value) return null
   return playlistVideos.value[currentVideoIndex.value] || null
@@ -1785,7 +1842,7 @@ onMounted(async () => {
   
   const hideExplicitWarnings = localStorage.getItem('hide_explicit_warnings') === 'true'
   
-  if (video.value?.explicit && !hideExplicitWarnings) {
+  if (video.value?.explicit && !hideExplicitWarnings && !explicitSeriesAccepted()) {
     showExplicitWarning.value = true
     explicitWarningAccepted.value = false
     await nextTick()
@@ -1871,7 +1928,12 @@ onMounted(async () => {
 
   // Always load related videos so mobile can still surface recommendations during playlist playback
   try {
-    relatedVideos.value = await getRelatedVideos(id, 10)
+    const [videos, media] = await Promise.all([
+      getRelatedVideos(id, 10),
+      getRelatedMedia(id, 4).catch(() => []),
+    ])
+    relatedVideos.value = videos
+    relatedMedia.value = Array.isArray(media) ? media : []
     void loadProgressForVideos(relatedVideos.value.map((relatedVideo: any) => relatedVideo.id))
   } catch (err) {
     console.error('Failed to load related videos:', err)
@@ -2336,10 +2398,33 @@ watch(showExplicitWarning, async (visible) => {
   pauseWatchPlayerForExplicitWarning()
 })
 
+// Confirming once covers the rest of an 18+ series for this browser session,
+// so binge-watching does not stop at every episode.
+const explicitSeriesKey = () => {
+  const seriesId = typeof route.query.series_id === 'string' ? route.query.series_id : ''
+  return seriesId ? `giltube_explicit_ok_series_${seriesId}` : ''
+}
+
+const explicitSeriesAccepted = () => {
+  const key = explicitSeriesKey()
+  if (!key) return false
+  try {
+    return sessionStorage.getItem(key) === 'true'
+  } catch {
+    return false
+  }
+}
+
 // Handle explicit warning
 const continueToVideo = async () => {
   if (neverShowExplicitWarningAgain.value) {
     localStorage.setItem('hide_explicit_warnings', 'true')
+  }
+  const seriesKey = explicitSeriesKey()
+  if (seriesKey) {
+    try {
+      sessionStorage.setItem(seriesKey, 'true')
+    } catch {}
   }
   explicitWarningAccepted.value = true
   showExplicitWarning.value = false
@@ -2420,6 +2505,7 @@ const normalizeSeriesEpisode = (episode: any) => ({
   intro_start_seconds: episode.intro_start_seconds,
   intro_end_seconds: episode.intro_end_seconds,
   series_episode_id: episode.id,
+  content_warning: Boolean(episode.content_warning),
 })
 
 const loadSeries = async (seriesId: string) => {
@@ -2703,5 +2789,133 @@ const handleVideoEnded = async () => {
   .intro-suggestion-player :deep(.video-player-container) {
     height: clamp(320px, 46vh, 520px);
   }
+}
+
+.watch-player-shell {
+  overflow: hidden;
+  border-radius: 0.875rem;
+  background: #000;
+}
+
+.mobile-watch-layout .watch-player-shell {
+  border-radius: 0;
+}
+
+.watch-chip {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 0.375rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  padding: 0.25rem 0.625rem;
+  color: #c8c8cf;
+  font-size: 0.75rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.watch-chip--strong {
+  color: #f2f2f4;
+  font-weight: 600;
+}
+
+.watch-chip--hdr {
+  background: rgba(250, 204, 21, 0.14);
+  color: #fde68a;
+  font-weight: 600;
+}
+
+.watch-chip--warn {
+  background: rgba(239, 68, 68, 0.14);
+  color: #fca5a5;
+}
+
+.watch-chip--link {
+  transition: background-color 150ms ease, color 150ms ease;
+}
+
+.watch-chip--link:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.watch-pill {
+  display: inline-flex;
+  height: 2.25rem;
+  align-items: center;
+  gap: 0.5rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.07);
+  padding: 0 0.875rem;
+  color: #f2f2f4;
+  font-size: 0.875rem;
+  font-weight: 500;
+  white-space: nowrap;
+  transition: background-color 150ms ease, color 150ms ease;
+}
+
+.watch-pill:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.watch-pill.is-active {
+  color: #f87171;
+}
+
+.watch-pill--icon {
+  width: 2.25rem;
+  justify-content: center;
+  padding: 0;
+}
+
+.watch-pill--primary {
+  background: #f2f2f4;
+  color: #0c0c0e;
+  font-weight: 600;
+}
+
+.watch-pill--primary:hover:not(:disabled) {
+  background: #fff;
+}
+
+.watch-media-card {
+  border-radius: 0.875rem;
+  background: rgba(255, 255, 255, 0.04);
+  padding: 1rem;
+}
+
+.watch-thumb-badge {
+  position: absolute;
+  right: 0.375rem;
+  bottom: 0.375rem;
+  border-radius: 0.3125rem;
+  background: rgba(12, 12, 14, 0.82);
+  padding: 0.0625rem 0.3125rem;
+  color: #f2f2f4;
+  font-size: 0.6875rem;
+  font-weight: 600;
+}
+
+.watch-rating-badge {
+  border: 1px solid rgb(255 255 255 / 0.35);
+  border-radius: 0.25rem;
+  padding: 0 0.3rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  line-height: 1.1rem;
+  color: #f4f4f5;
+}
+
+.watch-thumb-badge--kind {
+  right: auto;
+  left: 0.375rem;
+}
+
+.watch-thumb-badge--start {
+  left: 0.375rem;
+  right: auto;
+  top: 0.375rem;
+  bottom: auto;
 }
 </style>

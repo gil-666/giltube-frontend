@@ -1,9 +1,9 @@
 <template>
   <div class="space-y-6">
-    <section class="rounded-2xl border border-zinc-800 bg-zinc-950/80 p-5 shadow-xl">
+    <section class="rounded-2xl border border-white/[0.07] bg-zinc-950/80 p-5 shadow-xl">
       <div class="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h2 class="text-2xl font-black text-white">{{ t('admin.mediaIngests.title') }}</h2>
+          <h2 class="text-2xl font-semibold text-white">{{ t('admin.mediaIngests.title') }}</h2>
           <p class="mt-1 max-w-3xl text-sm text-zinc-400">{{ t('admin.mediaIngests.subtitle') }}</p>
         </div>
         <div class="flex flex-wrap gap-2">
@@ -17,15 +17,15 @@
       </div>
 
       <form class="mt-5 grid gap-3 lg:grid-cols-[8rem_minmax(0,1.2fr)_6rem_7rem_minmax(0,2fr)_8rem]" @submit.prevent="submitIngest">
-        <select v-model="form.media_type" class="rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-white outline-none focus:border-red-400">
+        <select v-model="form.media_type" class="rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-white outline-none focus:border-white/30">
           <option value="movie">{{ t('admin.mediaIngests.movie') }}</option>
           <option value="series">{{ t('admin.mediaIngests.series') }}</option>
         </select>
-        <input v-model="form.title" required :placeholder="t('admin.mediaIngests.titlePlaceholder')" class="rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-white outline-none placeholder:text-zinc-600 focus:border-red-400" />
-        <input v-model.number="form.year" min="0" type="number" :placeholder="t('admin.mediaIngests.year')" class="rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-white outline-none placeholder:text-zinc-600 focus:border-red-400" />
-        <input v-if="form.media_type === 'series'" v-model.number="form.season_count" min="1" type="number" :placeholder="t('admin.mediaIngests.seasonCount')" class="rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-white outline-none placeholder:text-zinc-600 focus:border-red-400" />
+        <input v-model="form.title" required :placeholder="t('admin.mediaIngests.titlePlaceholder')" class="rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-white outline-none placeholder:text-zinc-600 focus:border-white/30" />
+        <input v-model.number="form.year" min="0" type="number" :placeholder="t('admin.mediaIngests.year')" class="rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-white outline-none placeholder:text-zinc-600 focus:border-white/30" />
+        <input v-if="form.media_type === 'series'" v-model.number="form.season_count" min="1" type="number" :placeholder="t('admin.mediaIngests.seasonCount')" class="rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-white outline-none placeholder:text-zinc-600 focus:border-white/30" />
         <div v-else />
-        <input v-model="form.source_url" required :placeholder="t('admin.mediaIngests.sourcePlaceholder')" class="rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 font-mono text-sm text-white outline-none placeholder:text-zinc-600 focus:border-red-400" />
+        <input v-model="form.source_url" required :placeholder="t('admin.mediaIngests.sourcePlaceholder')" class="rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 font-mono text-sm text-white outline-none placeholder:text-zinc-600 focus:border-white/30" />
         <button type="submit" :disabled="creating" class="rounded-lg bg-red-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-red-500 disabled:cursor-not-allowed disabled:opacity-60">
           {{ creating ? t('admin.mediaIngests.queueing') : t('admin.mediaIngests.queue') }}
         </button>
@@ -35,10 +35,10 @@
       <div v-if="error" class="mt-4 rounded-lg border border-red-500/30 bg-red-950/50 p-3 text-sm text-red-100">{{ error }}</div>
     </section>
 
-    <section class="overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-950/80 shadow-xl">
+    <section class="overflow-hidden rounded-2xl border border-white/[0.07] bg-zinc-950/80 shadow-xl">
       <div class="overflow-x-auto">
         <table class="w-full min-w-[72rem] text-sm">
-          <thead class="bg-zinc-900 text-xs uppercase tracking-wide text-zinc-500">
+          <thead class="bg-zinc-900 text-xs text-zinc-500">
             <tr>
               <th class="px-4 py-3 text-left font-bold">{{ t('admin.mediaIngests.columns.item') }}</th>
               <th class="px-4 py-3 text-left font-bold">{{ t('admin.mediaIngests.columns.status') }}</th>
@@ -47,7 +47,7 @@
               <th class="px-4 py-3 text-left font-bold">{{ t('admin.mediaIngests.columns.attach') }}</th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-zinc-800">
+          <tbody class="divide-y divide-white/[0.07]">
             <tr v-for="item in ingests" :key="item.id" class="align-top transition hover:bg-zinc-900/70">
               <td class="px-4 py-4">
                 <p class="font-bold text-white">{{ item.title }}</p>
@@ -117,7 +117,7 @@
                   <button
                     type="button"
                     :disabled="!canOpenAttachPanel(item)"
-                    class="rounded bg-blue-600 px-4 py-2 text-xs font-bold text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
+                    class="rounded bg-zinc-100 px-4 py-2 text-xs font-bold text-zinc-950 transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-50"
                     @click="openAttachPanel(item)"
                   >
                     {{ item.attached_video_id ? t('admin.mediaIngests.attachAgain') : t('admin.mediaIngests.attach') }}
@@ -157,10 +157,10 @@
         @click.self="closeUploadPanel"
       >
         <section class="flex h-full w-full max-w-4xl flex-col overflow-hidden bg-zinc-950 shadow-2xl sm:max-h-[88dvh] sm:rounded-2xl sm:border sm:border-zinc-700">
-          <header class="flex shrink-0 items-start justify-between gap-4 border-b border-zinc-800 p-5 sm:p-6">
+          <header class="flex shrink-0 items-start justify-between gap-4 border-b border-white/[0.07] p-5 sm:p-6">
             <div>
-              <p class="text-xs font-bold uppercase tracking-wide text-red-400">{{ t('admin.mediaIngests.upload.kicker') }}</p>
-              <h3 class="mt-1 text-2xl font-black">{{ t('admin.mediaIngests.upload.title') }}</h3>
+              <p class="text-xs font-medium text-zinc-400">{{ t('admin.mediaIngests.upload.kicker') }}</p>
+              <h3 class="mt-1 text-2xl font-semibold">{{ t('admin.mediaIngests.upload.title') }}</h3>
             </div>
             <button type="button" :disabled="uploadBusy" class="rounded-lg bg-zinc-800 px-4 py-2 text-sm font-bold transition hover:bg-zinc-700 disabled:opacity-50" @click="closeUploadPanel">
               {{ t('common.close') }}
@@ -171,29 +171,29 @@
             <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-[9rem_minmax(0,1fr)_8rem_8rem]">
               <label class="grid gap-1 text-xs font-bold uppercase text-zinc-500">
                 {{ t('admin.mediaIngests.upload.mediaType') }}
-                <select v-model="uploadForm.mediaType" :disabled="uploadBusy" class="rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2.5 text-sm font-normal normal-case text-white focus:border-red-400">
+                <select v-model="uploadForm.mediaType" :disabled="uploadBusy" class="rounded-lg border border-white/10 bg-zinc-900 px-3 py-2.5 text-sm font-normal normal-case text-white focus:border-white/30">
                   <option value="movie">{{ t('admin.mediaIngests.movie') }}</option>
                   <option value="series">{{ t('admin.mediaIngests.series') }}</option>
                 </select>
               </label>
               <label class="grid gap-1 text-xs font-bold uppercase text-zinc-500">
                 {{ t('admin.mediaIngests.upload.titleLabel') }}
-                <input v-model="uploadForm.title" :disabled="uploadBusy" class="min-w-0 rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2.5 text-sm font-normal normal-case text-white focus:border-red-400" />
+                <input v-model="uploadForm.title" :disabled="uploadBusy" class="min-w-0 rounded-lg border border-white/10 bg-zinc-900 px-3 py-2.5 text-sm font-normal normal-case text-white focus:border-white/30" />
               </label>
               <label class="grid gap-1 text-xs font-bold uppercase text-zinc-500">
                 {{ t('admin.mediaIngests.year') }}
-                <input v-model.number="uploadForm.year" :disabled="uploadBusy" min="0" type="number" class="rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2.5 text-sm font-normal normal-case text-white focus:border-red-400" />
+                <input v-model.number="uploadForm.year" :disabled="uploadBusy" min="0" type="number" class="rounded-lg border border-white/10 bg-zinc-900 px-3 py-2.5 text-sm font-normal normal-case text-white focus:border-white/30" />
               </label>
               <label v-if="uploadForm.mediaType === 'series'" class="grid gap-1 text-xs font-bold uppercase text-zinc-500">
                 {{ t('admin.mediaIngests.seasonCount') }}
-                <input v-model.number="uploadForm.seasonCount" :disabled="uploadBusy" min="1" type="number" class="rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2.5 text-sm font-normal normal-case text-white focus:border-red-400" />
+                <input v-model.number="uploadForm.seasonCount" :disabled="uploadBusy" min="1" type="number" class="rounded-lg border border-white/10 bg-zinc-900 px-3 py-2.5 text-sm font-normal normal-case text-white focus:border-white/30" />
               </label>
             </div>
 
-            <label class="flex cursor-pointer items-start gap-3 rounded-lg border border-zinc-800 bg-zinc-900/60 p-3">
+            <label class="flex cursor-pointer items-start gap-3 rounded-lg border border-white/[0.07] bg-zinc-900/60 p-3">
               <input v-model="useLocalUpload" :disabled="uploadBusy" type="checkbox" class="mt-1 h-4 w-4 rounded accent-blue-500 disabled:opacity-50" />
               <span>
-                <span class="block text-sm font-black">{{ t('upload.localUpload') }}</span>
+                <span class="block text-sm font-semibold">{{ t('upload.localUpload') }}</span>
                 <span class="mt-1 block text-xs leading-5 text-zinc-500">{{ t('upload.localUploadHelper') }}</span>
               </span>
             </label>
@@ -203,7 +203,7 @@
               @dragover.prevent
               @drop.prevent="onUploadDrop"
             >
-              <p class="text-lg font-black">{{ t('admin.mediaIngests.upload.dropTitle') }}</p>
+              <p class="text-lg font-semibold">{{ t('admin.mediaIngests.upload.dropTitle') }}</p>
               <p class="mt-1 text-sm text-zinc-400">{{ t('admin.mediaIngests.upload.dropBody') }}</p>
               <button type="button" :disabled="uploadBusy" class="mt-4 rounded-lg bg-zinc-800 px-4 py-2 text-sm font-bold hover:bg-zinc-700 disabled:opacity-50" @click="uploadFileInput?.click()">
                 {{ t('admin.mediaIngests.upload.choose') }}
@@ -212,7 +212,7 @@
             </div>
 
             <div v-if="uploadFiles.length" class="space-y-2">
-              <div v-for="(row, index) in uploadFiles" :key="row.key" class="rounded-lg border border-zinc-800 bg-zinc-900/60 p-3">
+              <div v-for="(row, index) in uploadFiles" :key="row.key" class="rounded-lg border border-white/[0.07] bg-zinc-900/60 p-3">
                 <div class="flex items-start justify-between gap-3">
                   <div class="min-w-0">
                     <p class="truncate text-sm font-bold" :title="row.file.name">{{ row.file.name }}</p>
@@ -231,7 +231,7 @@
             <p v-if="uploadError" class="rounded-lg border border-red-500/30 bg-red-950/40 p-3 text-sm text-red-200">{{ uploadError }}</p>
           </div>
 
-          <footer class="flex shrink-0 items-center justify-between gap-4 border-t border-zinc-800 bg-zinc-950 p-5 sm:p-6">
+          <footer class="flex shrink-0 items-center justify-between gap-4 border-t border-white/[0.07] bg-zinc-950 p-5 sm:p-6">
             <p class="text-sm text-zinc-500">{{ t('admin.mediaIngests.upload.selected', { count: uploadFiles.length }) }}</p>
             <button type="button" :disabled="!uploadFiles.length || uploadBusy" class="rounded-lg bg-red-600 px-5 py-2.5 text-sm font-bold hover:bg-red-500 disabled:cursor-not-allowed disabled:opacity-50" @click="submitUploadedIngest">
               {{ uploadBusy ? t('admin.mediaIngests.upload.uploading') : t('admin.mediaIngests.upload.submit') }}
@@ -248,11 +248,11 @@
         :style="{ zIndex: 2147483647 }"
         @click.self="closeAttachPanel"
       >
-        <section class="flex h-full w-full max-w-5xl flex-col overflow-hidden rounded-2xl border border-zinc-700 bg-zinc-950 shadow-2xl sm:h-auto sm:max-h-[88dvh]" style="max-width: min(100%, 72rem);">
-          <header class="flex shrink-0 flex-col gap-3 border-b border-zinc-800 bg-zinc-900/80 p-5 sm:flex-row sm:items-start sm:justify-between">
+        <section class="flex h-full w-full max-w-5xl flex-col overflow-hidden rounded-2xl border border-white/10 bg-zinc-950 shadow-2xl sm:h-auto sm:max-h-[88dvh]" style="max-width: min(100%, 72rem);">
+          <header class="flex shrink-0 flex-col gap-3 border-b border-white/[0.07] bg-zinc-900/80 p-5 sm:flex-row sm:items-start sm:justify-between">
             <div class="min-w-0">
-              <p class="text-xs font-bold uppercase tracking-wide text-zinc-500">{{ t('admin.mediaIngests.columns.attach') }}</p>
-              <h3 class="mt-1 truncate text-2xl font-black text-white">{{ attachPanelItem.title }}</h3>
+              <p class="text-xs font-medium text-zinc-500">{{ t('admin.mediaIngests.columns.attach') }}</p>
+              <h3 class="mt-1 truncate text-2xl font-semibold text-white">{{ attachPanelItem.title }}</h3>
               <p class="mt-1 text-sm text-zinc-500">
                 {{ attachPanelItem.media_type }} <span v-if="attachPanelItem.year">· {{ attachPanelItem.year }}</span> · {{ attachPanelItem.status }}
               </p>
@@ -265,27 +265,27 @@
           <div class="grid min-h-0 flex-1 gap-5 overflow-y-auto p-5 lg:grid-cols-[minmax(0,1fr)_20rem]">
             <div class="space-y-4">
               <div class="grid gap-3 sm:grid-cols-2">
-                <label class="grid gap-1 text-xs font-bold uppercase tracking-wide text-zinc-500">
+                <label class="grid gap-1 text-xs font-medium text-zinc-500">
                   {{ t('admin.mediaIngests.selectChannel') }}
-                  <select v-model="attachForms[attachPanelItem.id].channel_id" class="w-full min-w-0 rounded border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm font-normal normal-case tracking-normal text-white">
+                  <select v-model="attachForms[attachPanelItem.id].channel_id" class="w-full min-w-0 rounded border border-white/10 bg-zinc-900 px-3 py-2 text-sm font-normal normal-case tracking-normal text-white">
                     <option value="">{{ t('admin.mediaIngests.selectChannel') }}</option>
                     <option v-for="channel in channels" :key="channel.id" :value="channel.id">{{ channel.name }}</option>
                   </select>
                 </label>
-                <label class="grid gap-1 text-xs font-bold uppercase tracking-wide text-zinc-500">
+                <label class="grid gap-1 text-xs font-medium text-zinc-500">
                   {{ t('admin.mediaIngests.titlePlaceholder') }}
-                  <input v-model="attachForms[attachPanelItem.id].title" :placeholder="attachPanelItem.title" class="w-full min-w-0 rounded border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm font-normal normal-case tracking-normal text-white placeholder:text-zinc-600" />
+                  <input v-model="attachForms[attachPanelItem.id].title" :placeholder="attachPanelItem.title" class="w-full min-w-0 rounded border border-white/10 bg-zinc-900 px-3 py-2 text-sm font-normal normal-case tracking-normal text-white placeholder:text-zinc-600" />
                 </label>
               </div>
 
-            <label class="grid gap-1 text-xs font-bold uppercase tracking-wide text-zinc-500">
+            <label class="grid gap-1 text-xs font-medium text-zinc-500">
               {{ t('admin.mediaIngests.description') }}
-              <textarea v-model="attachForms[attachPanelItem.id].description" rows="4" :placeholder="t('admin.mediaIngests.description')" class="w-full rounded border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm font-normal normal-case tracking-normal text-white placeholder:text-zinc-600" />
+              <textarea v-model="attachForms[attachPanelItem.id].description" rows="4" :placeholder="t('admin.mediaIngests.description')" class="w-full rounded border border-white/10 bg-zinc-900 px-3 py-2 text-sm font-normal normal-case tracking-normal text-white placeholder:text-zinc-600" />
             </label>
 
-            <div v-if="attachPanelItem.media_type === 'series'" class="space-y-4 rounded-xl border border-zinc-800 bg-black/30 p-4">
+            <div v-if="attachPanelItem.media_type === 'series'" class="space-y-4 rounded-xl border border-white/[0.07] bg-black/30 p-4">
               <div class="grid gap-3 sm:grid-cols-[minmax(0,1fr)_10rem]">
-                <select v-model="attachForms[attachPanelItem.id].series_id" class="w-full rounded border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white" @change="normalizeSeriesPreview(attachPanelItem.id)">
+                <select v-model="attachForms[attachPanelItem.id].series_id" class="w-full rounded border border-white/10 bg-zinc-900 px-3 py-2 text-sm text-white" @change="normalizeSeriesPreview(attachPanelItem.id)">
                   <option value="">{{ t('admin.mediaIngests.createNewSeries') }}</option>
                   <option v-for="series in props.seriesItems || []" :key="series.id" :value="series.id">
                     {{ series.title }} · {{ t('admin.mediaIngests.existingSeriesMeta', { seasons: series.seasons || 1, episodes: series.episode_count || 0 }) }}
@@ -299,22 +299,22 @@
               <p v-if="previewState(attachPanelItem.id).error" class="text-xs text-red-300">{{ previewState(attachPanelItem.id).error }}</p>
 
               <div v-if="previewState(attachPanelItem.id).files.length" class="space-y-3">
-                <div class="flex flex-col gap-1 text-xs font-bold uppercase tracking-wide text-zinc-500 sm:flex-row sm:items-center sm:justify-between">
+                <div class="flex flex-col gap-1 text-xs font-medium text-zinc-500 sm:flex-row sm:items-center sm:justify-between">
                   <span>{{ t('admin.mediaIngests.previewFiles', { count: previewState(attachPanelItem.id).files.length }) }}</span>
                   <span>{{ attachPanelItem.season_count || 1 }} {{ t('admin.mediaIngests.seasonsShort') }}</span>
                 </div>
                 <div class="max-h-[28rem] space-y-2 overflow-y-auto pr-1">
-                  <div v-for="file in previewState(attachPanelItem.id).files" :key="file.file_path" class="rounded border border-zinc-800 bg-zinc-950 p-3">
+                  <div v-for="file in previewState(attachPanelItem.id).files" :key="file.file_path" class="rounded border border-white/[0.07] bg-zinc-950 p-3">
                     <div class="grid gap-2 sm:grid-cols-[4.5rem_3.5rem_minmax(0,1fr)]">
-                      <select v-model.number="file.season_number" class="rounded border border-zinc-700 bg-zinc-900 px-2 py-1 text-xs text-white" @change="normalizeSeriesPreview(attachPanelItem.id)">
+                      <select v-model.number="file.season_number" class="rounded border border-white/10 bg-zinc-900 px-2 py-1 text-xs text-white" @change="normalizeSeriesPreview(attachPanelItem.id)">
                         <option v-for="season in seasonOptions(attachPanelItem)" :key="season" :value="season">S{{ season }}</option>
                       </select>
-                      <span class="rounded border border-zinc-800 bg-black/40 px-2 py-1 text-center text-xs font-bold text-zinc-300">E{{ file.episode_number }}</span>
-                      <input v-model="file.title" :placeholder="t('admin.mediaIngests.episodeTitle')" class="min-w-0 rounded border border-zinc-700 bg-zinc-900 px-2 py-1 text-xs text-white placeholder:text-zinc-600" />
+                      <span class="rounded border border-white/[0.07] bg-black/40 px-2 py-1 text-center text-xs font-bold text-zinc-300">E{{ file.episode_number }}</span>
+                      <input v-model="file.title" :placeholder="t('admin.mediaIngests.episodeTitle')" class="min-w-0 rounded border border-white/10 bg-zinc-900 px-2 py-1 text-xs text-white placeholder:text-zinc-600" />
                     </div>
                     <div class="mt-2 flex flex-wrap items-center gap-2">
-                      <button type="button" class="rounded border border-zinc-700 px-2 py-1 text-[11px] font-bold text-zinc-200 transition hover:bg-zinc-800" @click="moveSeriesPreviewEpisode(attachPanelItem.id, file, -1)">{{ t('admin.mediaIngests.moveUp') }}</button>
-                      <button type="button" class="rounded border border-zinc-700 px-2 py-1 text-[11px] font-bold text-zinc-200 transition hover:bg-zinc-800" @click="moveSeriesPreviewEpisode(attachPanelItem.id, file, 1)">{{ t('admin.mediaIngests.moveDown') }}</button>
+                      <button type="button" class="rounded border border-white/10 px-2 py-1 text-[11px] font-bold text-zinc-200 transition hover:bg-zinc-800" @click="moveSeriesPreviewEpisode(attachPanelItem.id, file, -1)">{{ t('admin.mediaIngests.moveUp') }}</button>
+                      <button type="button" class="rounded border border-white/10 px-2 py-1 text-[11px] font-bold text-zinc-200 transition hover:bg-zinc-800" @click="moveSeriesPreviewEpisode(attachPanelItem.id, file, 1)">{{ t('admin.mediaIngests.moveDown') }}</button>
                       <span class="text-[11px] text-zinc-500">{{ formatBytes(file.size) }}</span>
                     </div>
                     <code class="mt-2 block break-all text-[11px] text-zinc-500">{{ file.relative_path || file.file_name }}</code>
@@ -324,23 +324,23 @@
             </div>
 
             <template v-else>
-              <label class="grid gap-1 text-xs font-bold uppercase tracking-wide text-zinc-500">
+              <label class="grid gap-1 text-xs font-medium text-zinc-500">
                 {{ t('admin.mediaIngests.filePathOverride') }}
-                <input v-model="attachForms[attachPanelItem.id].file_path" :placeholder="t('admin.mediaIngests.filePathOverride')" class="w-full rounded border border-zinc-700 bg-zinc-900 px-3 py-2 font-mono text-xs font-normal normal-case tracking-normal text-white placeholder:text-zinc-600" />
+                <input v-model="attachForms[attachPanelItem.id].file_path" :placeholder="t('admin.mediaIngests.filePathOverride')" class="w-full rounded border border-white/10 bg-zinc-900 px-3 py-2 font-mono text-xs font-normal normal-case tracking-normal text-white placeholder:text-zinc-600" />
               </label>
             </template>
           </div>
 
-          <aside class="space-y-4 rounded-xl border border-zinc-800 bg-black/30 p-4">
+          <aside class="space-y-4 rounded-xl border border-white/[0.07] bg-black/30 p-4">
             <div v-if="attachPanelItem.attached_video_id" class="rounded border border-amber-500/40 bg-amber-950/30 p-3 text-xs leading-5 text-amber-100">
               {{ t('admin.mediaIngests.alreadyAttachedWarning') }}
             </div>
             <div>
-              <p class="text-xs font-bold uppercase tracking-wide text-zinc-500">{{ t('admin.mediaIngests.columns.path') }}</p>
+              <p class="text-xs font-medium text-zinc-500">{{ t('admin.mediaIngests.columns.path') }}</p>
               <code class="mt-2 block break-all rounded bg-black/40 p-2 text-xs text-zinc-300">{{ attachPanelItem.content_path || attachPanelItem.save_path || '-' }}</code>
             </div>
             <div>
-              <p class="text-xs font-bold uppercase tracking-wide text-zinc-500">{{ t('admin.mediaIngests.columns.progress') }}</p>
+              <p class="text-xs font-medium text-zinc-500">{{ t('admin.mediaIngests.columns.progress') }}</p>
               <div class="mt-2 h-2 overflow-hidden rounded-full bg-zinc-800">
                 <div class="h-full rounded-full bg-red-500" :style="{ width: `${displayProgress(attachPanelItem)}%` }" />
               </div>
@@ -354,7 +354,7 @@
               v-if="attachPanelItem.media_type === 'series'"
               type="button"
               :disabled="!canBulkAttachSeries(attachPanelItem) || previewState(attachPanelItem.id).attaching"
-              class="w-full rounded bg-blue-600 px-3 py-2 text-sm font-bold text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
+              class="w-full rounded bg-zinc-100 px-3 py-2 text-sm font-bold text-zinc-950 transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-50"
               @click="bulkAttachSeries(attachPanelItem)"
             >
               {{ previewState(attachPanelItem.id).attaching ? t('admin.mediaIngests.bulkAttaching') : attachPanelItem.attached_video_id ? t('admin.mediaIngests.bulkAttachAgain') : t('admin.mediaIngests.bulkAttach') }}
@@ -363,7 +363,7 @@
               v-else
               type="button"
               :disabled="!canAttach(attachPanelItem) || attachingId === attachPanelItem.id"
-              class="w-full rounded bg-blue-600 px-3 py-2 text-sm font-bold text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
+              class="w-full rounded bg-zinc-100 px-3 py-2 text-sm font-bold text-zinc-950 transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-50"
               @click="attach(attachPanelItem)"
             >
               {{ attachingId === attachPanelItem.id ? t('admin.mediaIngests.attaching') : attachPanelItem.attached_video_id ? t('admin.mediaIngests.attachAgain') : t('admin.mediaIngests.attach') }}
@@ -381,10 +381,10 @@
         :style="{ zIndex: 2147483647 }"
       >
         <section class="flex min-h-0 w-full flex-col bg-zinc-950">
-          <header class="flex shrink-0 items-start justify-between gap-4 border-b border-zinc-800 px-5 py-4 sm:px-8">
+          <header class="flex shrink-0 items-start justify-between gap-4 border-b border-white/[0.07] px-5 py-4 sm:px-8">
             <div class="min-w-0">
               <p class="text-xs font-bold uppercase text-emerald-400">{{ t('admin.mediaIngests.audio.kicker') }}</p>
-              <h2 class="mt-1 truncate text-2xl font-black">{{ t('admin.mediaIngests.audio.title') }}</h2>
+              <h2 class="mt-1 truncate text-2xl font-semibold">{{ t('admin.mediaIngests.audio.title') }}</h2>
               <p class="mt-1 truncate text-sm text-zinc-500">{{ audioPanelItem.title }}</p>
             </div>
             <button type="button" :disabled="bulkAudioImporting" class="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-zinc-800 text-2xl text-white hover:bg-zinc-700 disabled:opacity-50" :aria-label="t('common.close')" @click="closeAudioPanel">×</button>
@@ -392,7 +392,7 @@
 
           <div class="min-h-0 flex-1 overflow-y-auto px-5 py-5 sm:px-8">
             <p v-if="audioPanelError && importedAudio" class="mx-auto mb-4 max-w-5xl rounded border border-red-500/30 bg-red-950/40 p-3 text-sm text-red-200">{{ audioPanelError }}</p>
-            <div v-if="!importedAudio" class="mx-auto mb-5 flex w-full max-w-5xl items-center gap-2 rounded-lg border border-zinc-800 bg-zinc-900/60 p-1">
+            <div v-if="!importedAudio" class="mx-auto mb-5 flex w-full max-w-5xl items-center gap-2 rounded-lg border border-white/[0.07] bg-zinc-900/60 p-1">
               <button type="button" :disabled="bulkAudioImporting" :class="audioMode === 'single' ? 'bg-zinc-700 text-white' : 'text-zinc-400 hover:text-white'" class="flex-1 rounded-md px-4 py-2 text-sm font-bold transition disabled:opacity-50" @click="setAudioMode('single')">
                 {{ t('admin.mediaIngests.audio.singleMode') }}
               </button>
@@ -415,48 +415,48 @@
 
             <div v-else-if="audioMode === 'single'" class="mx-auto grid w-full max-w-5xl gap-5 lg:grid-cols-[minmax(0,1fr)_20rem]">
               <div class="space-y-5">
-                <section class="rounded-lg border border-zinc-800 bg-zinc-900/60 p-4">
+                <section class="rounded-lg border border-white/[0.07] bg-zinc-900/60 p-4">
                   <h3 class="font-bold">{{ t('admin.mediaIngests.audio.destination') }}</h3>
                   <div class="mt-3 grid gap-3 sm:grid-cols-2">
-                    <select v-model="audioForm.targetType" class="rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-3 text-white" @change="resetAudioTarget">
+                    <select v-model="audioForm.targetType" class="rounded-lg border border-white/10 bg-zinc-900 px-3 py-3 text-white" @change="resetAudioTarget">
                       <option value="movie">{{ t('admin.mediaIngests.audio.movie') }}</option>
                       <option value="episode">{{ t('admin.mediaIngests.audio.episode') }}</option>
                     </select>
-                    <select v-if="audioForm.targetType === 'movie'" v-model="audioForm.targetId" class="rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-3 text-white">
+                    <select v-if="audioForm.targetType === 'movie'" v-model="audioForm.targetId" class="rounded-lg border border-white/10 bg-zinc-900 px-3 py-3 text-white">
                       <option value="">{{ t('admin.mediaIngests.audio.selectMovie') }}</option>
                       <option v-for="movie in audioMovies" :key="movie.id" :value="movie.id" :disabled="!movie.video_id">{{ movie.title }}</option>
                     </select>
-                    <select v-else v-model="audioForm.seriesId" class="rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-3 text-white" @change="loadAudioEpisodes">
+                    <select v-else v-model="audioForm.seriesId" class="rounded-lg border border-white/10 bg-zinc-900 px-3 py-3 text-white" @change="loadAudioEpisodes">
                       <option value="">{{ t('admin.mediaIngests.audio.selectSeries') }}</option>
                       <option v-for="series in props.seriesItems || []" :key="series.id" :value="series.id">{{ series.title }}</option>
                     </select>
-                    <select v-if="audioForm.targetType === 'episode'" v-model="audioForm.targetId" class="rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-3 text-white sm:col-span-2">
+                    <select v-if="audioForm.targetType === 'episode'" v-model="audioForm.targetId" class="rounded-lg border border-white/10 bg-zinc-900 px-3 py-3 text-white sm:col-span-2">
                       <option value="">{{ t('admin.mediaIngests.audio.selectEpisode') }}</option>
                       <option v-for="episode in audioEpisodes" :key="episode.id" :value="episode.id">S{{ episode.season_number }} E{{ episode.episode_number }} · {{ episode.title }}</option>
                     </select>
                   </div>
                 </section>
 
-                <section class="rounded-lg border border-zinc-800 bg-zinc-900/60 p-4">
+                <section class="rounded-lg border border-white/[0.07] bg-zinc-900/60 p-4">
                   <h3 class="font-bold">{{ t('admin.mediaIngests.audio.source') }}</h3>
                   <div v-if="audioSourcesLoading" class="mt-3 text-sm text-zinc-400">{{ t('admin.mediaIngests.audio.inspecting') }}</div>
                   <div v-else class="mt-3 grid gap-3">
-                    <select v-model="audioForm.filePath" class="rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-3 text-white" @change="selectFirstAudioStream">
+                    <select v-model="audioForm.filePath" class="rounded-lg border border-white/10 bg-zinc-900 px-3 py-3 text-white" @change="selectFirstAudioStream">
                       <option value="">{{ t('admin.mediaIngests.audio.selectFile') }}</option>
                       <option v-for="source in audioSources" :key="source.file_path" :value="source.file_path">{{ source.relative_path }} · {{ formatBytes(source.size) }}</option>
                     </select>
-                    <select v-model.number="audioForm.streamIndex" class="rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-3 text-white" @change="fillAudioStreamMetadata">
+                    <select v-model.number="audioForm.streamIndex" class="rounded-lg border border-white/10 bg-zinc-900 px-3 py-3 text-white" @change="fillAudioStreamMetadata">
                       <option :value="-1">{{ t('admin.mediaIngests.audio.selectStream') }}</option>
                       <option v-for="stream in selectedAudioSource?.streams || []" :key="stream.index" :value="stream.index">{{ audioStreamLabel(stream) }}</option>
                     </select>
                   </div>
                 </section>
 
-                <section class="rounded-lg border border-zinc-800 bg-zinc-900/60 p-4">
+                <section class="rounded-lg border border-white/[0.07] bg-zinc-900/60 p-4">
                   <h3 class="font-bold">{{ t('admin.mediaIngests.audio.details') }}</h3>
                   <div class="mt-3 grid gap-3 sm:grid-cols-[8rem_minmax(0,1fr)]">
-                    <input v-model="audioForm.language" placeholder="es" class="rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-3 text-white placeholder:text-zinc-600" />
-                    <input v-model="audioForm.label" placeholder="Español Latino" class="rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-3 text-white placeholder:text-zinc-600" />
+                    <input v-model="audioForm.language" placeholder="es" class="rounded-lg border border-white/10 bg-zinc-900 px-3 py-3 text-white placeholder:text-zinc-600" />
+                    <input v-model="audioForm.label" placeholder="Español Latino" class="rounded-lg border border-white/10 bg-zinc-900 px-3 py-3 text-white placeholder:text-zinc-600" />
                   </div>
                   <label class="mt-3 flex items-center gap-2 text-sm text-zinc-300">
                     <input v-model="audioForm.isDefault" type="checkbox" class="h-4 w-4 accent-red-500" />
@@ -465,7 +465,7 @@
                 </section>
               </div>
 
-              <aside class="h-fit rounded-lg border border-zinc-800 bg-black/30 p-4 lg:sticky lg:top-0">
+              <aside class="h-fit rounded-lg border border-white/[0.07] bg-black/30 p-4 lg:sticky lg:top-0">
                 <p class="text-sm leading-6 text-zinc-400">{{ t('admin.mediaIngests.audio.preserveNote') }}</p>
                 <p v-if="audioPanelError" class="mt-4 rounded border border-red-500/30 bg-red-950/40 p-3 text-sm text-red-200">{{ audioPanelError }}</p>
                 <button type="button" :disabled="!canImportAudio || audioImporting" class="mt-5 w-full rounded-lg bg-red-600 px-4 py-3 font-bold text-white hover:bg-red-500 disabled:cursor-not-allowed disabled:opacity-50" @click="importSelectedAudio">
@@ -475,36 +475,36 @@
             </div>
 
             <div v-else class="mx-auto w-full max-w-6xl space-y-5">
-              <section class="grid gap-4 rounded-lg border border-zinc-800 bg-zinc-900/60 p-4 lg:grid-cols-[minmax(0,1fr)_9rem_9rem_9rem]">
+              <section class="grid gap-4 rounded-lg border border-white/[0.07] bg-zinc-900/60 p-4 lg:grid-cols-[minmax(0,1fr)_9rem_9rem_9rem]">
                 <label class="grid gap-1 text-xs font-bold uppercase text-zinc-500">
                   {{ t('admin.mediaIngests.audio.selectSeries') }}
-                  <select v-model="bulkSeriesId" :disabled="bulkAudioImporting" class="min-w-0 rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2.5 text-sm font-normal normal-case text-white" @change="loadBulkAudioEpisodes">
+                  <select v-model="bulkSeriesId" :disabled="bulkAudioImporting" class="min-w-0 rounded-lg border border-white/10 bg-zinc-900 px-3 py-2.5 text-sm font-normal normal-case text-white" @change="loadBulkAudioEpisodes">
                     <option value="">{{ t('admin.mediaIngests.audio.selectSeries') }}</option>
                     <option v-for="series in props.seriesItems || []" :key="series.id" :value="series.id">{{ series.title }}</option>
                   </select>
                 </label>
                 <label class="grid gap-1 text-xs font-bold uppercase text-zinc-500">
                   {{ t('admin.mediaIngests.audio.language') }}
-                  <input v-model="bulkAudioForm.language" :disabled="bulkAudioImporting" class="rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2.5 text-sm font-normal normal-case text-white" />
+                  <input v-model="bulkAudioForm.language" :disabled="bulkAudioImporting" class="rounded-lg border border-white/10 bg-zinc-900 px-3 py-2.5 text-sm font-normal normal-case text-white" />
                 </label>
                 <label class="grid gap-1 text-xs font-bold uppercase text-zinc-500">
                   {{ t('admin.mediaIngests.audio.delay') }}
-                  <input v-model.number="bulkAudioForm.delayMs" :disabled="bulkAudioImporting" type="number" step="1" class="rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2.5 text-sm font-normal normal-case text-white" />
+                  <input v-model.number="bulkAudioForm.delayMs" :disabled="bulkAudioImporting" type="number" step="1" class="rounded-lg border border-white/10 bg-zinc-900 px-3 py-2.5 text-sm font-normal normal-case text-white" />
                 </label>
                 <label class="grid gap-1 text-xs font-bold uppercase text-zinc-500">
                   {{ t('admin.mediaIngests.audio.trim') }}
-                  <input v-model.number="bulkAudioForm.trimStartMs" :disabled="bulkAudioImporting" min="0" type="number" step="1" class="rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2.5 text-sm font-normal normal-case text-white" />
+                  <input v-model.number="bulkAudioForm.trimStartMs" :disabled="bulkAudioImporting" min="0" type="number" step="1" class="rounded-lg border border-white/10 bg-zinc-900 px-3 py-2.5 text-sm font-normal normal-case text-white" />
                 </label>
                 <label class="grid gap-1 text-xs font-bold uppercase text-zinc-500 lg:col-span-4">
                   {{ t('admin.mediaIngests.audio.label') }}
-                  <input v-model="bulkAudioForm.label" :disabled="bulkAudioImporting" class="rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2.5 text-sm font-normal normal-case text-white" />
+                  <input v-model="bulkAudioForm.label" :disabled="bulkAudioImporting" class="rounded-lg border border-white/10 bg-zinc-900 px-3 py-2.5 text-sm font-normal normal-case text-white" />
                 </label>
               </section>
 
-              <section class="overflow-hidden rounded-lg border border-zinc-800 bg-zinc-950">
-                <div class="flex flex-col gap-3 border-b border-zinc-800 p-4 sm:flex-row sm:items-center sm:justify-between">
+              <section class="overflow-hidden rounded-lg border border-white/[0.07] bg-zinc-950">
+                <div class="flex flex-col gap-3 border-b border-white/[0.07] p-4 sm:flex-row sm:items-center sm:justify-between">
                   <div>
-                    <h3 class="font-black">{{ t('admin.mediaIngests.audio.bulkLinks') }}</h3>
+                    <h3 class="font-semibold">{{ t('admin.mediaIngests.audio.bulkLinks') }}</h3>
                     <p class="mt-1 text-sm text-zinc-500">{{ t('admin.mediaIngests.audio.bulkHelp') }}</p>
                   </div>
                   <div class="flex gap-2">
@@ -515,7 +515,7 @@
 
                 <div v-if="bulkEpisodesLoading" class="p-8 text-center text-sm text-zinc-400">{{ t('admin.mediaIngests.audio.loadingEpisodes') }}</div>
                 <div v-else-if="!bulkSeriesId" class="p-8 text-center text-sm text-zinc-500">{{ t('admin.mediaIngests.audio.chooseSeriesHelp') }}</div>
-                <div v-else class="divide-y divide-zinc-800">
+                <div v-else class="divide-y divide-white/[0.07]">
                   <div v-for="row in bulkAudioRows" :key="row.targetId" :class="row.included ? 'bg-zinc-900/40' : 'opacity-60'" class="grid gap-3 p-4 transition md:grid-cols-[3rem_minmax(10rem,0.8fr)_minmax(14rem,1.3fr)_minmax(10rem,0.8fr)] md:items-center">
                     <label class="flex items-center gap-2 text-xs font-bold text-zinc-400">
                       <input v-model="row.included" :disabled="bulkAudioImporting || row.status === 'done' || !row.sourcePath" type="checkbox" class="h-5 w-5 accent-red-500" />
@@ -527,11 +527,11 @@
                       <p v-else-if="row.matchKind" class="mt-1 text-xs text-emerald-400">{{ bulkMatchLabel(row.matchKind) }}</p>
                       <p v-else class="mt-1 text-xs text-amber-300">{{ t('admin.mediaIngests.audio.noMatch') }}</p>
                     </div>
-                    <select v-model="row.sourcePath" :disabled="bulkAudioImporting || row.status === 'done'" class="min-w-0 rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white" @change="selectBulkSource(row)">
+                    <select v-model="row.sourcePath" :disabled="bulkAudioImporting || row.status === 'done'" class="min-w-0 rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-sm text-white" @change="selectBulkSource(row)">
                       <option value="">{{ t('admin.mediaIngests.audio.excludeEpisode') }}</option>
                       <option v-for="source in audioSources" :key="source.file_path" :value="source.file_path">{{ source.relative_path }}</option>
                     </select>
-                    <select v-model.number="row.streamIndex" :disabled="bulkAudioImporting || row.status === 'done' || !row.sourcePath" class="min-w-0 rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white">
+                    <select v-model.number="row.streamIndex" :disabled="bulkAudioImporting || row.status === 'done' || !row.sourcePath" class="min-w-0 rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-sm text-white">
                       <option :value="-1">{{ t('admin.mediaIngests.audio.selectStream') }}</option>
                       <option v-for="stream in bulkRowSource(row)?.streams || []" :key="stream.index" :value="stream.index">{{ audioStreamLabel(stream) }}</option>
                     </select>
@@ -541,7 +541,7 @@
                 </div>
               </section>
 
-              <div class="flex flex-col gap-3 rounded-lg border border-zinc-800 bg-zinc-900/60 p-4 sm:flex-row sm:items-center sm:justify-between">
+              <div class="flex flex-col gap-3 rounded-lg border border-white/[0.07] bg-zinc-900/60 p-4 sm:flex-row sm:items-center sm:justify-between">
                 <p class="text-sm text-zinc-400">{{ t('admin.mediaIngests.audio.bulkCount', { count: bulkReadyRows.length }) }}</p>
                 <button type="button" :disabled="!bulkReadyRows.length || bulkAudioImporting" class="rounded-lg bg-red-600 px-5 py-3 font-bold text-white hover:bg-red-500 disabled:cursor-not-allowed disabled:opacity-50" @click="importBulkAudio">
                   {{ bulkAudioImporting ? t('admin.mediaIngests.audio.bulkImporting', { current: bulkImportProgress.current, total: bulkImportProgress.total }) : t('admin.mediaIngests.audio.bulkSubmit') }}
@@ -558,17 +558,17 @@
     <Teleport to="body">
       <div v-if="subtitlePanelItem" class="fixed inset-0 flex overflow-hidden bg-black/90 text-white" :style="{ zIndex: 2147483647 }">
         <section class="flex min-h-0 w-full flex-col bg-zinc-950">
-          <header class="flex shrink-0 items-start justify-between gap-4 border-b border-zinc-800 px-5 py-4 sm:px-8">
+          <header class="flex shrink-0 items-start justify-between gap-4 border-b border-white/[0.07] px-5 py-4 sm:px-8">
             <div class="min-w-0">
               <p class="text-xs font-bold uppercase text-cyan-400">{{ t('admin.mediaIngests.subtitles.kicker') }}</p>
-              <h2 class="mt-1 truncate text-2xl font-black">{{ t('admin.mediaIngests.subtitles.title') }}</h2>
+              <h2 class="mt-1 truncate text-2xl font-semibold">{{ t('admin.mediaIngests.subtitles.title') }}</h2>
               <p class="mt-1 truncate text-sm text-zinc-500">{{ subtitlePanelItem.title }}</p>
             </div>
             <button type="button" :disabled="subtitleImporting" class="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-zinc-800 text-2xl hover:bg-zinc-700 disabled:opacity-50" :aria-label="t('common.close')" @click="closeSubtitlePanel">×</button>
           </header>
 
           <div class="min-h-0 flex-1 overflow-y-auto px-5 py-5 sm:px-8">
-            <div class="mx-auto mb-5 flex w-full max-w-5xl gap-2 rounded-lg border border-zinc-800 bg-zinc-900/60 p-1">
+            <div class="mx-auto mb-5 flex w-full max-w-5xl gap-2 rounded-lg border border-white/[0.07] bg-zinc-900/60 p-1">
               <button type="button" :disabled="subtitleImporting" :class="subtitleMode === 'single' ? 'bg-zinc-700 text-white' : 'text-zinc-400'" class="flex-1 rounded-md px-4 py-2 text-sm font-bold" @click="subtitleMode = 'single'">{{ t('admin.mediaIngests.subtitles.singleMode') }}</button>
               <button type="button" :disabled="subtitleImporting" :class="subtitleMode === 'bulk' ? 'bg-zinc-700 text-white' : 'text-zinc-400'" class="flex-1 rounded-md px-4 py-2 text-sm font-bold" @click="subtitleMode = 'bulk'">{{ t('admin.mediaIngests.subtitles.bulkMode') }}</button>
             </div>
@@ -576,83 +576,83 @@
             <div v-if="subtitleSourcesLoading" class="mx-auto max-w-5xl py-16 text-center text-zinc-400">{{ t('admin.mediaIngests.subtitles.inspecting') }}</div>
             <div v-else-if="subtitleMode === 'single'" class="mx-auto grid w-full max-w-5xl gap-5 lg:grid-cols-[minmax(0,1fr)_20rem]">
               <div class="space-y-5">
-                <section class="rounded-lg border border-zinc-800 bg-zinc-900/60 p-4">
+                <section class="rounded-lg border border-white/[0.07] bg-zinc-900/60 p-4">
                   <h3 class="font-bold">{{ t('admin.mediaIngests.subtitles.destination') }}</h3>
                   <div class="mt-3 grid gap-3 sm:grid-cols-2">
-                    <select v-model="subtitleForm.targetType" class="rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-3" @change="resetSubtitleTarget">
+                    <select v-model="subtitleForm.targetType" class="rounded-lg border border-white/10 bg-zinc-900 px-3 py-3" @change="resetSubtitleTarget">
                       <option value="movie">{{ t('admin.mediaIngests.audio.movie') }}</option>
                       <option value="episode">{{ t('admin.mediaIngests.audio.episode') }}</option>
                     </select>
-                    <select v-if="subtitleForm.targetType === 'movie'" v-model="subtitleForm.targetId" class="rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-3">
+                    <select v-if="subtitleForm.targetType === 'movie'" v-model="subtitleForm.targetId" class="rounded-lg border border-white/10 bg-zinc-900 px-3 py-3">
                       <option value="">{{ t('admin.mediaIngests.audio.selectMovie') }}</option>
                       <option v-for="movie in subtitleMovies" :key="movie.id" :value="movie.id" :disabled="!movie.video_id">{{ movie.title }}</option>
                     </select>
-                    <select v-else v-model="subtitleForm.seriesId" class="rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-3" @change="loadSubtitleEpisodes">
+                    <select v-else v-model="subtitleForm.seriesId" class="rounded-lg border border-white/10 bg-zinc-900 px-3 py-3" @change="loadSubtitleEpisodes">
                       <option value="">{{ t('admin.mediaIngests.audio.selectSeries') }}</option>
                       <option v-for="series in props.seriesItems || []" :key="series.id" :value="series.id">{{ series.title }}</option>
                     </select>
-                    <select v-if="subtitleForm.targetType === 'episode'" v-model="subtitleForm.targetId" class="rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-3 sm:col-span-2">
+                    <select v-if="subtitleForm.targetType === 'episode'" v-model="subtitleForm.targetId" class="rounded-lg border border-white/10 bg-zinc-900 px-3 py-3 sm:col-span-2">
                       <option value="">{{ t('admin.mediaIngests.audio.selectEpisode') }}</option>
                       <option v-for="episode in subtitleEpisodes" :key="episode.id" :value="episode.id">S{{ episode.season_number }} E{{ episode.episode_number }} · {{ episode.title }}</option>
                     </select>
                   </div>
                 </section>
 
-                <section class="rounded-lg border border-zinc-800 bg-zinc-900/60 p-4">
+                <section class="rounded-lg border border-white/[0.07] bg-zinc-900/60 p-4">
                   <h3 class="font-bold">{{ t('admin.mediaIngests.subtitles.source') }}</h3>
                   <div class="mt-3 grid gap-3">
-                    <select v-model="subtitleForm.filePath" class="rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-3" @change="selectFirstSubtitleStream">
+                    <select v-model="subtitleForm.filePath" class="rounded-lg border border-white/10 bg-zinc-900 px-3 py-3" @change="selectFirstSubtitleStream">
                       <option value="">{{ t('admin.mediaIngests.subtitles.selectFile') }}</option>
                       <option v-for="source in subtitleSources" :key="source.file_path" :value="source.file_path">{{ source.relative_path }}</option>
                     </select>
-                    <select v-model.number="subtitleForm.streamIndex" class="rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-3" @change="fillSubtitleMetadata">
+                    <select v-model.number="subtitleForm.streamIndex" class="rounded-lg border border-white/10 bg-zinc-900 px-3 py-3" @change="fillSubtitleMetadata">
                       <option :value="-1">{{ t('admin.mediaIngests.subtitles.selectStream') }}</option>
                       <option v-for="stream in selectedSubtitleSource?.streams || []" :key="stream.index" :value="stream.index">{{ subtitleStreamLabel(stream) }}</option>
                     </select>
                   </div>
                 </section>
 
-                <section class="rounded-lg border border-zinc-800 bg-zinc-900/60 p-4">
+                <section class="rounded-lg border border-white/[0.07] bg-zinc-900/60 p-4">
                   <h3 class="font-bold">{{ t('admin.mediaIngests.subtitles.details') }}</h3>
                   <div class="mt-3 grid gap-3 sm:grid-cols-[8rem_minmax(0,1fr)_9rem]">
-                    <input v-model="subtitleForm.language" placeholder="es" class="rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-3" />
-                    <input v-model="subtitleForm.label" placeholder="Español" class="rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-3" />
-                    <input v-model.number="subtitleForm.delayMs" type="number" step="100" :placeholder="t('admin.mediaIngests.subtitles.delay')" class="rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-3" />
+                    <input v-model="subtitleForm.language" placeholder="es" class="rounded-lg border border-white/10 bg-zinc-900 px-3 py-3" />
+                    <input v-model="subtitleForm.label" placeholder="Español" class="rounded-lg border border-white/10 bg-zinc-900 px-3 py-3" />
+                    <input v-model.number="subtitleForm.delayMs" type="number" step="100" :placeholder="t('admin.mediaIngests.subtitles.delay')" class="rounded-lg border border-white/10 bg-zinc-900 px-3 py-3" />
                   </div>
                   <label class="mt-3 flex items-center gap-2 text-sm text-zinc-300"><input v-model="subtitleForm.isDefault" type="checkbox" class="h-4 w-4 accent-red-500" />{{ t('admin.mediaIngests.subtitles.default') }}</label>
                 </section>
               </div>
-              <aside class="h-fit rounded-lg border border-zinc-800 bg-black/30 p-4 lg:sticky lg:top-0">
+              <aside class="h-fit rounded-lg border border-white/[0.07] bg-black/30 p-4 lg:sticky lg:top-0">
                 <p class="text-sm leading-6 text-zinc-400">{{ t('admin.mediaIngests.subtitles.preserveNote') }}</p>
                 <button type="button" :disabled="!canImportSubtitle || subtitleImporting" class="mt-5 w-full rounded-lg bg-cyan-700 px-4 py-3 font-bold hover:bg-cyan-600 disabled:opacity-50" @click="importSelectedSubtitle">{{ subtitleImporting ? t('admin.mediaIngests.subtitles.importing') : t('admin.mediaIngests.subtitles.import') }}</button>
               </aside>
             </div>
 
             <div v-else class="mx-auto w-full max-w-6xl space-y-5">
-              <section class="grid gap-4 rounded-lg border border-zinc-800 bg-zinc-900/60 p-4 lg:grid-cols-[minmax(0,1fr)_8rem_minmax(10rem,0.7fr)_9rem]">
-                <select v-model="subtitleBulkSeriesId" :disabled="subtitleImporting" class="rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-3" @change="loadSubtitleBulkEpisodes">
+              <section class="grid gap-4 rounded-lg border border-white/[0.07] bg-zinc-900/60 p-4 lg:grid-cols-[minmax(0,1fr)_8rem_minmax(10rem,0.7fr)_9rem]">
+                <select v-model="subtitleBulkSeriesId" :disabled="subtitleImporting" class="rounded-lg border border-white/10 bg-zinc-900 px-3 py-3" @change="loadSubtitleBulkEpisodes">
                   <option value="">{{ t('admin.mediaIngests.audio.selectSeries') }}</option>
                   <option v-for="series in props.seriesItems || []" :key="series.id" :value="series.id">{{ series.title }}</option>
                 </select>
-                <input v-model="subtitleBulkForm.language" :disabled="subtitleImporting" placeholder="es" class="rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-3" />
-                <input v-model="subtitleBulkForm.label" :disabled="subtitleImporting" placeholder="Español" class="rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-3" />
-                <input v-model.number="subtitleBulkForm.delayMs" :disabled="subtitleImporting" type="number" step="100" :placeholder="t('admin.mediaIngests.subtitles.delay')" class="rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-3" />
+                <input v-model="subtitleBulkForm.language" :disabled="subtitleImporting" placeholder="es" class="rounded-lg border border-white/10 bg-zinc-900 px-3 py-3" />
+                <input v-model="subtitleBulkForm.label" :disabled="subtitleImporting" placeholder="Español" class="rounded-lg border border-white/10 bg-zinc-900 px-3 py-3" />
+                <input v-model.number="subtitleBulkForm.delayMs" :disabled="subtitleImporting" type="number" step="100" :placeholder="t('admin.mediaIngests.subtitles.delay')" class="rounded-lg border border-white/10 bg-zinc-900 px-3 py-3" />
               </section>
 
-              <section class="overflow-hidden rounded-lg border border-zinc-800">
-                <div class="border-b border-zinc-800 p-4"><h3 class="font-black">{{ t('admin.mediaIngests.subtitles.bulkLinks') }}</h3><p class="mt-1 text-sm text-zinc-500">{{ t('admin.mediaIngests.subtitles.bulkHelp') }}</p></div>
+              <section class="overflow-hidden rounded-lg border border-white/[0.07]">
+                <div class="border-b border-white/[0.07] p-4"><h3 class="font-semibold">{{ t('admin.mediaIngests.subtitles.bulkLinks') }}</h3><p class="mt-1 text-sm text-zinc-500">{{ t('admin.mediaIngests.subtitles.bulkHelp') }}</p></div>
                 <div v-if="!subtitleBulkSeriesId" class="p-8 text-center text-zinc-500">{{ t('admin.mediaIngests.subtitles.chooseSeriesHelp') }}</div>
-                <div v-else class="divide-y divide-zinc-800">
+                <div v-else class="divide-y divide-white/[0.07]">
                   <div v-for="row in subtitleBulkRows" :key="row.targetId" :class="row.included ? 'bg-zinc-900/40' : 'opacity-60'" class="grid gap-3 p-4 md:grid-cols-[3rem_minmax(10rem,0.8fr)_minmax(14rem,1.3fr)_minmax(10rem,0.8fr)] md:items-center">
                     <input v-model="row.included" :disabled="subtitleImporting || row.status === 'done' || !row.sourcePath" type="checkbox" class="h-5 w-5 accent-red-500" />
                     <div class="min-w-0"><p class="truncate font-bold">S{{ row.seasonNumber }} E{{ row.episodeNumber }} · {{ row.targetTitle }}</p><p class="mt-1 text-xs" :class="row.status === 'error' ? 'text-red-300' : row.status === 'done' ? 'text-emerald-300' : row.matchKind ? 'text-cyan-300' : 'text-amber-300'">{{ subtitleRowState(row) }}</p></div>
-                    <select v-model="row.sourcePath" :disabled="subtitleImporting || row.status === 'done'" class="min-w-0 rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2" @change="selectSubtitleBulkSource(row)"><option value="">{{ t('admin.mediaIngests.subtitles.excludeEpisode') }}</option><option v-for="source in subtitleSources" :key="source.file_path" :value="source.file_path">{{ source.relative_path }}</option></select>
-                    <select v-model.number="row.streamIndex" :disabled="subtitleImporting || row.status === 'done' || !row.sourcePath" class="min-w-0 rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2"><option :value="-1">{{ t('admin.mediaIngests.subtitles.selectStream') }}</option><option v-for="stream in subtitleBulkRowSource(row)?.streams || []" :key="stream.index" :value="stream.index">{{ subtitleStreamLabel(stream) }}</option></select>
+                    <select v-model="row.sourcePath" :disabled="subtitleImporting || row.status === 'done'" class="min-w-0 rounded-lg border border-white/10 bg-zinc-900 px-3 py-2" @change="selectSubtitleBulkSource(row)"><option value="">{{ t('admin.mediaIngests.subtitles.excludeEpisode') }}</option><option v-for="source in subtitleSources" :key="source.file_path" :value="source.file_path">{{ source.relative_path }}</option></select>
+                    <select v-model.number="row.streamIndex" :disabled="subtitleImporting || row.status === 'done' || !row.sourcePath" class="min-w-0 rounded-lg border border-white/10 bg-zinc-900 px-3 py-2"><option :value="-1">{{ t('admin.mediaIngests.subtitles.selectStream') }}</option><option v-for="stream in subtitleBulkRowSource(row)?.streams || []" :key="stream.index" :value="stream.index">{{ subtitleStreamLabel(stream) }}</option></select>
                     <p v-if="row.error" class="text-xs text-red-300 md:col-start-2 md:col-span-3">{{ row.error }}</p>
                   </div>
                 </div>
               </section>
-              <div class="flex flex-col gap-3 rounded-lg border border-zinc-800 bg-zinc-900/60 p-4 sm:flex-row sm:items-center sm:justify-between"><p class="text-sm text-zinc-400">{{ t('admin.mediaIngests.subtitles.bulkCount', { count: subtitleBulkReadyRows.length }) }}</p><button type="button" :disabled="!subtitleBulkReadyRows.length || subtitleImporting" class="rounded-lg bg-cyan-700 px-5 py-3 font-bold hover:bg-cyan-600 disabled:opacity-50" @click="importBulkSubtitles">{{ subtitleImporting ? t('admin.mediaIngests.subtitles.bulkImporting', { current: subtitleImportProgress.current, total: subtitleImportProgress.total }) : t('admin.mediaIngests.subtitles.bulkSubmit') }}</button></div>
+              <div class="flex flex-col gap-3 rounded-lg border border-white/[0.07] bg-zinc-900/60 p-4 sm:flex-row sm:items-center sm:justify-between"><p class="text-sm text-zinc-400">{{ t('admin.mediaIngests.subtitles.bulkCount', { count: subtitleBulkReadyRows.length }) }}</p><button type="button" :disabled="!subtitleBulkReadyRows.length || subtitleImporting" class="rounded-lg bg-cyan-700 px-5 py-3 font-bold hover:bg-cyan-600 disabled:opacity-50" @click="importBulkSubtitles">{{ subtitleImporting ? t('admin.mediaIngests.subtitles.bulkImporting', { current: subtitleImportProgress.current, total: subtitleImportProgress.total }) : t('admin.mediaIngests.subtitles.bulkSubmit') }}</button></div>
             </div>
             <p v-if="subtitleMessage" class="mx-auto mt-5 max-w-6xl rounded border border-emerald-500/30 bg-emerald-950/40 p-3 text-sm text-emerald-200">{{ subtitleMessage }}</p>
             <p v-if="subtitlePanelError" class="mx-auto mt-5 max-w-6xl rounded border border-red-500/30 bg-red-950/40 p-3 text-sm text-red-200">{{ subtitlePanelError }}</p>

@@ -2,7 +2,7 @@
     <div class="min-h-screen bg-black text-white p-6">
         <div class="grid grid-cols-1 xl:grid-cols-[1fr_360px] gap-6 max-w-7xl mx-auto">
             <section class="space-y-5 min-w-0">
-                <div class="rounded-lg overflow-hidden border border-zinc-800 bg-zinc-950">
+                <div class="rounded-lg overflow-hidden border border-white/[0.07] bg-zinc-950">
 					<VideoPlayer v-if="playbackUrl && isLive" :src="playbackUrl" status="ready" :lock-adaptive-quality="true" />
 					<div v-else class="relative flex aspect-video items-center justify-center overflow-hidden bg-zinc-950 p-8 text-center">
                         <img
@@ -14,7 +14,7 @@
                         />
                         <div v-if="live?.thumbnail_url" class="absolute inset-0 bg-black/45" />
 					  <div class="relative z-10">
-                            <p class="text-2xl font-black">{{ live?.waiting_for_publisher ? t('live.startingShortly') : live?.scheduled_for ? t('live.upcomingStream') : t('live.streamOffline') }}</p>
+                            <p class="text-2xl font-semibold">{{ live?.waiting_for_publisher ? t('live.startingShortly') : live?.scheduled_for ? t('live.upcomingStream') : t('live.streamOffline') }}</p>
                             <p v-if="live?.scheduled_for" class="mt-2 text-zinc-200">{{ t('live.scheduledFor', { date: formatTime(live.scheduled_for) }) }}</p>
                             <p v-if="scheduledCountdown" class="mt-2 text-lg font-bold text-white">{{ scheduledCountdown }}</p>
                         </div>
@@ -25,15 +25,15 @@
                     <div class="flex items-center gap-3 flex-wrap">
                         <span
                             class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold border"
-                            :class="isLive ? 'bg-red-900 text-red-200 border-red-700' : 'bg-zinc-800 text-zinc-300 border-zinc-700'">
+                            :class="isLive ? 'bg-red-600 text-white border-red-500' : 'bg-zinc-800 text-zinc-300 border-white/10'">
                             <span class="w-2 h-2 rounded-full"
                                 :class="isLive ? 'bg-red-400 animate-pulse' : 'bg-zinc-500'" />
                             {{ isLive ? t('live.live') : live?.waiting_for_publisher ? t('live.startingSoonBadge') : t('live.offline') }}
                         </span>
-                        <h1 class="text-2xl font-bold break-words">{{ liveTitle }}</h1>
+                        <h1 class="break-words text-xl font-semibold tracking-tight sm:text-2xl">{{ liveTitle }}</h1>
                     </div>
 
-                    <div v-if="isLive" class="rounded-md border border-zinc-800 bg-zinc-900/70 p-3">
+                    <div v-if="isLive" class="rounded-md border border-white/[0.07] bg-zinc-900/70 p-3">
                         <div class="flex items-center justify-between gap-3 flex-wrap">
                             <p class="text-sm text-zinc-200 font-medium">
                                 {{ t('live.watching') }} {{ viewers.length + anonymousCount }}
@@ -45,7 +45,7 @@
 
                         <div v-if="viewers.length > 0" class="mt-3 flex flex-wrap gap-2">
                             <div v-for="viewer in viewers" :key="viewer.id"
-                                class="inline-flex items-center gap-2 rounded-full border border-zinc-700 bg-zinc-800 px-2.5 py-1 text-xs text-zinc-100">
+                                class="inline-flex items-center gap-2 rounded-full border border-white/10 bg-zinc-800 px-2.5 py-1 text-xs text-zinc-100">
                                 <AvatarFallback
                                     :src="viewer.avatarUrl"
                                     :name="viewer.name || t('live.viewerFallback')"
@@ -87,8 +87,8 @@
                 </div>
             </section>
 
-            <aside class="bg-zinc-900 border border-zinc-800 rounded-lg flex flex-col min-h-[520px] max-h-[80vh]">
-                <div class="p-4 border-b border-zinc-800 flex items-center justify-between">
+            <aside class="bg-zinc-900 border border-white/[0.07] rounded-lg flex flex-col min-h-[520px] max-h-[80vh]">
+                <div class="p-4 border-b border-white/[0.07] flex items-center justify-between">
                     <div>
                         <p class="font-semibold">{{ t('live.liveChat') }}</p>
                         <p class="text-xs text-gray-400">{{ t('live.chatDisabled') }}</p>
@@ -123,11 +123,11 @@
                     </div>
                 </div>
 
-                <div class="p-3 border-t border-zinc-800 space-y-2">
+                <div class="p-3 border-t border-white/[0.07] space-y-2">
                     <div v-if="isLoggedIn && availableChannels.length > 0" class="space-y-1">
                         <label class="text-xs text-gray-400">{{ t('live.chatAs') }}</label>
                         <select v-model="selectedChatChannelId"
-                            class="w-full bg-zinc-800 border border-zinc-700 rounded px-2 py-1.5 text-sm">
+                            class="w-full bg-zinc-800 border border-white/10 rounded px-2 py-1.5 text-sm">
                             <option v-for="ch in availableChannels" :key="ch.id" :value="ch.id">{{ ch.name }}</option>
                         </select>
                     </div>
@@ -149,9 +149,9 @@
                     <div class="flex gap-2">
                         <input v-model="chatInput" type="text" maxlength="500" :placeholder="t('live.saySomething')"
                             @keydown.enter="sendChatMessage"
-                            class="flex-1 bg-zinc-800 border border-zinc-700 rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-500" />
+                            class="flex-1 bg-zinc-800 border border-white/10 rounded px-3 py-2 text-sm focus:outline-none focus:border-white/30" />
                         <button @click="sendChatMessage" :disabled="chatSending || !canSendChat"
-                            class="px-3 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 rounded text-sm transition">
+                            class="px-3 py-2 bg-zinc-100 hover:bg-white disabled:opacity-50 rounded text-sm transition text-zinc-950">
                             {{ chatSending ? t('live.sending') : t('live.send') }}
                         </button>
                     </div>
