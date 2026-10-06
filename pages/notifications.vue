@@ -80,7 +80,7 @@
         <NuxtLink
           v-for="item in items"
           :key="item.id"
-          :to="localizedItemUrl(item.url)"
+          :to="localizedItemUrl(notificationUrl(item))"
           class="block border rounded-lg transition"
           :class="item.is_read ? 'bg-transparent border-white/[0.07] hover:bg-white/[0.03]' : 'bg-white/[0.05] border-white/15 hover:bg-white/[0.07]'"
           @click="markRead(item)"
@@ -98,6 +98,7 @@
                 </p>
                 <p v-if="item.target_video?.title" class="text-xs text-gray-400 mt-1">{{ t('notifications.videoLabel') }} {{ item.target_video.title }}</p>
                 <p v-if="item.target_comment?.snippet" class="text-xs text-gray-500 mt-1">{{ item.target_comment.snippet }}</p>
+                <p v-if="newsSnippet(item)" class="text-xs text-gray-400 mt-1 line-clamp-2">{{ newsSnippet(item) }}</p>
                 <p class="text-xs text-gray-500 mt-2">{{ formatTime(item.created_at) }}</p>
               </div>
             </div>
@@ -157,12 +158,24 @@ const AUTH_STATE_CHANGED_EVENT = 'giltube-auth-changed'
 
 const notificationSummary = (item: NotificationItem) => {
 	if (item.type === 'featured_content' && typeof item.metadata?.push_title === 'string') return item.metadata.push_title
+  if (item.type === 'news') return typeof item.metadata?.title === 'string' && item.metadata.title ? item.metadata.title : t('notifications.newsFallback')
   if (item.type === 'comment_video') return t('notifications.commentedOnVideo', { name: item.actor_channel.name })
   if (item.type === 'reply_comment') return t('notifications.repliedToComment', { name: item.actor_channel.name })
   if (item.type === 'like_video') return t('notifications.likedYourVideo', { name: item.actor_channel.name })
   if (item.type === 'like_comment') return t('notifications.likedYourComment', { name: item.actor_channel.name })
   if (item.type === 'live_started') return t('notifications.startedLive', { name: item.actor_channel.name })
   return t('notifications.sentNotification', { name: item.actor_channel.name })
+}
+
+const newsSnippet = (item: NotificationItem) => {
+  if (item.type !== 'news') return ''
+  return typeof item.metadata?.push_body === 'string' ? item.metadata.push_body : ''
+}
+
+// News notifications always open the news page, even if an older row has no url.
+const notificationUrl = (item: NotificationItem) => {
+  if (item.type === 'news' && typeof item.metadata?.news_id === 'string' && item.metadata.news_id) return `/news/${item.metadata.news_id}`
+  return item.url
 }
 
 const actorInitial = (item: NotificationItem) => {

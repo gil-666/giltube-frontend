@@ -350,13 +350,14 @@
               <NuxtLink
                 v-for="item in notificationPreview"
                 :key="item.id"
-                :to="localizedNotificationUrl(item.url)"
+                :to="localizedNotificationUrl(notificationTargetUrl(item))"
                 class="block px-4 py-3 border-b border-white/[0.07] hover:bg-zinc-800 transition"
                 @click="handleNotificationClick(item.id)"
               >
                 <p class="text-sm" :class="item.is_read ? 'text-gray-300' : 'text-white font-semibold'">
                   {{ notificationSummary(item) }}
                 </p>
+                <p v-if="item.type === 'news' && item.metadata?.push_body" class="mt-0.5 line-clamp-2 text-xs text-gray-400">{{ item.metadata.push_body }}</p>
                 <p class="text-xs text-gray-500 mt-1">{{ formatNotificationTime(item.created_at) }}</p>
               </NuxtLink>
             </div>
@@ -608,6 +609,8 @@
     </div>
 
     <GlobalMusicPlayer />
+
+    <NewsStartupPanel :ready="newsAuthReady" :logged-in="isLoggedIn" :blocked="showGilIDLinkModal" />
 
     <nav
       v-if="isMobileDevice && !shouldHideHeader"
@@ -1256,6 +1259,7 @@ import { useMusicPlayer } from '~/app/composables/useMusicPlayer'
 import { useSiteTheme, useSiteThemeHead } from '~/app/composables/useSiteTheme'
 import ThemeEffects from '~/app/components/themes/ThemeEffects.vue'
 import ThemeAnimatedBackground from '~/app/components/themes/ThemeAnimatedBackground.vue'
+import NewsStartupPanel from '~/app/components/news/NewsStartupPanel.vue'
 import musicLogoFull from '~/assets/giltube-music-logo-full.png'
 import musicLogoSymbol from '~/assets/giltube-music-logo-symbol.png'
 import musicLogoFullDark from '~/assets/giltube-music-logo-full-dark.png'
@@ -1288,6 +1292,9 @@ const isLikelyMobileUserAgent = (userAgent = '', maxTouchPoints = 0) => {
     (/Macintosh/i.test(ua) && maxTouchPoints > 1)
 }
 const isLoggedIn = ref(false)
+// Set once checkAuthStatus has read the stored session, so the news panel
+// knows whether to fetch as a guest or a signed-in user.
+const newsAuthReady = ref(false)
 const username = ref('')
 const userId = ref('')
 const userType = ref('user')
@@ -1791,8 +1798,15 @@ const localizedNotificationUrl = (rawUrl) => {
   return localePath(rawUrl.startsWith('/') ? rawUrl : `/${rawUrl}`)
 }
 
+// News notifications always open the news page, even if an older row has no url.
+const notificationTargetUrl = (item) => {
+  if (item?.type === 'news' && typeof item?.metadata?.news_id === 'string' && item.metadata.news_id) return `/news/${item.metadata.news_id}`
+  return item?.url
+}
+
 const notificationSummary = (item) => {
 	if (item?.type === 'featured_content' && typeof item?.metadata?.push_title === 'string') return item.metadata.push_title
+  if (item?.type === 'news') return typeof item?.metadata?.title === 'string' && item.metadata.title ? item.metadata.title : t('notifications.newsFallback')
   if (!item?.actor_channel?.name) return t('app.newActivity')
   if (item.type === 'comment_video') return t('notifications.commentedOnVideo', { name: item.actor_channel.name })
   if (item.type === 'reply_comment') return t('notifications.repliedToComment', { name: item.actor_channel.name })
@@ -2144,6 +2158,7 @@ onMounted(async () => {
   }
   loadActiveWatchParty()
   checkAuthStatus()
+  newsAuthReady.value = true
   siteTheme.sync(true)
   await loadCategories()
   if (isLoggedIn.value) {

@@ -296,63 +296,68 @@
 
     <div v-if="loading" class="text-sm text-gray-400">{{ t('themes.loading') }}</div>
 
-    <div v-else class="grid gap-3 sm:grid-cols-2">
-      <article
-        v-for="card in cards"
-        :key="card.key"
-        class="flex flex-col gap-3 rounded-lg border p-3 transition"
-        :class="card.active ? 'border-white/30 bg-white/[0.04]' : 'border-white/[0.08]'"
-      >
-        <ThemePreview :colors="card.look" />
-        <div class="flex items-start justify-between gap-2">
-          <div class="min-w-0">
-            <p class="truncate font-medium">{{ card.name }}</p>
-            <p class="truncate text-xs text-gray-400">{{ card.subtitle }}</p>
+    <template v-else>
+    <div v-for="group in cardGroups" :key="group.key" class="space-y-2">
+      <h3 class="theme-section-title">{{ t(`themes.groups.${group.key}`) }}</h3>
+      <div class="grid gap-3 sm:grid-cols-2">
+        <article
+          v-for="card in group.cards"
+          :key="card.key"
+          class="flex flex-col gap-3 rounded-lg border p-3 transition"
+          :class="card.active ? 'border-white/30 bg-white/[0.04]' : 'border-white/[0.08]'"
+        >
+          <ThemePreview :colors="card.look" />
+          <div class="flex items-start justify-between gap-2">
+            <div class="min-w-0">
+              <p class="truncate font-medium">{{ card.name }}</p>
+              <p class="truncate text-xs text-gray-400">{{ card.subtitle }}</p>
+            </div>
+            <span v-if="card.active" class="shrink-0 rounded-full bg-white/10 px-2 py-0.5 text-xs font-medium">{{ t('themes.active') }}</span>
           </div>
-          <span v-if="card.active" class="shrink-0 rounded-full bg-white/10 px-2 py-0.5 text-xs font-medium">{{ t('themes.active') }}</span>
-        </div>
-        <p v-if="card.record?.is_retired" class="text-xs text-yellow-300">{{ t('themes.retiredNotice') }}</p>
+          <p v-if="card.record?.is_retired" class="text-xs text-yellow-300">{{ t('themes.retiredNotice') }}</p>
 
-        <div class="mt-auto flex flex-wrap gap-1.5">
-          <button
-            v-if="!card.active"
-            type="button"
-            class="rounded bg-zinc-100 px-3 py-1.5 text-sm text-zinc-950 transition hover:bg-white disabled:opacity-60"
-            :disabled="busy || !!editor"
-            @click="applyCard(card.record)"
-          >
-            {{ t('themes.apply') }}
-          </button>
-          <template v-if="card.record?.is_owner">
-            <button type="button" class="theme-action" :disabled="busy || !!editor" @click="startEdit(card.record)">{{ t('themes.edit') }}</button>
-            <button type="button" class="theme-action" :disabled="busy" @click="copyShareLink(card.record)">
-              {{ copiedId === card.record.id ? t('themes.linkCopied') : t('themes.copyLink') }}
+          <div class="mt-auto flex flex-wrap gap-1.5">
+            <button
+              v-if="!card.active"
+              type="button"
+              class="rounded bg-zinc-100 px-3 py-1.5 text-sm text-zinc-950 transition hover:bg-white disabled:opacity-60"
+              :disabled="busy || !!editor"
+              @click="applyCard(card.record)"
+            >
+              {{ t('themes.apply') }}
             </button>
-          </template>
-          <button
-            v-else
-            type="button"
-            class="theme-action"
-            :disabled="busy || !!editor"
-            @click="startNew(card.look, card.record ? t('themes.copyName', { name: card.name }) : '')"
-          >
-            {{ card.record ? t('themes.duplicate') : t('themes.customize') }}
-          </button>
-          <button v-if="card.record" type="button" class="theme-action" :disabled="exportingId === card.record.id" @click="exportCard(card.record)">
-            {{ t('themes.export') }}
-          </button>
-          <button
-            v-if="card.record"
-            type="button"
-            class="rounded px-3 py-1.5 text-sm text-red-400 transition hover:bg-red-500/10 disabled:opacity-60"
-            :disabled="busy || editor?.id === card.record.id"
-            @click="removeCard(card.record)"
-          >
-            {{ card.record.is_owner ? t('themes.delete') : t('themes.remove') }}
-          </button>
-        </div>
-      </article>
+            <template v-if="card.record?.is_owner">
+              <button type="button" class="theme-action" :disabled="busy || !!editor" @click="startEdit(card.record)">{{ t('themes.edit') }}</button>
+              <button type="button" class="theme-action" :disabled="busy" @click="copyShareLink(card.record)">
+                {{ copiedId === card.record.id ? t('themes.linkCopied') : t('themes.copyLink') }}
+              </button>
+            </template>
+            <button
+              v-else
+              type="button"
+              class="theme-action"
+              :disabled="busy || !!editor"
+              @click="startNew(card.look, card.record ? t('themes.copyName', { name: card.name }) : '')"
+            >
+              {{ card.record ? t('themes.duplicate') : t('themes.customize') }}
+            </button>
+            <button v-if="card.record" type="button" class="theme-action" :disabled="exportingId === card.record.id" @click="exportCard(card.record)">
+              {{ t('themes.export') }}
+            </button>
+            <button
+              v-if="card.record && !card.record.is_builtin"
+              type="button"
+              class="rounded px-3 py-1.5 text-sm text-red-400 transition hover:bg-red-500/10 disabled:opacity-60"
+              :disabled="busy || editor?.id === card.record.id"
+              @click="removeCard(card.record)"
+            >
+              {{ card.record.is_owner ? t('themes.delete') : t('themes.remove') }}
+            </button>
+          </div>
+        </article>
+      </div>
     </div>
+    </template>
   </section>
 </template>
 
@@ -453,14 +458,27 @@ const cards = computed(() => [
   ...themes.value.map(record => ({
     key: record.id,
     name: record.name,
-    subtitle: record.is_owner
-      ? (record.install_count > 0 ? t('themes.usedBy', { count: record.install_count }) : t('themes.yourTheme'))
-      : t('themes.byOwner', { owner: record.owner_username || t('themes.unknownOwner') }),
+    subtitle: record.is_builtin
+      ? t('themes.builtinSubtitle')
+      : record.is_owner
+        ? (record.install_count > 0 ? t('themes.usedBy', { count: record.install_count }) : t('themes.yourTheme'))
+        : t('themes.byOwner', { owner: record.owner_username || t('themes.unknownOwner') }),
     look: themeAppearanceOf(record),
     record,
     active: record.id === activeId.value,
   })),
 ])
+
+// GilTube's own looks first (the default and the built-ins), then the
+// user's themes and the ones they installed.
+const cardGroups = computed(() => {
+  const builtin = cards.value.filter(card => !card.record || card.record.is_builtin)
+  const library = cards.value.filter(card => card.record && !card.record.is_builtin)
+  return [
+    { key: 'giltube', cards: builtin },
+    ...(library.length ? [{ key: 'library', cards: library }] : []),
+  ]
+})
 
 // Fonts used by the cards, or every font while the editor shows its picker.
 useHead({

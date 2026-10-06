@@ -1,6 +1,6 @@
 import api from './client'
 
-export type NotificationType = 'comment_video' | 'reply_comment' | 'like_video' | 'like_comment' | 'live_started' | 'new_video' | 'video_ready' | 'watch_party_invite' | 'watch_party_host' | 'new_subscriber' | 'featured_content'
+export type NotificationType = 'comment_video' | 'reply_comment' | 'like_video' | 'like_comment' | 'live_started' | 'new_video' | 'video_ready' | 'watch_party_invite' | 'watch_party_host' | 'new_subscriber' | 'featured_content' | 'news'
 
 export interface NotificationActorChannel {
   id: string

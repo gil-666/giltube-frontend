@@ -109,6 +109,12 @@
 	  >
 		Featured
 	  </button>
+      <button
+        @click="activeTab = 'news'"
+        :class="['flex-none snap-start whitespace-nowrap border-b-2 px-3 py-2 font-semibold transition sm:px-4', activeTab === 'news' ? 'border-blue-500 text-zinc-200' : 'border-transparent text-gray-400 hover:text-white']"
+      >
+        {{ t('admin.tabs.news') }}
+      </button>
 	  <button
         @click="activeTab = 'playback-intro'"
         :class="['flex-none snap-start whitespace-nowrap border-b-2 px-3 py-2 font-semibold transition sm:px-4', activeTab === 'playback-intro' ? 'border-blue-500 text-zinc-200' : 'border-transparent text-gray-400 hover:text-white']"
@@ -568,6 +574,7 @@
     <TranscodeJobsAdminPanel v-if="activeTab === 'transcode-jobs'" />
     <WorkerAdminPanel v-if="activeTab === 'workers'" />
 	<FeaturedContentAdminPanel v-if="activeTab === 'featured'" />
+    <NewsAdminPanel v-if="activeTab === 'news'" />
     <PlaybackIntroAdminPanel v-if="activeTab === 'playback-intro'" />
 
     <!-- Series Tab -->
@@ -1179,6 +1186,7 @@ import TranscodeJobsAdminPanel from '~/app/components/admin/TranscodeJobsAdminPa
 import WorkerAdminPanel from '~/app/components/admin/WorkerAdminPanel.vue'
 import PlaybackIntroAdminPanel from '~/app/components/admin/PlaybackIntroAdminPanel.vue'
 import FeaturedContentAdminPanel from '~/app/components/admin/FeaturedContentAdminPanel.vue'
+import NewsAdminPanel from '~/app/components/admin/NewsAdminPanel.vue'
 import VideoEditorPanel from '~/app/components/admin/VideoEditorPanel.vue'
 import YouTubeMirrorAdminPanel from '~/app/components/admin/YouTubeMirrorAdminPanel.vue'
 import AdminHelpButton from '~/app/components/admin/AdminHelpButton.vue'
@@ -1228,6 +1236,7 @@ const adminTabOptions = computed(() => [
   { value: 'transcode-jobs', label: t('admin.tabs.transcodeJobs') },
   { value: 'workers', label: t('admin.tabs.workers') },
 	{ value: 'featured', label: 'Featured' },
+  { value: 'news', label: t('admin.tabs.news') },
   { value: 'playback-intro', label: 'Playback intro' },
   { value: 'intro-suggestions', label: t('admin.tabs.introSuggestions') },
 ])

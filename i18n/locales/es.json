@@ -153,7 +153,8 @@
     "pushEnabled": "Notificaciones push activadas.",
     "enableFailed": "No se pudieron activar las notificaciones push.",
     "pushDisabled": "Notificaciones push desactivadas.",
-    "disableFailed": "No se pudieron desactivar las notificaciones push."
+    "disableFailed": "No se pudieron desactivar las notificaciones push.",
+    "newsFallback": "Novedades de GilTube"
   },
   "modal": {
     "welcomeTitle": "Bienvenido a GilTube",
@@ -1354,7 +1355,8 @@
       "mediaIngests": "Ingesta de medios",
       "transcodeJobs": "Trabajos de transcodificación",
       "workers": "Workers",
-      "introSuggestions": "Sugerencias de intro"
+      "introSuggestions": "Sugerencias de intro",
+      "news": "Novedades"
     },
     "workers": {
       "title": "Grupo de workers",
@@ -1702,7 +1704,99 @@
       "editorBody": "Usa el mismo editor completo del dashboard, con acceso admin a todos los canales.",
       "totalComments": "Comentarios totales"
     },
-    "loading": "Cargando datos de administración..."
+    "loading": "Cargando datos de administración...",
+    "news": {
+      "title": "Novedades",
+      "subtitle": "Publica anuncios como paneles de inicio, notificaciones o ambos. Compartidos por la web y la app móvil.",
+      "createHeading": "Nueva noticia",
+      "editHeading": "Editar noticia",
+      "alreadyNotified": "Notificación enviada {time}",
+      "fields": {
+        "title": "Título",
+        "titlePlaceholder": "¿Qué hay de nuevo?",
+        "body": "Contenido (Markdown)",
+        "bodyPlaceholder": "Escribe el anuncio. Se admite Markdown.",
+        "enabled": "Activada"
+      },
+      "cheatSheet": {
+        "title": "Guía rápida de formato",
+        "heading": "Título (#, ##, ###)",
+        "bold": "Negrita",
+        "italic": "Cursiva",
+        "strike": "Tachado",
+        "code": "Código en línea",
+        "link": "Enlace a una página de GilTube o a una URL https",
+        "list": "Lista con viñetas o numerada",
+        "quote": "Cita",
+        "divider": "Separador",
+        "codeBlock": "Bloque de código (en su propia línea, antes y después)",
+        "linksNote": "Deja una línea en blanco entre párrafos. Solo las rutas de GilTube y los enlaces http(s) se convierten en enlaces."
+      },
+      "preview": "Vista previa",
+      "previewUntitled": "Sin título",
+      "previewEmpty": "La vista previa del contenido aparece aquí.",
+      "delivery": {
+        "title": "Entrega",
+        "panel": "Mostrar como panel al iniciar",
+        "panelHint": "Se abre al cargar la web o la app, hasta que la persona lo descarte.",
+        "notify": "Enviar una notificación",
+        "silent": "Silenciosa",
+        "silentHint": "Solo aparece en la lista de notificaciones.",
+        "loud": "Con aviso",
+        "loudHint": "También envía una notificación push a navegadores y teléfonos.",
+        "notResent": "Ya se envió una notificación para esta noticia; guardar no la volverá a enviar."
+      },
+      "cta": {
+        "title": "Llamada a la acción",
+        "kind": "Botón",
+        "none": "Ninguno",
+        "internal": "Página de GilTube",
+        "external": "Enlace externo",
+        "label": "Texto del botón",
+        "internalTarget": "Ruta de GilTube",
+        "externalTarget": "URL"
+      },
+      "schedule": {
+        "starts": "Empieza",
+        "startsHint": "Déjalo vacío para empezar ahora.",
+        "ends": "Termina",
+        "endsHint": "Opcional. Los paneles dejan de mostrarse después de esta hora."
+      },
+      "loudWarning": "Esto envía una notificación push a todos los usuarios.",
+      "loudConfirm": "Esto envía una notificación push a todos los usuarios. ¿Continuar?",
+      "saving": "Guardando…",
+      "save": "Guardar cambios",
+      "create": "Publicar noticia",
+      "cancel": "Cancelar",
+      "saved": "Noticia guardada.",
+      "deleteConfirm": "¿Eliminar «{title}»? También se eliminan sus notificaciones.",
+      "loading": "Cargando novedades…",
+      "empty": "Todavía no hay novedades.",
+      "list": {
+        "starts": "Empieza {time}",
+        "ends": "termina {time}",
+        "dismissals": "{count} descartes",
+        "enabled": "Activada",
+        "view": "Ver",
+        "edit": "Editar",
+        "delete": "Eliminar"
+      },
+      "chips": {
+        "panel": "Panel",
+        "silent": "Silenciosa",
+        "loud": "Con aviso",
+        "scheduled": "Programada",
+        "ended": "Finalizada",
+        "disabled": "Desactivada",
+        "notified": "Notificada {time}"
+      },
+      "errors": {
+        "load": "No se pudieron cargar las novedades.",
+        "save": "No se pudo guardar la noticia.",
+        "delete": "No se pudo eliminar la noticia.",
+        "noDelivery": "Elige un panel, una notificación o ambos."
+      }
+    }
   },
   "seriesAdmin": {
     "title": "Creador de series",
@@ -2283,7 +2377,8 @@
         "font": "Tipografía: {font}",
         "corners": "Esquinas: {corners}",
         "effect": "Efecto: {effect}"
-      }
+      },
+      "builtinNote": "Incluido con GilTube: aplícalo cuando quieras desde la configuración de temas."
     },
     "resetChanges": "Deshacer cambios",
     "effectsHelp": "Los efectos se muestran detrás de la página, teñidos con tus colores, y se desactivan si tu dispositivo pide reducir el movimiento.",
@@ -2348,6 +2443,28 @@
     "effectGroups": {
       "particles": "Partículas",
       "animated": "Fondos animados"
+    },
+    "builtinSubtitle": "Creado por GilTube",
+    "groups": {
+      "giltube": "Temas de GilTube",
+      "library": "Tus temas"
+    }
+  },
+  "news": {
+    "eyebrow": "Novedades",
+    "learnMore": "Más información",
+    "panel": {
+      "counter": "{current} de {total}",
+      "close": "Cerrar",
+      "openPage": "Abrir como página",
+      "next": "Siguiente",
+      "dismiss": "Descartar"
+    },
+    "page": {
+      "loading": "Cargando…",
+      "notFoundTitle": "Noticia no encontrada",
+      "notFoundBody": "Esta noticia no existe o todavía no está disponible.",
+      "goHome": "Ir al inicio"
     }
   }
 }

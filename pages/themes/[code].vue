@@ -73,7 +73,8 @@
               {{ theme.is_owner ? t('themes.share.manageYours') : t('themes.share.manageThemes') }}
             </NuxtLink>
           </div>
-          <p v-if="signedIn && !theme.is_owner" class="text-xs text-gray-500">{{ t('themes.share.updatesNote') }}</p>
+          <p v-if="theme.is_builtin" class="text-xs text-gray-500">{{ t('themes.share.builtinNote') }}</p>
+          <p v-else-if="signedIn && !theme.is_owner" class="text-xs text-gray-500">{{ t('themes.share.updatesNote') }}</p>
         </div>
       </template>
     </div>

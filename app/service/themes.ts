@@ -15,6 +15,7 @@ export interface ThemeRecord {
   owner_username: string
   is_owner: boolean
   is_retired: boolean
+  is_builtin: boolean
   install_count: number
   created_at: string
   updated_at: string

@@ -153,7 +153,8 @@
     "pushEnabled": "Push notifications enabled.",
     "enableFailed": "Failed to enable push notifications.",
     "pushDisabled": "Push notifications disabled.",
-    "disableFailed": "Failed to disable push notifications."
+    "disableFailed": "Failed to disable push notifications.",
+    "newsFallback": "News from GilTube"
   },
   "modal": {
     "welcomeTitle": "Welcome to GilTube",
@@ -1354,7 +1355,8 @@
       "mediaIngests": "Media Ingest",
       "transcodeJobs": "Transcode Jobs",
       "workers": "Workers",
-      "introSuggestions": "Intro Suggestions"
+      "introSuggestions": "Intro Suggestions",
+      "news": "News"
     },
     "workers": {
       "title": "Worker pool",
@@ -1702,7 +1704,99 @@
       "editorBody": "This uses the same full editor as the dashboard, with admin access across all channels.",
       "totalComments": "Total Comments"
     },
-    "loading": "Loading admin data..."
+    "loading": "Loading admin data...",
+    "news": {
+      "title": "News",
+      "subtitle": "Publish announcements as startup panels, notifications, or both. Shared by the website and mobile app.",
+      "createHeading": "New news item",
+      "editHeading": "Edit news item",
+      "alreadyNotified": "Notification sent {time}",
+      "fields": {
+        "title": "Title",
+        "titlePlaceholder": "What's new?",
+        "body": "Body (Markdown)",
+        "bodyPlaceholder": "Write the announcement. Markdown is supported.",
+        "enabled": "Enabled"
+      },
+      "cheatSheet": {
+        "title": "Formatting cheat sheet",
+        "heading": "Heading (#, ##, ###)",
+        "bold": "Bold",
+        "italic": "Italic",
+        "strike": "Strikethrough",
+        "code": "Inline code",
+        "link": "Link to a GilTube page or an https URL",
+        "list": "Bulleted or numbered list",
+        "quote": "Quote",
+        "divider": "Divider",
+        "codeBlock": "Code block (on its own line, before and after)",
+        "linksNote": "Leave a blank line between paragraphs. Only GilTube paths and http(s) links become links."
+      },
+      "preview": "Preview",
+      "previewUntitled": "Untitled",
+      "previewEmpty": "The body preview appears here.",
+      "delivery": {
+        "title": "Delivery",
+        "panel": "Show as a panel on startup",
+        "panelHint": "Opens when people load the website or app, until they dismiss it.",
+        "notify": "Send a notification",
+        "silent": "Silent",
+        "silentHint": "Only appears in the notification list.",
+        "loud": "Loud",
+        "loudHint": "Also sends a push notification to browsers and phones.",
+        "notResent": "A notification was already sent for this item; saving won't send it again."
+      },
+      "cta": {
+        "title": "Call to action",
+        "kind": "Button",
+        "none": "None",
+        "internal": "Page on GilTube",
+        "external": "External link",
+        "label": "Button label",
+        "internalTarget": "GilTube path",
+        "externalTarget": "URL"
+      },
+      "schedule": {
+        "starts": "Starts",
+        "startsHint": "Leave empty to start now.",
+        "ends": "Ends",
+        "endsHint": "Optional. Panels stop showing after this time."
+      },
+      "loudWarning": "This sends a push notification to every user.",
+      "loudConfirm": "This sends a push notification to every user. Continue?",
+      "saving": "Saving…",
+      "save": "Save changes",
+      "create": "Publish news",
+      "cancel": "Cancel",
+      "saved": "News saved.",
+      "deleteConfirm": "Delete “{title}”? Its notifications are deleted too.",
+      "loading": "Loading news…",
+      "empty": "No news yet.",
+      "list": {
+        "starts": "Starts {time}",
+        "ends": "ends {time}",
+        "dismissals": "{count} dismissals",
+        "enabled": "Enabled",
+        "view": "View",
+        "edit": "Edit",
+        "delete": "Delete"
+      },
+      "chips": {
+        "panel": "Panel",
+        "silent": "Silent",
+        "loud": "Loud",
+        "scheduled": "Scheduled",
+        "ended": "Ended",
+        "disabled": "Disabled",
+        "notified": "Notified {time}"
+      },
+      "errors": {
+        "load": "Could not load news.",
+        "save": "Could not save news.",
+        "delete": "Could not delete news.",
+        "noDelivery": "Choose a panel, a notification, or both."
+      }
+    }
   },
   "seriesAdmin": {
     "title": "Series Creator",
@@ -2283,7 +2377,8 @@
         "font": "Font: {font}",
         "corners": "Corners: {corners}",
         "effect": "Effect: {effect}"
-      }
+      },
+      "builtinNote": "Included with GilTube: apply it any time from your theme settings."
     },
     "resetChanges": "Reset changes",
     "effectsHelp": "Effects play behind the page, tinted with your colors, and turn off when your device asks for reduced motion.",
@@ -2348,6 +2443,28 @@
     "effectGroups": {
       "particles": "Particles",
       "animated": "Animated backgrounds"
+    },
+    "builtinSubtitle": "Made by GilTube",
+    "groups": {
+      "giltube": "GilTube themes",
+      "library": "Your themes"
+    }
+  },
+  "news": {
+    "eyebrow": "News",
+    "learnMore": "Learn more",
+    "panel": {
+      "counter": "{current} of {total}",
+      "close": "Close",
+      "openPage": "Open as a page",
+      "next": "Next",
+      "dismiss": "Dismiss"
+    },
+    "page": {
+      "loading": "Loading…",
+      "notFoundTitle": "News not found",
+      "notFoundBody": "This news item doesn't exist or isn't available yet.",
+      "goHome": "Go home"
     }
   }
 }

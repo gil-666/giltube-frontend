@@ -18,6 +18,7 @@ Referencia para desarrolladores de la API HTTP pública de GilTube.
 - [Suscripciones](#suscripciones)
 - [Listas de reproducción](#listas-de-reproducción)
 - [Temas](#temas)
+- [Noticias](#noticias)
 - [Películas, series y música](#películas-series-y-música)
 - [Transmisiones en vivo y chat](#transmisiones-en-vivo-y-chat)
 - [Watch parties](#watch-parties)
@@ -633,6 +634,8 @@ Un tema es un nombre más tres colores (`primary_color`, `accent_color`, `backgr
 
 Los primeros cuatro efectos son partículas CSS; el resto son fondos animados (WebGL/canvas) adaptados de [Vue Bits](https://vue-bits.dev) y teñidos con los colores del tema. La imagen de fondo se muestra con una opacidad fija del 40% sobre el color de fondo (y el degradado). Subirla o quitarla incrementa `version` como cualquier otra edición.
 
+Los temas integrados vienen con GilTube y aparecen primero en cada respuesta de `GET /themes` con `is_builtin: true`, `owner_user_id: ""` y `owner_username: "GilTube"`. Cualquier usuario puede aplicarlos con `PUT /themes/active` (sin instalarlos; `POST /themes/shared/{code}/install` sobre un tema integrado solo lo aplica). No se pueden editar, eliminar ni desinstalar desde la API: el backend los sincroniza desde `internal/api/builtin_themes.json` al iniciar e incrementa `version` cuando uno cambia. Un tema integrado que se quita de ese archivo se retira; quienes lo tenían activo lo reciben instalado para que su aspecto no cambie.
+
 Campos del tema:
 
 ```json
@@ -650,6 +653,7 @@ Campos del tema:
   "owner_username": "gil",
   "is_owner": false,
   "is_retired": false,
+  "is_builtin": false,
   "install_count": 12,
   "created_at": "2026-10-05T18:00:00Z",
   "updated_at": "2026-10-05T19:30:00Z"
@@ -669,6 +673,20 @@ Los temas retirados ya no se encuentran por su código ni aparecen en la bibliot
   "source": "https://giltube.gilservers.com/themes/Hq7cVd2mPz"
 }
 ```
+
+## Noticias
+
+Las noticias son anuncios de administración. Cada una puede mostrarse como **panel** al abrir el sitio o la app (hasta que el usuario lo descarte), enviar una **notificación** de tipo `news` — `silent` (solo en la lista de notificaciones) o `loud` (también como notificación push en navegadores y teléfonos) — o ambas cosas. El cuerpo es Markdown; los clientes lo muestran con su propio analizador (solo los enlaces http(s) y las rutas de GilTube se convierten en enlaces y nunca se muestra HTML). Una llamada a la acción opcional apunta a una ruta de GilTube (`cta_kind: "internal"`, p. ej. `/account-settings#themes`) o a una URL http(s) externa (`"external"`).
+
+| Método | Ruta | Acceso | Entrada |
+| --- | --- | --- | --- |
+| `GET` | `/news/panels` | Usuario opcional | Paneles que se deben mostrar ahora (activos, iniciados y sin terminar), del más reciente al más antiguo, máximo 5. Los usuarios con sesión no reciben los que descartaron; los invitados deben filtrarlos localmente. |
+| `GET` | `/news/{id}` | Público | `{ "item": ... }`; `404` si no existe, está desactivada o aún no inicia. Las noticias terminadas se siguen devolviendo. |
+| `POST` | `/news/{id}/dismiss` | Usuario | Oculta el panel para este usuario. |
+
+Campos: `id`, `title`, `body`, `show_panel`, `notify_mode` (`none`/`silent`/`loud`), `cta_kind` (`none`/`internal`/`external`), `cta_label`, `cta_target`, `enabled`, `starts_at`, `ends_at`, `notified_at`, `created_at`, `updated_at` (más `dismiss_count` en la lista de administración).
+
+Las notificaciones se envían una sola vez, cuando la noticia está activa, ya inició y su `notify_mode` no es `none` (se revisa cada 30 segundos y justo después de crearla o editarla). Como las notificaciones de un mismo canal se agrupan por minuto, como máximo una noticia notifica por minuto; las demás siguen en los minutos posteriores. Parecen venir del canal predeterminado de quien la publicó, enlazan a `/news/{id}` y llevan `metadata.news_id`, `title`, `push_body` (fragmento en texto plano) y `notify_mode`. Los usuarios pueden silenciarlas con la preferencia de notificación `news`.
 
 ## Películas, series y música
 
@@ -867,6 +885,10 @@ La superficie administrativa actual se agrupa así:
 | Metadatos | `GET /admin/metadata/search`, `GET /admin/metadata/details` |
 | Música | `/admin/music/overview`, `/admin/music/artists`, `/admin/music/releases`, `/admin/music/tracks` y acciones de carga, publicación, portada, letras y asociación de videos |
 | Contenido destacado | `GET`/`POST /admin/featured`, `PUT`/`DELETE /admin/featured/{id}`, `GET /admin/featured/candidates` (query `type`, `q`, `limit`); como máximo cinco elementos habilitados a la vez |
+| `GET` | `/admin/news` | Admin | Todas las noticias con `dismiss_count`. |
+| `POST` | `/admin/news` | Admin | JSON: `title` (1–120), `body` (Markdown, ≤ 10000), `show_panel`, `notify_mode`, `cta_kind`, `cta_label` (≤ 40), `cta_target`, y opcionalmente `enabled`, `starts_at`, `ends_at`. Se requiere un panel, una notificación o ambos. |
+| `PUT` | `/admin/news/{id}` | Admin | Mismo cuerpo. Una notificación ya enviada no se reenvía. |
+| `DELETE` | `/admin/news/{id}` | Admin | Elimina la noticia y sus notificaciones. |
 | Series | `/admin/series`, `GET /admin/series/{id}` (incluye episodios aún en proceso), orden y metadatos de episodios, subtítulos y audio |
 | Detección de intros | `GET /admin/series/{id}/detect-intros` (estado del trabajo), `POST /admin/series/{id}/detect-intros` (inicio; `409` mientras hay un trabajo en curso) |
 | Intro de reproducción | `GET`, `POST` (multipart `video`: `.mp4`, `.m4v` o `.webm`, máximo 500 MB), `PUT` (JSON `enabled`, `allow_skip`) y `DELETE /admin/playback-intro` |
