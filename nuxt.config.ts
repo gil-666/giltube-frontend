@@ -4,8 +4,9 @@ const config = {
   modules: ['@nuxtjs/tailwindcss', '@vite-pwa/nuxt', '@nuxtjs/i18n'],
   tailwindcss: {
     config: {
-      // The module's default globs don't cover app/components/**; opt files in here.
-      content: ['./app/components/videoplayer/ClipEditor.vue'],
+      // The module's default globs don't cover app/** (components there are
+      // imported directly rather than auto-registered), so scan it explicitly.
+      content: ['./app/components/**/*.vue', './app/**/*.ts'],
       theme: {
         extend: {
           fontFamily: {
