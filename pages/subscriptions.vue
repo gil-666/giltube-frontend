@@ -24,7 +24,7 @@
       <div v-else-if="needsChannel" class="rounded-xl border border-white/[0.07] bg-zinc-900/60 px-6 py-12 text-center">
         <h2 class="text-xl font-semibold">{{ t('subscriptions.needsChannelTitle') }}</h2>
         <p class="mt-2 text-sm text-zinc-400">{{ t('subscriptions.needsChannelBody') }}</p>
-        <NuxtLink :to="localePath('/create-channel')" class="mt-5 inline-flex rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-black hover:bg-zinc-200">{{ t('subscriptions.createChannel') }}</NuxtLink>
+        <NuxtLink :to="localePath('/create-channel')" class="mt-5 inline-flex rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-zinc-950 hover:bg-zinc-200">{{ t('subscriptions.createChannel') }}</NuxtLink>
       </div>
 
       <div v-else-if="error" class="rounded-xl border border-red-500/20 bg-red-500/[0.06] p-5 text-sm text-red-200">{{ error }}</div>
@@ -32,7 +32,7 @@
       <div v-else-if="!channels.length" class="rounded-lg border border-white/[0.07] bg-zinc-900/60 px-6 py-12 text-center">
         <h2 class="text-xl font-semibold">{{ t('subscriptions.emptyTitle') }}</h2>
         <p class="mt-2 text-sm text-zinc-400">{{ t('subscriptions.emptyBody') }}</p>
-        <NuxtLink :to="localePath('/search')" class="mt-5 inline-flex rounded-full bg-white px-5 py-2.5 text-sm font-bold text-black hover:bg-zinc-200">{{ t('subscriptions.findChannels') }}</NuxtLink>
+        <NuxtLink :to="localePath('/search')" class="mt-5 inline-flex rounded-full bg-white px-5 py-2.5 text-sm font-bold text-zinc-950 hover:bg-zinc-200">{{ t('subscriptions.findChannels') }}</NuxtLink>
       </div>
 
       <div v-else class="space-y-10">
@@ -44,7 +44,7 @@
                 <span v-else>{{ row.channel.name.charAt(0).toUpperCase() }}</span>
               </div>
               <div class="flex min-w-0 items-center gap-1.5">
-                <h2 class="truncate text-lg font-bold group-hover:text-red-300">{{ row.channel.name }}</h2>
+                <h2 class="truncate text-lg font-bold group-hover:text-primary-300">{{ row.channel.name }}</h2>
                 <VerifiedBadge :verified="row.channel.verified" size="sm" />
               </div>
             </NuxtLink>
@@ -61,7 +61,7 @@
                 <div class="aspect-video overflow-hidden rounded-lg bg-zinc-900">
                   <img v-if="video.thumbnail_url" :src="resolveMediaUrl(video.thumbnail_url)" :srcset="imageVariantSrcset(video.thumbnail_url) || undefined" sizes="(min-width:1280px) 18rem, (min-width:640px) 16rem, 76vw" :alt="video.title" class="h-full w-full object-cover transition group-hover:scale-[1.02]" loading="lazy" decoding="async">
                 </div>
-                <h3 class="mt-3 line-clamp-2 text-sm font-bold group-hover:text-red-300">{{ video.title }}</h3>
+                <h3 class="mt-3 line-clamp-2 text-sm font-bold group-hover:text-primary-300">{{ video.title }}</h3>
                 <p class="mt-1 text-xs text-zinc-500">{{ t('home.videoStats', { views: formatViews(video.views), time: getTimeAgo(video.created_at) }) }}</p>
               </NuxtLink>
             </div>
@@ -164,16 +164,16 @@ useHead({ title: () => `${t('subscriptions.title')} - GilTube` })
   width: 2.25rem;
   align-items: center;
   justify-content: center;
-  border: 1px solid rgb(255 255 255 / 10%);
+  border: 1px solid rgb(var(--gt-white) / 10%);
   border-radius: 9999px;
-  background: rgb(255 255 255 / 5%);
-  color: white;
+  background: rgb(var(--gt-white) / 5%);
+  color: rgb(var(--gt-white));
   font-size: 1.125rem;
   transition: background-color 150ms ease;
 }
 
 .subscription-arrow:hover {
-  background: rgb(255 255 255 / 10%);
+  background: rgb(var(--gt-white) / 10%);
 }
 
 @media (max-width: 640px) {

@@ -72,10 +72,10 @@
                                 {{ t('searchPage.movie') }}
                             </div>
                             
-                            <span class="absolute left-2 top-2 rounded-md bg-black/75 px-1.5 py-0.5 text-[11px] font-semibold text-zinc-100 backdrop-blur">
+                            <span class="gt-media absolute left-2 top-2 rounded-md bg-black/75 px-1.5 py-0.5 text-[11px] font-semibold text-zinc-100 backdrop-blur">
                                 {{ t('searchPage.movie') }}
                             </span>
-                            <span v-if="movie.year" class="absolute bottom-2 right-2 rounded-md bg-black/75 px-1.5 py-0.5 text-[11px] font-semibold text-zinc-100">
+                            <span v-if="movie.year" class="gt-media absolute bottom-2 right-2 rounded-md bg-black/75 px-1.5 py-0.5 text-[11px] font-semibold text-zinc-100">
                                 {{ movie.year }}
                             </span>
                         </div>
@@ -106,10 +106,10 @@
                                 {{ t('searchPage.seriesOne') }}
                             </div>
                             
-                            <span class="absolute left-2 top-2 rounded-md bg-black/75 px-1.5 py-0.5 text-[11px] font-semibold text-zinc-100 backdrop-blur">
+                            <span class="gt-media absolute left-2 top-2 rounded-md bg-black/75 px-1.5 py-0.5 text-[11px] font-semibold text-zinc-100 backdrop-blur">
                                 {{ t('searchPage.seriesOne') }}
                             </span>
-                            <span class="absolute bottom-2 right-2 rounded-md bg-black/75 px-1.5 py-0.5 text-[11px] font-semibold text-zinc-100">
+                            <span class="gt-media absolute bottom-2 right-2 rounded-md bg-black/75 px-1.5 py-0.5 text-[11px] font-semibold text-zinc-100">
                                 {{ t('searchPage.seriesMeta', { seasons: series.seasons || 1, episodes: series.episodes || 0 }) }}
                             </span>
                         </div>

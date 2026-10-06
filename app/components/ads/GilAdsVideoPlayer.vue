@@ -1,5 +1,5 @@
 <template>
-  <div class="relative">
+  <div class="gt-media relative">
     <div
       v-if="showPreroll && prerollAd?.creative"
       class="gilads-preroll-container overflow-hidden rounded-lg bg-black"
@@ -74,7 +74,7 @@
         :aria-label="t('playbackIntro.play')"
         @click="playIntroElement"
       >
-        <span class="flex h-16 w-16 items-center justify-center rounded-full bg-white/90 text-2xl text-black">▶</span>
+        <span class="flex h-16 w-16 items-center justify-center rounded-full bg-white/90 text-2xl text-zinc-950">▶</span>
       </button>
       <button
         v-if="introAllowSkip && showPlaybackIntro"

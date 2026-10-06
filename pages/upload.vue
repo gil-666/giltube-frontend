@@ -566,36 +566,36 @@ definePageMeta({
 .field-control {
   width: 100%;
   border-radius: 0.5rem;
-  border: 1px solid rgb(63 63 70);
-  background: rgb(24 24 27);
+  border: 1px solid rgb(var(--gt-zinc-700));
+  background: rgb(var(--gt-zinc-900));
   padding: 0.75rem 1rem;
-  color: white;
+  color: rgb(var(--gt-white));
   outline: none;
   transition: border-color 0.15s ease, background-color 0.15s ease;
 }
 
 .field-control:focus {
-  border-color: rgb(59 130 246);
-  background: rgb(9 9 11);
+  border-color: rgb(var(--gt-accent-500));
+  background: rgb(var(--gt-zinc-950));
 }
 
 input,
 textarea,
 select {
-  color: white;
+  color: rgb(var(--gt-white));
 }
 
 input::placeholder,
 textarea::placeholder {
-  color: #6b7280;
+  color: rgb(var(--gt-zinc-500));
 }
 
 input:autofill,
 input:autofill:hover,
 input:autofill:focus,
 input:autofill:active {
-  -webkit-box-shadow: 0 0 0 30px #18181b inset !important;
-  box-shadow: 0 0 0 30px #18181b inset !important;
-  -webkit-text-fill-color: white !important;
+  -webkit-box-shadow: 0 0 0 30px rgb(var(--gt-zinc-900)) inset !important;
+  box-shadow: 0 0 0 30px rgb(var(--gt-zinc-900)) inset !important;
+  -webkit-text-fill-color: rgb(var(--gt-white)) !important;
 }
 </style>

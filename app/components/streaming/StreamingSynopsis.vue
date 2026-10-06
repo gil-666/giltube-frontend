@@ -72,7 +72,7 @@ onBeforeUnmount(() => resizeObserver?.disconnect())
   overflow: hidden;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: var(--synopsis-lines);
-  color: rgb(212 212 216);
+  color: rgb(var(--gt-zinc-300));
   font-size: 0.875rem;
   line-height: 1.65;
   white-space: pre-line;
@@ -89,21 +89,21 @@ onBeforeUnmount(() => resizeObserver?.disconnect())
   padding: 0;
   border: 0;
   background: transparent;
-  color: rgb(244 244 245);
+  color: rgb(var(--gt-zinc-100));
   font-size: 0.8125rem;
   font-weight: 800;
   text-decoration: underline;
-  text-decoration-color: rgb(113 113 122);
+  text-decoration-color: rgb(var(--gt-zinc-500));
   text-underline-offset: 0.2rem;
 }
 
 .streaming-synopsis-toggle:hover {
-  text-decoration-color: rgb(244 244 245);
+  text-decoration-color: rgb(var(--gt-zinc-100));
 }
 
 .streaming-synopsis-toggle:focus-visible {
   border-radius: 0.2rem;
-  outline: 2px solid white;
+  outline: 2px solid rgb(var(--gt-white));
   outline-offset: 0.25rem;
 }
 </style>

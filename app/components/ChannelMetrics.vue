@@ -139,6 +139,16 @@ const formatDuration = (seconds: number) => {
 
 const formatPercent = (value: number) => `${Math.round(Math.max(0, Math.min(value || 0, 1)) * 100)}%`
 
+// Canvas can't read CSS variables, so resolve theme triplets ("R G B") to color strings.
+const themeColor = (name: string, fallback: string, alpha = 1) => {
+  const triplet = typeof document === 'undefined'
+    ? ''
+    : getComputedStyle(document.documentElement).getPropertyValue(name).trim()
+  const parts = triplet.split(/\s+/)
+  if (parts.length !== 3) return fallback
+  return `rgba(${parts.join(', ')}, ${alpha})`
+}
+
 const metricCards = computed(() => {
   const data = analytics.value || {}
   return [
@@ -160,7 +170,7 @@ const metricCards = computed(() => {
       label: t('channelMetrics.totalLikes'),
       value: formatNumber(data.total_likes || 0),
       detail: t('channelMetrics.likeRateDetail', { rate: formatPercent(data.like_to_view_rate || 0) }),
-      iconClass: 'text-red-500/40',
+      iconClass: 'text-primary-500/40',
       icon: 'M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z',
     },
     {
@@ -209,13 +219,13 @@ const generateChartData = () => {
           analytics.value.completed_watches,
         ],
         backgroundColor: [
-          'rgba(59, 130, 246, 0.8)',
-          'rgba(239, 68, 68, 0.8)',
+          themeColor('--gt-accent-500', 'rgba(59, 130, 246, 0.8)', 0.8),
+          themeColor('--gt-primary-500', 'rgba(239, 68, 68, 0.8)', 0.8),
           'rgba(245, 158, 11, 0.8)',
           'rgba(6, 182, 212, 0.8)',
           'rgba(16, 185, 129, 0.8)',
         ],
-        borderColor: ['#3b82f6', '#ef4444', '#f59e0b', '#06b6d4', '#10b981'],
+        borderColor: [themeColor('--gt-accent-500', '#3b82f6'), themeColor('--gt-primary-500', '#ef4444'), '#f59e0b', '#06b6d4', '#10b981'],
         borderWidth: 2,
       }
     ]
@@ -258,7 +268,7 @@ const createChart = () => {
           legend: {
             position: 'bottom',
             labels: {
-              color: '#9ca3af',
+              color: themeColor('--gt-zinc-400', '#9ca3af'),
               boxWidth: 12,
               padding: 15,
               font: {

@@ -6,7 +6,7 @@
     <header class="mb-8 flex items-center gap-5">
       <img v-if="data.track.cover_url" :src="imageVariantUrl(data.track.cover_url, 'md')" :srcset="imageVariantSrcset(data.track.cover_url)" sizes="160px" class="h-32 w-32 rounded-md object-cover sm:h-40 sm:w-40" alt="">
       <div class="min-w-0">
-        <p class="text-xs font-bold uppercase text-red-400">{{ t('music.track.label') }}</p>
+        <p class="text-xs font-bold uppercase text-primary-400">{{ t('music.track.label') }}</p>
         <h1 class="overflow-wrap-anywhere text-3xl font-semibold tracking-tight text-white sm:text-5xl">{{ data.track.title }}</h1>
         <NuxtLink :to="localePath(`/music/artists/${data.track.artist_slug}`)" class="mt-2 inline-block font-semibold text-zinc-200">{{ data.track.artist_name }}</NuxtLink>
       </div>
@@ -59,12 +59,12 @@ if (data.value) {
 
 <style scoped>
 dt {
-  color: rgb(113 113 122);
+  color: rgb(var(--gt-zinc-500));
 }
 
 dd {
   margin-top: 3px;
-  color: rgb(212 212 216);
+  color: rgb(var(--gt-zinc-300));
 }
 
 .overflow-wrap-anywhere {

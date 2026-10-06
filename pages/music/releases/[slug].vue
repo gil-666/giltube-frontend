@@ -251,13 +251,13 @@ const playTrack = (index: number) => {
 .release-page {
   min-height: 100%;
   padding-bottom: 8rem;
-  color: #f4f4f5;
-  background: #09090b;
+  color: rgb(var(--gt-zinc-100));
+  background: rgb(var(--gt-zinc-950));
 }
 
 .release-hero {
-  border-bottom: 1px solid #303036;
-  background: #24252d;
+  border-bottom: 1px solid rgb(var(--gt-zinc-700));
+  background: rgb(var(--gt-zinc-800));
 }
 
 .release-hero-inner,
@@ -286,13 +286,13 @@ const playTrack = (index: number) => {
 .cover-placeholder {
   display: grid;
   place-items: center;
-  background: #35363f;
+  background: rgb(var(--gt-zinc-700));
 }
 
 .cover-placeholder svg {
   width: 34%;
   fill: none;
-  stroke: #a1a1aa;
+  stroke: rgb(var(--gt-zinc-400));
   stroke-width: 1.4;
 }
 
@@ -303,7 +303,7 @@ const playTrack = (index: number) => {
 .release-kind {
   display: block;
   margin-bottom: 0.65rem;
-  color: #d4d4d8;
+  color: rgb(var(--gt-zinc-300));
   font-size: 0.78rem;
   font-weight: 800;
   text-transform: uppercase;
@@ -324,12 +324,12 @@ const playTrack = (index: number) => {
   align-items: center;
   gap: 0.45rem;
   margin-top: 1.5rem;
-  color: #d4d4d8;
+  color: rgb(var(--gt-zinc-300));
   font-size: 0.94rem;
 }
 
 .release-byline a {
-  color: #fff;
+  color: rgb(var(--gt-white));
   font-weight: 750;
 }
 
@@ -353,12 +353,12 @@ const playTrack = (index: number) => {
 }
 
 .lossless-details strong {
-  color: #f4f4f5;
+  color: rgb(var(--gt-zinc-100));
   font-size: 0.78rem;
 }
 
 .lossless-details span {
-  color: #a1a1aa;
+  color: rgb(var(--gt-zinc-400));
   font-size: 0.75rem;
   font-variant-numeric: tabular-nums;
 }
@@ -387,14 +387,15 @@ const playTrack = (index: number) => {
   display: grid;
   place-items: center;
   border: 0;
-  color: #fff;
+  color: rgb(var(--gt-white));
 }
 
 .primary-play {
   width: 4rem;
   height: 4rem;
   border-radius: 50%;
-  background: #dc3429;
+  background: rgb(var(--gt-primary-600));
+  color: rgb(var(--gt-on-primary));
 }
 
 .primary-play:disabled {
@@ -410,16 +411,16 @@ const playTrack = (index: number) => {
   width: 2.75rem;
   height: 2.75rem;
   background: transparent;
-  color: #a1a1aa;
+  color: rgb(var(--gt-zinc-400));
 }
 
 .icon-action:hover,
 .icon-action.active {
-  color: #fff;
+  color: rgb(var(--gt-white));
 }
 
 .icon-action.active {
-  color: #f87171;
+  color: rgb(var(--gt-primary-400));
 }
 
 .icon-action svg {
@@ -437,8 +438,8 @@ const playTrack = (index: number) => {
   align-items: center;
   min-height: 2.6rem;
   padding-inline: 0.75rem;
-  border-bottom: 1px solid #313136;
-  color: #a1a1aa;
+  border-bottom: 1px solid rgb(var(--gt-zinc-700));
+  color: rgb(var(--gt-zinc-400));
   font-size: 0.82rem;
 }
 
@@ -469,7 +470,7 @@ const playTrack = (index: number) => {
 
 .track-list li:hover,
 .track-list li.current {
-  background: #1b1b1f;
+  background: color-mix(in srgb, rgb(var(--gt-zinc-900)) 60%, rgb(var(--gt-zinc-800)));
 }
 
 .track-main {
@@ -487,12 +488,12 @@ const playTrack = (index: number) => {
 .track-index {
   display: grid;
   place-items: center;
-  color: #a1a1aa;
+  color: rgb(var(--gt-zinc-400));
 }
 
 .track-index svg {
   width: 1rem;
-  fill: #f87171;
+  fill: rgb(var(--gt-primary-400));
 }
 
 .track-copy {
@@ -514,7 +515,7 @@ const playTrack = (index: number) => {
 }
 
 .track-copy small {
-  color: #a1a1aa;
+  color: rgb(var(--gt-zinc-400));
   font-size: 0.84rem;
 }
 
@@ -525,8 +526,8 @@ const playTrack = (index: number) => {
   height: 1.05rem;
   margin-right: 0.3rem;
   border-radius: 2px;
-  background: #a1a1aa;
-  color: #18181b;
+  background: rgb(var(--gt-zinc-400));
+  color: rgb(var(--gt-zinc-900));
   font-size: 0.68rem;
   font-weight: 800;
 }
@@ -536,7 +537,7 @@ const playTrack = (index: number) => {
   align-items: center;
   gap: 0.35rem;
   margin-right: 1rem;
-  color: #a1a1aa;
+  color: rgb(var(--gt-zinc-400));
   font-size: 0.8rem;
 }
 
@@ -547,7 +548,7 @@ const playTrack = (index: number) => {
 }
 
 .video-link:hover {
-  color: #fff;
+  color: rgb(var(--gt-white));
 }
 
 .video-link svg {
@@ -559,15 +560,15 @@ const playTrack = (index: number) => {
 
 .track-duration {
   justify-self: end;
-  color: #a1a1aa;
+  color: rgb(var(--gt-zinc-400));
   font-variant-numeric: tabular-nums;
   font-size: 0.86rem;
 }
 
 .release-rights {
   padding: 2rem 0.75rem 0;
-  border-top: 1px solid #242429;
-  color: #71717a;
+  border-top: 1px solid rgb(var(--gt-zinc-800));
+  color: rgb(var(--gt-zinc-500));
   font-size: 0.75rem;
   line-height: 1.55;
 }
@@ -576,7 +577,7 @@ const playTrack = (index: number) => {
   min-height: 50vh;
   display: grid;
   place-items: center;
-  color: #a1a1aa;
+  color: rgb(var(--gt-zinc-400));
 }
 
 .page-state.error {

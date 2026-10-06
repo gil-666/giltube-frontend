@@ -35,7 +35,7 @@
       @pointerdown="beginOverviewDrag"
     >
       <div class="absolute inset-y-[-3px] rounded-full bg-white/10 ring-1 ring-white/25" :style="overviewWindowStyle" />
-      <div class="absolute inset-y-0 min-w-[3px] rounded-full bg-red-500" :style="overviewSelectionStyle" />
+      <div class="absolute inset-y-0 min-w-[3px] rounded-full bg-primary-500" :style="overviewSelectionStyle" />
       <div class="absolute inset-y-[-4px] w-0.5 -translate-x-1/2 rounded-full bg-white" :style="overviewPlayheadStyle" />
     </div>
 
@@ -69,7 +69,7 @@
           <!-- Selection: drag the body to move the clip, the edges to trim it -->
           <div
             v-show="selectionVisible"
-            class="clip-selection absolute inset-y-0 cursor-grab bg-red-500/30 ring-2 ring-inset ring-red-400 active:cursor-grabbing"
+            class="clip-selection absolute inset-y-0 cursor-grab bg-primary-500/30 ring-2 ring-inset ring-primary-400 active:cursor-grabbing"
             :style="selectionStyle"
             role="slider"
             tabindex="0"
@@ -82,7 +82,7 @@
             @keydown="handleKey('move', $event)"
           >
             <div
-              class="clip-handle absolute inset-y-0 left-0 flex w-4 cursor-ew-resize items-center justify-center bg-red-400 sm:w-3"
+              class="clip-handle absolute inset-y-0 left-0 flex w-4 cursor-ew-resize items-center justify-center bg-primary-400 sm:w-3"
               role="slider"
               tabindex="0"
               :aria-label="t('video.clip.moveStart')"
@@ -93,10 +93,10 @@
               @pointerdown.stop="beginDrag('start', $event)"
               @keydown.stop="handleKey('start', $event)"
             >
-              <span class="h-6 w-0.5 rounded-full bg-red-950/60" />
+              <span class="h-6 w-0.5 rounded-full bg-primary-950/60" />
             </div>
             <div
-              class="clip-handle absolute inset-y-0 right-0 flex w-4 cursor-ew-resize items-center justify-center bg-red-400 sm:w-3"
+              class="clip-handle absolute inset-y-0 right-0 flex w-4 cursor-ew-resize items-center justify-center bg-primary-400 sm:w-3"
               role="slider"
               tabindex="0"
               :aria-label="t('video.clip.moveEnd')"
@@ -107,7 +107,7 @@
               @pointerdown.stop="beginDrag('end', $event)"
               @keydown.stop="handleKey('end', $event)"
             >
-              <span class="h-6 w-0.5 rounded-full bg-red-950/60" />
+              <span class="h-6 w-0.5 rounded-full bg-primary-950/60" />
             </div>
           </div>
         </div>
@@ -120,8 +120,8 @@
           aria-hidden="true"
           @pointerdown.stop="beginDrag('seek', $event)"
         >
-          <span class="absolute left-1/2 top-0 h-3 w-3 -translate-x-1/2 rounded-full bg-white shadow-[0_0_12px_rgba(255,255,255,0.6)]" />
-          <span class="absolute bottom-0 left-1/2 top-2 w-0.5 -translate-x-1/2 bg-white shadow-[0_0_8px_rgba(255,255,255,0.5)]" />
+          <span class="absolute left-1/2 top-0 h-3 w-3 -translate-x-1/2 rounded-full bg-white shadow-[0_0_12px_rgb(var(--gt-white)/0.6)]" />
+          <span class="absolute bottom-0 left-1/2 top-2 w-0.5 -translate-x-1/2 bg-white shadow-[0_0_8px_rgb(var(--gt-white)/0.5)]" />
         </div>
       </div>
 
@@ -155,7 +155,7 @@
     <div class="mt-3 grid grid-cols-3 gap-2 sm:flex sm:items-center">
       <button
         type="button"
-        class="flex min-h-11 items-center justify-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-bold text-black transition hover:bg-zinc-200"
+        class="flex min-h-11 items-center justify-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-bold text-zinc-950 transition hover:bg-zinc-200"
         @click="togglePreview"
       >
         <svg v-if="previewing" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
@@ -581,7 +581,7 @@ onBeforeUnmount(() => {
 <style scoped>
 .clip-selection:focus-visible,
 .clip-handle:focus-visible {
-  outline: 2px solid #fff;
+  outline: 2px solid rgb(var(--gt-white));
   outline-offset: 2px;
 }
 </style>

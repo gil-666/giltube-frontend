@@ -17,6 +17,7 @@ Referencia para desarrolladores de la API HTTP pública de GilTube.
 - [Autenticación y cuenta](#autenticación-y-cuenta)
 - [Suscripciones](#suscripciones)
 - [Listas de reproducción](#listas-de-reproducción)
+- [Temas](#temas)
 - [Películas, series y música](#películas-series-y-música)
 - [Transmisiones en vivo y chat](#transmisiones-en-vivo-y-chat)
 - [Watch parties](#watch-parties)
@@ -597,6 +598,77 @@ Las suscripciones relacionan un canal con otro.
 | `PUT` | `/playlists/{id}/videos/reorder` | Usuario | JSON: `videos`, arreglo de `{ "video_id": "...", "position": number }`. |
 
 Los valores válidos de `visibility` son `public`, `private` y `unlisted`.
+
+## Temas
+
+Un tema es un nombre más tres colores (`primary_color`, `accent_color`, `background_color`, cada uno `#rrggbb`). Los temas pertenecen a una cuenta de usuario. Se comparten mediante un código: instalar un tema compartido guarda una referencia, así que cuando el propietario lo edita, todas las personas que lo instalaron reciben los nuevos colores (`version` aumenta con cada edición). El aspecto integrado de GilTube no tiene registro; una cuenta lo usa cuando `active_theme_id` es `null`.
+
+| Método | Ruta | Acceso | Entrada |
+| --- | --- | --- | --- |
+| `GET` | `/themes` | Usuario | Devuelve `active_theme_id` y `themes`: primero los temas propios y luego los instalados. |
+| `POST` | `/themes` | Usuario | JSON: `name` (1–40 caracteres), `primary_color`, `accent_color`, `background_color`. Devuelve `201` con `theme`. Límite de 50 temas propios (`409`). |
+| `PUT` | `/themes/{id}` | Usuario (propietario) | Mismo cuerpo que al crear. Devuelve el `theme` actualizado. `404` si el tema no es tuyo. |
+| `DELETE` | `/themes/{id}` | Usuario (propietario) | Elimina el tema. Si otras personas lo instalaron, se retira en su lugar: `{ "deleted": true, "retired": true }`. |
+| `GET` | `/themes/active` | Usuario | `{ "theme": TEMA_O_NULL }`. |
+| `PUT` | `/themes/active` | Usuario | JSON: `theme_id` (`null` o vacío para el aspecto predeterminado). El tema debe estar en la biblioteca del usuario; si no, `404`. |
+| `GET` | `/themes/shared/{code}` | Usuario opcional | `{ "theme": ..., "installed": bool }`. `404` para códigos desconocidos o retirados. |
+| `POST` | `/themes/shared/{code}/install` | Usuario | JSON: `activate` opcional (bool). Agrega el tema a la biblioteca (límite de 100 instalaciones, `409`). Instalar tu propio tema solo lo aplica. |
+| `DELETE` | `/themes/{id}/install` | Usuario | Quita un tema instalado de la biblioteca y restablece el tema activo si estaba en uso. |
+| `POST` | `/themes/{id}/background` | Usuario (propietario) | Campo multipart `image` (JPEG, PNG o WebP, hasta 16 MiB y 32 MP). Reemplaza la imagen de fondo y devuelve el `theme` actualizado. |
+| `DELETE` | `/themes/{id}/background` | Usuario (propietario) | Quita la imagen de fondo. |
+| `GET` | `/theme-backgrounds/{filename}` | Público | Sirve las imágenes de fondo (`_lg` para la página, `_sm` para vistas previas). El nombre cambia en cada subida, así que las respuestas se pueden guardar en caché indefinidamente. |
+
+`POST /themes` y `PUT /themes/{id}` también aceptan un objeto `style` opcional. Todos los campos son opcionales; los que faltan toman el valor predeterminado indicado, y los valores fuera de estas listas se rechazan con `400`:
+
+| Campo | Valores | Predeterminado |
+| --- | --- | --- |
+| `gradient_color` | `#rrggbb`, o `""` sin degradado | `""` |
+| `gradient_angle` | 0–359 | `160` |
+| `background_fit` | `cover`, `tile` | `cover` |
+| `background_blur` | 0–24 (píxeles) | `0` |
+| `corners` | `sharp`, `default`, `soft`, `round` | `default` |
+| `font` | `inter`, `rounded`, `grotesk`, `serif`, `mono`, `pixel` | `inter` |
+| `effect` | `none`, `snow`, `sparkles`, `bubbles`, `stars`, `aurora`, `silk`, `iridescence`, `threads`, `waves`, `particles`, `light-rays`, `plasma`, `ripple-grid`, `plasma-wave`, `balatro`, `gradient-waves` | `none` |
+| `effect_strength` | 10–100 (porcentaje con el que el efecto se ve sobre el fondo) | `70` |
+
+Los primeros cuatro efectos son partículas CSS; el resto son fondos animados (WebGL/canvas) adaptados de [Vue Bits](https://vue-bits.dev) y teñidos con los colores del tema. La imagen de fondo se muestra con una opacidad fija del 40% sobre el color de fondo (y el degradado). Subirla o quitarla incrementa `version` como cualquier otra edición.
+
+Campos del tema:
+
+```json
+{
+  "id": "THEME_ID",
+  "share_code": "Hq7cVd2mPz",
+  "name": "Midnight Ocean",
+  "primary_color": "#38bdf8",
+  "accent_color": "#22c55e",
+  "background_color": "#0b1220",
+  "background_image": "/api/v1/theme-backgrounds/THEME_ID_1791266861676434667_lg.jpg",
+  "style": { "gradient_color": "#003344", "gradient_angle": 45, "background_fit": "cover", "background_blur": 4, "corners": "round", "font": "pixel", "effect": "snow" },
+  "version": 3,
+  "owner_user_id": "USER_ID",
+  "owner_username": "gil",
+  "is_owner": false,
+  "is_retired": false,
+  "install_count": 12,
+  "created_at": "2026-10-05T18:00:00Z",
+  "updated_at": "2026-10-05T19:30:00Z"
+}
+```
+
+Los temas retirados ya no se encuentran por su código ni aparecen en la biblioteca del propietario, pero quienes los instalaron conservan la última versión (`is_retired: true`). Cuando se quita la última instalación, el tema se elimina. Los enlaces para compartir en el sitio usan `/themes/{share_code}`. Los archivos de tema exportados tienen esta forma:
+
+```json
+{
+  "format": "giltube-theme",
+  "version": 1,
+  "name": "Midnight Ocean",
+  "colors": { "primary": "#38bdf8", "accent": "#22c55e", "background": "#0b1220" },
+  "style": { "corners": "round", "font": "pixel", "effect": "snow" },
+  "background_image": "data:image/jpeg;base64,...",
+  "source": "https://giltube.gilservers.com/themes/Hq7cVd2mPz"
+}
+```
 
 ## Películas, series y música
 

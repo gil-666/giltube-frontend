@@ -108,7 +108,7 @@
     <Teleport to="body">
       <div
         v-if="showQueuePicker"
-        class="fixed inset-0 z-[9999] flex items-stretch justify-center bg-[radial-gradient(circle_at_top,_rgba(239,68,68,0.22),_rgba(0,0,0,0.92)_45%,_rgba(0,0,0,0.98))] p-3 text-white sm:items-center sm:p-6"
+        class="fixed inset-0 z-[9999] flex items-stretch justify-center bg-[radial-gradient(circle_at_top,_rgb(var(--gt-primary-500)/0.22),_rgba(0,0,0,0.92)_45%,_rgba(0,0,0,0.98))] p-3 text-white sm:items-center sm:p-6"
         :style="{ zIndex: 2147483647 }"
         @click.self="showQueuePicker = false"
       >
@@ -136,7 +136,7 @@
                 v-for="video in queuePickerVideos"
                 :key="video.id"
                 type="button"
-                class="group overflow-hidden rounded-xl border border-white/10 bg-white/5 text-left transition hover:border-red-500/50 hover:bg-white/10"
+                class="group overflow-hidden rounded-xl border border-white/10 bg-white/5 text-left transition hover:border-primary-500/50 hover:bg-white/10"
                 @click="selectQueueVideo(video.id)"
               >
                 <div class="relative aspect-video bg-black">
@@ -245,7 +245,7 @@ watch(showQueuePicker, (isOpen) => {
 <style scoped>
 .watch-party-queue-scroll {
   scrollbar-width: thin;
-  scrollbar-color: rgba(239, 68, 68, 0.45) rgba(24, 24, 27, 0.55);
+  scrollbar-color: rgb(var(--gt-primary-500) / 0.45) rgb(var(--gt-zinc-900) / 0.55);
 }
 
 .watch-party-queue-scroll::-webkit-scrollbar {
@@ -253,12 +253,12 @@ watch(showQueuePicker, (isOpen) => {
 }
 
 .watch-party-queue-scroll::-webkit-scrollbar-track {
-  background: rgba(24, 24, 27, 0.55);
+  background: rgb(var(--gt-zinc-900) / 0.55);
   border-radius: 9999px;
 }
 
 .watch-party-queue-scroll::-webkit-scrollbar-thumb {
-  background: rgba(239, 68, 68, 0.45);
+  background: rgb(var(--gt-primary-500) / 0.45);
   border-radius: 9999px;
 }
 </style>

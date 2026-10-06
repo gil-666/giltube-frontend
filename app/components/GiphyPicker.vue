@@ -67,7 +67,7 @@
               :alt="gif.title"
               class="w-full h-40 object-cover"
             />
-            <div class="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition flex items-end justify-center">
+            <div class="gt-media absolute inset-0 bg-black/0 group-hover:bg-black/30 transition flex items-end justify-center">
               <span class="text-xs text-white opacity-0 group-hover:opacity-100 transition pb-2 px-1 text-center truncate">
                 {{ gif.title }}
               </span>

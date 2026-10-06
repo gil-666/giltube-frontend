@@ -247,20 +247,20 @@ definePageMeta({
 <style scoped>
 input,
 textarea {
-  color: white;
+  color: rgb(var(--gt-white));
 }
 
 input::placeholder,
 textarea::placeholder {
-  color: #6b7280;
+  color: rgb(var(--gt-zinc-500));
 }
 
 input:autofill,
 input:autofill:hover,
 input:autofill:focus,
 input:autofill:active {
-  -webkit-box-shadow: 0 0 0 30px #27272a inset !important;
-  box-shadow: 0 0 0 30px #27272a inset !important;
-  -webkit-text-fill-color: white !important;
+  -webkit-box-shadow: 0 0 0 30px rgb(var(--gt-zinc-800)) inset !important;
+  box-shadow: 0 0 0 30px rgb(var(--gt-zinc-800)) inset !important;
+  -webkit-text-fill-color: rgb(var(--gt-white)) !important;
 }
 </style>

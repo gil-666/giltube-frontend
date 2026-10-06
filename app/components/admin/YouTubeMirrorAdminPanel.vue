@@ -47,25 +47,25 @@
 
       <div class="mt-4 flex flex-wrap items-center gap-3">
         <label class="inline-flex items-center gap-2 rounded border border-white/10 bg-zinc-800 px-3 py-2 text-sm text-gray-300">
-          <input v-model="importForm.explicit" type="checkbox" class="h-4 w-4 accent-red-600" />
+          <input v-model="importForm.explicit" type="checkbox" class="h-4 w-4 accent-primary-600" />
           {{ t('youtubeMirrorAdmin.import.explicit') }}
         </label>
         <label class="inline-flex items-center gap-2 rounded border border-white/10 bg-zinc-800 px-3 py-2 text-sm text-gray-300">
-          <input v-model="importForm.hidden" type="checkbox" class="h-4 w-4 accent-red-600" />
+          <input v-model="importForm.hidden" type="checkbox" class="h-4 w-4 accent-primary-600" />
           {{ t('youtubeMirrorAdmin.import.hidden') }}
         </label>
         <label class="inline-flex items-center gap-2 rounded border border-white/10 bg-zinc-800 px-3 py-2 text-sm text-gray-300">
-          <input v-model="importForm.createNewChannel" type="checkbox" class="h-4 w-4 accent-red-600" />
+          <input v-model="importForm.createNewChannel" type="checkbox" class="h-4 w-4 accent-primary-600" />
           {{ t('youtubeMirrorAdmin.import.createNewChannel') }}
         </label>
         <label class="inline-flex items-center gap-2 rounded border border-white/10 bg-zinc-800 px-3 py-2 text-sm text-gray-300">
-          <input v-model="importForm.copyChannelInfo" type="checkbox" class="h-4 w-4 accent-red-600" />
+          <input v-model="importForm.copyChannelInfo" type="checkbox" class="h-4 w-4 accent-primary-600" />
           {{ t('youtubeMirrorAdmin.import.copyChannelInfo') }}
         </label>
         <button
           type="button"
           :disabled="importing || !importForm.url.trim()"
-          class="rounded bg-red-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+          class="rounded bg-primary-600 px-5 py-2.5 text-sm font-semibold text-on-primary transition hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-50"
           @click="startImport"
         >
           {{ importing ? t('youtubeMirrorAdmin.import.starting') : t('youtubeMirrorAdmin.import.submit') }}
@@ -134,7 +134,7 @@
           </option>
         </select>
         <label class="inline-flex items-center gap-2 rounded border border-white/10 bg-zinc-800 px-3 py-2 text-sm text-gray-300">
-          <input v-model="mappingForm.createNewChannel" type="checkbox" class="h-4 w-4 accent-red-600" />
+          <input v-model="mappingForm.createNewChannel" type="checkbox" class="h-4 w-4 accent-primary-600" />
           {{ t('youtubeMirrorAdmin.mappings.createNew') }}
         </label>
         <button

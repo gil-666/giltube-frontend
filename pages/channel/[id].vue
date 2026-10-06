@@ -1,13 +1,13 @@
 ﻿<template>
   <div class="channel-page min-h-screen bg-zinc-950 text-white">
     <!-- Channel Header -->
-    <div v-if="channel" class="channel-hero relative overflow-hidden bg-zinc-950">
+    <div v-if="channel" class="channel-hero gt-media relative overflow-hidden bg-zinc-950 text-white">
       <div v-if="channelBackgroundUrl" class="absolute inset-0">
         <img :src="channelBackgroundUrl" :srcset="channelBackgroundSrcset || undefined" sizes="100vw" :alt="`${channel.name} background`" class="channel-fade-bg h-full w-full object-cover" :style="channelBackgroundStyle" />
         <div class="channel-hero-overlay absolute inset-0 bg-black/70" />
         <div class="channel-hero-fade absolute inset-0 bg-gradient-to-t from-zinc-950 via-black/45 to-black/25" />
       </div>
-      <div v-else class="absolute inset-0 bg-[linear-gradient(180deg,#16161a_0%,#0c0c0e_100%)]" />
+      <div v-else class="absolute inset-0 bg-[linear-gradient(180deg,rgb(var(--gt-zinc-900))_0%,rgb(var(--gt-zinc-950))_100%)]" />
       <iframe
         v-if="headerThemeSrcdoc"
         class="channel-custom-theme channel-fade-bg pointer-events-none absolute inset-0 h-full w-full border-0"
@@ -20,7 +20,7 @@
         <button
           v-if="canEditChannel"
           type="button"
-          class="absolute right-4 top-4 z-20 inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/15 bg-black/55 text-white shadow-lg backdrop-blur transition hover:bg-white hover:text-black sm:right-6 sm:top-6"
+          class="absolute right-4 top-4 z-20 inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/15 bg-black/55 text-white shadow-lg backdrop-blur transition hover:bg-white hover:text-zinc-950 sm:right-6 sm:top-6"
           :title="t('channels.edit')"
           @click="openChannelEditor"
         >
@@ -33,7 +33,7 @@
         <button
           type="button"
           :class="[
-            'absolute top-4 z-20 inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/15 bg-black/55 text-white shadow-lg backdrop-blur transition hover:bg-white hover:text-black sm:top-6',
+            'absolute top-4 z-20 inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/15 bg-black/55 text-white shadow-lg backdrop-blur transition hover:bg-white hover:text-zinc-950 sm:top-6',
             canEditChannel ? 'right-16 sm:right-[4.75rem]' : 'right-4 sm:right-6'
           ]"
           :title="t('channelPage.details')"
@@ -84,7 +84,7 @@
                 type="button"
                 :disabled="subscriptionBusy"
                 class="channel-subscribe-button inline-flex min-w-28 items-center justify-center rounded-full px-5 py-2 text-sm font-bold shadow-lg transition disabled:cursor-wait disabled:opacity-60"
-                :class="[isSubscribed ? 'border border-white/20 bg-black/55 text-white backdrop-blur hover:bg-white/15' : 'bg-white text-black hover:bg-zinc-200', { 'is-subscribed': isSubscribed }]"
+                :class="[isSubscribed ? 'border border-white/20 bg-black/55 text-white backdrop-blur hover:bg-white/15' : 'bg-white text-zinc-950 hover:bg-zinc-200', { 'is-subscribed': isSubscribed }]"
                 @click="toggleSubscription"
               >
                 {{ subscriptionBusy ? t('channelPage.subscriptionWorking') : isSubscribed ? t('channelPage.subscribed') : t('channelPage.subscribe') }}
@@ -121,7 +121,7 @@
       <div class="w-full max-w-lg overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-950 shadow-2xl">
         <div class="flex items-center justify-between gap-3 border-b border-zinc-800 px-5 py-4">
           <div>
-            <p class="text-xs font-bold uppercase tracking-[0.18em] text-red-300">{{ channel.name }}</p>
+            <p class="text-xs font-bold uppercase tracking-[0.18em] text-primary-300">{{ channel.name }}</p>
             <h2 class="text-2xl font-black">{{ t('channelPage.details') }}</h2>
           </div>
           <button
@@ -162,7 +162,7 @@
       <div class="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-zinc-800 bg-zinc-950 p-5 shadow-2xl sm:p-6">
         <div class="mb-5 flex items-center justify-between gap-3">
           <div>
-            <p class="text-xs font-bold uppercase tracking-[0.18em] text-red-300">{{ t('channels.edit') }}</p>
+            <p class="text-xs font-bold uppercase tracking-[0.18em] text-primary-300">{{ t('channels.edit') }}</p>
             <h2 class="text-2xl font-black">{{ t('channels.editModal') }}</h2>
           </div>
           <button type="button" class="rounded-full bg-zinc-800 px-3 py-1.5 text-sm font-bold text-zinc-200 transition hover:bg-zinc-700" @click="showChannelEditor = false">
@@ -173,12 +173,12 @@
         <form class="space-y-4" @submit.prevent="saveChannelEditor">
           <div>
             <label class="mb-2 block text-sm font-semibold">{{ t('channels.channelName') }}</label>
-            <input v-model="editForm.name" required type="text" class="w-full rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-2 text-white outline-none transition focus:border-red-400" />
+            <input v-model="editForm.name" required type="text" class="w-full rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-2 text-white outline-none transition focus:border-primary-400" />
           </div>
 
           <div>
             <label class="mb-2 block text-sm font-semibold">{{ t('channels.description') }}</label>
-            <textarea v-model="editForm.description" rows="4" class="w-full rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-2 text-white outline-none transition focus:border-red-400" />
+            <textarea v-model="editForm.description" rows="4" class="w-full rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-2 text-white outline-none transition focus:border-primary-400" />
           </div>
 
           <div>
@@ -218,18 +218,18 @@
                 <img :src="editorBackgroundPreviewUrl" :alt="t('channelPage.backgroundPreview')" class="h-full w-full object-cover" :style="editBackgroundStyle" />
                 <div class="absolute inset-0 bg-black/60" />
               </div>
-              <div class="grid gap-3 rounded-xl border border-zinc-800 bg-black/30 p-3 sm:grid-cols-3">
+              <div class="grid gap-3 rounded-xl border border-zinc-800 bg-zinc-950/30 p-3 sm:grid-cols-3">
                 <label class="text-xs font-semibold text-zinc-300">
                   {{ t('channels.backgroundPositionX') }}
-                  <input v-model.number="editForm.backgroundPositionX" type="range" min="0" max="100" class="mt-2 w-full accent-red-500" />
+                  <input v-model.number="editForm.backgroundPositionX" type="range" min="0" max="100" class="mt-2 w-full accent-primary-500" />
                 </label>
                 <label class="text-xs font-semibold text-zinc-300">
                   {{ t('channels.backgroundPositionY') }}
-                  <input v-model.number="editForm.backgroundPositionY" type="range" min="0" max="100" class="mt-2 w-full accent-red-500" />
+                  <input v-model.number="editForm.backgroundPositionY" type="range" min="0" max="100" class="mt-2 w-full accent-primary-500" />
                 </label>
                 <label class="text-xs font-semibold text-zinc-300">
                   {{ t('channels.backgroundZoom') }}
-                  <input v-model.number="editForm.backgroundScale" type="range" min="100" max="250" class="mt-2 w-full accent-red-500" />
+                  <input v-model.number="editForm.backgroundScale" type="range" min="100" max="250" class="mt-2 w-full accent-primary-500" />
                 </label>
               </div>
               <div class="flex flex-wrap gap-3">
@@ -250,19 +250,19 @@
             <div class="mt-4 grid gap-4 lg:grid-cols-2">
               <div>
                 <label class="mb-2 block text-sm font-semibold">{{ t('channels.headerHtml') }}</label>
-                <textarea v-model="editForm.customHeaderHtml" rows="7" class="w-full rounded-lg border border-zinc-700 bg-black/50 px-3 py-2 font-mono text-xs text-white outline-none transition focus:border-red-400" />
+                <textarea v-model="editForm.customHeaderHtml" rows="7" class="w-full rounded-lg border border-zinc-700 bg-zinc-950/50 px-3 py-2 font-mono text-xs text-white outline-none transition focus:border-primary-400" />
               </div>
               <div>
                 <label class="mb-2 block text-sm font-semibold">{{ t('channels.headerCss') }}</label>
-                <textarea v-model="editForm.customHeaderCss" rows="7" class="w-full rounded-lg border border-zinc-700 bg-black/50 px-3 py-2 font-mono text-xs text-white outline-none transition focus:border-red-400" />
+                <textarea v-model="editForm.customHeaderCss" rows="7" class="w-full rounded-lg border border-zinc-700 bg-zinc-950/50 px-3 py-2 font-mono text-xs text-white outline-none transition focus:border-primary-400" />
               </div>
               <div>
                 <label class="mb-2 block text-sm font-semibold">{{ t('channels.contentHtml') }}</label>
-                <textarea v-model="editForm.customContentHtml" rows="7" class="w-full rounded-lg border border-zinc-700 bg-black/50 px-3 py-2 font-mono text-xs text-white outline-none transition focus:border-red-400" />
+                <textarea v-model="editForm.customContentHtml" rows="7" class="w-full rounded-lg border border-zinc-700 bg-zinc-950/50 px-3 py-2 font-mono text-xs text-white outline-none transition focus:border-primary-400" />
               </div>
               <div>
                 <label class="mb-2 block text-sm font-semibold">{{ t('channels.contentCss') }}</label>
-                <textarea v-model="editForm.customContentCss" rows="7" class="w-full rounded-lg border border-zinc-700 bg-black/50 px-3 py-2 font-mono text-xs text-white outline-none transition focus:border-red-400" />
+                <textarea v-model="editForm.customContentCss" rows="7" class="w-full rounded-lg border border-zinc-700 bg-zinc-950/50 px-3 py-2 font-mono text-xs text-white outline-none transition focus:border-primary-400" />
               </div>
             </div>
           </details>
@@ -337,7 +337,7 @@
                   :srcset="imageVariantSrcset(video.thumbnail_url) || undefined"
                   sizes="(min-width: 1024px) 25vw, 50vw"
                   class="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]" />
-                <span v-if="isVideo8K(video.width) || isVideo4K(video.width)" class="absolute bottom-2 right-2 rounded-md bg-black/80 px-1.5 py-0.5 text-[11px] font-semibold text-zinc-100">{{ isVideo8K(video.width) ? '8K' : '4K' }}</span>
+                <span v-if="isVideo8K(video.width) || isVideo4K(video.width)" class="gt-media absolute bottom-2 right-2 rounded-md bg-black/80 px-1.5 py-0.5 text-[11px] font-semibold text-zinc-100">{{ isVideo8K(video.width) ? '8K' : '4K' }}</span>
                 <div v-else-if="!video.thumbnail_url" class="flex h-full w-full items-center justify-center bg-zinc-800">
                   <span class="text-zinc-500 text-xs">{{ t('channelPage.noThumbnail') }}</span>
                 </div>
@@ -729,22 +729,22 @@ const formatDate = (date) => {
 .channel-tabs {
   display: inline-flex;
   border-radius: 999px;
-  background: rgba(0, 0, 0, 0.34);
+  background: rgb(var(--gt-zinc-950) / 0.34);
   padding: 0.15rem 0.35rem 0;
   box-shadow: 0 12px 30px rgba(0, 0, 0, 0.22);
   backdrop-filter: blur(8px);
 }
 
 .channel-tabs button {
-  color: rgba(255, 255, 255, 0.72);
+  color: rgb(var(--gt-white) / 0.72);
   text-shadow:
-    0 1px 2px rgba(0, 0, 0, 1),
-    0 3px 10px rgba(0, 0, 0, 0.9);
+    0 1px 2px rgb(var(--gt-zinc-950) / 1),
+    0 3px 10px rgb(var(--gt-zinc-950) / 0.9);
 }
 
 .channel-tabs button:hover,
 .channel-tabs button.is-active {
-  color: #fff;
+  color: rgb(var(--gt-white));
 }
 
 .channel-tab-button {
@@ -763,18 +763,18 @@ const formatDate = (date) => {
 }
 
 .channel-tab-button.is-active::after {
-  background: #ef4444;
+  background: rgb(var(--gt-primary-500));
 }
 
 .channel-music-panel {
   padding: 1.25rem;
-  border: 1px solid rgba(255, 255, 255, 0.14);
+  border: 1px solid rgb(var(--gt-white) / 0.14);
   border-radius: 0.875rem;
   background:
-    linear-gradient(180deg, rgba(39, 39, 42, 0.7), rgba(24, 24, 27, 0.58)),
-    rgba(9, 9, 11, 0.46);
+    linear-gradient(180deg, rgb(var(--gt-zinc-800) / 0.7), rgb(var(--gt-zinc-900) / 0.58)),
+    rgb(var(--gt-zinc-950) / 0.46);
   box-shadow: 0 20px 55px rgba(0, 0, 0, 0.22);
-  color: #f4f4f5;
+  color: rgb(var(--gt-zinc-100));
   backdrop-filter: blur(12px);
 }
 
@@ -787,14 +787,14 @@ const formatDate = (date) => {
 }
 
 .music-panel-heading h2 {
-  color: #fff;
+  color: rgb(var(--gt-white));
   font-size: 1.25rem;
   font-weight: 800;
 }
 
 .music-panel-heading p {
   margin-top: 0.2rem;
-  color: #a1a1aa;
+  color: rgb(var(--gt-zinc-400));
   font-size: 0.82rem;
 }
 
@@ -805,18 +805,18 @@ const formatDate = (date) => {
   gap: 0.35rem;
   flex: none;
   padding: 0.55rem 0.75rem;
-  border: 1px solid #52525b;
+  border: 1px solid rgb(var(--gt-zinc-600));
   border-radius: 6px;
-  background: #18181b;
-  color: #fff;
+  background: rgb(var(--gt-zinc-900));
+  color: rgb(var(--gt-white));
   font-size: 0.82rem;
   font-weight: 700;
   transition: border-color 150ms ease, background 150ms ease;
 }
 
 .artist-page-link:hover {
-  border-color: #71717a;
-  background: #27272a;
+  border-color: rgb(var(--gt-zinc-500));
+  background: rgb(var(--gt-zinc-800));
 }
 
 .artist-page-link svg {
@@ -838,15 +838,15 @@ const formatDate = (date) => {
   display: block;
   min-width: 0;
   padding: 0.5rem;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid rgb(var(--gt-white) / 0.12);
   border-radius: 8px;
-  background: rgba(24, 24, 27, 0.7);
+  background: rgb(var(--gt-zinc-900) / 0.7);
   transition: border-color 150ms ease, background 150ms ease, transform 150ms ease;
 }
 
 .channel-release-tile:hover {
-  border-color: rgba(248, 113, 113, 0.5);
-  background: rgba(39, 39, 42, 0.82);
+  border-color: rgb(var(--gt-primary-400) / 0.5);
+  background: rgb(var(--gt-zinc-800) / 0.82);
   transform: translateY(-2px);
 }
 
@@ -856,14 +856,14 @@ const formatDate = (date) => {
   width: 100%;
   aspect-ratio: 1;
   border-radius: 5px;
-  background: #27272a;
+  background: rgb(var(--gt-zinc-800));
   object-fit: cover;
 }
 
 .channel-release-tile h3 {
   margin-top: 0.65rem;
   overflow: hidden;
-  color: #fff;
+  color: rgb(var(--gt-white));
   font-size: 0.9rem;
   font-weight: 700;
   text-overflow: ellipsis;
@@ -871,13 +871,13 @@ const formatDate = (date) => {
 }
 
 .channel-release-tile:hover h3 {
-  color: #fca5a5;
+  color: rgb(var(--gt-primary-300));
 }
 
 .channel-release-tile p {
   margin-top: 0.22rem;
   overflow: hidden;
-  color: #a1a1aa;
+  color: rgb(var(--gt-zinc-400));
   font-size: 0.75rem;
   text-overflow: ellipsis;
   text-transform: capitalize;
@@ -886,7 +886,7 @@ const formatDate = (date) => {
 
 .music-empty {
   padding: 2rem 0;
-  color: #a1a1aa;
+  color: rgb(var(--gt-zinc-400));
   text-align: center;
 }
 
@@ -913,11 +913,11 @@ const formatDate = (date) => {
 
 /* Over a channel's custom background, cards keep a frame for contrast. */
 .has-custom-theme .channel-video-card {
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid rgb(var(--gt-white) / 0.12);
   border-radius: 0.875rem;
   background:
-    linear-gradient(180deg, rgba(39, 39, 42, 0.72), rgba(24, 24, 27, 0.58)),
-    rgba(9, 9, 11, 0.44);
+    linear-gradient(180deg, rgb(var(--gt-zinc-800) / 0.72), rgb(var(--gt-zinc-900) / 0.58)),
+    rgb(var(--gt-zinc-950) / 0.44);
   box-shadow: 0 14px 34px rgba(0, 0, 0, 0.22);
   padding: 0.45rem;
   transition:
@@ -928,16 +928,16 @@ const formatDate = (date) => {
 }
 
 .has-custom-theme .channel-video-card:hover {
-  border-color: rgba(248, 113, 113, 0.5);
+  border-color: rgb(var(--gt-primary-400) / 0.5);
   background:
-    linear-gradient(180deg, rgba(63, 63, 70, 0.8), rgba(24, 24, 27, 0.66)),
-    rgba(9, 9, 11, 0.56);
+    linear-gradient(180deg, rgb(var(--gt-zinc-700) / 0.8), rgb(var(--gt-zinc-900) / 0.66)),
+    rgb(var(--gt-zinc-950) / 0.56);
   transform: translateY(-1px);
 }
 
 @supports not (backdrop-filter: blur(10px)) {
   .channel-video-card {
-    background: rgba(24, 24, 27, 0.86);
+    background: rgb(var(--gt-zinc-900) / 0.86);
   }
 }
 

@@ -11,7 +11,8 @@
       </div>
 
       <div class="mb-8">
-        <img src="../assets/logowhsmall.png" alt="GilTube" class="h-8 w-auto" />
+        <img src="../assets/logowhsmall.png" alt="GilTube" class="gt-logo-on-dark h-8 w-auto" />
+        <img src="../assets/logoblsmall.png" alt="GilTube" class="gt-logo-on-light h-8 w-auto" />
         <h1 class="mt-8 text-2xl font-semibold tracking-tight">{{ t('login.title') }}</h1>
       </div>
 
@@ -113,8 +114,8 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { computed, onMounted, ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useLocalePath } from '#i18n'
 import { beginGilIDAuth, beginPasskeyLogin, finishPasskeyLogin, getGilIDSessionProfile, login, logoutGilIDSession } from '~/app/service/auth'
@@ -135,6 +136,12 @@ useMetaTags({
 })
 
 const router = useRouter()
+const route = useRoute()
+// Only same-site paths, so ?redirect= can't send people to another origin.
+const redirectPath = computed(() => {
+  const value = route.query.redirect
+  return typeof value === 'string' && value.startsWith('/') && !value.startsWith('//') && !value.includes('\\') ? value : '/'
+})
 const email = ref('')
 const password = ref('')
 const error = ref('')
@@ -150,7 +157,7 @@ onMounted(async () => {
 
 const completeLogin = async (response: Parameters<typeof persistAuthSession>[0], fallbackEmail: string) => {
   await persistAuthSession(response, fallbackEmail)
-  router.push(localePath('/'))
+  router.push(localePath(redirectPath.value))
 }
 
 const handleLogin = async () => {
@@ -218,7 +225,7 @@ const handleGilIDLogin = async () => {
   gilidLoading.value = true
 
   try {
-    const response = await beginGilIDAuth('login', '/')
+    const response = await beginGilIDAuth('login', redirectPath.value)
     window.location.href = response.authorize_url
   } catch (err: any) {
     error.value = err?.response?.data?.error || 'Failed to redirect to GILid.'
@@ -233,7 +240,7 @@ const handleGilIDSwitchAccount = async () => {
   try {
     await logoutGilIDSession()
     gilidSessionProfile.value = null
-    const response = await beginGilIDAuth('login', '/')
+    const response = await beginGilIDAuth('login', redirectPath.value)
     window.location.href = response.authorize_url
   } catch (err: any) {
     error.value = err?.response?.data?.error || err?.message || 'Failed to switch GILid account.'
@@ -244,19 +251,19 @@ const handleGilIDSwitchAccount = async () => {
 
 <style scoped>
 input {
-  color: white;
+  color: rgb(var(--gt-white));
 }
 
 input::placeholder {
-  color: #a0aec0;
+  color: rgb(var(--gt-zinc-400));
 }
 
 input:autofill,
 input:autofill:hover,
 input:autofill:focus,
 input:autofill:active {
-  -webkit-box-shadow: 0 0 0 30px #374151 inset !important;
-  box-shadow: 0 0 0 30px #374151 inset !important;
-  -webkit-text-fill-color: white !important;
+  -webkit-box-shadow: 0 0 0 30px rgb(var(--gt-zinc-700)) inset !important;
+  box-shadow: 0 0 0 30px rgb(var(--gt-zinc-700)) inset !important;
+  -webkit-text-fill-color: rgb(var(--gt-white)) !important;
 }
 </style>

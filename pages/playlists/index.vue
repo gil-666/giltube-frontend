@@ -26,7 +26,7 @@
     <!-- Grid -->
     <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       <NuxtLink v-for="playlist in playlists" :key="playlist.id" :to="localePath(`/playlists/${playlist.id}`)" 
-        class="bg-zinc-800 rounded-lg overflow-hidden hover:shadow-lg hover:shadow-red-500/20 transition group cursor-pointer">
+        class="bg-zinc-800 rounded-lg overflow-hidden hover:shadow-lg hover:shadow-primary-500/20 transition group cursor-pointer">
         
         <!-- Thumbnail placeholder with video count -->
         <div class="w-full aspect-video bg-zinc-700 relative overflow-hidden">
@@ -46,7 +46,7 @@
           </div>
           
           <!-- Visibility badge -->
-          <div class="absolute top-2 right-2 px-2 py-1 bg-black/70 rounded text-xs font-medium text-white">
+          <div class="gt-media absolute top-2 right-2 px-2 py-1 bg-black/70 rounded text-xs font-medium text-white">
             {{ getVisibilityLabel(playlist.visibility) }}
           </div>
         </div>

@@ -161,7 +161,7 @@
                 </label>
               </section>
 
-              <section v-if="hasLyrics" class="lyrics-panel" :aria-label="t('music.player.lyrics')">
+              <section v-if="hasLyrics" class="lyrics-panel gt-media" :aria-label="t('music.player.lyrics')">
                 <div v-if="currentTrack.cover_url" class="lyrics-art-backdrop" aria-hidden="true">
                   <img :src="imageVariantUrl(currentTrack.cover_url, 'lg')" alt="">
                 </div>
@@ -260,7 +260,7 @@ const { t } = useI18n()
 const audioElement = ref<HTMLAudioElement | null>(null)
 const coverArtElement = ref<HTMLImageElement | null>(null)
 const lyricsScrollElement = ref<HTMLElement | null>(null)
-const coverGlow = ref('rgba(239, 68, 68, 0.28)')
+const coverGlow = ref('rgb(var(--gt-primary-500) / 0.28)')
 const coverTiltX = ref(0)
 const coverTiltY = ref(0)
 const coverIsTilting = ref(false)
@@ -696,7 +696,7 @@ const updateCoverGlow = () => {
     if (!dominant) return
     coverGlow.value = `rgba(${Math.round(dominant.red / dominant.samples)}, ${Math.round(dominant.green / dominant.samples)}, ${Math.round(dominant.blue / dominant.samples)}, 0.52)`
   } catch {
-    coverGlow.value = 'rgba(239, 68, 68, 0.28)'
+    coverGlow.value = 'rgb(var(--gt-primary-500) / 0.28)'
   }
 }
 
@@ -943,9 +943,9 @@ onBeforeUnmount(() => {
   align-items: center;
   gap: 8px;
   overflow: hidden;
-  border: 1px solid rgb(63 63 70);
+  border: 1px solid rgb(var(--gt-zinc-700));
   border-radius: 8px;
-  background: rgb(9 9 11 / 0.97);
+  background: rgb(var(--gt-zinc-950) / 0.97);
   padding: 8px;
   box-shadow: 0 14px 50px rgb(0 0 0 / 0.6);
   backdrop-filter: blur(16px);
@@ -966,7 +966,7 @@ onBeforeUnmount(() => {
   height: 48px;
   flex: none;
   border-radius: 5px;
-  background: rgb(39 39 42);
+  background: rgb(var(--gt-zinc-800));
   object-fit: cover;
 }
 
@@ -984,13 +984,13 @@ onBeforeUnmount(() => {
 }
 
 .track-copy strong {
-  color: white;
+  color: rgb(var(--gt-white));
   font-size: 0.875rem;
 }
 
 .track-copy small {
   margin-top: 2px;
-  color: rgb(161 161 170);
+  color: rgb(var(--gt-zinc-400));
   font-size: 0.75rem;
 }
 
@@ -1011,7 +1011,7 @@ onBeforeUnmount(() => {
 .queue-actions button {
   display: grid;
   place-items: center;
-  color: white;
+  color: rgb(var(--gt-white));
 }
 
 .mini-controls button {
@@ -1024,13 +1024,13 @@ onBeforeUnmount(() => {
 .panel-close:hover,
 .panel-transport button:hover,
 .queue-actions button:hover:not(:disabled) {
-  background: rgb(39 39 42);
+  background: rgb(var(--gt-zinc-800));
 }
 
 .mini-controls .play,
 .panel-transport .panel-play {
-  background: white;
-  color: black;
+  background: rgb(var(--gt-white));
+  color: rgb(var(--gt-zinc-950));
 }
 
 svg {
@@ -1059,7 +1059,7 @@ svg {
 .mini-timeline input {
   width: 100%;
   height: 6px;
-  accent-color: rgb(239 68 68);
+  accent-color: rgb(var(--gt-primary-500));
 }
 
 .music-panel-backdrop {
@@ -1080,9 +1080,9 @@ svg {
   max-height: min(48rem, calc(100dvh - 40px));
   grid-template-rows: minmax(0, 1fr);
   overflow: hidden;
-  border: 1px solid rgb(63 63 70);
+  border: 1px solid rgb(var(--gt-zinc-700));
   border-radius: 8px;
-  background: rgb(9 9 11);
+  background: rgb(var(--gt-zinc-950));
   box-shadow: 0 28px 90px rgb(0 0 0 / 0.75);
   transform: translateY(var(--panel-drag-y, 0));
   transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
@@ -1097,9 +1097,9 @@ svg {
   align-items: center;
   gap: 4px;
   max-width: calc(100% - 32px);
-  border: 1px solid rgb(39 39 42);
+  border: 1px solid rgb(var(--gt-zinc-800));
   border-radius: 999px;
-  background: rgb(24 24 27 / 0.88);
+  background: rgb(var(--gt-zinc-900) / 0.88);
   padding: 3px;
   box-shadow: 0 8px 28px rgb(0 0 0 / 0.36);
   transform: translateX(-50%);
@@ -1109,7 +1109,7 @@ svg {
 .panel-tabs button {
   flex: none;
   border-radius: 999px;
-  color: rgb(161 161 170);
+  color: rgb(var(--gt-zinc-400));
   font-size: 0.72rem;
   font-weight: 800;
   padding: 7px 10px;
@@ -1117,14 +1117,14 @@ svg {
 }
 
 .panel-tabs button.active {
-  background: rgb(63 63 70);
-  color: white;
+  background: rgb(var(--gt-zinc-700));
+  color: rgb(var(--gt-white));
 }
 
 @media (hover: hover) {
   .panel-tabs button:hover {
-    background: rgb(63 63 70);
-    color: white;
+    background: rgb(var(--gt-zinc-700));
+    color: rgb(var(--gt-white));
   }
 }
 
@@ -1141,7 +1141,7 @@ svg {
   height: 38px;
   border-radius: 50%;
   flex: none;
-  background: rgb(9 9 11 / 0.62);
+  background: rgb(var(--gt-zinc-950) / 0.62);
   backdrop-filter: blur(14px);
 }
 
@@ -1162,7 +1162,7 @@ svg {
   min-width: 0;
   flex-direction: column;
   justify-content: center;
-  border-right: 1px solid rgb(39 39 42);
+  border-right: 1px solid rgb(var(--gt-zinc-800));
   padding: 24px;
 }
 
@@ -1172,7 +1172,7 @@ svg {
   aspect-ratio: 1;
   align-self: center;
   border-radius: 7px;
-  background: rgb(39 39 42);
+  background: rgb(var(--gt-zinc-800));
   object-fit: cover;
   box-shadow: 0 20px 50px rgb(0 0 0 / 0.45);
 }
@@ -1198,7 +1198,7 @@ svg {
 
 .panel-cover-empty svg {
   width: 25%;
-  color: rgb(113 113 122);
+  color: rgb(var(--gt-zinc-500));
 }
 
 .panel-track-row {
@@ -1222,14 +1222,14 @@ svg {
 }
 
 .panel-track-copy a:first-child {
-  color: white;
+  color: rgb(var(--gt-white));
   font-size: 1.15rem;
   font-weight: 800;
 }
 
 .panel-track-copy .panel-artist-link {
   margin-top: 3px;
-  color: rgb(161 161 170);
+  color: rgb(var(--gt-zinc-400));
   font-size: 0.875rem;
 }
 
@@ -1239,7 +1239,7 @@ svg {
   align-items: center;
   gap: 6px;
   margin-top: 9px;
-  color: rgb(244 244 245);
+  color: rgb(var(--gt-zinc-100));
   font-size: 0.76rem;
   font-weight: 750;
 }
@@ -1266,8 +1266,8 @@ svg {
   justify-content: center;
   gap: 3px;
   border-radius: 50%;
-  background: rgb(39 39 42 / 0.78);
-  color: rgb(248 113 113);
+  background: rgb(var(--gt-zinc-800) / 0.78);
+  color: rgb(var(--gt-primary-400));
 }
 
 .panel-track-loading span {
@@ -1308,11 +1308,11 @@ svg {
 .panel-timeline input {
   grid-column: 1 / -1;
   width: 100%;
-  accent-color: rgb(239 68 68);
+  accent-color: rgb(var(--gt-primary-500));
 }
 
 .panel-timeline span {
-  color: rgb(113 113 122);
+  color: rgb(var(--gt-zinc-500));
   font-size: 0.7rem;
   font-variant-numeric: tabular-nums;
 }
@@ -1332,17 +1332,17 @@ svg {
   width: 42px;
   height: 42px;
   border-radius: 50%;
-  color: rgb(161 161 170);
+  color: rgb(var(--gt-zinc-400));
 }
 
 .panel-transport button.active {
-  color: rgb(248 113 113);
+  color: rgb(var(--gt-primary-400));
 }
 
 .panel-transport .panel-play {
   width: 54px;
   height: 54px;
-  color: black;
+  color: rgb(var(--gt-zinc-950));
 }
 
 .panel-transport button span {
@@ -1357,13 +1357,13 @@ svg {
   gap: 8px;
   margin: 12px auto 0;
   width: min(14rem, 100%);
-  color: rgb(161 161 170);
+  color: rgb(var(--gt-zinc-400));
 }
 
 .panel-volume input {
   min-width: 0;
   flex: 1;
-  accent-color: rgb(239 68 68);
+  accent-color: rgb(var(--gt-primary-500));
 }
 
 .queue-panel {
@@ -1376,7 +1376,7 @@ svg {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-bottom: 1px solid rgb(39 39 42);
+  border-bottom: 1px solid rgb(var(--gt-zinc-800));
   padding: 16px;
 }
 
@@ -1386,11 +1386,11 @@ svg {
 }
 
 .queue-heading strong {
-  color: white;
+  color: rgb(var(--gt-white));
 }
 
 .queue-heading span {
-  color: rgb(113 113 122);
+  color: rgb(var(--gt-zinc-500));
   font-size: 0.75rem;
 }
 
@@ -1410,11 +1410,11 @@ svg {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  border-bottom: 1px solid rgb(39 39 42 / 0.7);
+  border-bottom: 1px solid rgb(var(--gt-zinc-800) / 0.7);
 }
 
 .queue-panel li.active {
-  background: rgb(24 24 27);
+  background: rgb(var(--gt-zinc-900));
 }
 
 .queue-select {
@@ -1447,12 +1447,12 @@ svg {
 }
 
 .queue-select strong {
-  color: white;
+  color: rgb(var(--gt-white));
   font-size: 0.875rem;
 }
 
 .queue-select small {
-  color: rgb(113 113 122);
+  color: rgb(var(--gt-zinc-500));
   font-size: 0.75rem;
 }
 
@@ -1465,7 +1465,7 @@ svg {
   width: 30px;
   height: 30px;
   border-radius: 50%;
-  color: rgb(161 161 170);
+  color: rgb(var(--gt-zinc-400));
 }
 
 .queue-actions button:disabled {
@@ -1613,7 +1613,7 @@ svg {
 }
 
 .karaoke-line:focus-visible {
-  outline: 2px solid rgb(248 113 113);
+  outline: 2px solid rgb(var(--gt-primary-400));
   outline-offset: 4px;
 }
 
@@ -1686,7 +1686,7 @@ svg {
   .music-panel-backdrop {
     display: block;
     padding: 0;
-    background: rgb(9 9 11);
+    background: rgb(var(--gt-zinc-950));
   }
 
   .music-panel {

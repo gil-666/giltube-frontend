@@ -86,7 +86,7 @@
                         @click="onToggleCommentLike(comment.id, !comment.liked_by_actor)"
                         :disabled="!!togglingCommentLikeMap[comment.id]"
                         class="text-xs transition disabled:opacity-50 disabled:cursor-not-allowed"
-                        :class="comment.liked_by_actor ? 'text-red-400 hover:text-red-300' : 'text-gray-400 hover:text-gray-200'"
+                        :class="comment.liked_by_actor ? 'text-primary-400 hover:text-primary-300' : 'text-gray-400 hover:text-gray-200'"
                     >
                         {{ comment.liked_by_actor ? '♥' : '♡' }} {{ comment.likes_count || 0 }}
                     </button>
@@ -432,7 +432,7 @@ const submitReply = async () => {
 <style scoped>
 .comment-highlight {
     animation: comment-pulse 1.8s ease-in-out 0s 1;
-    box-shadow: 0 0 0 1px rgba(255, 0, 0, 0.644), 0 0 0 10px rgba(250, 204, 21, 0.08);
+    box-shadow: 0 0 0 1px rgb(var(--gt-primary) / 0.644), 0 0 0 10px rgba(250, 204, 21, 0.08);
 }
 
 .reply-thread-enter-active,
@@ -456,14 +456,14 @@ const submitReply = async () => {
 }
 
 .comment-text :deep(.comment-link) {
-    color: rgb(96 165 250);
+    color: rgb(var(--gt-accent-400));
     text-decoration: underline;
     text-underline-offset: 2px;
     word-break: break-all;
 }
 
 .comment-text :deep(.comment-link:hover) {
-    color: rgb(147 197 253);
+    color: rgb(var(--gt-accent-300));
 }
 
 .comment-text :deep(.comment-link-internal) {
@@ -488,15 +488,15 @@ const submitReply = async () => {
 @keyframes comment-pulse {
     0% {
         transform: scale(1);
-        background-color: rgb(24 24 27);
+        background-color: rgb(var(--gt-zinc-900));
     }
     30% {
         transform: scale(1.01);
-        background-color: rgb(39 39 42);
+        background-color: rgb(var(--gt-zinc-800));
     }
     100% {
         transform: scale(1);
-        background-color: rgb(24 24 27);
+        background-color: rgb(var(--gt-zinc-900));
     }
 }
 </style>

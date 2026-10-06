@@ -48,14 +48,14 @@
           :key="channel.id"
           class="motion-card group overflow-hidden rounded-xl border border-white/[0.07] bg-zinc-950 shadow-2xl shadow-black/20 transition hover:border-zinc-700"
         >
-          <div class="relative h-36 bg-zinc-900">
+          <div class="gt-media relative h-36 bg-zinc-900">
             <img
               v-if="channel.background_url && channel.background_url.trim()"
               :src="getBackgroundUrl(channel.background_url)"
               :alt="`${channel.name} background`"
               class="h-full w-full object-cover opacity-70 transition duration-300 group-hover:scale-[1.02]"
             />
-            <div v-else class="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(220,38,38,0.20),transparent_32%),linear-gradient(135deg,rgba(39,39,42,0.95),rgba(9,9,11,1))]" />
+            <div v-else class="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgb(var(--gt-primary-600)/0.20),transparent_32%),linear-gradient(135deg,rgb(var(--gt-zinc-800)/0.95),rgb(var(--gt-zinc-950)))]" />
             <div class="absolute inset-0 bg-gradient-to-t from-zinc-950 via-black/45 to-black/10" />
             <div class="absolute bottom-4 left-4 flex items-end gap-3">
               <div class="h-20 w-20 overflow-hidden rounded-full border-2 border-zinc-950 bg-zinc-800 shadow-xl">
@@ -169,14 +169,14 @@
           <div class="min-h-0 flex-1 overflow-y-auto p-4 sm:p-5">
             <div class="grid gap-5 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
               <section class="overflow-hidden rounded-xl border border-white/[0.07] bg-zinc-950">
-                <div class="relative h-40 bg-zinc-900 sm:h-48">
+                <div class="gt-media relative h-40 bg-zinc-900 text-white sm:h-48">
                   <img
                     v-if="editPreviewBackground"
                     :src="editPreviewBackground"
                     alt=""
                     class="h-full w-full object-cover"
                   />
-                  <div v-else class="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(220,38,38,0.20),transparent_34%),linear-gradient(135deg,rgba(39,39,42,0.95),rgba(9,9,11,1))]" />
+                  <div v-else class="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgb(var(--gt-primary-600)/0.20),transparent_34%),linear-gradient(135deg,rgb(var(--gt-zinc-800)/0.95),rgb(var(--gt-zinc-950)))]" />
                   <div class="absolute inset-0 bg-gradient-to-t from-zinc-950 via-black/45 to-black/10" />
                   <div class="absolute bottom-4 left-4 right-4 flex items-end gap-3">
                     <div class="h-20 w-20 shrink-0 overflow-hidden rounded-full border-2 border-zinc-950 bg-zinc-800 shadow-xl">
@@ -269,7 +269,7 @@
                   </div>
                   <div class="mt-3 h-16 overflow-hidden rounded-lg bg-zinc-800">
                     <img v-if="editPreviewBackground" :src="editPreviewBackground" alt="" class="h-full w-full object-cover" />
-                    <div v-else class="h-full w-full bg-[linear-gradient(135deg,rgba(39,39,42,1),rgba(9,9,11,1))]" />
+                    <div v-else class="h-full w-full bg-[linear-gradient(135deg,rgb(var(--gt-zinc-800)),rgb(var(--gt-zinc-950)))]" />
                   </div>
                   <div class="mt-3 flex flex-wrap gap-2">
                     <label class="inline-flex cursor-pointer items-center justify-center rounded-lg bg-zinc-800 px-3 py-2 text-xs font-bold text-zinc-100 transition hover:bg-zinc-700">
@@ -636,19 +636,19 @@ const formatDate = (date?: string) => {
 <style scoped>
 input,
 textarea {
-  color: white;
+  color: rgb(var(--gt-white));
 }
 
 input::placeholder,
 textarea::placeholder {
-  color: #6b7280;
+  color: rgb(var(--gt-zinc-500));
 }
 
 input:autofill,
 input:autofill:hover,
 input:autofill:focus,
 input:autofill:active {
-  -webkit-text-fill-color: white !important;
-  -webkit-box-shadow: 0 0 0 30px rgb(24, 24, 27) inset !important;
+  -webkit-text-fill-color: rgb(var(--gt-white)) !important;
+  -webkit-box-shadow: 0 0 0 30px rgb(var(--gt-zinc-900)) inset !important;
 }
 </style>

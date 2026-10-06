@@ -1,5 +1,5 @@
 <template>
-  <div class="w-full flex items-center justify-center relative">
+  <div class="gt-media w-full flex items-center justify-center relative">
     <div class="video-player-container w-full bg-black rounded-lg overflow-hidden flex items-center justify-center relative">
       <video ref="videoElement" class="video-js vjs-default-skin" :class="{ 'giltube-clip-mode': props.clipMode, 'giltube-clip-range': hasClipRange }" controls
         preload="auto"></video>
@@ -48,12 +48,12 @@
         />
         <div
           class="played-amount"
-          style="position: absolute; left: 0; top: 0; height: 100%; background-color: rgb(239, 68, 68); transition: width 75ms ease;"
+          style="position: absolute; left: 0; top: 0; height: 100%; background-color: rgb(var(--gt-primary-500)); transition: width 75ms ease;"
           :style="{ width: `${displayProgressPercent}%` }"
         />
         <div
           class="seek-indicator"
-          style="position: absolute; top: 50%; width: 12px; height: 12px; background-color: rgb(239, 68, 68); border-radius: 50%; box-shadow: 0 4px 6px rgba(0,0,0,0.5); opacity: 0; transition: opacity 150ms ease; pointer-events: none;"
+          style="position: absolute; top: 50%; width: 12px; height: 12px; background-color: rgb(var(--gt-primary-500)); border-radius: 50%; box-shadow: 0 4px 6px rgba(0,0,0,0.5); opacity: 0; transition: opacity 150ms ease; pointer-events: none;"
           :style="{ left: `${displaySeekPreviewPercent}%`, transform: 'translate(-50%, -50%)' }"
         />
         <div
@@ -67,7 +67,7 @@
 
       <div
         v-if="hasClipRange"
-        class="pointer-events-none absolute left-3 top-3 z-20 rounded-full border border-red-300/30 bg-red-950/80 px-3 py-1 text-xs font-bold uppercase tracking-[0.16em] text-red-100 shadow-lg"
+        class="pointer-events-none absolute left-3 top-3 z-20 rounded-full border border-primary-300/30 bg-primary-950/80 px-3 py-1 text-xs font-bold uppercase tracking-[0.16em] text-primary-100 shadow-lg"
       >
         Clip · {{ formatDisplayTime(displayDuration) }}
       </div>
@@ -171,7 +171,7 @@
         <button
           v-if="showSkipIntroButton"
           type="button"
-          class="skip-intro-button rounded bg-white px-4 py-2 text-sm font-semibold text-black shadow-lg transition hover:bg-zinc-200"
+          class="skip-intro-button rounded bg-white px-4 py-2 text-sm font-semibold text-zinc-950 shadow-lg transition hover:bg-zinc-200"
           :class="{ 'skip-intro-faded': !skipIntroVisible }"
           :tabindex="skipIntroVisible ? 0 : -1"
           @click="skipIntro"
@@ -181,7 +181,7 @@
         <button
           v-if="showNextEpisodeOverlay"
           type="button"
-          class="rounded bg-white px-4 py-2 text-sm font-semibold text-black shadow-lg transition hover:bg-zinc-200"
+          class="rounded bg-white px-4 py-2 text-sm font-semibold text-zinc-950 shadow-lg transition hover:bg-zinc-200"
           @click="emit('nextEpisode')"
         >
           {{ props.nextEpisodeLabel || t('video.player.nextEpisode') }}
@@ -3395,7 +3395,7 @@ watch(
 
 .giltube-context-menu-check {
   margin-left: auto;
-  color: #f87171;
+  color: rgb(var(--gt-primary-400));
 }
 
 .giltube-stats-panel {
@@ -3427,7 +3427,7 @@ watch(
   padding: 6px 6px 6px 12px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   background: rgba(0, 0, 0, 0.6);
-  color: #fca5a5;
+  color: rgb(var(--gt-primary-300));
   font-family: inherit;
   font-size: 11px;
   font-weight: 700;
@@ -3494,7 +3494,7 @@ watch(
   display: block;
   height: 100%;
   border-radius: inherit;
-  background: #ef4444;
+  background: rgb(var(--gt-primary-500));
   transition: width 300ms ease;
 }
 
@@ -3622,7 +3622,7 @@ watch(
   max-width: 100%;
   align-items: stretch;
   gap: 0.75rem;
-  border-left: 3px solid #e50914;
+  border-left: 3px solid rgb(var(--gt-primary));
   background: linear-gradient(90deg, rgb(0 0 0 / 0.62), rgb(0 0 0 / 0));
   padding: 0.45rem 2.5rem 0.45rem 0.8rem;
   color: #fff;
@@ -3870,11 +3870,13 @@ watch(
 }
 
 :deep(.vjs-menu-item:hover) {
-  background-color: #ef4444;
+  background-color: rgb(var(--gt-primary-500));
+  color: rgb(var(--gt-on-primary));
 }
 
 :deep(.vjs-menu-item.vjs-selected) {
-  background-color: #ef4444;
+  background-color: rgb(var(--gt-primary-500));
+  color: rgb(var(--gt-on-primary));
   font-weight: bold;
 }
 
@@ -4054,7 +4056,7 @@ watch(
 }
 
 :deep(.vjs-play-progress) {
-  background-color: #ef4444;
+  background-color: rgb(var(--gt-primary-500));
 }
 
 :deep(.vjs-quality-levels-button) {
@@ -4178,7 +4180,7 @@ watch(
 }
 
 :deep(.vjs-quality-button:hover) {
-  color: #ef4444;
+  color: rgb(var(--gt-primary-500));
 }
 
 :deep(.vjs-hdr-badge) {
@@ -4209,11 +4211,11 @@ watch(
 }
 
 :deep(.vjs-quality-button:hover .vjs-control-text) {
-  color: #ef4444;
+  color: rgb(var(--gt-primary-500));
 }
 
 :deep(.vjs-audio-button:hover) {
-  color: #ef4444;
+  color: rgb(var(--gt-primary-500));
 }
 
 :deep(.vjs-audio-button .vjs-icon-placeholder) {
@@ -4292,13 +4294,14 @@ watch(
 
 :deep(.vjs-quality-menu-item:hover),
 :deep(.vjs-audio-menu-item:hover) {
-  background-color: #ef4444;
-  color: white;
+  background-color: rgb(var(--gt-primary-500));
+  color: rgb(var(--gt-on-primary));
 }
 
 :deep(.vjs-quality-menu-item.vjs-selected),
 :deep(.vjs-audio-menu-item.vjs-selected) {
-  background-color: #ef4444;
+  background-color: rgb(var(--gt-primary-500));
+  color: rgb(var(--gt-on-primary));
   font-weight: bold;
 }
 
@@ -4361,8 +4364,8 @@ watch(
 
 :deep(.vjs-mobile-settings-item:hover),
 :deep(.vjs-mobile-settings-item.vjs-selected) {
-  background-color: #ef4444;
-  color: white;
+  background-color: rgb(var(--gt-primary-500));
+  color: rgb(var(--gt-on-primary));
   font-weight: 700;
 }
 

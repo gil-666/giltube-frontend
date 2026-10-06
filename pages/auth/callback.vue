@@ -10,7 +10,7 @@
       </div>
 
       <div v-if="error" class="mt-5">
-        <NuxtLink :to="localePath('/login')" class="inline-flex rounded-lg bg-zinc-100 px-4 py-2 font-semibold text-slate-950 transition hover:bg-white">
+        <NuxtLink :to="localePath('/login')" class="inline-flex rounded-lg bg-zinc-100 px-4 py-2 font-semibold text-zinc-950 transition hover:bg-white">
           {{ t('login.backToLogin') }}
         </NuxtLink>
       </div>

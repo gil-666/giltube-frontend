@@ -44,7 +44,7 @@
         <button
           type="button"
           :disabled="!file || uploading"
-          class="rounded-xl bg-red-600 px-5 py-2.5 font-bold text-white hover:bg-red-500 disabled:opacity-50"
+          class="rounded-xl bg-primary-600 px-5 py-2.5 font-bold text-on-primary hover:bg-primary-500 disabled:opacity-50"
           @click="upload"
         >
           {{ uploading ? `Uploading ${uploadProgress}%` : 'Upload' }}
@@ -52,11 +52,11 @@
 
         <div class="space-y-3 border-t border-white/[0.07] pt-4">
           <label class="flex items-center gap-3 text-sm text-zinc-200">
-            <input :checked="intro?.enabled" :disabled="!intro?.url || saving" type="checkbox" class="h-4 w-4 accent-red-600" @change="saveSetting('enabled', ($event.target as HTMLInputElement).checked)" />
+            <input :checked="intro?.enabled" :disabled="!intro?.url || saving" type="checkbox" class="h-4 w-4 accent-primary-600" @change="saveSetting('enabled', ($event.target as HTMLInputElement).checked)" />
             Play intro before movies and episodes
           </label>
           <label class="flex items-center gap-3 text-sm text-zinc-200">
-            <input :checked="intro?.allow_skip" :disabled="saving" type="checkbox" class="h-4 w-4 accent-red-600" @change="saveSetting('allow_skip', ($event.target as HTMLInputElement).checked)" />
+            <input :checked="intro?.allow_skip" :disabled="saving" type="checkbox" class="h-4 w-4 accent-primary-600" @change="saveSetting('allow_skip', ($event.target as HTMLInputElement).checked)" />
             Let viewers skip the intro
           </label>
         </div>

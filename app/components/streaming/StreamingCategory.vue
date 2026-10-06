@@ -19,7 +19,7 @@
     </div>
 
     <div v-else>
-      <section v-if="featuredItem" class="streaming-hero">
+      <section v-if="featuredItem" class="streaming-hero gt-media text-white">
         <Transition name="streaming-hero-image" mode="out-in">
           <img
             :key="featuredItem.id"
@@ -156,7 +156,7 @@
           @click.self="$emit('close')"
         >
           <section class="streaming-modal-panel">
-            <div class="streaming-modal-hero">
+            <div class="streaming-modal-hero gt-media">
               <img v-bind="responsiveImage(selectedItem.backdropUrl || selectedItem.posterUrl, 'min(100vw, 64rem)')" :alt="selectedItem.title" class="streaming-modal-image" decoding="async" fetchpriority="high" />
               <div class="streaming-modal-fade" />
               <button
@@ -398,15 +398,15 @@ onBeforeUnmount(() => {
   justify-content: center;
   border-radius: 999px;
   background: transparent;
-  color: #9b9ba5;
+  color: rgb(var(--gt-zinc-400));
   font-size: 1.125rem;
   line-height: 1;
   transition: background-color 160ms ease, opacity 160ms ease;
 }
 
 .streaming-row-button:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.07);
-  color: #fff;
+  background: rgb(var(--gt-white) / 0.07);
+  color: rgb(var(--gt-white));
 }
 
 .streaming-row-button:disabled {
@@ -461,7 +461,7 @@ onBeforeUnmount(() => {
 }
 
 .streaming-eyebrow {
-  color: rgb(252 165 165);
+  color: rgb(var(--gt-primary-300));
   font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.3em;
@@ -577,8 +577,8 @@ onBeforeUnmount(() => {
   aspect-ratio: 2 / 3;
   overflow: hidden;
   border-radius: 0.75rem;
-  background: #16161a;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+  background: rgb(var(--gt-zinc-900));
+  box-shadow: inset 0 0 0 1px rgb(var(--gt-white) / 0.06);
 }
 
 .streaming-poster-image {
@@ -605,7 +605,7 @@ onBeforeUnmount(() => {
 
 .streaming-poster-progress > div {
   height: 100%;
-  background: rgb(220 38 38);
+  background: rgb(var(--gt-primary-600));
 }
 
 .streaming-poster-play {
@@ -653,7 +653,7 @@ onBeforeUnmount(() => {
   justify-content: center;
   overflow: hidden;
   padding: clamp(0.5rem, 2vw, 1rem);
-  color: #fff;
+  color: rgb(var(--gt-white));
   background: rgba(0, 0, 0, 0.8);
   backdrop-filter: blur(6px);
 }
@@ -670,10 +670,10 @@ onBeforeUnmount(() => {
   overscroll-behavior: contain;
   scroll-behavior: smooth;
   border-radius: 1rem;
-  background: #131316;
+  background: color-mix(in srgb, rgb(var(--gt-zinc-900)) 70%, rgb(var(--gt-zinc-950)));
   box-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.8);
-  outline: 1px solid rgba(255, 255, 255, 0.08);
-  scrollbar-color: rgba(113, 113, 122, 0.75) rgba(24, 24, 27, 0.25);
+  outline: 1px solid rgb(var(--gt-white) / 0.08);
+  scrollbar-color: rgb(var(--gt-zinc-500) / 0.75) rgb(var(--gt-zinc-900) / 0.25);
   scrollbar-width: thin;
 }
 
@@ -685,6 +685,7 @@ onBeforeUnmount(() => {
   flex: 0 0 auto;
   overflow: hidden;
   background: rgb(24 24 27);
+  color: rgb(var(--gt-white));
   box-shadow: 0 1px 0 rgba(255, 255, 255, 0.08), 0 14px 30px rgba(0, 0, 0, 0.3);
 }
 
@@ -897,13 +898,13 @@ onBeforeUnmount(() => {
 
 .streaming-modal-panel::-webkit-scrollbar-thumb {
   min-height: 48px;
-  background: linear-gradient(180deg, rgba(161, 161, 170, 0.72), rgba(82, 82, 91, 0.78));
-  border: 1px solid rgba(24, 24, 27, 0.75);
+  background: linear-gradient(180deg, rgb(var(--gt-zinc-400) / 0.72), rgb(var(--gt-zinc-600) / 0.78));
+  border: 1px solid rgb(var(--gt-zinc-900) / 0.75);
   border-radius: 999px;
 }
 
 .streaming-modal-panel::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(180deg, rgba(212, 212, 216, 0.86), rgba(113, 113, 122, 0.9));
+  background: linear-gradient(180deg, rgb(var(--gt-zinc-300) / 0.86), rgb(var(--gt-zinc-500) / 0.9));
 }
 
 @media (max-width: 639px) {

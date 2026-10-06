@@ -27,7 +27,7 @@
 
           <div class="grid gap-4 xl:grid-cols-2">
             <div class="flex items-center gap-3 rounded border border-white/10 bg-zinc-800 p-4">
-              <input id="explicit-toggle" v-model="form.explicit" type="checkbox" class="h-4 w-4 cursor-pointer rounded accent-red-500" />
+              <input id="explicit-toggle" v-model="form.explicit" type="checkbox" class="h-4 w-4 cursor-pointer rounded accent-primary-500" />
               <label for="explicit-toggle" class="flex-1 cursor-pointer">
                 <span class="text-sm font-medium text-white">{{ t('edit.explicit') }}</span>
                 <p class="mt-1 text-xs text-gray-400">{{ t('edit.explicitHelper') }}</p>

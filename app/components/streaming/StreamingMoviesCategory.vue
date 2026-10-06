@@ -529,7 +529,7 @@ onUnmounted(() => {
   aspect-ratio: 2 / 3;
   overflow: hidden;
   border-radius: 0.25rem;
-  background: rgb(24 24 27);
+  background: rgb(var(--gt-zinc-900));
 }
 
 .movie-poster-image {
@@ -547,12 +547,12 @@ onUnmounted(() => {
   display: grid;
   gap: 0.75rem;
   margin-top: 1.25rem;
-  color: rgb(161 161 170);
+  color: rgb(var(--gt-zinc-400));
   font-size: 0.875rem;
 }
 
 .movie-meta-grid dt {
-  color: rgb(113 113 122);
+  color: rgb(var(--gt-zinc-500));
   font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.18em;
@@ -561,14 +561,14 @@ onUnmounted(() => {
 
 .movie-meta-grid dd {
   margin-top: 0.25rem;
-  color: rgb(228 228 231);
+  color: rgb(var(--gt-zinc-200));
 }
 
 .streaming-detail-placeholder {
   height: 1.25rem;
   width: 7rem;
   border-radius: 0.25rem;
-  background: rgb(39 39 42);
+  background: rgb(var(--gt-zinc-800));
   animation: streaming-detail-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
@@ -594,17 +594,17 @@ onUnmounted(() => {
 
 .movie-related-card {
   display: block;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgb(var(--gt-white) / 0.1);
   border-radius: 0.25rem;
-  background: rgba(0, 0, 0, 0.35);
+  background: rgb(var(--gt-zinc-950) / 0.35);
   padding: 0.75rem;
-  color: #fff;
+  color: rgb(var(--gt-white));
   text-decoration: none;
   transition: background-color 160ms ease;
 }
 
 .movie-related-card:hover {
-  background: rgb(24 24 27);
+  background: rgb(var(--gt-zinc-900));
 }
 
 .movie-related-thumb {
@@ -612,7 +612,7 @@ onUnmounted(() => {
   aspect-ratio: 16 / 9;
   overflow: hidden;
   border-radius: 0.25rem;
-  background: rgb(24 24 27);
+  background: rgb(var(--gt-zinc-900));
 }
 
 .movie-related-thumb img {
@@ -638,14 +638,14 @@ onUnmounted(() => {
 
 .movie-related-progress > div {
   height: 100%;
-  background: rgb(220 38 38);
+  background: rgb(var(--gt-primary-600));
 }
 
 .movie-related-card h4 {
   display: -webkit-box;
   margin-top: 0.5rem;
   overflow: hidden;
-  color: #fff;
+  color: rgb(var(--gt-white));
   font-size: 0.875rem;
   font-weight: 700;
   -webkit-box-orient: vertical;
@@ -659,15 +659,15 @@ onUnmounted(() => {
   justify-content: center;
   border-radius: 0.25rem;
   border: 1px solid rgba(255, 255, 255, 0.2);
-  background: rgba(220, 38, 38, 0.92);
+  background: rgb(var(--gt-primary-600) / 0.92);
   padding: 0.75rem 1rem;
-  color: #fff;
+  color: rgb(var(--gt-on-primary));
   font-weight: 800;
   transition: background-color 160ms ease;
 }
 
 .streaming-watch-party-button:hover {
-  background: rgb(185 28 28);
+  background: rgb(var(--gt-primary-700));
 }
 
 .streaming-party-dialog-backdrop {
@@ -677,17 +677,17 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: radial-gradient(circle at center, rgba(127, 29, 29, 0.34), rgba(0, 0, 0, 0.88) 58%);
+  background: radial-gradient(circle at center, rgb(var(--gt-primary-900) / 0.34), rgba(0, 0, 0, 0.88) 58%);
   padding: 1rem;
 }
 
 .streaming-party-dialog {
   width: min(100%, 28rem);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid rgb(var(--gt-white) / 0.12);
   border-radius: 0.5rem;
-  background: rgb(24 24 27);
+  background: rgb(var(--gt-zinc-900));
   padding: 1.5rem;
-  color: #fff;
+  color: rgb(var(--gt-white));
   box-shadow: 0 24px 80px rgba(0, 0, 0, 0.65);
 }
 
@@ -698,7 +698,7 @@ onUnmounted(() => {
 
 .streaming-party-dialog p {
   margin-top: 0.5rem;
-  color: rgb(161 161 170);
+  color: rgb(var(--gt-zinc-400));
   font-size: 0.875rem;
   line-height: 1.5;
 }
@@ -706,7 +706,7 @@ onUnmounted(() => {
 .streaming-party-dialog label {
   display: block;
   margin-top: 1rem;
-  color: rgb(212 212 216);
+  color: rgb(var(--gt-zinc-300));
   font-size: 0.875rem;
   font-weight: 700;
 }
@@ -715,10 +715,10 @@ onUnmounted(() => {
   margin-top: 0.5rem;
   width: 100%;
   border-radius: 0.375rem;
-  border: 1px solid rgb(63 63 70);
-  background: rgb(39 39 42);
+  border: 1px solid rgb(var(--gt-zinc-700));
+  background: rgb(var(--gt-zinc-800));
   padding: 0.65rem 0.75rem;
-  color: #fff;
+  color: rgb(var(--gt-white));
   outline: none;
 }
 
@@ -746,14 +746,15 @@ onUnmounted(() => {
 
 .streaming-party-dialog-actions button {
   border-radius: 0.375rem;
-  background: rgb(63 63 70);
+  background: rgb(var(--gt-zinc-700));
   padding: 0.65rem 1rem;
   font-size: 0.875rem;
   font-weight: 800;
 }
 
 .streaming-party-dialog-actions button:last-child {
-  background: rgb(220 38 38);
+  background: rgb(var(--gt-primary-600));
+  color: rgb(var(--gt-on-primary));
 }
 
 .streaming-party-dialog-actions button:disabled {

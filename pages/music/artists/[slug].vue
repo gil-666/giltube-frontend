@@ -1,6 +1,6 @@
 <template>
   <main v-if="data" class="min-h-screen">
-    <header class="artist-header" :style="bannerStyle">
+    <header class="artist-header gt-media" :style="bannerStyle">
       <div class="artist-header-shade" />
       <div class="artist-header-content">
         <AvatarFallback :src="resolveAvatarUrl(data.artist.avatar_url)" :name="data.artist.name" class="artist-avatar" />
@@ -132,7 +132,7 @@ if (data.value) {
   aspect-ratio: 1;
   border-radius: 6px;
   object-fit: cover;
-  background: rgb(39 39 42);
+  background: rgb(var(--gt-zinc-800));
 }
 
 .release-grid strong,
@@ -145,12 +145,12 @@ if (data.value) {
 
 .release-grid strong {
   margin-top: 10px;
-  color: white;
+  color: rgb(var(--gt-white));
 }
 
 .release-grid span {
   margin-top: 3px;
-  color: rgb(113 113 122);
+  color: rgb(var(--gt-zinc-500));
   font-size: 0.8rem;
   text-transform: capitalize;
 }

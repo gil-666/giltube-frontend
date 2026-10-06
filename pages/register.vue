@@ -3,7 +3,7 @@
     <div class="w-full max-w-sm py-10">
       <!-- Logo/Header -->
       <div class="mb-8">
-        <NuxtLink :to="localePath('/')" aria-label="GilTube"><img src="../assets/logowhsmall.png" alt="GilTube" class="h-8 w-auto" /></NuxtLink>
+        <NuxtLink :to="localePath('/')" aria-label="GilTube"><img src="../assets/logowhsmall.png" alt="GilTube" class="gt-logo-on-dark h-8 w-auto" /><img src="../assets/logoblsmall.png" alt="GilTube" class="gt-logo-on-light h-8 w-auto" /></NuxtLink>
         <h1 class="mt-8 text-2xl font-semibold tracking-tight">{{ t('register.title') }}</h1>
       </div>
 
@@ -193,19 +193,19 @@ const handleRegister = async () => {
 
 <style scoped>
 input {
-  color: white;
+  color: rgb(var(--gt-white));
 }
 
 input::placeholder {
-  color: #a0aec0;
+  color: rgb(var(--gt-zinc-400));
 }
 
 input:autofill,
 input:autofill:hover,
 input:autofill:focus,
 input:autofill:active {
-  -webkit-box-shadow: 0 0 0 30px #374151 inset !important;
-  box-shadow: 0 0 0 30px #374151 inset !important;
-  -webkit-text-fill-color: white !important;
+  -webkit-box-shadow: 0 0 0 30px rgb(var(--gt-zinc-700)) inset !important;
+  box-shadow: 0 0 0 30px rgb(var(--gt-zinc-700)) inset !important;
+  -webkit-text-fill-color: rgb(var(--gt-white)) !important;
 }
 </style>

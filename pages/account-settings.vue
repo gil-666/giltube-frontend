@@ -45,6 +45,8 @@
         </div>
       </section>
 
+      <ThemeManager v-if="!isLoading" />
+
       <div class="bg-zinc-900 rounded-lg p-6 border border-white/[0.08] space-y-4">
         <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
@@ -261,6 +263,7 @@ import {
 } from '~/app/service/auth'
 import type { MusicQuality } from '~/app/service/auth'
 import { useMetaTags } from '~/app/composables/useMetaTags'
+import ThemeManager from '~/app/components/themes/ThemeManager.vue'
 import { prepareCredentialCreationOptions, serializeRegistrationCredential, supportsWebAuthn } from '~/app/service/webauthn'
 import { clearAuthSession } from '~/app/utils/authSession'
 

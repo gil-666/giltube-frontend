@@ -17,6 +17,7 @@ Developer reference for the public GilTube HTTP API.
 - [Authentication and account](#authentication-and-account)
 - [Subscriptions](#subscriptions)
 - [Playlists](#playlists)
+- [Themes](#themes)
 - [Movies, series, and music](#movies-series-and-music)
 - [Live streaming and chat](#live-streaming-and-chat)
 - [Watch parties](#watch-parties)
@@ -586,6 +587,77 @@ Subscription state:
 | `PUT` | `/playlists/{id}/videos/reorder` | User | JSON: `videos`, an array of `{ "video_id": "...", "position": number }`. |
 
 Valid visibility values are `public`, `private`, and `unlisted`.
+
+## Themes
+
+A theme is a name plus three colors (`primary_color`, `accent_color`, `background_color`, each `#rrggbb`). Themes belong to a user account. Sharing works by share code: installing a shared theme stores a reference, so when the owner edits it, everyone who installed it gets the new colors (`version` increments on every edit). The built-in GilTube look has no record; an account uses it when `active_theme_id` is `null`.
+
+| Method | Path | Access | Input |
+| --- | --- | --- | --- |
+| `GET` | `/themes` | User | Returns `active_theme_id` and `themes`: the user's own themes, then installed ones. |
+| `POST` | `/themes` | User | JSON: `name` (1–40 characters), `primary_color`, `accent_color`, `background_color`. Returns `201` with `theme`. Limit 50 own themes (`409`). |
+| `PUT` | `/themes/{id}` | User (owner) | Same body as create. Returns the updated `theme`. `404` for themes you don't own. |
+| `DELETE` | `/themes/{id}` | User (owner) | Deletes the theme. If other people installed it, it is retired instead: `{ "deleted": true, "retired": true }`. |
+| `GET` | `/themes/active` | User | `{ "theme": THEME_OR_NULL }`. |
+| `PUT` | `/themes/active` | User | JSON: `theme_id` (`null` or empty for the default look). The theme must be in the user's library, otherwise `404`. |
+| `GET` | `/themes/shared/{code}` | Optional user | `{ "theme": ..., "installed": bool }`. `404` for unknown or retired codes. |
+| `POST` | `/themes/shared/{code}/install` | User | JSON: optional `activate` (bool). Adds the theme to the library (limit 100 installs, `409`). Installing your own theme only applies it. |
+| `DELETE` | `/themes/{id}/install` | User | Removes an installed theme from the library and resets the active theme if it was in use. |
+| `POST` | `/themes/{id}/background` | User (owner) | Multipart field `image` (JPEG, PNG or WebP, up to 16 MiB and 32 MP). Replaces the background image and returns the updated `theme`. |
+| `DELETE` | `/themes/{id}/background` | User (owner) | Removes the background image. |
+| `GET` | `/theme-backgrounds/{filename}` | Public | Serves background images (`_lg` for the page, `_sm` for previews). File names change on every upload, so responses are cacheable forever. |
+
+`POST /themes` and `PUT /themes/{id}` also accept an optional `style` object. Every field is optional; missing fields take the default shown, and values outside these lists are rejected with `400`:
+
+| Field | Values | Default |
+| --- | --- | --- |
+| `gradient_color` | `#rrggbb`, or `""` for no gradient | `""` |
+| `gradient_angle` | 0–359 | `160` |
+| `background_fit` | `cover`, `tile` | `cover` |
+| `background_blur` | 0–24 (pixels) | `0` |
+| `corners` | `sharp`, `default`, `soft`, `round` | `default` |
+| `font` | `inter`, `rounded`, `grotesk`, `serif`, `mono`, `pixel` | `inter` |
+| `effect` | `none`, `snow`, `sparkles`, `bubbles`, `stars`, `aurora`, `silk`, `iridescence`, `threads`, `waves`, `particles`, `light-rays`, `plasma`, `ripple-grid`, `plasma-wave`, `balatro`, `gradient-waves` | `none` |
+| `effect_strength` | 10–100 (percent the effect shows over the background) | `70` |
+
+The first four effects are CSS particles; the rest are animated WebGL/canvas backgrounds adapted from [Vue Bits](https://vue-bits.dev) and tinted with the theme colors. The background image is shown at a fixed 40% opacity over the background color (and gradient). Uploading or removing it increments `version` like any other edit.
+
+Theme fields:
+
+```json
+{
+  "id": "THEME_ID",
+  "share_code": "Hq7cVd2mPz",
+  "name": "Midnight Ocean",
+  "primary_color": "#38bdf8",
+  "accent_color": "#22c55e",
+  "background_color": "#0b1220",
+  "background_image": "/api/v1/theme-backgrounds/THEME_ID_1791266861676434667_lg.jpg",
+  "style": { "gradient_color": "#003344", "gradient_angle": 45, "background_fit": "cover", "background_blur": 4, "corners": "round", "font": "pixel", "effect": "snow" },
+  "version": 3,
+  "owner_user_id": "USER_ID",
+  "owner_username": "gil",
+  "is_owner": false,
+  "is_retired": false,
+  "install_count": 12,
+  "created_at": "2026-10-05T18:00:00Z",
+  "updated_at": "2026-10-05T19:30:00Z"
+}
+```
+
+Retired themes no longer resolve by share code and leave the owner's library, but people who installed them keep the last version (`is_retired: true`). Once the last install is removed, the theme is deleted. Share links on the website use `/themes/{share_code}`. Exported theme files use this shape:
+
+```json
+{
+  "format": "giltube-theme",
+  "version": 1,
+  "name": "Midnight Ocean",
+  "colors": { "primary": "#38bdf8", "accent": "#22c55e", "background": "#0b1220" },
+  "style": { "corners": "round", "font": "pixel", "effect": "snow" },
+  "background_image": "data:image/jpeg;base64,...",
+  "source": "https://giltube.gilservers.com/themes/Hq7cVd2mPz"
+}
+```
 
 ## Movies, series, and music
 

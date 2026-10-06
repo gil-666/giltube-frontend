@@ -72,7 +72,7 @@ const { t } = useI18n()
 .artwork-wrap img,
 .cover-placeholder {
   border-radius: 6px;
-  background: rgb(39 39 42);
+  background: rgb(var(--gt-zinc-800));
   object-fit: cover;
 }
 
@@ -84,7 +84,7 @@ const { t } = useI18n()
 .cover-placeholder svg {
   width: 25%;
   fill: none;
-  stroke: rgb(113 113 122);
+  stroke: rgb(var(--gt-zinc-500));
   stroke-width: 1.5;
 }
 
@@ -97,8 +97,8 @@ const { t } = useI18n()
   height: 42px;
   place-items: center;
   border-radius: 50%;
-  background: rgb(239 68 68);
-  color: white;
+  background: rgb(var(--gt-primary-500));
+  color: rgb(var(--gt-on-primary));
   opacity: 0;
   box-shadow: 0 8px 22px rgb(0 0 0 / 0.55);
   transform: translateY(5px);
@@ -113,7 +113,7 @@ const { t } = useI18n()
 }
 
 .play-release:hover {
-  background: rgb(220 38 38);
+  background: rgb(var(--gt-primary-600));
 }
 
 .play-release svg {
@@ -124,8 +124,8 @@ const { t } = useI18n()
 .spinner {
   width: 17px;
   height: 17px;
-  border: 2px solid rgb(255 255 255 / 0.45);
-  border-top-color: white;
+  border: 2px solid rgb(var(--gt-on-primary) / 0.45);
+  border-top-color: rgb(var(--gt-on-primary));
   border-radius: 50%;
   animation: spin 700ms linear infinite;
 }
@@ -141,24 +141,24 @@ const { t } = useI18n()
 
 .release-title {
   margin-top: 9px;
-  color: white;
+  color: rgb(var(--gt-white));
   font-size: 0.9rem;
   font-weight: 700;
 }
 
 .artist-name {
   margin-top: 2px;
-  color: rgb(161 161 170);
+  color: rgb(var(--gt-zinc-400));
   font-size: 0.8rem;
 }
 
 .artist-name:hover {
-  color: white;
+  color: rgb(var(--gt-white));
 }
 
 .release-meta {
   margin-top: 2px;
-  color: rgb(113 113 122);
+  color: rgb(var(--gt-zinc-500));
   font-size: 0.72rem;
   text-transform: capitalize;
 }

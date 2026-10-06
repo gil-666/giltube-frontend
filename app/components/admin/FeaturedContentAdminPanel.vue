@@ -46,10 +46,10 @@
         Custom description
         <textarea v-model="form.description" rows="3" maxlength="500" class="rounded-xl border border-white/10 bg-zinc-900 px-3 py-2.5 text-white" />
       </label>
-      <label class="flex items-center gap-3 text-sm text-zinc-200"><input v-model="form.enabled" type="checkbox" class="h-4 w-4 accent-red-600" /> Show this slot</label>
-      <label class="flex items-center gap-3 text-sm text-zinc-200"><input v-model="form.notifications_enabled" type="checkbox" class="h-4 w-4 accent-red-600" /> Send featured notifications</label>
+      <label class="flex items-center gap-3 text-sm text-zinc-200"><input v-model="form.enabled" type="checkbox" class="h-4 w-4 accent-primary-600" /> Show this slot</label>
+      <label class="flex items-center gap-3 text-sm text-zinc-200"><input v-model="form.notifications_enabled" type="checkbox" class="h-4 w-4 accent-primary-600" /> Send featured notifications</label>
       <div class="flex flex-wrap gap-2 lg:col-span-2">
-        <button :disabled="saving" class="rounded-xl bg-red-600 px-5 py-2.5 font-bold text-white hover:bg-red-500 disabled:opacity-50">{{ saving ? 'Saving…' : editingId ? 'Save item' : 'Add featured item' }}</button>
+        <button :disabled="saving" class="rounded-xl bg-primary-600 px-5 py-2.5 font-bold text-on-primary hover:bg-primary-500 disabled:opacity-50">{{ saving ? 'Saving…' : editingId ? 'Save item' : 'Add featured item' }}</button>
         <button v-if="editingId" type="button" class="rounded-xl bg-zinc-800 px-5 py-2.5 font-bold text-white" @click="resetForm">Cancel</button>
       </div>
     </form>

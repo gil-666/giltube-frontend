@@ -61,7 +61,7 @@
           <div>
             <p class="text-xs font-medium text-gray-500">{{ t('admin.transcodeJobs.progress') }}</p>
             <div class="mt-2 h-2 overflow-hidden rounded-full bg-zinc-800">
-              <div class="h-full rounded-full bg-red-500 transition-all" :style="{ width: `${safeProgress(job.progress)}%` }" />
+              <div class="h-full rounded-full bg-primary-500 transition-all" :style="{ width: `${safeProgress(job.progress)}%` }" />
             </div>
             <p class="mt-2 text-sm text-gray-300">{{ safeProgress(job.progress) }}%</p>
             <p class="mt-1 text-xs text-gray-500">{{ t('admin.transcodeJobs.videoStatus', { status: job.video_status || 'unknown', progress: job.video_progress || 0 }) }}</p>
@@ -78,7 +78,7 @@
           <div class="flex flex-wrap content-start gap-2 lg:justify-end">
             <button
               v-if="canStart(job.status)"
-              class="rounded-lg bg-blue-700 px-3 py-2 text-sm font-semibold text-white transition hover:bg-blue-600 disabled:opacity-60"
+              class="rounded-lg bg-blue-700 px-3 py-2 text-sm font-semibold text-on-accent transition hover:bg-blue-600 disabled:opacity-60"
               :disabled="busyId === job.video_id"
               @click="runAction(job, 'start')"
             >

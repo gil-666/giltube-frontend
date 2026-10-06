@@ -1,7 +1,14 @@
+const THEME_STEPS = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950]
+const themeColor = (name: string) => `rgb(var(--gt-${name}) / <alpha-value>)`
+const STATUS_HUES = ['red', 'emerald', 'amber', 'green', 'yellow', 'cyan', 'purple', 'rose', 'pink', 'violet']
+const themeRadius = (rem: number) => `calc(${rem}rem * var(--gt-radius-scale))`
+const themeScale = (name: string) => Object.fromEntries(THEME_STEPS.map(step => [step, themeColor(`${name}-${step}`)]))
+
 const config = {
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
   modules: ['@nuxtjs/tailwindcss', '@vite-pwa/nuxt', '@nuxtjs/i18n'],
+  css: ['~/assets/css/theme.css'],
   tailwindcss: {
     config: {
       // The module's default globs don't cover app/** (components there are
@@ -9,21 +16,38 @@ const config = {
       content: ['./app/components/**/*.vue', './app/**/*.ts'],
       theme: {
         extend: {
+          // --gt-font and --gt-radius-scale are theme choices; their defaults
+          // (Inter, 1) reproduce the stock look.
           fontFamily: {
-            sans: ['Inter', 'ui-sans-serif', 'system-ui', '-apple-system', 'Segoe UI', 'Roboto', 'sans-serif'],
+            sans: ['var(--gt-font)', 'Inter', 'ui-sans-serif', 'system-ui', '-apple-system', 'Segoe UI', 'Roboto', 'sans-serif'],
           },
-          // One neutral scale for the whole UI: near-black canvas with evenly
-          // spaced, slightly cool surface steps. gray mirrors zinc so older
-          // markup that mixes the two stays consistent.
+          borderRadius: {
+            sm: themeRadius(0.125),
+            DEFAULT: themeRadius(0.25),
+            md: themeRadius(0.375),
+            lg: themeRadius(0.5),
+            xl: themeRadius(0.75),
+            '2xl': themeRadius(1),
+            '3xl': themeRadius(1.5),
+          },
+          // Every palette the UI paints with reads a CSS variable holding an
+          // "R G B" triplet, so a site theme can repaint the whole UI. The stock
+          // values live in assets/css/theme.css; app/utils/theme.ts derives
+          // the rest. zinc/gray are the neutral surfaces (gray mirrors zinc so
+          // older markup stays consistent), white is the foreground, blue is
+          // the accent, and primary is the brand color. red stays a fixed
+          // palette for errors and destructive actions. The status hues keep
+          // their stock values but are mirrored on light themes (theme.css).
           colors: {
-            zinc: {
-              50: '#fafafb', 100: '#f2f2f4', 200: '#e2e2e6', 300: '#c8c8cf', 400: '#9b9ba5',
-              500: '#6c6c76', 600: '#4a4a52', 700: '#333339', 800: '#232328', 900: '#16161a', 950: '#0c0c0e',
-            },
-            gray: {
-              50: '#fafafb', 100: '#f2f2f4', 200: '#e2e2e6', 300: '#c8c8cf', 400: '#9b9ba5',
-              500: '#6c6c76', 600: '#4a4a52', 700: '#333339', 800: '#232328', 900: '#16161a', 950: '#0c0c0e',
-            },
+            zinc: themeScale('zinc'),
+            gray: themeScale('zinc'),
+            white: themeColor('white'),
+            blue: themeScale('accent'),
+            primary: { ...themeScale('primary'), DEFAULT: themeColor('primary') },
+            accent: { ...themeScale('accent'), DEFAULT: themeColor('accent') },
+            'on-primary': themeColor('on-primary'),
+            'on-accent': themeColor('on-accent'),
+            ...Object.fromEntries(STATUS_HUES.map(hue => [hue, themeScale(hue)])),
           },
         },
       },

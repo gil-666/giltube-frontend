@@ -9,11 +9,11 @@
       <div class="grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
         <div v-for="video in videos" :key="video.id">
           <NuxtLink :to="localePath(`/video/${video.id}`)">
-            <div class="relative aspect-video overflow-hidden rounded-xl bg-zinc-800 ring-1 ring-white/[0.06]">
+            <div class="gt-media relative aspect-video overflow-hidden rounded-xl bg-zinc-800 ring-1 ring-white/[0.06]">
               <img class="h-full w-full object-cover" v-bind="responsiveImage(getThumbnailUrl(video), '(min-width: 1024px) 25vw, (min-width: 768px) 33vw, (min-width: 640px) 50vw, 100vw')" :alt="video.title" loading="lazy" decoding="async" />
               <span v-if="isVideo8K(video.width) || isVideo4K(video.width)" class="absolute right-2 top-2 rounded-md bg-black/70 px-1.5 py-0.5 text-[11px] font-semibold tracking-wide text-white backdrop-blur">{{ isVideo8K(video.width) ? '8K' : '4K' }}</span>
               <div v-if="videoProgressPercent(video.id) > 0" class="absolute inset-x-0 bottom-0 h-1 bg-black/55">
-                <div class="h-full bg-red-600" :style="{ width: `${videoProgressPercent(video.id)}%` }" />
+                <div class="h-full bg-primary-600" :style="{ width: `${videoProgressPercent(video.id)}%` }" />
               </div>
             </div>
           </NuxtLink>

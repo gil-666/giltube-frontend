@@ -1,11 +1,11 @@
 <template>
-  <div v-if="videoNotFound" class="flex min-h-screen items-center justify-center bg-black px-4 text-white">
+  <div v-if="videoNotFound" class="flex min-h-screen items-center justify-center bg-zinc-950 px-4 text-white">
     <div class="w-full max-w-lg rounded-2xl border border-zinc-800 bg-zinc-950 p-8 text-center shadow-2xl shadow-black/50">
       <p class="text-sm font-bold uppercase tracking-[0.24em] text-red-300">{{ t('video.notFoundKicker') }}</p>
       <h1 class="mt-3 text-3xl font-black">{{ t('video.notFoundTitle') }}</h1>
       <p class="mt-3 text-sm leading-6 text-zinc-400">{{ t('video.notFoundBody') }}</p>
       <div class="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-center">
-        <NuxtLink :to="localePath('/')" class="rounded-lg bg-red-600 px-5 py-3 text-sm font-bold text-white transition hover:bg-red-500">
+        <NuxtLink :to="localePath('/')" class="rounded-lg bg-primary-600 px-5 py-3 text-sm font-bold text-on-primary transition hover:bg-primary-500">
           {{ t('video.goBackHome') }}
         </NuxtLink>
         <NuxtLink :to="localePath('/search')" class="rounded-lg bg-zinc-800 px-5 py-3 text-sm font-semibold text-zinc-100 transition hover:bg-zinc-700">
@@ -271,7 +271,7 @@
 
             <div
               v-if="!isDescriptionExpanded && descriptionIsLong"
-              class="pointer-events-none absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-[#1a1a1e] to-transparent"
+              class="pointer-events-none absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-zinc-900 to-transparent"
             />
           </div>
           <button
@@ -481,7 +481,7 @@
         <div class="w-full max-w-4xl rounded-2xl border border-zinc-700 bg-zinc-950 p-5 shadow-2xl shadow-black/70">
           <div class="flex items-start justify-between gap-4">
             <div>
-              <p class="text-xs font-bold uppercase tracking-[0.18em] text-red-300">{{ t('video.introSuggestion.kicker') }}</p>
+              <p class="text-xs font-bold uppercase tracking-[0.18em] text-primary-300">{{ t('video.introSuggestion.kicker') }}</p>
               <h2 class="mt-1 text-xl font-bold text-white">{{ t('video.introSuggestion.title') }}</h2>
               <p class="mt-2 text-sm leading-6 text-zinc-400">{{ t('video.introSuggestion.body') }}</p>
             </div>
@@ -523,10 +523,10 @@
               </div>
             </div>
             <div class="mt-4 flex flex-wrap gap-2">
-              <button type="button" class="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-500" @click="setIntroSuggestionPoint('start')">
+              <button type="button" class="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-on-accent transition hover:bg-blue-500" @click="setIntroSuggestionPoint('start')">
                 {{ t('video.introSuggestion.setStart') }}
               </button>
-              <button type="button" class="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-500" @click="setIntroSuggestionPoint('end')">
+              <button type="button" class="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-on-accent transition hover:bg-blue-500" @click="setIntroSuggestionPoint('end')">
                 {{ t('video.introSuggestion.setEnd') }}
               </button>
               <button type="button" :disabled="!canPreviewIntroSuggestion" class="rounded-xl bg-zinc-800 px-4 py-2 text-sm font-semibold text-zinc-200 transition hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-50" @click="previewIntroSuggestionRange">
@@ -545,7 +545,7 @@
               v-model="introSuggestionNote"
               rows="3"
               maxlength="500"
-              class="mt-2 w-full rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2 text-white outline-none focus:border-red-400"
+              class="mt-2 w-full rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2 text-white outline-none focus:border-primary-400"
               :placeholder="t('video.introSuggestion.notePlaceholder')"
             />
           </label>
@@ -559,7 +559,7 @@
             </button>
             <button
               type="button"
-              class="rounded-xl bg-red-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-red-500 disabled:cursor-not-allowed disabled:opacity-60"
+              class="rounded-xl bg-primary-600 px-4 py-2 text-sm font-bold text-on-primary transition hover:bg-primary-500 disabled:cursor-not-allowed disabled:opacity-60"
               :disabled="introSuggestionSubmitting"
               @click="submitIntroSuggestion"
             >
@@ -640,7 +640,7 @@
             <label class="text-xs text-gray-400 block mb-2">{{ t('video.commentAs') }}</label>
             <select
               v-model="personalAccountSelectedChannel"
-              class="w-full bg-zinc-800 border border-zinc-700 rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-red-500"
+              class="w-full bg-zinc-800 border border-zinc-700 rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-primary-500"
             >
               <option v-for="channel in userChannels" :key="channel.id" :value="channel.id">
                 {{ channel.name }}
@@ -681,7 +681,7 @@
               <button
                 @click="postComment"
                 :disabled="!newCommentText.trim() || isPostingComment"
-                class="comment-submit-action px-4 py-2 bg-red-600 hover:bg-red-700 rounded transition disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                class="comment-submit-action px-4 py-2 bg-primary-600 hover:bg-primary-700 text-on-primary rounded transition disabled:opacity-50 disabled:cursor-not-allowed text-sm"
               >
                 {{ isPostingComment ? t('video.posting') : t('video.comment') }}
               </button>
@@ -782,7 +782,7 @@
                 <div v-if="isVideo8K(relatedVideo.width)" class="watch-thumb-badge">{{ t('video.eightKBadge') }}</div>
                 <div v-if="isVideo4K(relatedVideo.width)" class="watch-thumb-badge">{{ t('video.fourKBadge') }}</div>
                 <div v-if="videoProgressPercent(relatedVideo.id) > 0" class="absolute inset-x-0 bottom-0 h-1 bg-black/55">
-                  <div class="h-full bg-red-600" :style="{ width: `${videoProgressPercent(relatedVideo.id)}%` }" />
+                  <div class="h-full bg-primary-600" :style="{ width: `${videoProgressPercent(relatedVideo.id)}%` }" />
                 </div>
               </div>
               <p class="text-xs font-semibold line-clamp-2 w-40">{{ relatedVideo.title }}</p>
@@ -927,7 +927,7 @@
                     <div v-if="isVideo8K(relatedVideo.width)" class="watch-thumb-badge">{{ t('video.eightKBadge') }}</div>
                     <div v-if="isVideo4K(relatedVideo.width)" class="watch-thumb-badge">{{ t('video.fourKBadge') }}</div>
                     <div v-if="videoProgressPercent(relatedVideo.id) > 0" class="absolute inset-x-0 bottom-0 h-1 bg-black/55">
-                      <div class="h-full bg-red-600" :style="{ width: `${videoProgressPercent(relatedVideo.id)}%` }" />
+                      <div class="h-full bg-primary-600" :style="{ width: `${videoProgressPercent(relatedVideo.id)}%` }" />
                     </div>
                   </div>
                   <p class="text-xs font-semibold line-clamp-2 w-40">{{ relatedVideo.title }}</p>
@@ -969,7 +969,7 @@
                 <div v-if="isVideo8K(relatedVideo.width)" class="watch-thumb-badge">{{ t('video.eightKBadge') }}</div>
                 <div v-if="isVideo4K(relatedVideo.width)" class="watch-thumb-badge">{{ t('video.fourKBadge') }}</div>
                 <div v-if="videoProgressPercent(relatedVideo.id) > 0" class="absolute inset-x-0 bottom-0 h-1 bg-black/55">
-                  <div class="h-full bg-red-600" :style="{ width: `${videoProgressPercent(relatedVideo.id)}%` }" />
+                  <div class="h-full bg-primary-600" :style="{ width: `${videoProgressPercent(relatedVideo.id)}%` }" />
                 </div>
               </div>
               <p class="text-sm font-semibold line-clamp-2">{{ relatedVideo.title }}</p>
@@ -999,7 +999,7 @@
                 <span v-if="relatedVideo.kind" class="watch-thumb-badge watch-thumb-badge--kind">{{ relatedVideo.kindLabel }}</span>
                 <span v-if="isVideo8K(relatedVideo.width) || isVideo4K(relatedVideo.width)" class="watch-thumb-badge">{{ isVideo8K(relatedVideo.width) ? t('video.eightKBadge') : t('video.fourKBadge') }}</span>
                 <div v-if="videoProgressPercent(relatedVideo.id) > 0" class="absolute inset-x-0 bottom-0 h-[3px] bg-white/20">
-                  <div class="h-full bg-red-600" :style="{ width: `${videoProgressPercent(relatedVideo.id)}%` }" />
+                  <div class="h-full bg-primary-600" :style="{ width: `${videoProgressPercent(relatedVideo.id)}%` }" />
                 </div>
               </div>
               <div class="min-w-0 flex-1 py-0.5">
@@ -1029,7 +1029,7 @@
         <div class="space-y-3">
           <NuxtLink
             :to="localePath('/create-channel')"
-            class="block w-full px-4 py-3 bg-blue-600 hover:bg-blue-700 rounded transition text-center font-semibold"
+            class="block w-full px-4 py-3 bg-blue-600 hover:bg-blue-700 text-on-accent rounded transition text-center font-semibold"
             @click="showCreateChannelDialog = false"
           >
             {{ t('video.createChannel') }}
@@ -1056,7 +1056,7 @@
 
         <button
           @click="showErrorDialog = false"
-          class="w-full px-4 py-3 bg-blue-600 hover:bg-blue-700 rounded transition text-center font-semibold"
+          class="w-full px-4 py-3 bg-blue-600 hover:bg-blue-700 text-on-accent rounded transition text-center font-semibold"
         >
           {{ t('video.close') }}
         </button>
@@ -1147,7 +1147,7 @@
       <label class="mt-5 block text-sm font-semibold text-zinc-300">{{ t('watchParty.visibility') }}</label>
       <select
         v-model="watchPartyVisibility"
-        class="mt-2 w-full rounded bg-zinc-800 px-3 py-2 text-sm text-white outline-none ring-1 ring-zinc-700 focus:ring-red-500"
+        class="mt-2 w-full rounded bg-zinc-800 px-3 py-2 text-sm text-white outline-none ring-1 ring-zinc-700 focus:ring-primary-500"
       >
         <option value="private">{{ t('playlists.private') }}</option>
         <option value="public">{{ t('playlists.public') }}</option>
@@ -1156,7 +1156,7 @@
       <label class="mt-5 block text-sm font-semibold text-zinc-300">{{ t('watchParty.dialog.partyType') }}</label>
       <select
         v-model="watchPartyType"
-        class="mt-2 w-full rounded bg-zinc-800 px-3 py-2 text-sm text-white outline-none ring-1 ring-zinc-700 focus:ring-red-500"
+        class="mt-2 w-full rounded bg-zinc-800 px-3 py-2 text-sm text-white outline-none ring-1 ring-zinc-700 focus:ring-primary-500"
       >
         <option value="queue">{{ t('watchParty.dialog.partyTypes.queue') }}</option>
         <option value="single">{{ t('watchParty.dialog.partyTypes.single') }}</option>
@@ -1175,7 +1175,7 @@
         </button>
         <button
           type="button"
-          class="rounded bg-red-600 px-4 py-2 text-sm font-semibold hover:bg-red-700 disabled:opacity-60"
+          class="rounded bg-primary-600 px-4 py-2 text-sm font-semibold text-on-primary hover:bg-primary-700 disabled:opacity-60"
           :disabled="creatingWatchParty"
           @click="startWatchParty"
         >
@@ -2619,16 +2619,16 @@ const handleVideoEnded = async () => {
 <style scoped>
 .music-attribution {
   overflow: hidden;
-  border: 1px solid rgb(39 39 42);
+  border: 1px solid rgb(var(--gt-zinc-800));
   border-radius: 8px;
-  background: rgb(24 24 27 / 72%);
+  background: rgb(var(--gt-zinc-900) / 72%);
 }
 
 .music-attribution-heading {
   padding: 14px 16px 10px;
   font-size: 1.1rem;
   font-weight: 700;
-  color: white;
+  color: rgb(var(--gt-white));
 }
 
 .music-attribution-track {
@@ -2646,7 +2646,7 @@ const handleVideoEnded = async () => {
   place-items: center;
   overflow: hidden;
   border-radius: 6px;
-  background: rgb(39 39 42);
+  background: rgb(var(--gt-zinc-800));
 }
 
 .music-attribution-cover img {
@@ -2657,7 +2657,7 @@ const handleVideoEnded = async () => {
 
 .music-attribution-cover svg {
   width: 34px;
-  fill: rgb(161 161 170);
+  fill: rgb(var(--gt-zinc-400));
 }
 
 .music-attribution-details {
@@ -2679,36 +2679,36 @@ const handleVideoEnded = async () => {
 .music-attribution-title {
   font-size: 1rem;
   font-weight: 650;
-  color: white;
+  color: rgb(var(--gt-white));
 }
 
 .music-attribution-link {
   font-size: 0.875rem;
-  color: rgb(161 161 170);
+  color: rgb(var(--gt-zinc-400));
 }
 
 .music-attribution-title:hover,
 .music-attribution-link:hover {
-  color: rgb(252 165 165);
+  color: rgb(var(--gt-primary-300));
 }
 
 .music-attribution-listen {
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  border: 1px solid rgb(82 82 91);
+  border: 1px solid rgb(var(--gt-zinc-600));
   border-radius: 999px;
   padding: 8px 13px;
   font-size: 0.875rem;
   font-weight: 650;
-  color: rgb(228 228 231);
+  color: rgb(var(--gt-zinc-200));
   transition: border-color 150ms ease, background-color 150ms ease, color 150ms ease;
 }
 
 .music-attribution-listen:hover {
-  border-color: rgb(239 68 68);
-  background: rgb(127 29 29 / 24%);
-  color: white;
+  border-color: rgb(var(--gt-primary-500));
+  background: rgb(var(--gt-primary-900) / 24%);
+  color: rgb(var(--gt-white));
 }
 
 .music-attribution-listen svg {
@@ -2717,11 +2717,11 @@ const handleVideoEnded = async () => {
 }
 
 .music-attribution-copyright {
-  border-top: 1px solid rgb(39 39 42);
+  border-top: 1px solid rgb(var(--gt-zinc-800));
   padding: 10px 16px 12px;
   font-size: 0.75rem;
   line-height: 1.5;
-  color: rgb(113 113 122);
+  color: rgb(var(--gt-zinc-500));
 }
 
 .watch-player-shell :deep(.video-player-container),
@@ -2807,16 +2807,16 @@ const handleVideoEnded = async () => {
   align-items: center;
   gap: 0.375rem;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.06);
+  background: rgb(var(--gt-white) / 0.06);
   padding: 0.25rem 0.625rem;
-  color: #c8c8cf;
+  color: rgb(var(--gt-zinc-300));
   font-size: 0.75rem;
   font-weight: 500;
   white-space: nowrap;
 }
 
 .watch-chip--strong {
-  color: #f2f2f4;
+  color: rgb(var(--gt-zinc-100));
   font-weight: 600;
 }
 
@@ -2836,8 +2836,8 @@ const handleVideoEnded = async () => {
 }
 
 .watch-chip--link:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: #fff;
+  background: rgb(var(--gt-white) / 0.1);
+  color: rgb(var(--gt-white));
 }
 
 .watch-pill {
@@ -2846,9 +2846,9 @@ const handleVideoEnded = async () => {
   align-items: center;
   gap: 0.5rem;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.07);
+  background: rgb(var(--gt-white) / 0.07);
   padding: 0 0.875rem;
-  color: #f2f2f4;
+  color: rgb(var(--gt-zinc-100));
   font-size: 0.875rem;
   font-weight: 500;
   white-space: nowrap;
@@ -2856,11 +2856,11 @@ const handleVideoEnded = async () => {
 }
 
 .watch-pill:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.12);
+  background: rgb(var(--gt-white) / 0.12);
 }
 
 .watch-pill.is-active {
-  color: #f87171;
+  color: rgb(var(--gt-primary-400));
 }
 
 .watch-pill--icon {
@@ -2870,18 +2870,18 @@ const handleVideoEnded = async () => {
 }
 
 .watch-pill--primary {
-  background: #f2f2f4;
-  color: #0c0c0e;
+  background: rgb(var(--gt-zinc-100));
+  color: rgb(var(--gt-zinc-950));
   font-weight: 600;
 }
 
 .watch-pill--primary:hover:not(:disabled) {
-  background: #fff;
+  background: rgb(var(--gt-white));
 }
 
 .watch-media-card {
   border-radius: 0.875rem;
-  background: rgba(255, 255, 255, 0.04);
+  background: rgb(var(--gt-white) / 0.04);
   padding: 1rem;
 }
 
@@ -2898,13 +2898,13 @@ const handleVideoEnded = async () => {
 }
 
 .watch-rating-badge {
-  border: 1px solid rgb(255 255 255 / 0.35);
+  border: 1px solid rgb(var(--gt-white) / 0.35);
   border-radius: 0.25rem;
   padding: 0 0.3rem;
   font-size: 0.6875rem;
   font-weight: 600;
   line-height: 1.1rem;
-  color: #f4f4f5;
+  color: rgb(var(--gt-zinc-100));
 }
 
 .watch-thumb-badge--kind {

@@ -161,11 +161,11 @@ useHead({ title: () => t('music.home.title') })
 
 .music-header {
   padding: 4px 0 22px;
-  border-bottom: 1px solid rgb(39 39 42);
+  border-bottom: 1px solid rgb(var(--gt-zinc-800));
 }
 
 .music-header h1 {
-  color: white;
+  color: rgb(var(--gt-white));
   font-size: 2rem;
   font-weight: 800;
 }
@@ -183,7 +183,7 @@ useHead({ title: () => t('music.home.title') })
 }
 
 .shelf-header h2 {
-  color: white;
+  color: rgb(var(--gt-white));
   font-size: 1.2rem;
   font-weight: 800;
 }
@@ -211,7 +211,7 @@ useHead({ title: () => t('music.home.title') })
 
 .shelf-title > svg {
   width: 17px;
-  color: rgb(113 113 122);
+  color: rgb(var(--gt-zinc-500));
 }
 
 .shelf-controls {
@@ -225,15 +225,15 @@ useHead({ title: () => t('music.home.title') })
   width: 34px;
   height: 34px;
   place-items: center;
-  border: 1px solid rgb(63 63 70);
+  border: 1px solid rgb(var(--gt-zinc-700));
   border-radius: 50%;
-  color: rgb(212 212 216);
+  color: rgb(var(--gt-zinc-300));
 }
 
 .shelf-controls button:hover {
-  border-color: rgb(113 113 122);
-  background: rgb(39 39 42);
-  color: white;
+  border-color: rgb(var(--gt-zinc-500));
+  background: rgb(var(--gt-zinc-800));
+  color: rgb(var(--gt-white));
 }
 
 .shelf-controls svg,
@@ -281,8 +281,8 @@ useHead({ title: () => t('music.home.title') })
   aspect-ratio: 1;
   overflow: hidden;
   border-radius: 50%;
-  background: rgb(39 39 42);
-  box-shadow: inset 0 0 0 1px rgb(63 63 70);
+  background: rgb(var(--gt-zinc-800));
+  box-shadow: inset 0 0 0 1px rgb(var(--gt-zinc-700));
 }
 
 .artist-tile strong,
@@ -295,19 +295,19 @@ useHead({ title: () => t('music.home.title') })
 
 .artist-tile strong {
   margin-top: 10px;
-  color: white;
+  color: rgb(var(--gt-white));
   font-size: 0.9rem;
 }
 
 .artist-tile span {
   margin-top: 2px;
-  color: rgb(113 113 122);
+  color: rgb(var(--gt-zinc-500));
   font-size: 0.75rem;
 }
 
 .page-message {
   padding: 72px 0;
-  color: rgb(161 161 170);
+  color: rgb(var(--gt-zinc-400));
   text-align: center;
 }
 
@@ -319,7 +319,7 @@ useHead({ title: () => t('music.home.title') })
 .loading-shelves section > div > span {
   display: block;
   border-radius: 5px;
-  background: rgb(39 39 42);
+  background: rgb(var(--gt-zinc-800));
   animation: pulse 1.4s ease-in-out infinite;
 }
 

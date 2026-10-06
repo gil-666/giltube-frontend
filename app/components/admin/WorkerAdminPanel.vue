@@ -17,7 +17,7 @@
         </button>
         <button
           type="button"
-          class="inline-flex h-10 items-center gap-2 rounded-md bg-red-600 px-4 text-sm font-bold text-white transition hover:bg-red-500 disabled:opacity-50"
+          class="inline-flex h-10 items-center gap-2 rounded-md bg-primary-600 px-4 text-sm font-bold text-on-primary transition hover:bg-primary-500 disabled:opacity-50"
           :disabled="creatingCode"
           @click="createCode"
         >
@@ -119,8 +119,8 @@
               aria-hidden="true"
               class="pointer-events-none absolute inset-0 rounded-full border transition-colors duration-200"
               :style="{
-                backgroundColor: worker.scheduling_disabled ? '#3f3f46' : '#10b981',
-                borderColor: worker.scheduling_disabled ? '#52525b' : '#34d399'
+                backgroundColor: worker.scheduling_disabled ? 'rgb(var(--gt-zinc-700))' : '#10b981',
+                borderColor: worker.scheduling_disabled ? 'rgb(var(--gt-zinc-600))' : '#34d399'
               }"
             />
             <span
@@ -136,7 +136,7 @@
             <span class="truncate font-semibold text-zinc-200">{{ worker.current_job.video_title || worker.current_job.video_id }}</span>
             <span class="shrink-0 tabular-nums text-zinc-400">{{ worker.current_job.progress }}%</span>
           </div>
-          <div class="mt-2 h-1.5 overflow-hidden rounded-full bg-zinc-800"><div class="h-full rounded-full bg-red-500 transition-all" :style="{ width: `${worker.current_job.progress}%` }" /></div>
+          <div class="mt-2 h-1.5 overflow-hidden rounded-full bg-zinc-800"><div class="h-full rounded-full bg-primary-500 transition-all" :style="{ width: `${worker.current_job.progress}%` }" /></div>
         </div>
 
         <div v-if="worker.disabled" class="mt-4 flex gap-2 border-t border-white/[0.07] pt-3">
@@ -164,7 +164,7 @@
                 <p class="font-bold capitalize text-white">{{ osLabel(recommendedRelease.os) }} · {{ archLabel(recommendedRelease.arch) }}</p>
                 <p class="text-xs text-zinc-500">{{ formatBytes(recommendedRelease.size) }} · {{ recommendedRelease.version }}</p>
               </div>
-              <button type="button" class="rounded-md bg-red-600 px-3 py-2 text-xs font-bold text-white hover:bg-red-500 disabled:opacity-50" :disabled="downloadingFilename === recommendedRelease.filename" @click="downloadRelease(recommendedRelease)">{{ t('admin.workers.downloadButton') }}</button>
+              <button type="button" class="rounded-md bg-primary-600 px-3 py-2 text-xs font-bold text-on-primary hover:bg-primary-500 disabled:opacity-50" :disabled="downloadingFilename === recommendedRelease.filename" @click="downloadRelease(recommendedRelease)">{{ t('admin.workers.downloadButton') }}</button>
             </div>
             <details v-if="otherReleases.length" class="mt-2">
               <summary class="cursor-pointer text-xs font-semibold text-zinc-400 hover:text-white">{{ t('admin.workers.otherPlatforms') }}</summary>
@@ -195,9 +195,9 @@
             <p class="mt-2 text-xs text-amber-300">{{ t('admin.workers.expires', { time: formatExpiry(enrollmentExpiresAt) }) }}</p>
           </div>
           <ol class="space-y-3 text-sm text-zinc-300">
-            <li class="flex gap-3"><span class="font-bold text-red-400">1</span><span>{{ t('admin.workers.stepDownload') }}</span></li>
-            <li class="flex gap-3"><span class="font-bold text-red-400">2</span><span>{{ t('admin.workers.stepRun') }}</span></li>
-            <li class="flex gap-3"><span class="font-bold text-red-400">3</span><span>{{ t('admin.workers.stepEnter') }}</span></li>
+            <li class="flex gap-3"><span class="font-bold text-primary-400">1</span><span>{{ t('admin.workers.stepDownload') }}</span></li>
+            <li class="flex gap-3"><span class="font-bold text-primary-400">2</span><span>{{ t('admin.workers.stepRun') }}</span></li>
+            <li class="flex gap-3"><span class="font-bold text-primary-400">3</span><span>{{ t('admin.workers.stepEnter') }}</span></li>
           </ol>
           <p class="border-t border-white/[0.07] pt-4 text-xs text-zinc-500">{{ t('admin.workers.networkNote') }}</p>
         </div>

@@ -152,6 +152,7 @@ The project is designed around the entire media lifecycle:
 - Installable PWA with a custom Workbox service worker, push notifications, and controlled media caching.
 - English and Spanish localization, including admin and media workflows. English is served without a prefix and Spanish under `/es`.
 - Digital Asset Links (`/.well-known/assetlinks.json`) for the GilTube Android app.
+- Personal site themes: each account can pick primary, accent, and background colors, and the whole UI (surfaces, text, brand buttons, selection states) is derived from them, including light backgrounds. Themes can also carry a background image (shown at 40% behind the page color, with blur and cover/tile options), a gradient, a corner style, one of six fonts, and an ambient effect: CSS particles (snow, sparkles, bubbles, starfield) or one of twelve animated backgrounds adapted from [Vue Bits](https://vue-bits.dev) (Aurora, Silk, Plasma, Balatro and more, MIT + Commons Clause; see `app/components/themes/backgrounds/vendor/`). Effects are tinted with the theme colors, have an adjustable strength, load only when used, and turn off for reduced motion. Themes can be shared by link (installs stay linked, so the creator's edits reach everyone using them) and exported or imported as `.giltheme.json` files. The active theme is cached in a cookie so pages render in it on the server without a flash.
 - User-agent-aware mobile navigation with music-specific navigation inside GilTube Music.
 - Desktop, phone, and tablet layouts built as operating interfaces rather than separate demo pages.
 - Accessible labels, focus states, semantic controls, and reduced accidental interaction during swipe gestures.
@@ -304,6 +305,8 @@ giltube-frontend/
 | `/go-live` | Stream setup, scheduling, thumbnails, and stream keys |
 | `/watch-party/:id` | Synchronized room and queue |
 | `/subscriptions` | Subscribed channels and their latest videos |
+| `/account-settings` | Account, music quality, themes, passkeys, and sign-in settings |
+| `/themes/:code` | Shared theme preview and install |
 | `/dashboard` | Channel video management and analytics |
 | `/my-channels` | Channel switching and editing |
 | `/admin` | Users, channels, videos, series, movies, ingest, jobs, workers, featured content, and playback intro |

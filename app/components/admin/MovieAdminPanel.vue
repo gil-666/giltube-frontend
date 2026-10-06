@@ -118,12 +118,12 @@
         </div>
 
         <label class="flex items-center gap-3 rounded border border-white/10 bg-zinc-800 p-3 text-sm text-gray-300">
-          <input v-model="movieForm.isFeatured" type="checkbox" class="h-4 w-4 accent-red-600" />
+          <input v-model="movieForm.isFeatured" type="checkbox" class="h-4 w-4 accent-primary-600" />
           {{ t('movieAdmin.featuredToggle') }}
         </label>
 
         <label class="flex items-center gap-3 rounded border border-white/10 bg-zinc-800 p-3 text-sm text-gray-300">
-          <input v-model="movieForm.explicit" type="checkbox" class="h-4 w-4 accent-red-600" />
+          <input v-model="movieForm.explicit" type="checkbox" class="h-4 w-4 accent-primary-600" />
           <span>
             {{ t('contentRatingAdmin.explicitMovie') }}
             <span class="block text-xs text-gray-500">{{ t('contentRatingAdmin.explicitMovieHelp') }}</span>
@@ -131,7 +131,7 @@
         </label>
 
         <label class="flex items-center gap-3 rounded border border-white/10 bg-zinc-800 p-3 text-sm text-gray-300">
-          <input v-model="movieForm.contentWarning" type="checkbox" class="h-4 w-4 accent-red-600" />
+          <input v-model="movieForm.contentWarning" type="checkbox" class="h-4 w-4 accent-primary-600" />
           <span>
             {{ t('contentRatingAdmin.warning') }}
             <span class="block text-xs text-gray-500">{{ t('contentRatingAdmin.warningMovieHelp') }}</span>
@@ -150,7 +150,7 @@
         </div>
 
         <div class="flex flex-wrap gap-3">
-          <button type="submit" :disabled="movieCreating || movieSaving || movieDeleting" class="rounded bg-red-600 px-5 py-2.5 font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50">
+          <button type="submit" :disabled="movieCreating || movieSaving || movieDeleting" class="rounded bg-primary-600 px-5 py-2.5 font-semibold text-on-primary transition hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-50">
             {{ createdMovieId ? (movieSaving ? t('common.saving') : t('movieAdmin.actions.saveMovieDetails')) : (movieCreating ? t('movieAdmin.actions.creatingMovie') : t('movieAdmin.actions.createMovie')) }}
           </button>
           <button v-if="createdMovieId" type="button" :disabled="movieCreating || movieSaving || movieDeleting" class="rounded bg-red-950 px-5 py-2.5 font-semibold text-red-100 ring-1 ring-red-800 transition hover:bg-red-900 disabled:cursor-not-allowed disabled:opacity-50" @click="deleteCurrentMovie">
@@ -182,7 +182,7 @@
             <button v-if="!track.default || hasDuplicateAudioDefaults" type="button" :disabled="audioSaving" class="rounded bg-emerald-700 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-emerald-600 disabled:cursor-not-allowed disabled:opacity-50" @click="makeAudioDefault(track)">
               {{ track.default ? t('movieAdmin.subtitles.keepOnlyDefault') : t('movieAdmin.subtitles.makeDefault') }}
             </button>
-            <button type="button" :disabled="audioSaving" class="rounded bg-blue-700 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-blue-600 disabled:cursor-not-allowed disabled:opacity-50" @click="saveAudioMetadata(track)">
+            <button type="button" :disabled="audioSaving" class="rounded bg-blue-700 px-3 py-1.5 text-xs font-semibold text-on-accent transition hover:bg-blue-600 disabled:cursor-not-allowed disabled:opacity-50" @click="saveAudioMetadata(track)">
               Save title
             </button>
             <button type="button" :disabled="audioDownloadingId === track.id" class="rounded bg-zinc-700 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-zinc-600 disabled:cursor-not-allowed disabled:opacity-50" @click="downloadAudioTrack(track)">
@@ -204,7 +204,7 @@
         <input v-model="audioForm.language" :placeholder="t('videoEditor.languagePlaceholder')" class="rounded border border-white/10 bg-zinc-800 px-3 py-2 text-white placeholder-gray-500" />
         <input v-model="audioForm.label" :placeholder="t('videoEditor.languageNamePlaceholder')" class="rounded border border-white/10 bg-zinc-800 px-3 py-2 text-white placeholder-gray-500" />
         <label class="flex items-center gap-2 rounded border border-white/10 bg-zinc-800 px-3 py-2 text-xs text-gray-300">
-          <input v-model="audioForm.isDefault" type="checkbox" class="h-4 w-4 accent-red-600" />
+          <input v-model="audioForm.isDefault" type="checkbox" class="h-4 w-4 accent-primary-600" />
           {{ t('movieAdmin.subtitles.default') }}
         </label>
         <input v-model.number="audioForm.delayMs" type="number" step="100" :placeholder="t('movieAdmin.subtitles.delayMs')" class="rounded border border-white/10 bg-zinc-800 px-3 py-2 text-white placeholder-gray-500" />
@@ -215,13 +215,13 @@
           <span class="text-gray-500">({{ formatFileSize(audioForm.file.size) }})</span>
         </p>
         <div v-if="audioSaving" class="mt-2 h-2 overflow-hidden rounded-full bg-zinc-800">
-          <div class="h-full rounded-full bg-red-600 transition-all" :style="{ width: `${audioUploadProgress}%` }" />
+          <div class="h-full rounded-full bg-primary-600 transition-all" :style="{ width: `${audioUploadProgress}%` }" />
         </div>
         <p v-if="audioSaving" class="mt-1 text-gray-400">{{ audioUploadProgress }}%</p>
       </div>
       <p class="text-xs text-gray-500">{{ t('videoEditor.audio.delayHelp') }}</p>
       <div class="flex flex-wrap gap-2">
-        <button type="button" :disabled="(!audioForm.file && !audioForm.trackId) || audioSaving" class="rounded bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50" @click="saveAudioTrack()">
+        <button type="button" :disabled="(!audioForm.file && !audioForm.trackId) || audioSaving" class="rounded bg-primary-600 px-4 py-2 text-sm font-semibold text-on-primary transition hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-50" @click="saveAudioTrack()">
           {{ audioSaving ? `${audioUploadProgress}%` : audioForm.trackId ? 'Save audio track' : 'Add audio track' }}
         </button>
         <button type="button" :disabled="!audioForm.file || audioSaving" class="rounded bg-zinc-100 px-4 py-2 text-sm font-semibold text-zinc-950 transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-50" @click="saveAudioTrack(true)">
@@ -241,7 +241,7 @@
       <div class="grid gap-4 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_12rem]">
         <input v-model="trailerForm.title" :placeholder="t('movieAdmin.placeholders.trailerTitle')" class="rounded border border-white/10 bg-zinc-800 px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-white/30" />
         <input type="file" accept="video/*" class="block w-full text-sm text-gray-300 file:mr-3 file:rounded file:border-0 file:bg-zinc-700 file:px-3 file:py-2 file:text-white" @change="onTrailerFileSelected" />
-        <button type="button" :disabled="!trailerFile || trailerUploading" class="rounded bg-red-600 px-4 py-2 font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50" @click="uploadTrailer">
+        <button type="button" :disabled="!trailerFile || trailerUploading" class="rounded bg-primary-600 px-4 py-2 font-semibold text-on-primary transition hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-50" @click="uploadTrailer">
           {{ trailerUploading ? `${trailerProgress}%` : t('movieAdmin.actions.uploadTrailer') }}
         </button>
       </div>
@@ -262,7 +262,7 @@
       <div class="grid gap-4 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_repeat(3,minmax(0,10rem))]">
         <input v-model="movieVideoTitle" :placeholder="t('movieAdmin.placeholders.movieVideoTitle')" class="rounded border border-white/10 bg-zinc-800 px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-white/30" />
         <input type="file" accept="video/*" class="block w-full text-sm text-gray-300 file:mr-3 file:rounded file:border-0 file:bg-zinc-700 file:px-3 file:py-2 file:text-white" @change="onMovieFileSelected" />
-        <button type="button" :disabled="!movieFile || movieUploading" class="rounded bg-red-600 px-4 py-2 font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50" @click="uploadMovieVideo()">
+        <button type="button" :disabled="!movieFile || movieUploading" class="rounded bg-primary-600 px-4 py-2 font-semibold text-on-primary transition hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-50" @click="uploadMovieVideo()">
           {{ movieUploading ? `${movieUploadProgress}%` : (movieVideoId ? t('movieAdmin.actions.replaceUpload') : t('movieAdmin.actions.upload')) }}
         </button>
         <button type="button" :disabled="!movieFile || movieUploading" class="rounded bg-zinc-100 px-4 py-2 font-semibold text-zinc-950 transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-50" @click="uploadMovieVideo(true)">
@@ -309,7 +309,7 @@
           <p class="mt-1 text-xs text-gray-500">{{ t('movieAdmin.subtitles.globalDelayHelp') }}</p>
         </div>
         <input v-model.number="globalSubtitleDelayMs" type="number" step="100" :placeholder="t('movieAdmin.subtitles.delayMs')" class="rounded border border-white/10 bg-zinc-800 px-3 py-2 text-white placeholder-gray-500" />
-        <button type="button" :disabled="!movieSubtitles.length || subtitleSaving || globalSubtitleDelaySaving" class="rounded bg-blue-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-600 disabled:cursor-not-allowed disabled:opacity-50" @click="applyGlobalSubtitleDelay">
+        <button type="button" :disabled="!movieSubtitles.length || subtitleSaving || globalSubtitleDelaySaving" class="rounded bg-blue-700 px-4 py-2 text-sm font-semibold text-on-accent transition hover:bg-blue-600 disabled:cursor-not-allowed disabled:opacity-50" @click="applyGlobalSubtitleDelay">
           {{ globalSubtitleDelaySaving ? t('common.saving') : t('movieAdmin.subtitles.applyGlobalDelay') }}
         </button>
       </div>
@@ -323,13 +323,13 @@
           </div>
           <div class="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
             <input v-model.number="track.delay_ms" type="number" step="100" :placeholder="t('movieAdmin.subtitles.delayMs')" class="w-full rounded border border-white/10 bg-zinc-800 px-3 py-1.5 text-xs text-white placeholder-gray-500 sm:w-28" />
-            <button type="button" :disabled="subtitleSaving" class="rounded bg-blue-700 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-blue-600 disabled:cursor-not-allowed disabled:opacity-50" @click="saveSubtitleMetadata(track)">
+            <button type="button" :disabled="subtitleSaving" class="rounded bg-blue-700 px-3 py-1.5 text-xs font-semibold text-on-accent transition hover:bg-blue-600 disabled:cursor-not-allowed disabled:opacity-50" @click="saveSubtitleMetadata(track)">
               Save title
             </button>
             <button v-if="!track.default || hasDuplicateSubtitleDefaults" type="button" :disabled="subtitleSaving" class="rounded bg-emerald-700 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-emerald-600 disabled:cursor-not-allowed disabled:opacity-50" @click="makeSubtitleDefault(track)">
               {{ track.default ? t('movieAdmin.subtitles.keepOnlyDefault') : t('movieAdmin.subtitles.makeDefault') }}
             </button>
-            <button type="button" :disabled="subtitleSaving" class="rounded bg-blue-700 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-blue-600 disabled:cursor-not-allowed disabled:opacity-50" @click="saveSubtitleDelay(track)">
+            <button type="button" :disabled="subtitleSaving" class="rounded bg-blue-700 px-3 py-1.5 text-xs font-semibold text-on-accent transition hover:bg-blue-600 disabled:cursor-not-allowed disabled:opacity-50" @click="saveSubtitleDelay(track)">
               {{ t('movieAdmin.subtitles.saveDelay') }}
             </button>
             <a
@@ -355,13 +355,13 @@
         <input v-model="subtitleForm.language" :placeholder="t('videoEditor.languagePlaceholder')" class="rounded border border-white/10 bg-zinc-800 px-3 py-2 text-white placeholder-gray-500" />
         <input v-model="subtitleForm.label" :placeholder="t('videoEditor.languageNamePlaceholder')" class="rounded border border-white/10 bg-zinc-800 px-3 py-2 text-white placeholder-gray-500" />
         <label class="flex items-center gap-2 rounded border border-white/10 bg-zinc-800 px-3 py-2 text-xs text-gray-300">
-          <input v-model="subtitleForm.isDefault" type="checkbox" class="h-4 w-4 accent-red-600" />
+          <input v-model="subtitleForm.isDefault" type="checkbox" class="h-4 w-4 accent-primary-600" />
           {{ t('movieAdmin.subtitles.default') }}
         </label>
         <input v-model.number="subtitleForm.delayMs" type="number" step="100" :placeholder="t('movieAdmin.subtitles.delayMs')" class="rounded border border-white/10 bg-zinc-800 px-3 py-2 text-white placeholder-gray-500" />
       </div>
       <div class="flex flex-wrap gap-2">
-        <button type="button" :disabled="(!subtitleForm.file && !subtitleForm.trackId) || subtitleSaving" class="rounded bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50" @click="saveSubtitle">
+        <button type="button" :disabled="(!subtitleForm.file && !subtitleForm.trackId) || subtitleSaving" class="rounded bg-primary-600 px-4 py-2 text-sm font-semibold text-on-primary transition hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-50" @click="saveSubtitle">
           {{ subtitleSaving ? t('common.saving') : subtitleForm.trackId ? t('movieAdmin.subtitles.saveSubtitle') : t('movieAdmin.subtitles.addSubtitle') }}
         </button>
         <button v-if="subtitleForm.trackId" type="button" class="rounded bg-zinc-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-zinc-600" @click="cancelReplaceSubtitle">

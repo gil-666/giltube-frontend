@@ -25,7 +25,7 @@
       </div>
 
       <div v-else class="home-sections space-y-10 lg:space-y-12">
-        <section v-if="featuredItems.length" class="home-hero" :aria-label="activeFeatured.title">
+        <section v-if="featuredItems.length" class="home-hero gt-media text-white" :aria-label="activeFeatured.title">
           <Transition name="featured-fade" mode="out-in">
             <div :key="activeFeatured.id" class="absolute inset-0">
               <img :src="featuredImage(activeFeatured)" :alt="activeFeatured.title" class="h-full w-full object-cover" fetchpriority="high" />
@@ -1266,7 +1266,7 @@ onUnmounted(() => {
   display: inline-flex;
   align-items: baseline;
   gap: 0.75rem;
-  color: #f2f2f4;
+  color: rgb(var(--gt-zinc-100));
   font-size: 1.125rem;
   font-weight: 600;
   letter-spacing: -0.01em;
@@ -1276,7 +1276,7 @@ onUnmounted(() => {
   display: inline-flex;
   align-items: center;
   gap: 0.125rem;
-  color: #6c6c76;
+  color: rgb(var(--gt-zinc-500));
   font-size: 0.8125rem;
   font-weight: 500;
   letter-spacing: 0;
@@ -1284,7 +1284,7 @@ onUnmounted(() => {
 }
 
 .shelf-title:hover .shelf-title__more {
-  color: #e2e2e6;
+  color: rgb(var(--gt-zinc-200));
 }
 
 .shelf-arrow {
@@ -1294,13 +1294,13 @@ onUnmounted(() => {
   align-items: center;
   justify-content: center;
   border-radius: 999px;
-  color: #9b9ba5;
+  color: rgb(var(--gt-zinc-400));
   transition: background-color 150ms ease, color 150ms ease;
 }
 
 .shelf-arrow:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.07);
-  color: #fff;
+  background: rgb(var(--gt-white) / 0.07);
+  color: rgb(var(--gt-white));
 }
 
 .shelf-arrow:disabled {
@@ -1311,7 +1311,7 @@ onUnmounted(() => {
   position: relative;
   overflow: hidden;
   border-radius: 0.75rem;
-  background: #16161a;
+  background: rgb(var(--gt-zinc-900));
 }
 
 .tile-media::after {
@@ -1319,7 +1319,7 @@ onUnmounted(() => {
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+  box-shadow: inset 0 0 0 1px rgb(var(--gt-white) / 0.06);
   pointer-events: none;
 }
 
@@ -1368,6 +1368,6 @@ onUnmounted(() => {
 
 .tile-progress > div {
   height: 100%;
-  background: #e5252a;
+  background: rgb(var(--gt-primary));
 }
 </style>

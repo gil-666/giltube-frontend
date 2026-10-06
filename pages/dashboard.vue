@@ -92,7 +92,7 @@
             <thead class="sticky top-0 z-10 border-b border-white/[0.07] bg-zinc-950 text-xs font-semibold text-zinc-400">
               <tr>
                 <th class="w-10 px-4 py-3">
-                  <input type="checkbox" class="h-4 w-4 rounded border-zinc-600 bg-zinc-900 accent-red-600" :aria-label="t('dashboard.selectAll')" />
+                  <input type="checkbox" class="h-4 w-4 rounded border-zinc-600 bg-zinc-900 accent-primary-600" :aria-label="t('dashboard.selectAll')" />
                 </th>
                 <th class="w-[34rem] px-2 py-3">{{ t('dashboard.columns.video') }}</th>
                 <th class="w-40 px-4 py-3">{{ t('dashboard.columns.visibility') }}</th>
@@ -107,7 +107,7 @@
             <tbody class="divide-y divide-white/[0.07]">
               <tr v-for="video in paginatedVideos" :key="video.id" class="motion-row group transition hover:bg-zinc-900/80">
                 <td class="px-4 py-3 align-top">
-                  <input type="checkbox" class="mt-7 h-4 w-4 rounded border-zinc-600 bg-zinc-900 accent-red-600" :aria-label="`Select ${video.title}`" />
+                  <input type="checkbox" class="mt-7 h-4 w-4 rounded border-zinc-600 bg-zinc-900 accent-primary-600" :aria-label="`Select ${video.title}`" />
                 </td>
                 <td class="px-2 py-3 align-top">
                   <div class="flex gap-4">
@@ -135,7 +135,7 @@
 
                     <div class="min-w-0 py-1">
                       <div class="flex min-w-0 items-center gap-2">
-                        <button type="button" class="truncate text-left font-semibold text-white hover:text-red-200" @click="editVideo(video.id)">
+                        <button type="button" class="truncate text-left font-semibold text-white hover:text-primary-200" @click="editVideo(video.id)">
                           {{ video.title }}
                         </button>
                         <span v-if="isVideo8K(video.width)" class="flex-shrink-0 border border-zinc-600 bg-zinc-900 px-1 py-0.5 text-[10px] font-semibold text-zinc-200">8K</span>
@@ -626,7 +626,7 @@ definePageMeta({
 
 .dashboard-table-scroll {
   scrollbar-width: thin;
-  scrollbar-color: rgb(82 82 91) rgb(9 9 11);
+  scrollbar-color: rgb(var(--gt-zinc-600)) rgb(var(--gt-zinc-950));
   overscroll-behavior-x: contain;
 }
 
@@ -635,17 +635,17 @@ definePageMeta({
 }
 
 .dashboard-table-scroll::-webkit-scrollbar-track {
-  background: rgb(9 9 11);
-  border-top: 1px solid rgb(39 39 42);
+  background: rgb(var(--gt-zinc-950));
+  border-top: 1px solid rgb(var(--gt-zinc-800));
 }
 
 .dashboard-table-scroll::-webkit-scrollbar-thumb {
-  background: linear-gradient(90deg, rgb(63 63 70), rgb(113 113 122));
-  border: 2px solid rgb(9 9 11);
+  background: linear-gradient(90deg, rgb(var(--gt-zinc-700)), rgb(var(--gt-zinc-500)));
+  border: 2px solid rgb(var(--gt-zinc-950));
   border-radius: 999px;
 }
 
 .dashboard-table-scroll::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(90deg, rgb(82 82 91), rgb(161 161 170));
+  background: linear-gradient(90deg, rgb(var(--gt-zinc-600)), rgb(var(--gt-zinc-400)));
 }
 </style>

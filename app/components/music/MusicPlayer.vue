@@ -199,9 +199,9 @@ const formatTime = (value: number) => {
 <style scoped>
 .music-player {
   overflow: hidden;
-  border: 1px solid rgb(63 63 70);
+  border: 1px solid rgb(var(--gt-zinc-700));
   border-radius: 8px;
-  background: rgb(9 9 11);
+  background: rgb(var(--gt-zinc-950));
 }
 
 .player-main {
@@ -217,7 +217,7 @@ const formatTime = (value: number) => {
   height: 72px;
   object-fit: cover;
   border-radius: 6px;
-  background: rgb(39 39 42);
+  background: rgb(var(--gt-zinc-800));
 }
 
 .player-cover-empty {
@@ -227,7 +227,7 @@ const formatTime = (value: number) => {
 
 .player-cover-empty svg {
   width: 28px;
-  stroke: rgb(161 161 170);
+  stroke: rgb(var(--gt-zinc-400));
   fill: none;
   stroke-width: 1.6;
 }
@@ -245,12 +245,12 @@ const formatTime = (value: number) => {
 }
 
 .track-copy strong {
-  color: white;
+  color: rgb(var(--gt-white));
 }
 
 .track-copy span {
   margin-top: 4px;
-  color: rgb(161 161 170);
+  color: rgb(var(--gt-zinc-400));
   font-size: 0.875rem;
 }
 
@@ -271,13 +271,13 @@ const formatTime = (value: number) => {
   height: 36px;
   place-items: center;
   border-radius: 50%;
-  color: white;
+  color: rgb(var(--gt-white));
 }
 
 .transport button:hover:not(:disabled),
 .modes button:hover,
 .queue-actions button:hover {
-  background: rgb(39 39 42);
+  background: rgb(var(--gt-zinc-800));
 }
 
 .transport button:disabled {
@@ -287,8 +287,8 @@ const formatTime = (value: number) => {
 .transport .play-button {
   width: 44px;
   height: 44px;
-  background: white;
-  color: black;
+  background: rgb(var(--gt-white));
+  color: rgb(var(--gt-zinc-950));
 }
 
 .transport svg,
@@ -318,11 +318,11 @@ const formatTime = (value: number) => {
   width: 34px;
   height: 34px;
   border-radius: 50%;
-  color: rgb(161 161 170);
+  color: rgb(var(--gt-zinc-400));
 }
 
 .modes button.active {
-  color: rgb(248 113 113);
+  color: rgb(var(--gt-primary-400));
 }
 
 .modes button span {
@@ -334,7 +334,7 @@ const formatTime = (value: number) => {
 .timeline span {
   width: 2.6rem;
   flex: none;
-  color: rgb(161 161 170);
+  color: rgb(var(--gt-zinc-400));
   font-size: 0.75rem;
   font-variant-numeric: tabular-nums;
 }
@@ -343,7 +343,7 @@ const formatTime = (value: number) => {
 .volume input {
   min-width: 0;
   flex: 1;
-  accent-color: rgb(239 68 68);
+  accent-color: rgb(var(--gt-primary-500));
 }
 
 .volume svg {
@@ -353,7 +353,7 @@ const formatTime = (value: number) => {
 .queue {
   max-height: 19rem;
   overflow-y: auto;
-  border-top: 1px solid rgb(39 39 42);
+  border-top: 1px solid rgb(var(--gt-zinc-800));
 }
 
 .queue li {
@@ -369,14 +369,14 @@ const formatTime = (value: number) => {
   align-items: center;
   gap: 8px;
   padding: 11px 16px;
-  color: rgb(212 212 216);
+  color: rgb(var(--gt-zinc-300));
   text-align: left;
 }
 
 .queue-track:hover,
 .queue-track.active {
-  background: rgb(24 24 27);
-  color: white;
+  background: rgb(var(--gt-zinc-900));
+  color: rgb(var(--gt-white));
 }
 
 .queue-actions {
@@ -390,7 +390,7 @@ const formatTime = (value: number) => {
   height: 32px;
   place-items: center;
   border-radius: 50%;
-  color: rgb(161 161 170);
+  color: rgb(var(--gt-zinc-400));
 }
 
 .queue-actions svg {
@@ -398,16 +398,16 @@ const formatTime = (value: number) => {
 }
 
 .queue-notice {
-  border-top: 1px solid rgb(39 39 42);
-  background: rgb(24 24 27);
+  border-top: 1px solid rgb(var(--gt-zinc-800));
+  background: rgb(var(--gt-zinc-900));
   padding: 8px 14px;
-  color: rgb(212 212 216);
+  color: rgb(var(--gt-zinc-300));
   font-size: 0.75rem;
 }
 
 .queue-number,
 .queue-duration {
-  color: rgb(113 113 122);
+  color: rgb(var(--gt-zinc-500));
   font-size: 0.75rem;
 }
 
@@ -419,7 +419,7 @@ const formatTime = (value: number) => {
 
 .explicit {
   border-radius: 2px;
-  background: rgb(82 82 91);
+  background: rgb(var(--gt-zinc-600));
   padding: 1px 4px;
   font-size: 0.65rem;
   font-weight: 800;

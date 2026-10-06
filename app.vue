@@ -3,6 +3,12 @@
     class="min-h-screen bg-zinc-950 text-white flex flex-col overflow-x-hidden"
     :class="[activeShellThemeClass, { 'easter-egg-active': !!activeEasterEgg && canApplyEasterEggTheme }]"
   >
+    <ClientOnly>
+      <Teleport to="body">
+        <ThemeEffects :effect="themeEffect" :strength="siteTheme.appearance.value.style.effect_strength" />
+        <ThemeAnimatedBackground :look="siteTheme.appearance.value" />
+      </Teleport>
+    </ClientOnly>
     <div
       v-if="transitionEasterEgg && easterEggTransitionPhase !== 'idle' && canApplyEasterEggTheme"
       class="easter-egg-wipe"
@@ -113,13 +119,20 @@
             class="inline-flex cursor-pointer items-center justify-center"
             :aria-label="t('app.home')"
           >
-            <img
-              v-if="isMusicRoute"
-              :src="isMobileDevice ? musicLogoSymbol : musicLogoFull"
-              alt="GilTube Music"
-              class="music-brand-logo"
-              :class="isMobileDevice ? 'music-brand-logo-symbol' : 'music-brand-logo-full'"
-            />
+            <template v-if="isMusicRoute">
+              <img
+                :src="isMobileDevice ? musicLogoSymbol : musicLogoFull"
+                alt="GilTube Music"
+                class="music-brand-logo gt-logo-on-dark"
+                :class="isMobileDevice ? 'music-brand-logo-symbol' : 'music-brand-logo-full'"
+              />
+              <img
+                :src="isMobileDevice ? musicLogoSymbolDark : musicLogoFullDark"
+                alt="GilTube Music"
+                class="music-brand-logo gt-logo-on-light"
+                :class="isMobileDevice ? 'music-brand-logo-symbol' : 'music-brand-logo-full'"
+              />
+            </template>
             <img
               v-else-if="activeEasterEgg?.id === 'sabrina-tube' && canApplyEasterEggTheme && !sabrinaLogoFailed"
               :src="sabrinaLogoSrc"
@@ -128,7 +141,10 @@
               @error="handleSabrinaLogoError"
             />
             <span v-else-if="activeEasterEgg?.id === 'sabrina-tube' && canApplyEasterEggTheme" class="sabrina-brand-text">SabrinaTube</span>
-            <img v-else src="./assets/logowhsmall.png" alt="GilTube" :class="isCompactMobileWatchTopBar ? 'h-6 object-contain' : 'h-7 object-contain md:h-8'" />
+            <template v-else>
+              <img src="./assets/logowhsmall.png" alt="GilTube" class="gt-logo-on-dark" :class="isCompactMobileWatchTopBar ? 'h-6 object-contain' : 'h-7 object-contain md:h-8'" />
+              <img src="./assets/logoblsmall.png" alt="GilTube" class="gt-logo-on-light" :class="isCompactMobileWatchTopBar ? 'h-6 object-contain' : 'h-7 object-contain md:h-8'" />
+            </template>
           </button>
           <!-- <span
             class="absolute -top-1.5 -right-1 md:top-0 md:-right-2 bg-red-600 text-white text-[10px] md:text-xs font-bold px-0.5 md:px-1.5 py-0 rounded">BETA</span> -->
@@ -439,7 +455,7 @@
           >
             &times;
           </button>
-          <button @click="handleMobileSearch()" class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-red-600 text-white transition hover:bg-red-500">
+          <button @click="handleMobileSearch()" class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary-600 text-on-primary transition hover:bg-primary-500">
             <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 12h14m-6-6 6 6-6 6" />
             </svg>
@@ -455,7 +471,7 @@
         </div>
         <div
           v-if="shouldShowSearchSuggestions"
-          class="search-suggestions-scrollbar mt-2 max-h-[min(62vh,28rem)] overflow-y-auto rounded-2xl border border-white/[0.07] bg-black/90 p-1 shadow-2xl shadow-black/70"
+          class="search-suggestions-scrollbar mt-2 max-h-[min(62vh,28rem)] overflow-y-auto rounded-2xl border border-white/[0.07] bg-zinc-950/90 p-1 shadow-2xl shadow-black/70"
           :style="{ zIndex: 9999 }"
         >
           <button
@@ -820,6 +836,10 @@
                 <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.3 4.3h3.4l.6 2.2c.5.2 1 .5 1.4.8l2.2-.6 1.7 3-1.6 1.6a6 6 0 0 1 0 1.4l1.6 1.6-1.7 3-2.2-.6c-.4.3-.9.6-1.4.8l-.6 2.2h-3.4l-.6-2.2c-.5-.2-1-.5-1.4-.8l-2.2.6-1.7-3L6 12.7a6 6 0 0 1 0-1.4L4.4 9.7l1.7-3 2.2.6c.4-.3.9-.6 1.4-.8l.6-2.2Z" /></svg>
                 <span>{{ t('app.accountSettings') }}</span>
               </NuxtLink>
+              <NuxtLink v-if="isLoggedIn" :to="localePath('/account-settings#themes')" class="mobile-sheet-action" @click="mobileMoreOpen = false">
+                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3a9 9 0 0 0 0 18c1 0 1.5-.6 1.5-1.4 0-.9-.8-1.3-.8-2.1 0-.8.7-1.4 1.5-1.4H16a5 5 0 0 0 5-5c0-4.4-4-8.1-9-8.1Z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7.5 11.5h.01M10 7.5h.01M14.5 7.5h.01M17 11h.01" /></svg>
+                <span>{{ t('app.themes') }}</span>
+              </NuxtLink>
               <NuxtLink v-if="userType === 'admin'" to="/admin/music" class="mobile-sheet-action" @click="mobileMoreOpen = false">
                 <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 19V9m5 10V5m5 14v-7m5 7V3" /></svg>
                 <span>{{ t('app.musicAdmin') }}</span>
@@ -888,6 +908,10 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z" />
               </svg>
               <span>{{ t('app.accountSettings') }}</span>
+            </NuxtLink>
+            <NuxtLink v-if="isLoggedIn" :to="localePath('/account-settings#themes')" class="mobile-sheet-action" @click="mobileMoreOpen = false">
+              <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3a9 9 0 0 0 0 18c1 0 1.5-.6 1.5-1.4 0-.9-.8-1.3-.8-2.1 0-.8.7-1.4 1.5-1.4H16a5 5 0 0 0 5-5c0-4.4-4-8.1-9-8.1Z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7.5 11.5h.01M10 7.5h.01M14.5 7.5h.01M17 11h.01" /></svg>
+              <span>{{ t('app.themes') }}</span>
             </NuxtLink>
             <NuxtLink v-if="isLoggedIn" :to="localePath('/my-channels')" class="mobile-sheet-action" @click="mobileMoreOpen = false">
               <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -992,7 +1016,7 @@
 
   <div
     v-if="activeWatchParty && !isInsideWatchPartyRoute && !isWatchPartyWidgetDismissed"
-    class="fixed bottom-4 right-4 z-[90] w-[min(22rem,calc(100vw-2rem))] rounded-xl border border-red-500/40 bg-zinc-950/95 p-4 text-white shadow-2xl backdrop-blur"
+    class="fixed bottom-4 right-4 z-[90] w-[min(22rem,calc(100vw-2rem))] rounded-xl border border-primary-500/40 bg-zinc-950/95 p-4 text-white shadow-2xl backdrop-blur"
   >
     <div class="flex items-start justify-between gap-4">
       <div class="min-w-0">
@@ -1011,7 +1035,7 @@
     <div class="mt-3 flex gap-2">
       <NuxtLink
         :to="localePath(`/watch-party/${activeWatchParty.id}?room=1`)"
-        class="flex-1 rounded-lg bg-red-600 px-3 py-2 text-center text-sm font-semibold transition hover:bg-red-700"
+        class="flex-1 rounded-lg bg-primary-600 px-3 py-2 text-center text-sm font-semibold text-on-primary transition hover:bg-primary-700"
       >
         Open
       </NuxtLink>
@@ -1027,7 +1051,7 @@
   <button
     v-else-if="activeWatchParty && !isInsideWatchPartyRoute && isWatchPartyWidgetDismissed"
     type="button"
-    class="fixed bottom-4 right-4 z-[90] inline-flex items-center gap-2 rounded-full border border-red-500/40 bg-zinc-950/95 px-4 py-3 text-sm font-semibold text-white shadow-2xl backdrop-blur transition hover:bg-zinc-900"
+    class="fixed bottom-4 right-4 z-[90] inline-flex items-center gap-2 rounded-full border border-primary-500/40 bg-zinc-950/95 px-4 py-3 text-sm font-semibold text-white shadow-2xl backdrop-blur transition hover:bg-zinc-900"
     @click="restoreWatchPartyWidget"
   >
     <span class="h-2.5 w-2.5 rounded-full bg-red-500" />
@@ -1207,6 +1231,9 @@
               {{ t('app.accountSettings') }}
             </NuxtLink>
           </div>
+          <NuxtLink :to="localePath('/account-settings#themes')" class="account-panel-action" @click="dropdownOpen = false">
+            {{ t('app.themes') }}
+          </NuxtLink>
           <div class="grid gap-2 sm:grid-cols-2">
             <NuxtLink :to="localePath('/create-channel')" class="account-panel-action" @click="dropdownOpen = false">
               {{ t('app.createChannel') }}
@@ -1226,8 +1253,13 @@ import { ref, onMounted, onUnmounted, computed, watch, nextTick } from 'vue'
 import GlobalMusicPlayer from '~/app/components/music/GlobalMusicPlayer.vue'
 import { useEasterEggs } from '~/app/composables/useEasterEggs'
 import { useMusicPlayer } from '~/app/composables/useMusicPlayer'
+import { useSiteTheme, useSiteThemeHead } from '~/app/composables/useSiteTheme'
+import ThemeEffects from '~/app/components/themes/ThemeEffects.vue'
+import ThemeAnimatedBackground from '~/app/components/themes/ThemeAnimatedBackground.vue'
 import musicLogoFull from '~/assets/giltube-music-logo-full.png'
 import musicLogoSymbol from '~/assets/giltube-music-logo-symbol.png'
+import musicLogoFullDark from '~/assets/giltube-music-logo-full-dark.png'
+import musicLogoSymbolDark from '~/assets/giltube-music-logo-symbol-dark.png'
 import { beginGilIDAuth, getMyAccount } from '~/app/service/auth'
 import { fetchUserChannels, setDefaultChannel } from '~/app/service/upload'
 import { clearAuthSession } from '~/app/utils/authSession'
@@ -1245,6 +1277,9 @@ const router = useRouter()
 const route = useRoute()
 const { t, locale, locales, setLocale } = useI18n()
 const localePath = useLocalePath()
+useSiteThemeHead()
+const siteTheme = useSiteTheme()
+const themeEffect = computed(() => siteTheme.appearance.value.style.effect)
 const requestHeaders = process.server ? useRequestHeaders(['user-agent']) : {}
 const pageTransitionKey = (routeLocation) => routeLocation.fullPath
 const isLikelyMobileUserAgent = (userAgent = '', maxTouchPoints = 0) => {
@@ -1878,6 +1913,7 @@ const markAllPreviewNotificationsRead = async () => {
 const handleNotificationVisibilityChange = () => {
   notificationsPollInterval.value = document.hidden ? 60000 : 15000
   startNotificationPolling()
+  if (!document.hidden) siteTheme.sync()
 }
 
 const handleNotificationClickOutside = (event) => {
@@ -2108,6 +2144,7 @@ onMounted(async () => {
   }
   loadActiveWatchParty()
   checkAuthStatus()
+  siteTheme.sync(true)
   await loadCategories()
   if (isLoggedIn.value) {
     loadChannels()
@@ -2295,6 +2332,7 @@ watch(() => route.fullPath, async () => {
   uploadDropdownOpen.value = false
   await nextTick()
   handleMainContentScroll()
+  siteTheme.sync()
   if (isLoggedIn.value) {
     checkGilIDLinkPrompt()
   }
@@ -2508,6 +2546,7 @@ const handleLogout = async () => {
   const previousUserID = userId.value
   await detachPushSubscriptionForUser(previousUserID)
   clearAuthSession()
+  siteTheme.resetLocal()
   isLoggedIn.value = false
   dropdownOpen.value = false
   router.push('/')
@@ -2544,24 +2583,24 @@ if (process.client) {
 <style global>
 /* ---------- Design foundation ---------- */
 :root {
-  color-scheme: dark;
-  --gt-canvas: #0c0c0e;
-  --gt-surface: #16161a;
-  --gt-surface-raised: #1d1d22;
-  --gt-line: rgba(255, 255, 255, 0.07);
-  --gt-line-strong: rgba(255, 255, 255, 0.13);
-  --gt-text: #f2f2f4;
-  --gt-text-muted: #9b9ba5;
-  --gt-text-faint: #6c6c76;
-  --gt-accent: #e5252a;
-  --gt-radius: 12px;
+  --gt-canvas: rgb(var(--gt-zinc-950));
+  --gt-surface: rgb(var(--gt-zinc-900));
+  --gt-surface-raised: color-mix(in srgb, rgb(var(--gt-zinc-900)) 70%, rgb(var(--gt-zinc-800)));
+  --gt-line: rgb(var(--gt-white) / 0.07);
+  --gt-line-strong: rgb(var(--gt-white) / 0.13);
+  --gt-text: rgb(var(--gt-zinc-100));
+  --gt-text-muted: rgb(var(--gt-zinc-400));
+  --gt-text-faint: rgb(var(--gt-zinc-500));
+  /* Brand color comes from the theme (--gt-primary). Note: --gt-accent is the
+     theme's accent RGB triplet (assets/css/theme.css), so it is not redefined here. */
+  --gt-radius: calc(12px * var(--gt-radius-scale));
 }
 
 html,
 body {
   background: var(--gt-canvas);
   color: var(--gt-text);
-  font-family: Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  font-family: var(--gt-font), Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   font-feature-settings: 'cv11', 'ss01', 'ss03';
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -2573,17 +2612,17 @@ h1, h2, h3 {
 }
 
 ::selection {
-  background: rgba(229, 37, 42, 0.35);
-  color: #fff;
+  background: rgb(var(--gt-primary) / 0.35);
+  color: rgb(var(--gt-white));
 }
 
 :focus-visible {
-  outline: 2px solid rgba(255, 255, 255, 0.55);
+  outline: 2px solid rgb(var(--gt-white) / 0.55);
   outline-offset: 2px;
 }
 
 * {
-  scrollbar-color: rgba(255, 255, 255, 0.14) transparent;
+  scrollbar-color: rgb(var(--gt-white) / 0.14) transparent;
   scrollbar-width: thin;
 }
 
@@ -2595,7 +2634,7 @@ h1, h2, h3 {
 *::-webkit-scrollbar-thumb {
   border: 3px solid transparent;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.14);
+  background: rgb(var(--gt-white) / 0.14);
   background-clip: padding-box;
 }
 
@@ -2612,38 +2651,38 @@ h1, h2, h3 {
   align-items: center;
   justify-content: center;
   border-radius: 999px;
-  color: #c8c8cf;
+  color: rgb(var(--gt-zinc-300));
   transition: background-color 150ms ease, color 150ms ease;
 }
 
 .shell-icon-button:hover {
-  background: rgba(255, 255, 255, 0.07);
-  color: #fff;
+  background: rgb(var(--gt-white) / 0.07);
+  color: rgb(var(--gt-white));
 }
 
 .shell-search-input {
   height: 2.5rem;
   width: 100%;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgb(var(--gt-white) / 0.08);
   border-radius: 999px;
-  background: rgba(22, 22, 26, 0.85);
+  background: rgb(var(--gt-zinc-900) / 0.85);
   padding: 0 1rem 0 2.5rem;
-  color: #fff;
+  color: rgb(var(--gt-white));
   font-size: 0.875rem;
   transition: border-color 150ms ease, background-color 150ms ease;
 }
 
 .shell-search-input::placeholder {
-  color: #6c6c76;
+  color: rgb(var(--gt-zinc-500));
 }
 
 .shell-search-input:hover {
-  border-color: rgba(255, 255, 255, 0.13);
+  border-color: rgb(var(--gt-white) / 0.13);
 }
 
 .shell-search-input:focus {
-  border-color: rgba(255, 255, 255, 0.22);
-  background: #16161a;
+  border-color: rgb(var(--gt-white) / 0.22);
+  background: rgb(var(--gt-zinc-900));
   outline: none;
 }
 
@@ -2656,22 +2695,22 @@ h1, h2, h3 {
   height: 2.25rem;
   align-items: center;
   border-radius: 999px;
-  background: #f2f2f4;
+  background: rgb(var(--gt-zinc-100));
   padding: 0 1rem;
-  color: #0c0c0e;
+  color: rgb(var(--gt-zinc-950));
   font-size: 0.875rem;
   font-weight: 600;
   transition: background-color 150ms ease;
 }
 
 .shell-signin:hover {
-  background: #fff;
+  background: rgb(var(--gt-white));
 }
 
 .shell-nav-heading {
   margin: 0 0 0.375rem;
   padding: 0 0.75rem;
-  color: #6c6c76;
+  color: rgb(var(--gt-zinc-500));
   font-size: 0.75rem;
   font-weight: 500;
 }
@@ -2683,25 +2722,25 @@ h1, h2, h3 {
   gap: 0.875rem;
   border-radius: 0.625rem;
   padding: 0 0.75rem;
-  color: #c8c8cf;
+  color: rgb(var(--gt-zinc-300));
   font-size: 0.875rem;
   font-weight: 500;
   transition: background-color 150ms ease, color 150ms ease;
 }
 
 .shell-nav-link:hover {
-  background: rgba(255, 255, 255, 0.05);
-  color: #fff;
+  background: rgb(var(--gt-white) / 0.05);
+  color: rgb(var(--gt-white));
 }
 
 .shell-nav-link.is-active {
-  background: rgba(255, 255, 255, 0.08);
-  color: #fff;
+  background: rgb(var(--gt-white) / 0.08);
+  color: rgb(var(--gt-white));
 }
 
 .shell-nav-link--quiet {
   height: 2rem;
-  color: #9b9ba5;
+  color: rgb(var(--gt-zinc-400));
   font-weight: 400;
 }
 
@@ -2712,12 +2751,12 @@ h1, h2, h3 {
 }
 
 .shell-nav-link.is-active .shell-nav-icon {
-  color: var(--gt-accent);
+  color: rgb(var(--gt-primary));
 }
 
 .shell-locale-toggle {
   display: inline-flex;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgb(var(--gt-white) / 0.08);
   border-radius: 999px;
   padding: 2px;
 }
@@ -2725,7 +2764,7 @@ h1, h2, h3 {
 .shell-locale-toggle button {
   border-radius: 999px;
   padding: 0.125rem 0.5rem;
-  color: #9b9ba5;
+  color: rgb(var(--gt-zinc-400));
   font-size: 0.6875rem;
   font-weight: 600;
   letter-spacing: 0.02em;
@@ -2733,8 +2772,8 @@ h1, h2, h3 {
 }
 
 .shell-locale-toggle button.is-active {
-  background: rgba(255, 255, 255, 0.1);
-  color: #fff;
+  background: rgb(var(--gt-white) / 0.1);
+  color: rgb(var(--gt-white));
 }
 
 /* ---------- Banners ---------- */
@@ -2744,10 +2783,10 @@ h1, h2, h3 {
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
-  background: #16161a;
+  border-bottom: 1px solid rgb(var(--gt-white) / 0.07);
+  background: rgb(var(--gt-zinc-900));
   padding: 0.625rem 1rem;
-  color: #e2e2e6;
+  color: rgb(var(--gt-zinc-200));
   font-size: 0.875rem;
 }
 
@@ -2759,23 +2798,23 @@ h1, h2, h3 {
   border-radius: 999px;
 }
 
-.shell-banner__dot.is-info { background: #60a5fa; }
+.shell-banner__dot.is-info { background: rgb(var(--gt-accent-400)); }
 .shell-banner__dot.is-warn { background: #fbbf24; }
 .shell-banner__dot.is-danger { background: #ef4444; }
 
 .shell-banner__button {
   height: 1.875rem;
   border-radius: 999px;
-  background: #f2f2f4;
+  background: rgb(var(--gt-zinc-100));
   padding: 0 0.875rem;
-  color: #0c0c0e;
+  color: rgb(var(--gt-zinc-950));
   font-size: 0.8125rem;
   font-weight: 600;
 }
 
 .shell-banner__button--quiet {
-  background: rgba(255, 255, 255, 0.07);
-  color: #e2e2e6;
+  background: rgb(var(--gt-white) / 0.07);
+  color: rgb(var(--gt-zinc-200));
 }
 
 .shell-banner__close {
@@ -2785,19 +2824,19 @@ h1, h2, h3 {
   align-items: center;
   justify-content: center;
   border-radius: 999px;
-  color: #9b9ba5;
+  color: rgb(var(--gt-zinc-400));
 }
 
 .shell-banner__close:hover {
-  background: rgba(255, 255, 255, 0.07);
-  color: #fff;
+  background: rgb(var(--gt-white) / 0.07);
+  color: rgb(var(--gt-white));
 }
 
 /* ---------- Forms ---------- */
 .gt-label {
   display: block;
   margin-bottom: 0.375rem;
-  color: #c8c8cf;
+  color: rgb(var(--gt-zinc-300));
   font-size: 0.8125rem;
   font-weight: 500;
 }
@@ -2805,22 +2844,22 @@ h1, h2, h3 {
 .gt-input {
   height: 2.75rem;
   width: 100%;
-  border: 1px solid rgba(255, 255, 255, 0.09);
+  border: 1px solid rgb(var(--gt-white) / 0.09);
   border-radius: 0.625rem;
-  background: rgba(255, 255, 255, 0.03);
+  background: rgb(var(--gt-white) / 0.03);
   padding: 0 0.875rem;
-  color: #fff;
+  color: rgb(var(--gt-white));
   font-size: 0.9375rem;
   transition: border-color 150ms ease, background-color 150ms ease;
 }
 
 .gt-input::placeholder {
-  color: #6c6c76;
+  color: rgb(var(--gt-zinc-500));
 }
 
 .gt-input:focus {
-  border-color: rgba(255, 255, 255, 0.28);
-  background: rgba(255, 255, 255, 0.05);
+  border-color: rgb(var(--gt-white) / 0.28);
+  background: rgb(var(--gt-white) / 0.05);
   outline: none;
 }
 
@@ -2843,23 +2882,23 @@ h1, h2, h3 {
 }
 
 .gt-button--primary {
-  background: #f2f2f4;
-  color: #0c0c0e;
+  background: rgb(var(--gt-zinc-100));
+  color: rgb(var(--gt-zinc-950));
 }
 
 .gt-button--primary:hover:not(:disabled) {
-  background: #fff;
+  background: rgb(var(--gt-white));
 }
 
 .gt-button--secondary {
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.04);
-  color: #f2f2f4;
+  border: 1px solid rgb(var(--gt-white) / 0.12);
+  background: rgb(var(--gt-white) / 0.04);
+  color: rgb(var(--gt-zinc-100));
 }
 
 .gt-button--secondary:hover:not(:disabled) {
-  border-color: rgba(255, 255, 255, 0.2);
-  background: rgba(255, 255, 255, 0.08);
+  border-color: rgb(var(--gt-white) / 0.2);
+  background: rgb(var(--gt-white) / 0.08);
 }
 
 .gt-alert {
@@ -2876,7 +2915,7 @@ h1, h2, h3 {
 }
 
 .search-suggestions-scrollbar {
-  scrollbar-color: rgba(113, 113, 122, 0.85) transparent;
+  scrollbar-color: rgb(var(--gt-zinc-500) / 0.85) transparent;
   scrollbar-width: thin;
 }
 
@@ -2889,13 +2928,13 @@ h1, h2, h3 {
 }
 
 .search-suggestions-scrollbar::-webkit-scrollbar-thumb {
-  border: 2px solid rgba(9, 9, 11, 0.9);
+  border: 2px solid rgb(var(--gt-zinc-950) / 0.9);
   border-radius: 999px;
-  background: rgba(113, 113, 122, 0.85);
+  background: rgb(var(--gt-zinc-500) / 0.85);
 }
 
 .search-suggestions-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: rgba(161, 161, 170, 0.95);
+  background: rgb(var(--gt-zinc-400) / 0.95);
 }
 
 .theme-sabrina-tube {
@@ -3143,6 +3182,7 @@ h1, h2, h3 {
 }
 
 .theme-sabrina-tube [class*="bg-red-600"],
+.theme-sabrina-tube [class*="bg-primary-600"],
 .theme-sabrina-tube [class*="bg-blue-600"],
 .theme-sabrina-tube [class*="bg-rose-500"],
 .theme-sabrina-tube .account-panel-check,
@@ -3153,6 +3193,7 @@ h1, h2, h3 {
 }
 
 .theme-sabrina-tube [class*="hover:bg-red-"]:hover,
+.theme-sabrina-tube [class*="hover:bg-primary-"]:hover,
 .theme-sabrina-tube [class*="hover:bg-blue-"]:hover,
 .theme-sabrina-tube [class*="hover:bg-zinc-"]:hover,
 .theme-sabrina-tube .account-panel-row:hover,
@@ -3289,10 +3330,15 @@ h1, h2, h3 {
 
 /* Saturated controls and status surfaces need light foregrounds. */
 .theme-sabrina-tube [class*="bg-red-600"],
+.theme-sabrina-tube [class*="bg-primary-600"],
 .theme-sabrina-tube [class*="bg-red-700"],
+.theme-sabrina-tube [class*="bg-primary-700"],
 .theme-sabrina-tube [class*="bg-red-800"],
+.theme-sabrina-tube [class*="bg-primary-800"],
 .theme-sabrina-tube [class*="bg-red-900"],
+.theme-sabrina-tube [class*="bg-primary-900"],
 .theme-sabrina-tube [class*="bg-red-950"],
+.theme-sabrina-tube [class*="bg-primary-950"],
 .theme-sabrina-tube [class*="bg-rose-600"],
 .theme-sabrina-tube [class*="bg-pink-600"],
 .theme-sabrina-tube [class*="bg-pink-700"],
@@ -3306,10 +3352,15 @@ h1, h2, h3 {
 }
 
 .theme-sabrina-tube [class*="bg-red-600"] [class*="text-"],
+.theme-sabrina-tube [class*="bg-primary-600"] [class*="text-"],
 .theme-sabrina-tube [class*="bg-red-700"] [class*="text-"],
+.theme-sabrina-tube [class*="bg-primary-700"] [class*="text-"],
 .theme-sabrina-tube [class*="bg-red-800"] [class*="text-"],
+.theme-sabrina-tube [class*="bg-primary-800"] [class*="text-"],
 .theme-sabrina-tube [class*="bg-red-900"] [class*="text-"],
+.theme-sabrina-tube [class*="bg-primary-900"] [class*="text-"],
 .theme-sabrina-tube [class*="bg-red-950"] [class*="text-"],
+.theme-sabrina-tube [class*="bg-primary-950"] [class*="text-"],
 .theme-sabrina-tube [class*="bg-rose-600"] [class*="text-"],
 .theme-sabrina-tube [class*="bg-pink-600"] [class*="text-"],
 .theme-sabrina-tube [class*="bg-pink-700"] [class*="text-"],
@@ -3638,7 +3689,7 @@ h1, h2, h3 {
 }
 
 .giltube-account-panel-scroll {
-  scrollbar-color: rgba(113, 113, 122, 0.75) transparent;
+  scrollbar-color: rgb(var(--gt-zinc-500) / 0.75) transparent;
   scrollbar-gutter: stable;
   scrollbar-width: thin;
 }
@@ -3653,7 +3704,7 @@ h1, h2, h3 {
 
 .giltube-account-panel-scroll::-webkit-scrollbar-thumb {
   border-radius: 999px;
-  background: rgba(113, 113, 122, 0.72);
+  background: rgb(var(--gt-zinc-500) / 0.72);
 }
 
 .account-panel-row {
@@ -3664,7 +3715,7 @@ h1, h2, h3 {
   border-radius: 0.75rem;
   padding: 0.75rem;
   text-align: left;
-  color: rgb(212 212 216);
+  color: rgb(var(--gt-zinc-300));
   transition:
     background-color 150ms ease,
     color 150ms ease,
@@ -3672,13 +3723,13 @@ h1, h2, h3 {
 }
 
 .account-panel-row:hover {
-  background: rgb(24 24 27);
-  color: white;
+  background: rgb(var(--gt-zinc-900));
+  color: rgb(var(--gt-white));
 }
 
 .account-panel-row-active {
-  background: rgba(37, 99, 235, 0.18);
-  color: white;
+  background: rgb(var(--gt-accent-600) / 0.18);
+  color: rgb(var(--gt-white));
 }
 
 .account-panel-avatar {
@@ -3690,11 +3741,11 @@ h1, h2, h3 {
   justify-content: center;
   overflow: hidden;
   border-radius: 999px;
-  border: 1px solid rgb(63 63 70);
-  background: rgb(39 39 42);
+  border: 1px solid rgb(var(--gt-zinc-700));
+  background: rgb(var(--gt-zinc-800));
   font-size: 0.875rem;
   font-weight: 900;
-  color: rgb(228 228 231);
+  color: rgb(var(--gt-zinc-200));
 }
 
 .account-panel-check {
@@ -3705,8 +3756,8 @@ h1, h2, h3 {
   align-items: center;
   justify-content: center;
   border-radius: 999px;
-  background: rgb(37 99 235);
-  color: white;
+  background: rgb(var(--gt-accent-600));
+  color: rgb(var(--gt-on-accent));
 }
 
 .account-panel-action {
@@ -3715,8 +3766,8 @@ h1, h2, h3 {
   align-items: center;
   justify-content: center;
   border-radius: 0.75rem;
-  border: 1px solid rgb(39 39 42);
-  background: rgb(24 24 27);
+  border: 1px solid rgb(var(--gt-zinc-800));
+  background: rgb(var(--gt-zinc-900));
   padding: 0.65rem 0.85rem;
   text-align: center;
   font-size: 0.875rem;
@@ -3728,8 +3779,8 @@ h1, h2, h3 {
 }
 
 .account-panel-action:hover {
-  border-color: rgb(82 82 91);
-  background: rgb(39 39 42);
+  border-color: rgb(var(--gt-zinc-600));
+  background: rgb(var(--gt-zinc-800));
 }
 
 .page-shift-enter-active,
@@ -3805,7 +3856,7 @@ h1, h2, h3 {
   justify-content: center;
   gap: 0.2rem;
   border-radius: 0.75rem;
-  color: rgb(161 161 170);
+  color: rgb(var(--gt-zinc-400));
   font-size: 0.68rem;
   font-weight: 700;
   line-height: 1;
@@ -3821,8 +3872,8 @@ h1, h2, h3 {
 
 .mobile-bottom-nav-item:hover,
 .mobile-bottom-nav-item:focus-visible {
-  background: rgb(39 39 42 / 0.82);
-  color: white;
+  background: rgb(var(--gt-zinc-800) / 0.82);
+  color: rgb(var(--gt-white));
   outline: none;
 }
 
@@ -3836,9 +3887,9 @@ h1, h2, h3 {
 .music-now-playing-nav:not(:disabled) svg {
   box-sizing: content-box;
   border-radius: 999px;
-  background: rgb(220 38 38);
+  background: rgb(var(--gt-primary-600));
   padding: 0.32rem;
-  color: white;
+  color: rgb(var(--gt-on-primary));
 }
 
 .music-now-playing-nav:disabled {
@@ -3890,12 +3941,13 @@ h1, h2, h3 {
 }
 
 .mobile-bottom-nav-create {
-  color: white;
+  color: rgb(var(--gt-white));
 }
 
 .mobile-bottom-nav-create svg {
+  color: rgb(var(--gt-on-primary));
   border-radius: 999px;
-  background: rgb(220 38 38);
+  background: rgb(var(--gt-primary-600));
   padding: 0.35rem;
   box-sizing: content-box;
 }
@@ -3909,8 +3961,8 @@ h1, h2, h3 {
   justify-content: center;
   gap: 0.35rem;
   border-radius: 0.75rem;
-  background: rgb(255 255 255 / 0.04);
-  color: rgb(228 228 231);
+  background: rgb(var(--gt-white) / 0.04);
+  color: rgb(var(--gt-zinc-200));
   padding: 0.65rem 0.45rem;
   text-align: center;
   font-size: 0.72rem;
@@ -3947,8 +3999,8 @@ h1, h2, h3 {
 
 .mobile-sheet-action:hover,
 .mobile-sheet-action:focus-visible {
-  background: rgb(39 39 42);
-  color: white;
+  background: rgb(var(--gt-zinc-800));
+  color: rgb(var(--gt-white));
   outline: none;
 }
 
@@ -4025,7 +4077,7 @@ h1, h2, h3 {
 }
 
 .giltube-sidebar-scrollbar {
-  scrollbar-color: rgba(113, 113, 122, 0.75) rgba(24, 24, 27, 0.25);
+  scrollbar-color: rgb(var(--gt-zinc-500) / 0.75) rgb(var(--gt-zinc-900) / 0.25);
   scrollbar-width: thin;
 }
 
@@ -4034,19 +4086,19 @@ h1, h2, h3 {
 }
 
 .giltube-sidebar-scrollbar::-webkit-scrollbar-track {
-  background: rgba(24, 24, 27, 0.35);
-  border-left: 1px solid rgba(63, 63, 70, 0.25);
+  background: rgb(var(--gt-zinc-900) / 0.35);
+  border-left: 1px solid rgb(var(--gt-zinc-700) / 0.25);
 }
 
 .giltube-sidebar-scrollbar::-webkit-scrollbar-thumb {
   min-height: 48px;
-  background: linear-gradient(180deg, rgba(161, 161, 170, 0.72), rgba(82, 82, 91, 0.78));
-  border: 2px solid rgba(24, 24, 27, 0.9);
+  background: linear-gradient(180deg, rgb(var(--gt-zinc-400) / 0.72), rgb(var(--gt-zinc-600) / 0.78));
+  border: 2px solid rgb(var(--gt-zinc-900) / 0.9);
   border-radius: 999px;
 }
 
 .giltube-sidebar-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(180deg, rgba(212, 212, 216, 0.86), rgba(113, 113, 122, 0.9));
+  background: linear-gradient(180deg, rgb(var(--gt-zinc-300) / 0.86), rgb(var(--gt-zinc-500) / 0.9));
 }
 
 .giltube-sidebar-category-scroll {
@@ -4073,13 +4125,13 @@ h1, h2, h3 {
 .giltube-sidebar-category-scroll:hover,
 .giltube-sidebar-category-scroll:focus,
 .giltube-sidebar-category-scroll:focus-within {
-  scrollbar-color: rgba(161, 161, 170, 0.55) transparent;
+  scrollbar-color: rgb(var(--gt-zinc-400) / 0.55) transparent;
 }
 
 .giltube-sidebar-category-scroll:hover::-webkit-scrollbar-thumb,
 .giltube-sidebar-category-scroll:focus::-webkit-scrollbar-thumb,
 .giltube-sidebar-category-scroll:focus-within::-webkit-scrollbar-thumb {
-  background: rgba(161, 161, 170, 0.55);
+  background: rgb(var(--gt-zinc-400) / 0.55);
 }
 
 @media (prefers-reduced-motion: reduce) {

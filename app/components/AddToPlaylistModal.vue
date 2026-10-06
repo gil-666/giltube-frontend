@@ -27,12 +27,12 @@
 
           <div v-else class="space-y-2 max-h-96 overflow-y-auto">
             <button v-for="playlist in playlists" :key="playlist.id" @click="selectPlaylist(playlist)" 
-              class="w-full text-left p-3 rounded border border-white/10 hover:border-red-500 hover:bg-zinc-700 transition">
+              class="w-full text-left p-3 rounded border border-white/10 hover:border-primary-500 hover:bg-zinc-700 transition">
               <div class="font-medium text-white">{{ playlist.title }}</div>
               <div class="text-sm text-gray-400">{{ playlist.video_count }} {{ t('playlists.videos') }}</div>
             </button>
 
-            <button @click="emitCreateNew" class="w-full p-3 rounded border border-dashed border-zinc-600 hover:border-red-500 text-gray-400 hover:text-white transition">
+            <button @click="emitCreateNew" class="w-full p-3 rounded border border-dashed border-zinc-600 hover:border-primary-500 text-gray-400 hover:text-white transition">
               + {{ t('playlists.createNew') }}
             </button>
           </div>

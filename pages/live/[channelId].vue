@@ -1,8 +1,8 @@
 <template>
-    <div class="min-h-screen bg-black text-white p-6">
+    <div class="min-h-screen bg-zinc-950 text-white p-6">
         <div class="grid grid-cols-1 xl:grid-cols-[1fr_360px] gap-6 max-w-7xl mx-auto">
             <section class="space-y-5 min-w-0">
-                <div class="rounded-lg overflow-hidden border border-white/[0.07] bg-zinc-950">
+                <div class="gt-media rounded-lg overflow-hidden border border-white/[0.07] bg-zinc-950">
 					<VideoPlayer v-if="playbackUrl && isLive" :src="playbackUrl" status="ready" :lock-adaptive-quality="true" />
 					<div v-else class="relative flex aspect-video items-center justify-center overflow-hidden bg-zinc-950 p-8 text-center">
                         <img

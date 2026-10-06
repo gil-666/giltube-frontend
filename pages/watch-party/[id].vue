@@ -1,5 +1,5 @@
 <template>
-  <main class="min-h-full bg-black text-white">
+  <main class="min-h-full bg-zinc-950 text-white">
     <div v-if="inviteMode" class="flex min-h-full items-center justify-center p-4">
       <section class="w-full max-w-xl rounded-2xl border border-white/10 bg-zinc-950 p-6 text-center shadow-2xl">
         <AvatarFallback
@@ -36,7 +36,7 @@
     <div v-else class="grid gap-6 p-4 lg:grid-cols-[minmax(0,1fr)_24rem] lg:items-start lg:p-6">
       <section class="flex min-w-0 flex-col lg:min-h-[calc(100dvh-7rem)]">
         <div class="flex min-h-0 flex-1 flex-col">
-          <div class="relative">
+          <div class="gt-media relative">
             <VideoPlayer
               ref="videoPlayerRef"
               class="watch-party-player"
