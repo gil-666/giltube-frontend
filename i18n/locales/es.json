@@ -1437,7 +1437,7 @@
         "notMeasured": "sin medir",
         "notReported": "Este worker aún no ha informado sus capacidades de codificación (versión anterior).",
         "limits": "Límites",
-        "limitsHelp": "Limita las calidades que recibe este worker. Las tareas en curso terminan primero.",
+        "limitsHelp": "Limita las calidades que recibe este worker. Las tareas en curso que superen los nuevos límites vuelven a la cola.",
         "sdrLimit": "SDR hasta",
         "hdrLimit": "HDR hasta",
         "noLimit": "Sin límite",

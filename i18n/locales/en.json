@@ -1437,7 +1437,7 @@
         "notMeasured": "not measured",
         "notReported": "This worker has not reported its encoding capabilities yet (older version).",
         "limits": "Limits",
-        "limitsHelp": "Cap the qualities this worker is given. Running tasks finish first.",
+        "limitsHelp": "Cap the qualities this worker is given. Running tasks above the new limits go back to the queue.",
         "sdrLimit": "SDR up to",
         "hdrLimit": "HDR up to",
         "noLimit": "No limit",
