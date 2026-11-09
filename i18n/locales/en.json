@@ -2345,6 +2345,31 @@
         "load": "Failed to load caption status.",
         "queue": "Failed to queue captions."
       }
+    },
+    "subtitleFinder": {
+      "title": "Find subtitles online",
+      "body": "Searches OpenSubtitles and SubDL. English and Latin American Spanish are listed first. New movies and episodes get these two automatically.",
+      "search": "Search",
+      "searchAgain": "Search again",
+      "searching": "Searching…",
+      "notConfigured": "No subtitle provider is set up. Add OPENSUBTITLES_API_KEY or SUBDL_API_KEY to the server environment.",
+      "matched": "Searched for {title}",
+      "byTitle": "by title (no TMDB match)",
+      "tmdbOverride": "TMDB ID",
+      "providerError": "{provider}: {message}",
+      "empty": "No subtitles found.",
+      "alreadyAdded": "Already added",
+      "untitled": "Untitled subtitle",
+      "downloads": "{count} downloads",
+      "trusted": "Trusted",
+      "machine": "Machine translated",
+      "add": "Add",
+      "adding": "Adding…",
+      "added": "Added",
+      "showAll": "Show all {count}",
+      "unknownLanguage": "Unknown language",
+      "searchFailed": "Subtitle search failed.",
+      "addFailed": "Could not add this subtitle."
     }
   },
   "common": {

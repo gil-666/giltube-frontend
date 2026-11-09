@@ -2345,6 +2345,31 @@
         "load": "No se pudo cargar el estado de los subtítulos.",
         "queue": "No se pudieron agregar los subtítulos a la cola."
       }
+    },
+    "subtitleFinder": {
+      "title": "Buscar subtítulos en línea",
+      "body": "Busca en OpenSubtitles y SubDL. Inglés y español latinoamericano aparecen primero. Las películas y episodios nuevos reciben estos dos automáticamente.",
+      "search": "Buscar",
+      "searchAgain": "Buscar de nuevo",
+      "searching": "Buscando…",
+      "notConfigured": "No hay ningún proveedor de subtítulos configurado. Agrega OPENSUBTITLES_API_KEY o SUBDL_API_KEY al entorno del servidor.",
+      "matched": "Se buscó {title}",
+      "byTitle": "por título (sin coincidencia en TMDB)",
+      "tmdbOverride": "ID de TMDB",
+      "providerError": "{provider}: {message}",
+      "empty": "No se encontraron subtítulos.",
+      "alreadyAdded": "Ya agregado",
+      "untitled": "Subtítulo sin título",
+      "downloads": "{count} descargas",
+      "trusted": "Confiable",
+      "machine": "Traducción automática",
+      "add": "Agregar",
+      "adding": "Agregando…",
+      "added": "Agregado",
+      "showAll": "Mostrar los {count}",
+      "unknownLanguage": "Idioma desconocido",
+      "searchFailed": "La búsqueda de subtítulos falló.",
+      "addFailed": "No se pudo agregar este subtítulo."
     }
   },
   "common": {
