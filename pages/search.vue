@@ -40,6 +40,7 @@
                         <div class="search-thumb relative mb-3 aspect-video overflow-hidden rounded-xl bg-zinc-900">
                             <img class="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]"
                                 v-bind="responsiveImage(video.thumbnail, '(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw')" alt="" />
+                            <span v-if="formatVideoDuration(video.duration_seconds)" class="gt-media absolute bottom-2 right-2 rounded-md bg-black/80 px-1.5 py-0.5 text-[11px] font-semibold tabular-nums text-zinc-100">{{ formatVideoDuration(video.duration_seconds) }}</span>
                         </div>
                         <p class="line-clamp-2 text-sm font-medium leading-5 text-zinc-100">{{ video.title }}</p>
                         <p class="mt-1 flex items-center gap-1 text-[13px] text-zinc-400">
@@ -169,6 +170,7 @@
 </template>
 
 <script setup lang="ts">
+import { formatVideoDuration } from '~/app/utils/time'
 import { responsiveImage } from '~/app/utils/media'
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'

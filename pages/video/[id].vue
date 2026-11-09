@@ -37,6 +37,7 @@
           :has-next-episode="hasNextQueueVideo"
           :next-episode-label="isPlayingFromSeries ? t('watchPage.nextEpisode') : t('watchPage.nextVideo')"
           :start-time-seconds="resumeStartSeconds"
+          :exact-start-time="linkedStartSeconds > 0"
           :autoplay="canAutoplayWatchVideo"
           :intro-candidate="isPlaybackIntroCandidate"
           :intro-ready="playbackIntroReady"
@@ -109,13 +110,17 @@
         
         <!-- Views and Date -->
         <div v-if="video.clip" class="mt-3 rounded-xl bg-white/[0.04] p-3 text-sm text-zinc-200">
-          <p class="font-semibold">Clipped by {{ clipAttributionName }}</p>
-          <NuxtLink :to="originalVideoLink" class="mt-1 inline-flex text-zinc-400 underline-offset-4 hover:text-white hover:underline">
-            Go to original video: {{ video.clip.original_video_title || "Original video" }}
+          <p class="font-semibold">{{ t('video.clip.clippedBy', { name: clipAttributionName }) }}</p>
+          <NuxtLink :to="originalVideoLink" class="mt-1 flex text-zinc-400 underline-offset-4 hover:text-white hover:underline">
+            {{ video.clip.original_video_title ? t('video.clip.originalNamed', { title: video.clip.original_video_title }) : t('video.clip.original') }}
+          </NuxtLink>
+          <NuxtLink :to="originalMomentLink" class="mt-1 flex text-zinc-400 underline-offset-4 hover:text-white hover:underline">
+            {{ t('video.clip.originalMoment', { start: formatClipTime(clipPlaybackStart), end: formatClipTime(clipPlaybackEnd) }) }}
           </NuxtLink>
         </div>
 
         <div class="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div class="flex min-w-0 items-center gap-4">
           <NuxtLink :to="localePath(`/channel/${video.channel?.id}`)" class="group flex min-w-0 items-center gap-3">
             <AvatarFallback
               :src="video.channel?.avatar_url"
@@ -127,8 +132,29 @@
                 <p class="truncate text-[15px] font-semibold text-zinc-100 group-hover:text-white">{{ video.channel.name }}</p>
                 <VerifiedBadge :verified="video.channel?.verified || false" size="md" />
               </div>
+              <p v-if="channelSubscriberCount !== null" class="truncate text-xs text-zinc-400">
+                {{ t(channelSubscriberCount === 1 ? 'channelPage.subscriberCountOne' : 'channelPage.subscriberCount', { count: formatViews(channelSubscriberCount) }) }}
+              </p>
             </div>
           </NuxtLink>
+          <SpecularButton
+            v-if="showSubscribeButton"
+            class="watch-subscribe-button"
+            :class="{ 'is-subscribed': isSubscribedToChannel }"
+            :color-var="isSubscribedToChannel ? '--gt-accent-400' : '--gt-zinc-50'"
+            :tint-var="isSubscribedToChannel ? '--gt-accent-500' : '--gt-white'"
+            :tint-opacity="isSubscribedToChannel ? 0.14 : 0.1"
+            :disabled="channelSubscriptionBusy"
+            :aria-pressed="isSubscribedToChannel"
+            :title="channelSubscriptionError || undefined"
+            @click="toggleChannelSubscription"
+          >
+            <svg v-if="isSubscribedToChannel" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M5 12.5l4.5 4.5L19 7.5" />
+            </svg>
+            {{ channelSubscriptionBusy ? t('channelPage.subscriptionWorking') : isSubscribedToChannel ? t('channelPage.subscribed') : t('channelPage.subscribe') }}
+          </SpecularButton>
+          </div>
 
           <!-- Action Buttons (Like, Share, Add to Playlist) -->
           <div class="flex shrink-0 flex-wrap gap-2 sm:justify-end">
@@ -779,8 +805,9 @@
                   :alt="relatedVideo.title"
                 />
                 <span v-if="relatedVideo.kind" class="watch-thumb-badge watch-thumb-badge--kind">{{ relatedVideo.kindLabel }}</span>
-                <div v-if="isVideo8K(relatedVideo.width)" class="watch-thumb-badge">{{ t('video.eightKBadge') }}</div>
-                <div v-if="isVideo4K(relatedVideo.width)" class="watch-thumb-badge">{{ t('video.fourKBadge') }}</div>
+                <div v-if="isVideo8K(relatedVideo.width)" class="watch-thumb-badge watch-thumb-badge--quality">{{ t('video.eightKBadge') }}</div>
+                <div v-if="isVideo4K(relatedVideo.width)" class="watch-thumb-badge watch-thumb-badge--quality">{{ t('video.fourKBadge') }}</div>
+                <span v-if="formatVideoDuration(relatedVideo.duration_seconds)" class="watch-thumb-badge tabular-nums">{{ formatVideoDuration(relatedVideo.duration_seconds) }}</span>
                 <div v-if="videoProgressPercent(relatedVideo.id) > 0" class="absolute inset-x-0 bottom-0 h-1 bg-black/55">
                   <div class="h-full bg-primary-600" :style="{ width: `${videoProgressPercent(relatedVideo.id)}%` }" />
                 </div>
@@ -924,8 +951,9 @@
                       :alt="relatedVideo.title"
                     />
                     <span v-if="relatedVideo.kind" class="watch-thumb-badge watch-thumb-badge--kind">{{ relatedVideo.kindLabel }}</span>
-                    <div v-if="isVideo8K(relatedVideo.width)" class="watch-thumb-badge">{{ t('video.eightKBadge') }}</div>
-                    <div v-if="isVideo4K(relatedVideo.width)" class="watch-thumb-badge">{{ t('video.fourKBadge') }}</div>
+                    <div v-if="isVideo8K(relatedVideo.width)" class="watch-thumb-badge watch-thumb-badge--quality">{{ t('video.eightKBadge') }}</div>
+                    <div v-if="isVideo4K(relatedVideo.width)" class="watch-thumb-badge watch-thumb-badge--quality">{{ t('video.fourKBadge') }}</div>
+                    <span v-if="formatVideoDuration(relatedVideo.duration_seconds)" class="watch-thumb-badge tabular-nums">{{ formatVideoDuration(relatedVideo.duration_seconds) }}</span>
                     <div v-if="videoProgressPercent(relatedVideo.id) > 0" class="absolute inset-x-0 bottom-0 h-1 bg-black/55">
                       <div class="h-full bg-primary-600" :style="{ width: `${videoProgressPercent(relatedVideo.id)}%` }" />
                     </div>
@@ -966,8 +994,9 @@
                   :alt="relatedVideo.title"
                 />
                 <span v-if="relatedVideo.kind" class="watch-thumb-badge watch-thumb-badge--kind">{{ relatedVideo.kindLabel }}</span>
-                <div v-if="isVideo8K(relatedVideo.width)" class="watch-thumb-badge">{{ t('video.eightKBadge') }}</div>
-                <div v-if="isVideo4K(relatedVideo.width)" class="watch-thumb-badge">{{ t('video.fourKBadge') }}</div>
+                <div v-if="isVideo8K(relatedVideo.width)" class="watch-thumb-badge watch-thumb-badge--quality">{{ t('video.eightKBadge') }}</div>
+                <div v-if="isVideo4K(relatedVideo.width)" class="watch-thumb-badge watch-thumb-badge--quality">{{ t('video.fourKBadge') }}</div>
+                <span v-if="formatVideoDuration(relatedVideo.duration_seconds)" class="watch-thumb-badge tabular-nums">{{ formatVideoDuration(relatedVideo.duration_seconds) }}</span>
                 <div v-if="videoProgressPercent(relatedVideo.id) > 0" class="absolute inset-x-0 bottom-0 h-1 bg-black/55">
                   <div class="h-full bg-primary-600" :style="{ width: `${videoProgressPercent(relatedVideo.id)}%` }" />
                 </div>
@@ -997,7 +1026,8 @@
                   alt=""
                 />
                 <span v-if="relatedVideo.kind" class="watch-thumb-badge watch-thumb-badge--kind">{{ relatedVideo.kindLabel }}</span>
-                <span v-if="isVideo8K(relatedVideo.width) || isVideo4K(relatedVideo.width)" class="watch-thumb-badge">{{ isVideo8K(relatedVideo.width) ? t('video.eightKBadge') : t('video.fourKBadge') }}</span>
+                <span v-if="isVideo8K(relatedVideo.width) || isVideo4K(relatedVideo.width)" class="watch-thumb-badge watch-thumb-badge--quality">{{ isVideo8K(relatedVideo.width) ? t('video.eightKBadge') : t('video.fourKBadge') }}</span>
+                <span v-if="formatVideoDuration(relatedVideo.duration_seconds)" class="watch-thumb-badge tabular-nums">{{ formatVideoDuration(relatedVideo.duration_seconds) }}</span>
                 <div v-if="videoProgressPercent(relatedVideo.id) > 0" class="absolute inset-x-0 bottom-0 h-[3px] bg-white/20">
                   <div class="h-full bg-primary-600" :style="{ width: `${videoProgressPercent(relatedVideo.id)}%` }" />
                 </div>
@@ -1192,6 +1222,8 @@
 import GilAdsVideoPlayer from '~/app/components/ads/GilAdsVideoPlayer.vue'
 import VideoPlayer from '~/app/components/videoplayer/VideoPlayer.vue'
 import ClipEditor from '~/app/components/videoplayer/ClipEditor.vue'
+import SpecularButton from '~/app/components/SpecularButton.vue'
+import { activeSubscriptionChannelID, getChannelSubscription, subscribeToChannel, unsubscribeFromChannel } from '~/app/service/subscriptions'
 import GilAdsBanner from '~/app/components/ads/GilAdsBanner.vue'
 import AvatarFallback from '~/app/components/AvatarFallback.vue'
 import VerifiedBadge from '~/app/components/VerifiedBadge.vue'
@@ -1208,7 +1240,7 @@ import { useMusicPlayer } from '~/app/composables/useMusicPlayer'
 import { createWatchParty } from '~/app/service/watchParties'
 import { getVideoComments, postComment as apiPostComment, deleteComment, likeComment, unlikeComment } from '~/app/service/comments'
 import { insertGiphyIntoComment, type GiphyGif } from '~/app/utils/giphy'
-import { getTimeAgo } from '~/app/utils/time'
+import { formatVideoDuration, getTimeAgo } from '~/app/utils/time'
 import { formatViews } from '~/app/utils/format'
 import { imageVariantSrcset, imageVariantUrl, isVideo4K, isVideo8K, resolveAvatarUrl, resolveMediaUrl, responsiveImage } from '~/app/utils/media'
 import { useMetaTags } from '~/app/composables/useMetaTags'
@@ -1233,6 +1265,53 @@ const isMobileUserAgent = (userAgent = '', maxTouchPoints = 0) => {
 const isMobileWatchDevice = ref(isMobileUserAgent(import.meta.server ? requestHeaders['user-agent'] : ''))
 
 const isLoggedIn = ref(false)
+
+// Subscribe button beside the channel name (hidden on the viewer's own channel).
+const subscriptionActorID = ref('')
+const isSubscribedToChannel = ref(false)
+const channelSubscriberCount = ref<number | null>(null)
+const channelSubscriptionBusy = ref(false)
+const channelSubscriptionError = ref('')
+const showSubscribeButton = computed(() => {
+  const channel = video.value?.channel
+  if (!channel?.id) return false
+  if (subscriptionActorID.value === channel.id) return false
+  return !(isLoggedIn.value && channel.user_id && channel.user_id === userId.value)
+})
+const loadChannelSubscription = async () => {
+  const channelID = video.value?.channel?.id
+  if (!channelID) return
+  subscriptionActorID.value = activeSubscriptionChannelID()
+  try {
+    const state = await getChannelSubscription(channelID, subscriptionActorID.value)
+    isSubscribedToChannel.value = Boolean(state.subscribed)
+    channelSubscriberCount.value = Number(state.subscriber_count || 0)
+  } catch (err) {
+    console.error('Channel subscription status failed:', err)
+  }
+}
+const toggleChannelSubscription = async () => {
+  const channelID = video.value?.channel?.id
+  if (!channelID) return
+  if (!isLoggedIn.value) {
+    await navigateTo(localePath('/login'))
+    return
+  }
+  if (channelSubscriptionBusy.value) return
+  channelSubscriptionBusy.value = true
+  channelSubscriptionError.value = ''
+  try {
+    const state = isSubscribedToChannel.value
+      ? await unsubscribeFromChannel(channelID, subscriptionActorID.value)
+      : await subscribeToChannel(channelID, subscriptionActorID.value)
+    isSubscribedToChannel.value = Boolean(state.subscribed)
+    channelSubscriberCount.value = Number(state.subscriber_count || 0)
+  } catch (err: any) {
+    channelSubscriptionError.value = err?.response?.data?.error || t('channelPage.subscriptionError')
+  } finally {
+    channelSubscriptionBusy.value = false
+  }
+}
 const userId = ref('')
 const activeAccount = ref('personal')
 const activeChannelName = ref('')
@@ -1358,7 +1437,13 @@ const playerDuration = ref(0)
 const MIN_CLIP_SOURCE_SECONDS = 120
 
 const clipAttributionName = computed(() => video.value?.clip?.clipped_by_channel || video.value?.clip?.clipped_by_username || 'User')
-const originalVideoLink = computed(() => localePath(`/video/${video.value?.clip?.original_video_id || ''}`))
+const originalVideoLink = computed(() => localePath(`/video/${video.value?.clip?.original_video_id || ''}?start_over=1`))
+const originalMomentLink = computed(() => localePath(`/video/${video.value?.clip?.original_video_id || ''}?t=${Math.floor(Number(video.value?.clip?.start_seconds || 0))}`))
+// A link to a moment: /video/:id?t=SECONDS starts there instead of the saved position.
+const linkedStartSeconds = computed(() => {
+  const value = Number(Array.isArray(route.query.t) ? route.query.t[0] : route.query.t)
+  return Number.isFinite(value) && value > 0 ? Math.floor(value) : 0
+})
 const clipVideoLink = (clipId: string) => localePath(`/video/${clipId}`)
 const isClipVideo = computed(() => Boolean(video.value?.clip?.original_video_id))
 const isMovieOrSeriesContext = computed(() => Boolean(
@@ -1388,8 +1473,10 @@ const clipPlaybackStart = computed(() => isClipVideo.value ? Number(video.value?
 const clipPlaybackEnd = computed(() => isClipVideo.value ? Number(video.value?.clip?.end_seconds || 0) : 0)
 const formatClipTime = (seconds: number) => {
   const total = Math.max(0, Math.floor(Number(seconds || 0)))
-  const minutes = Math.floor(total / 60)
+  const hours = Math.floor(total / 3600)
+  const minutes = Math.floor((total % 3600) / 60)
   const secs = total % 60
+  if (hours) return `${hours}:${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`
   return `${minutes}:${String(secs).padStart(2, '0')}`
 }
 const formatClipDuration = (clip: any) => formatClipTime(Number(clip?.clip?.end_seconds || 0) - Number(clip?.clip?.start_seconds || 0))
@@ -1763,6 +1850,10 @@ const onVideoPlay = async () => {
 
 const loadWatchResume = async () => {
   resumeStartSeconds.value = 0
+  if (linkedStartSeconds.value > 0) {
+    resumeStartSeconds.value = linkedStartSeconds.value
+    return
+  }
   if (!isLoggedIn.value) return
   const startOverQuery = route.query.start_over
   if (startOverQuery === '1' || startOverQuery === 'true') return
@@ -1861,6 +1952,7 @@ onMounted(async () => {
   }
   
   syncActiveAccountFromStorage()
+  void loadChannelSubscription()
   await loadWatchResume()
   // No intro when resuming partway through or arriving via a manual
   // "next episode" click.
@@ -2840,6 +2932,15 @@ const handleVideoEnded = async () => {
   color: rgb(var(--gt-white));
 }
 
+.watch-subscribe-button {
+  height: 2.25rem;
+  flex-shrink: 0;
+  padding: 0 1.05rem;
+  font-size: 0.875rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
 .watch-pill {
   display: inline-flex;
   height: 2.25rem;
@@ -2910,6 +3011,11 @@ const handleVideoEnded = async () => {
 .watch-thumb-badge--kind {
   right: auto;
   left: 0.375rem;
+}
+
+.watch-thumb-badge--quality {
+  top: 0.375rem;
+  bottom: auto;
 }
 
 .watch-thumb-badge--start {

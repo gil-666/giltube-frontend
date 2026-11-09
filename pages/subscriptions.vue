@@ -58,8 +58,9 @@
           <div v-if="row.videos.length" class="-mx-4 px-4 sm:mx-0 sm:px-0">
             <div :ref="setRowRef(row.channel.id)" class="subscription-rail flex snap-x gap-4 overflow-x-auto scroll-smooth pb-2 sm:gap-5">
               <NuxtLink v-for="video in row.videos" :key="video.id" :to="localePath(`/video/${video.id}`)" class="subscription-card group min-w-0 shrink-0 snap-start">
-                <div class="aspect-video overflow-hidden rounded-lg bg-zinc-900">
+                <div class="relative aspect-video overflow-hidden rounded-lg bg-zinc-900">
                   <img v-if="video.thumbnail_url" :src="resolveMediaUrl(video.thumbnail_url)" :srcset="imageVariantSrcset(video.thumbnail_url) || undefined" sizes="(min-width:1280px) 18rem, (min-width:640px) 16rem, 76vw" :alt="video.title" class="h-full w-full object-cover transition group-hover:scale-[1.02]" loading="lazy" decoding="async">
+                  <span v-if="formatVideoDuration(video.duration_seconds)" class="gt-media absolute bottom-2 right-2 rounded-md bg-black/80 px-1.5 py-0.5 text-[11px] font-semibold tabular-nums text-zinc-100">{{ formatVideoDuration(video.duration_seconds) }}</span>
                 </div>
                 <h3 class="mt-3 line-clamp-2 text-sm font-bold group-hover:text-primary-300">{{ video.title }}</h3>
                 <p class="mt-1 text-xs text-zinc-500">{{ t('home.videoStats', { views: formatViews(video.views), time: getTimeAgo(video.created_at) }) }}</p>
@@ -81,7 +82,7 @@ import VerifiedBadge from '~/app/components/VerifiedBadge.vue'
 import { activeSubscriptionChannelID, getSubscriptionsFeed, listSubscribedChannels } from '~/app/service/subscriptions'
 import { formatViews } from '~/app/utils/format'
 import { imageVariantSrcset, resolveAvatarUrl, resolveMediaUrl } from '~/app/utils/media'
-import { getTimeAgo } from '~/app/utils/time'
+import { formatVideoDuration, getTimeAgo } from '~/app/utils/time'
 
 const { t } = useI18n()
 const localePath = useLocalePath()

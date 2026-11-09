@@ -2,6 +2,17 @@ import api from './client'
 
 export type TranscodeJobStatus = 'queued' | 'running' | 'paused' | 'failed' | 'cancelled' | 'completed'
 
+export type TranscodeTask = {
+  name: string
+  kind: 'prep' | 'sdr' | 'hdr' | string
+  status: 'queued' | 'running' | 'completed' | 'failed' | 'skipped' | 'cancelled' | string
+  progress: number
+  attempts: number
+  worker_id: string
+  worker_name: string
+  error_message: string
+}
+
 export type TranscodeJob = {
   video_id: string
   title: string
@@ -18,6 +29,9 @@ export type TranscodeJob = {
   updated_at: string
   started_at?: string
   finished_at?: string
+  /** "split" for jobs encoded as distributed tasks, listed in tasks. */
+  mode?: string
+  tasks?: TranscodeTask[]
 }
 
 export const listTranscodeJobs = async (status = 'all') => {

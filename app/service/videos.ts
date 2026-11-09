@@ -170,6 +170,37 @@ export const deleteVideoSubtitle = async (videoId: string, trackId: string) => {
   return res.data
 }
 
+export type AutoCaptionJob = {
+  video_id: string
+  mode: 'auto' | 'manual' | string
+  requested_language: string
+  detected_language: string
+  status: 'queued' | 'running' | 'completed' | 'skipped' | 'failed' | 'cancelled' | string
+  progress: number
+  error_message: string
+  attempts: number
+  created_at: string
+  updated_at: string
+  started_at?: string
+  finished_at?: string
+}
+
+export type AutoCaptionStatus = {
+  job: AutoCaptionJob | null
+  workers_online: number
+  supported_languages: string[]
+}
+
+export const getVideoAutoCaptions = async (videoId: string) => {
+  const res = await api.get(`/videos/${videoId}/auto-captions`)
+  return res.data as AutoCaptionStatus
+}
+
+export const requestVideoAutoCaptions = async (videoId: string, language: 'auto' | 'en' | 'es') => {
+  const res = await api.post(`/videos/${videoId}/auto-captions`, { language })
+  return res.data as AutoCaptionStatus
+}
+
 const fetchFileWithRetry = async (url: string, maxRetries: number = 3): Promise<Blob> => {
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {

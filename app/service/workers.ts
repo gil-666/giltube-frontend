@@ -5,6 +5,33 @@ export interface WorkerJob {
   video_title: string
   progress: number
   started_at: string
+  /** Distributed transcode task, e.g. "2160p" or "2160p-hdr"; absent for a whole job. */
+  task?: string
+}
+
+/** What a worker reported it can encode, and how fast (megapixels per second per slot). */
+export interface WorkerCapabilities {
+  version?: number
+  sdr_hw_max_height?: number
+  hdr_hw_max_height?: number
+  sdr_sw?: boolean
+  hdr_sw?: boolean
+  slots?: number
+  sdr_hw_mpps?: number
+  sdr_sw_mpps?: number
+  hdr_hw_mpps?: number
+  hdr_sw_mpps?: number
+  decode_mpps?: number
+  tonemap_mpps?: number
+  download_bps?: number
+  shared_storage?: boolean
+  prep_lane?: boolean
+}
+
+/** Administrator caps: 0 = no limit, -1 (HDR only) = never. */
+export interface WorkerLimits {
+  sdr_max_height: number
+  hdr_max_height: number
 }
 
 export interface WorkerNode {
@@ -29,6 +56,11 @@ export interface WorkerNode {
   started_at: string
   last_seen: string
   current_job?: WorkerJob
+  caption_engine?: string
+  caption_status?: string
+  current_caption_job?: WorkerJob
+  capabilities?: WorkerCapabilities
+  limits?: WorkerLimits
 }
 
 export interface WorkerRelease {
@@ -83,6 +115,11 @@ export const setWorkerScheduling = async (id: string, enabled: boolean) => {
 export const setWorkerRoles = async (id: string, roles: string[]) => {
   const response = await api.put(`/admin/workers/${encodeURIComponent(id)}/roles`, { roles })
   return response.data
+}
+
+export const setWorkerLimits = async (id: string, limits: WorkerLimits): Promise<WorkerLimits> => {
+  const response = await api.put(`/admin/workers/${encodeURIComponent(id)}/limits`, limits)
+  return response.data?.limits
 }
 
 export const deleteWorker = async (id: string) => {

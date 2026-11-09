@@ -466,6 +466,8 @@ Estas rutas requieren ser propietario del video o admin.
 | `POST` | `/videos/{id}/subtitles` | Usuario | Subtítulo multipart y metadatos. |
 | `PUT` | `/videos/{id}/subtitles/{trackId}` | Usuario | Archivo y/o metadatos multipart. |
 | `DELETE` | `/videos/{id}/subtitles/{trackId}` | Usuario | Ninguna |
+| `GET` | `/videos/{id}/auto-captions` | Usuario | Ninguna. Devuelve el trabajo de subtítulos automáticos (o `null`) y `workers_online`. |
+| `POST` | `/videos/{id}/auto-captions` | Usuario | JSON `{ "language": "auto" \| "en" \| "es" }`. Agrega a la cola la (re)generación; `409` mientras haya uno en curso o el video siga procesándose. |
 | `GET` | `/videos/{id}/audio` | Usuario | Ninguna |
 | `POST` | `/videos/{id}/audio` | Usuario | Audio multipart y metadatos. |
 | `PUT` | `/videos/{id}/audio/{trackId}` | Usuario | Archivo y/o metadatos multipart. |
@@ -474,6 +476,8 @@ Estas rutas requieren ser propietario del video o admin.
 
 Los metadatos son `label`, `language`, `default` y `delay_ms`. El archivo de
 subtítulos usa la parte `subtitle`; el audio usa `audio`.
+
+Los subtítulos automáticos se publican como la pista `auto-captions`. Los generan workers con GPU y whisper.cpp, solo en inglés o español. El estado del trabajo es `queued`, `running`, `completed`, `skipped` (sin voz, un idioma no admitido o el video ya tiene subtítulos), `failed` o `cancelled`.
 
 ## Canales y usuarios
 
@@ -897,6 +901,7 @@ La superficie administrativa actual se agrupa así:
 | Espejos de YouTube | `/admin/youtube-mirrors/channels` y `/admin/youtube-mirrors/import` |
 | Ingestión | `/admin/media-ingests` y acciones de carga, reintento, pausa, vista previa, importación, adjuntos y limpieza |
 | Transcodificación | `/admin/transcode-jobs` y acciones de inicio, reinicio, pausa y cancelación |
+| Subtítulos automáticos | `/admin/caption-jobs` y acciones `backfill`, reintento y cancelación |
 | Workers | `/admin/workers`, versiones, códigos de registro, habilitación/revocación, planificación, asignación de roles (`PUT /admin/workers/{id}/roles`) y eliminación |
 
 Desarrolla clientes administrativos junto con la versión del backend objetivo.

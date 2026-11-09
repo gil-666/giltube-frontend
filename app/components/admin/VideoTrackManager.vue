@@ -76,6 +76,30 @@
         </div>
       </div>
 
+      <div class="space-y-3 rounded-xl border border-white/10 bg-zinc-950 p-4">
+        <div>
+          <h4 class="text-sm font-semibold text-white">{{ t('videoEditor.autoCaptions.title') }}</h4>
+          <p class="mt-1 text-xs text-gray-400">{{ t('videoEditor.autoCaptions.body') }}</p>
+        </div>
+        <p :class="autoCaptionStatusClass" class="text-sm">{{ autoCaptionStatusText }}</p>
+        <div v-if="autoCaptionJob?.status === 'running'" class="h-2 overflow-hidden rounded-full bg-zinc-800">
+          <div class="h-full rounded-full bg-primary-500 transition-all" :style="{ width: `${autoCaptionProgress}%` }" />
+        </div>
+        <p v-if="autoCaptionWorkersOnline === 0 && autoCaptionPending" class="text-xs text-amber-300/90">{{ t('videoEditor.autoCaptions.noWorkers') }}</p>
+        <div class="flex flex-wrap items-end gap-2">
+          <label class="text-xs font-medium text-gray-500">
+            {{ t('videoEditor.autoCaptions.language') }}
+            <select v-model="autoCaptionLanguage" :disabled="autoCaptionPending || autoCaptionQueueing" class="mt-1 block rounded border border-white/10 bg-zinc-800 px-3 py-2 text-sm text-white disabled:opacity-50">
+              <option v-for="option in autoCaptionLanguageOptions" :key="option" :value="option">{{ t(`videoEditor.autoCaptions.languages.${option}`) }}</option>
+            </select>
+          </label>
+          <button type="button" :disabled="autoCaptionPending || autoCaptionQueueing" class="rounded bg-primary-600 px-4 py-2 text-sm font-semibold text-on-primary transition hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-50" @click="generateAutoCaptions">
+            {{ autoCaptionQueueing ? t('videoEditor.autoCaptions.queueing') : autoCaptionJob ? t('videoEditor.autoCaptions.regenerate') : t('videoEditor.autoCaptions.generate') }}
+          </button>
+        </div>
+        <p v-if="hasAutoCaptionTrack" class="text-xs text-gray-500">{{ t('videoEditor.autoCaptions.replaceNote') }}</p>
+      </div>
+
       <div v-if="subtitles.length" class="mt-3 space-y-2">
         <div v-for="track in subtitles" :key="track.id" class="flex flex-col gap-3 rounded bg-zinc-950 px-3 py-2 sm:flex-row sm:items-center sm:justify-between">
           <div class="grid min-w-0 flex-1 gap-2 sm:grid-cols-[8rem_minmax(0,1fr)]">
@@ -135,9 +159,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { deleteVideoAudioTrack, deleteVideoSubtitle, downloadAudioTrackWAV, listVideoAudioTracks, listVideoSubtitles, uploadVideoAudioTrack, uploadVideoSubtitle } from '~/app/service/videos'
+import { deleteVideoAudioTrack, deleteVideoSubtitle, downloadAudioTrackWAV, getVideoAutoCaptions, listVideoAudioTracks, listVideoSubtitles, requestVideoAutoCaptions, uploadVideoAudioTrack, uploadVideoSubtitle, type AutoCaptionJob } from '~/app/service/videos'
 import { resolveMediaUrl } from '~/app/utils/media'
 
 type Track = {
@@ -214,11 +238,94 @@ const loadAudioTracks = async () => {
   }
 }
 
+const AUTO_CAPTION_TRACK_ID = 'auto-captions'
+const autoCaptionLanguageOptions = ['auto', 'en', 'es'] as const
+const autoCaptionJob = ref<AutoCaptionJob | null>(null)
+const autoCaptionWorkersOnline = ref<number | null>(null)
+const autoCaptionLanguage = ref<typeof autoCaptionLanguageOptions[number]>('auto')
+const autoCaptionQueueing = ref(false)
+let autoCaptionTimer: ReturnType<typeof setTimeout> | null = null
+
+const autoCaptionPending = computed(() => ['queued', 'running'].includes(autoCaptionJob.value?.status || ''))
+const autoCaptionProgress = computed(() => Math.max(0, Math.min(100, Math.round(autoCaptionJob.value?.progress || 0))))
+const hasAutoCaptionTrack = computed(() => subtitles.value.some(track => track.id === AUTO_CAPTION_TRACK_ID))
+
+const autoCaptionLanguageName = (code: string) =>
+  ['en', 'es'].includes(code) ? t(`videoEditor.autoCaptions.languages.${code}`) : code
+
+const autoCaptionStatusText = computed(() => {
+  const job = autoCaptionJob.value
+  if (!job) return t('videoEditor.autoCaptions.status.none')
+  switch (job.status) {
+    case 'queued': return t('videoEditor.autoCaptions.status.queued')
+    case 'running': return t('videoEditor.autoCaptions.status.running', { progress: autoCaptionProgress.value })
+    case 'completed': return t('videoEditor.autoCaptions.status.completed', { language: autoCaptionLanguageName(job.detected_language) })
+    case 'skipped': return t('videoEditor.autoCaptions.status.skipped', { reason: job.error_message })
+    case 'failed': return t('videoEditor.autoCaptions.status.failed', { reason: job.error_message })
+    case 'cancelled': return t('videoEditor.autoCaptions.status.cancelled')
+    default: return job.status
+  }
+})
+
+const autoCaptionStatusClass = computed(() => {
+  const status = autoCaptionJob.value?.status
+  if (status === 'failed') return 'text-red-300'
+  if (status === 'completed') return 'text-emerald-300'
+  if (status === 'skipped' || status === 'cancelled') return 'text-amber-300'
+  return 'text-gray-300'
+})
+
+const clearAutoCaptionTimer = () => {
+  if (autoCaptionTimer) clearTimeout(autoCaptionTimer)
+  autoCaptionTimer = null
+}
+
+const applyAutoCaptionStatus = async (data: { job: AutoCaptionJob | null, workers_online: number }) => {
+  const wasPending = autoCaptionPending.value
+  autoCaptionJob.value = data.job
+  autoCaptionWorkersOnline.value = data.workers_online
+  if (data.job && ['auto', 'en', 'es'].includes(data.job.requested_language)) {
+    autoCaptionLanguage.value = data.job.requested_language as typeof autoCaptionLanguageOptions[number]
+  }
+  clearAutoCaptionTimer()
+  if (autoCaptionPending.value) {
+    autoCaptionTimer = setTimeout(loadAutoCaptions, 5000)
+  } else if (wasPending && data.job?.status === 'completed') {
+    await loadSubtitles()
+  }
+}
+
+const loadAutoCaptions = async () => {
+  if (!props.videoId) return
+  try {
+    await applyAutoCaptionStatus(await getVideoAutoCaptions(props.videoId))
+  } catch (err: any) {
+    errorMessage.value = err?.response?.data?.error || err?.message || t('videoEditor.autoCaptions.errors.load')
+  }
+}
+
+const generateAutoCaptions = async () => {
+  if (!props.videoId) return
+  autoCaptionQueueing.value = true
+  errorMessage.value = ''
+  try {
+    await applyAutoCaptionStatus(await requestVideoAutoCaptions(props.videoId, autoCaptionLanguage.value))
+  } catch (err: any) {
+    errorMessage.value = err?.response?.data?.error || err?.message || t('videoEditor.autoCaptions.errors.queue')
+  } finally {
+    autoCaptionQueueing.value = false
+  }
+}
+
+onBeforeUnmount(clearAutoCaptionTimer)
+
 const loadAll = async () => {
   errorMessage.value = ''
   resetSubtitleForm()
   resetAudioForm()
-  await Promise.all([loadSubtitles(), loadAudioTracks()])
+  clearAutoCaptionTimer()
+  autoCaptionJob.value = null
+  await Promise.all([loadSubtitles(), loadAudioTracks(), loadAutoCaptions()])
 }
 
 watch(() => props.videoId, async (next, prev) => {

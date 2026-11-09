@@ -290,7 +290,11 @@
       "titlePlaceholder": "Clip: {title}",
       "publish": "Publish clip",
       "publishing": "Publishing...",
-      "publishFailed": "Failed to publish clip"
+      "publishFailed": "Failed to publish clip",
+      "clippedBy": "Clipped by {name}",
+      "original": "Original video",
+      "originalNamed": "Original video: {title}",
+      "originalMoment": "Watch this moment in the original ({start} – {end})"
     },
     "addPlaylist": "Add to Playlist",
     "download": "Download",
@@ -1409,6 +1413,37 @@
         "online": "Online",
         "offline": "Offline",
         "revoked": "Revoked"
+      },
+      "captions": {
+        "enabled": "Captions: {engine}",
+        "current": "Captioning {title} ({progress}%)",
+        "setup": "Captions: {status}"
+      },
+      "encoding": {
+        "title": "Encoding",
+        "canEncode": "Can encode",
+        "sdrHardware": "SDR on hardware up to {height}",
+        "hdrHardware": "HDR on hardware up to {height}",
+        "software": "Software: {encoders}",
+        "noSoftware": "No software encoders",
+        "speed": "Measured speed per slot",
+        "speedSdr": "SDR {hw} hw · {sw} sw MP/s",
+        "speedHdr": "HDR {hw} hw · {sw} sw MP/s",
+        "speedSource": "4K decode {decode} · tonemap {tonemap} MP/s",
+        "lanes": "{count} encode slot | {count} encode slots",
+        "prepLane": "+ prep lane",
+        "sharedStorage": "Reads sources from shared storage",
+        "download": "Downloads at {rate}/s",
+        "notMeasured": "not measured",
+        "notReported": "This worker has not reported its encoding capabilities yet (older version).",
+        "limits": "Limits",
+        "limitsHelp": "Cap the qualities this worker is given. Running tasks finish first.",
+        "sdrLimit": "SDR up to",
+        "hdrLimit": "HDR up to",
+        "noLimit": "No limit",
+        "noHdr": "No HDR",
+        "limitsSaved": "Limits saved",
+        "limitsError": "Could not save the limits"
       }
     },
     "introSuggestions": {
@@ -1466,6 +1501,25 @@
         "restart": "Restart",
         "pause": "Pause",
         "cancel": "Cancel"
+      },
+      "tasks": {
+        "title": "Tasks",
+        "summary": "{done} of {total} done",
+        "waiting": "Waiting",
+        "kinds": {
+          "prep": "Audio, captions, thumbnail",
+          "sdr": "SDR",
+          "hdr": "HDR"
+        },
+        "statuses": {
+          "queued": "Queued",
+          "running": "Encoding",
+          "completed": "Done",
+          "failed": "Failed",
+          "skipped": "Skipped",
+          "cancelled": "Cancelled"
+        },
+        "attempt": "attempt {count}"
       }
     },
     "mediaIngests": {
@@ -1795,6 +1849,42 @@
         "save": "Could not save news.",
         "delete": "Could not delete news.",
         "noDelivery": "Choose a panel, a notification, or both."
+      }
+    },
+    "captionJobs": {
+      "title": "Caption jobs",
+      "subtitle": "Automatic speech-to-text captions run on remote GPU workers with whisper.cpp, never on the primary.",
+      "workersOnline": "{count} caption worker(s) online",
+      "noWorkers": "No caption workers online. Install whisper.cpp on a GPU worker to process this queue.",
+      "backfill": "Caption existing videos",
+      "backfilling": "Queueing…",
+      "confirmBackfill": "Queue automatic captions for every ready video that has never been captioned? Videos that already have subtitles will be skipped.",
+      "backfillResult": "Queued {count} video(s).",
+      "empty": "No caption jobs.",
+      "statusFilter": "Status",
+      "mode": {
+        "auto": "Automatic",
+        "manual": "Requested"
+      },
+      "requested": "Requested: {language}",
+      "detected": "Detected: {language}",
+      "attempts": "Attempts: {count}",
+      "worker": "Worker: {name}",
+      "updated": "Updated {date}",
+      "loadError": "Failed to load caption jobs.",
+      "actionError": "Caption job action failed.",
+      "statuses": {
+        "all": "All",
+        "queued": "Queued",
+        "running": "Running",
+        "completed": "Completed",
+        "skipped": "Skipped",
+        "failed": "Failed",
+        "cancelled": "Cancelled"
+      },
+      "actions": {
+        "retry": "Retry",
+        "cancel": "Cancel"
       }
     }
   },
@@ -2227,6 +2317,34 @@
       "updateAudio": "Failed to update audio track",
       "deleteAudio": "Failed to delete audio track",
       "downloadAudio": "Failed to download audio track"
+    },
+    "autoCaptions": {
+      "title": "Automatic captions",
+      "body": "Generate captions from the video's speech. English and Spanish are supported.",
+      "language": "Spoken language",
+      "languages": {
+        "auto": "Detect automatically",
+        "en": "English",
+        "es": "Spanish"
+      },
+      "generate": "Generate captions",
+      "regenerate": "Regenerate captions",
+      "queueing": "Queueing…",
+      "status": {
+        "none": "No captions have been generated for this video yet.",
+        "queued": "Waiting for a caption worker…",
+        "running": "Generating captions… {progress}%",
+        "completed": "Captions generated ({language}).",
+        "skipped": "Skipped: {reason}",
+        "failed": "Caption generation failed: {reason}",
+        "cancelled": "Caption generation was cancelled."
+      },
+      "noWorkers": "No caption worker is online. Jobs will wait until a GPU worker with whisper.cpp connects.",
+      "replaceNote": "Regenerating replaces the current auto-generated track.",
+      "errors": {
+        "load": "Failed to load caption status.",
+        "queue": "Failed to queue captions."
+      }
     }
   },
   "common": {

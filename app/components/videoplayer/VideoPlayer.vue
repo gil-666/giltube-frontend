@@ -2077,11 +2077,11 @@ const applyInitialStartTime = () => {
   const hasClipRange = Number.isFinite(clipStartTime) && Number.isFinite(clipEndTime) && clipEndTime > clipStartTime
   const startTime = hasClipRange ? clipStartTime : Number(props.startTimeSeconds || 0)
   const playerDuration = Number(player.duration?.() || duration.value || 0)
-  if (!Number.isFinite(startTime) || (!hasClipRange && startTime <= 5)) {
+  if (!Number.isFinite(startTime) || (!hasClipRange && !props.exactStartTime && startTime <= 5)) {
     return
   }
   if (!Number.isFinite(playerDuration) || playerDuration <= 0) return
-  if (playerDuration > 0 && startTime / playerDuration >= 0.9) {
+  if (!props.exactStartTime && playerDuration > 0 && startTime / playerDuration >= 0.9) {
     hasAppliedInitialStartTime = true
     return
   }

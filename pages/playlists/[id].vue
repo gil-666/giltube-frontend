@@ -87,7 +87,7 @@
                             <div class="text-sm font-medium text-gray-500 w-8">{{ index + 1 }}</div>
 
                             <!-- Video Thumbnail -->
-                            <div class="w-20 h-20 flex-shrink-0 bg-zinc-700 rounded overflow-hidden">
+                            <div class="relative w-20 h-20 flex-shrink-0 bg-zinc-700 rounded overflow-hidden">
                                 <NuxtLink :to="localePath(`/video/${video.id}?playlist_id=${route.params.id}&index=${index}`)" class="w-full h-full">
                                     <img v-if="video.thumbnail_url" v-bind="responsiveImage(video.thumbnail_url, '80px')" :alt="video.title"
                                         class="w-full h-full object-cover hover:opacity-80 transition" />
@@ -96,6 +96,7 @@
                                         {{ t('playlists.noThumbnail') }}
                                     </div>
                                 </NuxtLink>
+                                <span v-if="formatVideoDuration(video.duration_seconds)" class="pointer-events-none absolute bottom-1 right-1 rounded bg-black/80 px-1 text-[10px] font-semibold tabular-nums text-zinc-100">{{ formatVideoDuration(video.duration_seconds) }}</span>
                             </div>
 
                             <!-- Video Info -->
@@ -178,6 +179,7 @@
 </template>
 
 <script setup lang="ts">
+import { formatVideoDuration } from '~/app/utils/time'
 import { responsiveImage } from '~/app/utils/media'
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from '#app'

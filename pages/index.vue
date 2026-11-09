@@ -191,7 +191,7 @@ import { listPublicWatchParties } from '~/app/service/watchParties'
 import { GILADS_PLACEMENTS } from '~/app/service/gilads'
 import { listActiveLiveStreams } from '~/app/service/live'
 import { listFeaturedContent } from '~/app/service/featured'
-import { getTimeAgo } from '~/app/utils/time'
+import { formatVideoDuration, getTimeAgo } from '~/app/utils/time'
 import { formatViews } from '~/app/utils/format'
 import { capDensity, imageVariantSrcset, imageVariantUrl, isVideo4K, isVideo8K, resolveMediaUrl } from '~/app/utils/media'
 import { useMetaTags } from '~/app/composables/useMetaTags'
@@ -322,6 +322,7 @@ const toHomeVideoFromSearch = (result) => ({
   description: result.description || '',
   thumbnail_url: result.thumbnail || '',
   views: Number(result.views || 0),
+  duration_seconds: Number(result.duration_seconds || 0),
   created_at: null,
   channel_id: result.channel_id,
   channel: {
@@ -972,6 +973,7 @@ const VideoTile = defineComponent({
     const progressPercent = () => getVideoProgressPercent(props.video.id)
 
     const qualityBadge = () => is8K() ? '8K' : is4K() ? '4K' : ''
+    const durationLabel = () => formatVideoDuration(props.video.duration_seconds)
 
     return () => h('article', { class: 'tile group w-full min-w-0' }, [
       h(NuxtLink, { to: getVideoLink(), class: 'block', tabindex: '-1', 'aria-hidden': 'true' }, () => [
@@ -989,8 +991,11 @@ const VideoTile = defineComponent({
           isLiveCard()
             ? h('span', { class: 'tile-badge tile-badge--live' }, [h('span', { class: 'home-live-dot' }), t('home.live')])
             : qualityBadge()
-              ? h('span', { class: 'tile-badge' }, qualityBadge())
+              ? h('span', { class: 'tile-badge tile-badge--quality' }, qualityBadge())
               : null,
+          !isLiveCard() && durationLabel()
+            ? h('span', { class: 'tile-badge' }, durationLabel())
+            : null,
           progressPercent() > 0
             ? h('div', { class: 'tile-progress' }, [h('div', { style: { width: `${progressPercent()}%` } })])
             : null,
@@ -1347,8 +1352,14 @@ onUnmounted(() => {
   color: #f2f2f4;
   font-size: 0.6875rem;
   font-weight: 600;
+  font-variant-numeric: tabular-nums;
   letter-spacing: 0.02em;
   backdrop-filter: blur(6px);
+}
+
+.tile-badge--quality {
+  top: 0.5rem;
+  bottom: auto;
 }
 
 .tile-badge--live {

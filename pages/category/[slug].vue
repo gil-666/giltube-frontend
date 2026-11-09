@@ -12,6 +12,7 @@
             <div class="gt-media relative aspect-video overflow-hidden rounded-xl bg-zinc-800 ring-1 ring-white/[0.06]">
               <img class="h-full w-full object-cover" v-bind="responsiveImage(getThumbnailUrl(video), '(min-width: 1024px) 25vw, (min-width: 768px) 33vw, (min-width: 640px) 50vw, 100vw')" :alt="video.title" loading="lazy" decoding="async" />
               <span v-if="isVideo8K(video.width) || isVideo4K(video.width)" class="absolute right-2 top-2 rounded-md bg-black/70 px-1.5 py-0.5 text-[11px] font-semibold tracking-wide text-white backdrop-blur">{{ isVideo8K(video.width) ? '8K' : '4K' }}</span>
+              <span v-if="formatVideoDuration(video.duration_seconds)" class="gt-media absolute bottom-2 right-2 rounded-md bg-black/80 px-1.5 py-0.5 text-[11px] font-semibold tabular-nums text-zinc-100">{{ formatVideoDuration(video.duration_seconds) }}</span>
               <div v-if="videoProgressPercent(video.id) > 0" class="absolute inset-x-0 bottom-0 h-1 bg-black/55">
                 <div class="h-full bg-primary-600" :style="{ width: `${videoProgressPercent(video.id)}%` }" />
               </div>
@@ -55,7 +56,7 @@ import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import StreamingSeriesCategory from '~/app/components/streaming/StreamingSeriesCategory.vue'
 import StreamingMoviesCategory from '~/app/components/streaming/StreamingMoviesCategory.vue'
 import AvatarFallback from '~/app/components/AvatarFallback.vue'
-import { getTimeAgo } from '~/app/utils/time'
+import { formatVideoDuration, getTimeAgo } from '~/app/utils/time'
 import { formatViews } from '~/app/utils/format'
 import { isVideo4K, isVideo8K, resolveMediaUrl, responsiveImage } from '~/app/utils/media'
 import { useMetaTags } from '~/app/composables/useMetaTags'

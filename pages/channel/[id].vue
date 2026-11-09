@@ -337,10 +337,11 @@
                   :srcset="imageVariantSrcset(video.thumbnail_url) || undefined"
                   sizes="(min-width: 1024px) 25vw, 50vw"
                   class="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]" />
-                <span v-if="isVideo8K(video.width) || isVideo4K(video.width)" class="gt-media absolute bottom-2 right-2 rounded-md bg-black/80 px-1.5 py-0.5 text-[11px] font-semibold text-zinc-100">{{ isVideo8K(video.width) ? '8K' : '4K' }}</span>
+                <span v-if="isVideo8K(video.width) || isVideo4K(video.width)" class="gt-media absolute right-2 top-2 rounded-md bg-black/80 px-1.5 py-0.5 text-[11px] font-semibold text-zinc-100">{{ isVideo8K(video.width) ? '8K' : '4K' }}</span>
                 <div v-else-if="!video.thumbnail_url" class="flex h-full w-full items-center justify-center bg-zinc-800">
                   <span class="text-zinc-500 text-xs">{{ t('channelPage.noThumbnail') }}</span>
                 </div>
+                <span v-if="formatVideoDuration(video.duration_seconds)" class="gt-media absolute bottom-2 right-2 rounded-md bg-black/80 px-1.5 py-0.5 text-[11px] font-semibold tabular-nums text-zinc-100">{{ formatVideoDuration(video.duration_seconds) }}</span>
               </div>
               <h3 class="line-clamp-2 break-words text-sm font-medium leading-5 text-zinc-100">
                 {{ video.title }}
@@ -361,7 +362,7 @@ import { updateChannel } from '~/app/service/upload'
 import { getChannelMusic, type MusicArtist, type MusicRelease } from '~/app/service/music'
 import { getChannelLiveStatus } from '~/app/service/live'
 import { activeSubscriptionChannelID, getChannelSubscription, subscribeToChannel, unsubscribeFromChannel } from '~/app/service/subscriptions'
-import { getTimeAgo } from '~/app/utils/time'
+import { formatVideoDuration, getTimeAgo } from '~/app/utils/time'
 import { formatViews } from '~/app/utils/format'
 import { imageVariantSrcset, imageVariantUrl, isVideo4K, isVideo8K, resolveMediaUrl } from '~/app/utils/media'
 import { useMetaTags } from '~/app/composables/useMetaTags'

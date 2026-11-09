@@ -101,6 +101,56 @@
           <div><dt class="text-xs text-zinc-500">{{ t('admin.workers.lastSeen') }}</dt><dd class="mt-0.5 text-zinc-200">{{ formatRelative(worker.last_seen) }}</dd></div>
         </dl>
 
+        <div v-if="worker.roles.includes('transcode') && !worker.disabled" class="mt-4 border-t border-white/[0.07] pt-3 text-xs">
+          <p class="text-sm font-semibold text-zinc-200">{{ t('admin.workers.encoding.title') }}</p>
+          <p v-if="!worker.capabilities?.version" class="mt-1 text-zinc-500">{{ t('admin.workers.encoding.notReported') }}</p>
+          <template v-else>
+            <div class="mt-2 flex flex-wrap gap-1.5">
+              <span v-if="worker.capabilities.sdr_hw_max_height" class="rounded bg-blue-950 px-1.5 py-0.5 font-semibold text-zinc-200">{{ t('admin.workers.encoding.sdrHardware', { height: heightLabel(worker.capabilities.sdr_hw_max_height) }) }}</span>
+              <span v-if="worker.capabilities.hdr_hw_max_height" class="rounded bg-violet-950 px-1.5 py-0.5 font-semibold text-zinc-200">{{ t('admin.workers.encoding.hdrHardware', { height: heightLabel(worker.capabilities.hdr_hw_max_height) }) }}</span>
+              <span class="rounded bg-zinc-800 px-1.5 py-0.5 text-zinc-300">{{ softwareLabel(worker) }}</span>
+              <span class="rounded bg-zinc-800 px-1.5 py-0.5 text-zinc-300">{{ t('admin.workers.encoding.lanes', { count: worker.capabilities.slots || 1 }, worker.capabilities.slots || 1) }}<template v-if="worker.capabilities.prep_lane"> {{ t('admin.workers.encoding.prepLane') }}</template></span>
+            </div>
+            <dl class="mt-2 grid gap-1 text-zinc-400 sm:grid-cols-2">
+              <dd>{{ t('admin.workers.encoding.speedSdr', { hw: rate(worker.capabilities.sdr_hw_mpps), sw: rate(worker.capabilities.sdr_sw_mpps) }) }}</dd>
+              <dd>{{ t('admin.workers.encoding.speedHdr', { hw: rate(worker.capabilities.hdr_hw_mpps), sw: rate(worker.capabilities.hdr_sw_mpps) }) }}</dd>
+              <dd>{{ t('admin.workers.encoding.speedSource', { decode: rate(worker.capabilities.decode_mpps), tonemap: rate(worker.capabilities.tonemap_mpps) }) }}</dd>
+              <dd>{{ worker.capabilities.shared_storage ? t('admin.workers.encoding.sharedStorage') : t('admin.workers.encoding.download', { rate: worker.capabilities.download_bps ? formatBytes(worker.capabilities.download_bps) : t('admin.workers.encoding.notMeasured') }) }}</dd>
+            </dl>
+          </template>
+          <div class="mt-3">
+            <p class="font-semibold text-zinc-300">{{ t('admin.workers.encoding.limits') }}</p>
+            <p class="mt-0.5 text-zinc-500">{{ t('admin.workers.encoding.limitsHelp') }}</p>
+            <div class="mt-2 grid grid-cols-2 gap-2">
+              <label class="text-zinc-500">
+                {{ t('admin.workers.encoding.sdrLimit') }}
+                <select
+                  :value="worker.limits?.sdr_max_height ?? 0"
+                  :disabled="updatingWorker === worker.id"
+                  class="mt-1 w-full rounded-md border border-white/10 bg-zinc-900 px-2 py-1.5 font-semibold text-zinc-100 outline-none focus:border-white/30 disabled:opacity-50"
+                  @change="changeLimit(worker, 'sdr_max_height', Number(($event.target as HTMLSelectElement).value))"
+                >
+                  <option :value="0">{{ t('admin.workers.encoding.noLimit') }}</option>
+                  <option v-for="height in limitHeights" :key="height" :value="height">{{ height }}p</option>
+                </select>
+              </label>
+              <label class="text-zinc-500">
+                {{ t('admin.workers.encoding.hdrLimit') }}
+                <select
+                  :value="worker.limits?.hdr_max_height ?? 0"
+                  :disabled="updatingWorker === worker.id"
+                  class="mt-1 w-full rounded-md border border-white/10 bg-zinc-900 px-2 py-1.5 font-semibold text-zinc-100 outline-none focus:border-white/30 disabled:opacity-50"
+                  @change="changeLimit(worker, 'hdr_max_height', Number(($event.target as HTMLSelectElement).value))"
+                >
+                  <option :value="0">{{ t('admin.workers.encoding.noLimit') }}</option>
+                  <option v-for="height in hdrLimitHeights" :key="height" :value="height">{{ height }}p</option>
+                  <option :value="-1">{{ t('admin.workers.encoding.noHdr') }}</option>
+                </select>
+              </label>
+            </div>
+          </div>
+        </div>
+
         <div v-if="!worker.disabled" class="mt-4 flex items-center justify-between gap-4 border-t border-white/[0.07] pt-3">
           <div>
             <p class="text-sm font-semibold text-zinc-200">{{ t('admin.workers.acceptJobs') }}</p>
@@ -134,9 +184,21 @@
         <div v-if="worker.current_job" class="mt-4 border-t border-white/[0.07] pt-3">
           <div class="flex items-center justify-between gap-3 text-xs">
             <span class="truncate font-semibold text-zinc-200">{{ worker.current_job.video_title || worker.current_job.video_id }}</span>
+            <span v-if="worker.current_job.task" class="shrink-0 rounded bg-zinc-800 px-1.5 py-0.5 font-mono text-[11px] text-zinc-300">{{ worker.current_job.task }}</span>
             <span class="shrink-0 tabular-nums text-zinc-400">{{ worker.current_job.progress }}%</span>
           </div>
           <div class="mt-2 h-1.5 overflow-hidden rounded-full bg-zinc-800"><div class="h-full rounded-full bg-primary-500 transition-all" :style="{ width: `${worker.current_job.progress}%` }" /></div>
+        </div>
+
+        <div v-if="!worker.caption_engine && worker.caption_status" class="mt-4 border-t border-white/[0.07] pt-3 text-xs">
+          <p :class="worker.caption_status.startsWith('setup failed') ? 'text-red-300' : 'text-zinc-400'">{{ t('admin.workers.captions.setup', { status: worker.caption_status }) }}</p>
+        </div>
+        <div v-if="worker.caption_engine" class="mt-4 border-t border-white/[0.07] pt-3 text-xs">
+          <p class="text-zinc-400">{{ t('admin.workers.captions.enabled', { engine: worker.caption_engine }) }}</p>
+          <template v-if="worker.current_caption_job">
+            <p class="mt-1 truncate font-semibold text-zinc-200">{{ t('admin.workers.captions.current', { title: worker.current_caption_job.video_title || worker.current_caption_job.video_id, progress: worker.current_caption_job.progress }) }}</p>
+            <div class="mt-2 h-1.5 overflow-hidden rounded-full bg-zinc-800"><div class="h-full rounded-full bg-emerald-500 transition-all" :style="{ width: `${worker.current_caption_job.progress}%` }" /></div>
+          </template>
         </div>
 
         <div v-if="worker.disabled" class="mt-4 flex gap-2 border-t border-white/[0.07] pt-3">
@@ -208,7 +270,7 @@
 
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
-import { createWorkerEnrollmentCode, deleteWorker, downloadWorkerRelease, enableWorker, listWorkerReleases, listWorkers, revokeWorker, setWorkerRoles, setWorkerScheduling, type WorkerNode, type WorkerRelease } from '~/app/service/workers'
+import { createWorkerEnrollmentCode, deleteWorker, downloadWorkerRelease, enableWorker, listWorkerReleases, listWorkers, revokeWorker, setWorkerLimits, setWorkerRoles, setWorkerScheduling, type WorkerLimits, type WorkerNode, type WorkerRelease } from '~/app/service/workers'
 
 const { t } = useI18n()
 const workers = ref<WorkerNode[]>([])
@@ -302,6 +364,26 @@ const changeRole = async (worker: WorkerNode, role: string) => {
   } finally {
     await loadWorkers()
     if (actionError) error.value = actionError
+    updatingWorker.value = ''
+  }
+}
+const limitHeights = [4320, 2160, 1080, 720, 480, 360]
+const hdrLimitHeights = [2160, 1080, 720, 480, 360]
+const heightLabel = (height: number) => height === 4320 ? '8K' : height === 2160 ? '4K' : `${height}p`
+const rate = (value?: number) => value ? Math.round(value).toString() : '–'
+const softwareLabel = (worker: WorkerNode) => {
+  const encoders = [worker.capabilities?.sdr_sw ? 'x264' : '', worker.capabilities?.hdr_sw ? 'x265' : ''].filter(Boolean)
+  return encoders.length ? t('admin.workers.encoding.software', { encoders: encoders.join(', ') }) : t('admin.workers.encoding.noSoftware')
+}
+const changeLimit = async (worker: WorkerNode, key: keyof WorkerLimits, value: number) => {
+  const limits: WorkerLimits = { sdr_max_height: worker.limits?.sdr_max_height ?? 0, hdr_max_height: worker.limits?.hdr_max_height ?? 0, [key]: value }
+  updatingWorker.value = worker.id
+  error.value = ''
+  try {
+    worker.limits = await setWorkerLimits(worker.id, limits)
+  } catch (err: any) {
+    error.value = err?.response?.data?.error || t('admin.workers.encoding.limitsError')
+  } finally {
     updatingWorker.value = ''
   }
 }

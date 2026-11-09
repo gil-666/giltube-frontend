@@ -571,7 +571,10 @@
     <MovieAdminPanel v-if="activeTab === 'movies'" />
     <YouTubeMirrorAdminPanel v-if="activeTab === 'youtube-mirrors'" :channels="channels" />
     <MediaIngestAdminPanel v-if="activeTab === 'media-ingests'" :channels="channels" :series-items="adminSeries" />
-    <TranscodeJobsAdminPanel v-if="activeTab === 'transcode-jobs'" />
+    <div v-if="activeTab === 'transcode-jobs'" class="space-y-10">
+      <TranscodeJobsAdminPanel />
+      <CaptionJobsAdminPanel />
+    </div>
     <WorkerAdminPanel v-if="activeTab === 'workers'" />
 	<FeaturedContentAdminPanel v-if="activeTab === 'featured'" />
     <NewsAdminPanel v-if="activeTab === 'news'" />
@@ -1183,6 +1186,7 @@ import ContentRatingFields from '~/app/components/admin/ContentRatingFields.vue'
 import { contentRatingInputFrom, emptyContentRatingInput } from '~/app/utils/contentRating'
 import MediaIngestAdminPanel from '~/app/components/admin/MediaIngestAdminPanel.vue'
 import TranscodeJobsAdminPanel from '~/app/components/admin/TranscodeJobsAdminPanel.vue'
+import CaptionJobsAdminPanel from '~/app/components/admin/CaptionJobsAdminPanel.vue'
 import WorkerAdminPanel from '~/app/components/admin/WorkerAdminPanel.vue'
 import PlaybackIntroAdminPanel from '~/app/components/admin/PlaybackIntroAdminPanel.vue'
 import FeaturedContentAdminPanel from '~/app/components/admin/FeaturedContentAdminPanel.vue'

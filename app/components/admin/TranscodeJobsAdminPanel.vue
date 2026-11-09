@@ -108,6 +108,37 @@
               {{ t('admin.transcodeJobs.actions.cancel') }}
             </button>
           </div>
+
+          <div v-if="job.tasks?.length" class="lg:col-span-4">
+            <p class="text-xs font-medium text-gray-500">
+              {{ t('admin.transcodeJobs.tasks.title') }} · {{ t('admin.transcodeJobs.tasks.summary', { done: finishedTasks(job), total: job.tasks.length }) }}
+            </p>
+            <div class="mt-2 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+              <div
+                v-for="task in job.tasks"
+                :key="task.name"
+                class="rounded-lg border border-white/[0.07] bg-black/30 p-2.5"
+                :title="task.error_message || undefined"
+              >
+                <div class="flex items-center justify-between gap-2">
+                  <span class="truncate font-mono text-xs font-semibold text-white">{{ task.kind === 'prep' ? t('admin.transcodeJobs.tasks.kinds.prep') : task.name }}</span>
+                  <span :class="taskStatusClass(task.status)" class="shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-semibold">
+                    {{ t(`admin.transcodeJobs.tasks.statuses.${task.status}`, task.status) }}
+                  </span>
+                </div>
+                <div class="mt-2 h-1.5 overflow-hidden rounded-full bg-zinc-800">
+                  <div :class="task.kind === 'hdr' ? 'bg-violet-500' : 'bg-primary-500'" class="h-full rounded-full transition-all" :style="{ width: `${taskProgress(task)}%` }" />
+                </div>
+                <p class="mt-1.5 truncate text-[11px] text-gray-500">
+                  <template v-if="task.status === 'running'">{{ task.worker_name || task.worker_id }} · {{ safeProgress(task.progress) }}%</template>
+                  <template v-else-if="task.status === 'queued'">{{ t('admin.transcodeJobs.tasks.waiting') }}</template>
+                  <template v-else-if="task.worker_name">{{ task.worker_name }}</template>
+                  <template v-if="task.attempts > 1"> · {{ t('admin.transcodeJobs.tasks.attempt', { count: task.attempts }) }}</template>
+                </p>
+                <p v-if="task.error_message && task.status !== 'completed'" class="mt-1 line-clamp-2 text-[11px] text-red-300/80">{{ task.error_message }}</p>
+              </div>
+            </div>
+          </div>
         </article>
       </div>
     </div>
@@ -124,9 +155,19 @@ import {
   restartTranscodeJob,
   startTranscodeJob,
   type TranscodeJob,
+  type TranscodeTask,
 } from '~/app/service/transcodeJobs'
 
 const { t } = useI18n()
+const finishedTasks = (job: TranscodeJob) => (job.tasks || []).filter(task => ['completed', 'skipped', 'failed', 'cancelled'].includes(task.status)).length
+const taskProgress = (task: TranscodeTask) => ['completed', 'skipped'].includes(task.status) ? 100 : safeProgress(task.progress)
+const taskStatusClass = (status: string) => ({
+  running: 'bg-blue-950 text-blue-200',
+  completed: 'bg-emerald-950 text-emerald-300',
+  failed: 'bg-red-950 text-red-300',
+  skipped: 'bg-zinc-800 text-zinc-400',
+  cancelled: 'bg-zinc-800 text-zinc-400',
+}[status] || 'bg-zinc-800 text-zinc-300')
 const statuses = ['all', 'queued', 'running', 'paused', 'failed', 'cancelled', 'completed']
 const jobs = ref<TranscodeJob[]>([])
 const statusFilter = ref('all')
