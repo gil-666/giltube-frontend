@@ -913,6 +913,8 @@
                 </div>
               </div>
 
+              <SubtitleFinder v-if="episode.videoId" class="mt-3" :video-id="episode.videoId" @added="onEpisodeSubtitlesFetched(episode, $event)" />
+
               <div v-if="episode.subtitles.length" class="mt-3 space-y-2">
                 <div v-for="track in episode.subtitles" :key="track.id" class="flex flex-col gap-3 rounded bg-zinc-900 px-3 py-2 sm:flex-row sm:items-center sm:justify-between">
                   <div class="grid min-w-0 flex-1 gap-2 sm:grid-cols-[8rem_minmax(0,1fr)]">
@@ -1181,6 +1183,7 @@ import { useRouter } from 'vue-router'
 import { useLocalePath } from '#i18n'
 import { useI18n } from 'vue-i18n'
 import { useLocalUploadBaseURL } from '~/app/composables/useLocalUploadBaseURL'
+import SubtitleFinder from '~/app/components/admin/SubtitleFinder.vue'
 import MovieAdminPanel from '~/app/components/admin/MovieAdminPanel.vue'
 import ContentRatingFields from '~/app/components/admin/ContentRatingFields.vue'
 import { contentRatingInputFrom, emptyContentRatingInput } from '~/app/utils/contentRating'
@@ -1685,6 +1688,10 @@ const createEpisodeRow = (episode: any = {}, nextNumber = 1): EpisodeRow => ({
   audioUploading: false,
   audioReplacingTrackId: '',
 })
+
+const onEpisodeSubtitlesFetched = (row: EpisodeRow, next: unknown[]) => {
+  row.subtitles = next as EpisodeRow['subtitles']
+}
 
 const loadEpisodeSubtitles = async (row: EpisodeRow) => {
   if (!row.episodeId) return

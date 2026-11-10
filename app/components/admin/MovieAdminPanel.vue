@@ -303,6 +303,8 @@
         </div>
       </div>
 
+      <SubtitleFinder v-if="movieVideoId" :video-id="movieVideoId" @added="onSubtitlesFetched" />
+
       <div class="grid gap-3 rounded border border-white/[0.07] bg-black/30 p-3 sm:grid-cols-[minmax(0,1fr)_10rem_10rem] sm:items-end">
         <div>
           <label class="text-xs font-medium text-gray-500">{{ t('movieAdmin.subtitles.globalDelay') }}</label>
@@ -445,6 +447,7 @@ import { useI18n } from 'vue-i18n'
 import { useLocalUploadBaseURL } from '~/app/composables/useLocalUploadBaseURL'
 import { searchMediaMetadata, type MediaMetadataResult } from '~/app/service/mediaMetadata'
 import { uploadVideo } from '~/app/service/upload'
+import SubtitleFinder from '~/app/components/admin/SubtitleFinder.vue'
 import { createMovie, deleteMovie, deleteMovieAudioTrack, deleteMovieSubtitle, downloadMovieAudioTrackWAV, getMovie, GILTUBE_MOVIES_CHANNEL_ID, listMovieAudioTracks, listMovieSubtitles, listMovies, setMovieTrailer, setMovieVideo, updateMovie, uploadMovieAudioTrack, uploadMovieSubtitle } from '~/app/service/movies'
 import { getAdminVideos } from '~/app/service/videos'
 import { resolveMediaUrl } from '~/app/utils/media'
@@ -998,6 +1001,10 @@ const linkExistingMovie = async (video: any) => {
   movieVideoId.value = video.id
   movieVideoTitle.value = video.title || movieForm.value.title
   await attachMovieVideo()
+}
+
+const onSubtitlesFetched = (next: unknown[]) => {
+  movieSubtitles.value = next as SubtitleTrack[]
 }
 
 const loadMovieSubtitles = async () => {

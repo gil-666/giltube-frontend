@@ -41,9 +41,18 @@ export interface SubtitleSearchResponse {
   present_languages: string[]
 }
 
-export const listSubtitleProviders = async (): Promise<{ providers: SubtitleProvider[], auto_languages: string[] }> => {
-  const response = await api.get('/admin/subtitle-providers')
-  return response.data
+type ProvidersResponse = { providers: SubtitleProvider[], auto_languages: string[] }
+
+// The series page shows a finder per episode; they share one request.
+let providersRequest: { at: number, promise: Promise<ProvidersResponse> } | null = null
+
+export const listSubtitleProviders = (): Promise<ProvidersResponse> => {
+  if (!providersRequest || Date.now() - providersRequest.at > 5 * 60 * 1000) {
+    const promise = api.get('/admin/subtitle-providers').then(response => response.data as ProvidersResponse)
+    providersRequest = { at: Date.now(), promise }
+    promise.catch(() => { providersRequest = null })
+  }
+  return providersRequest.promise
 }
 
 export const searchVideoSubtitlesOnline = async (videoId: string, options: { tmdbId?: number, title?: string } = {}): Promise<SubtitleSearchResponse> => {
