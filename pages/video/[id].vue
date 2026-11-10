@@ -3056,7 +3056,7 @@ const handleVideoEnded = async () => {
   white-space: nowrap;
 }
 
-.watch-pill {
+:deep(.watch-pill) {
   display: inline-flex;
   height: 2.25rem;
   align-items: center;
@@ -3071,27 +3071,27 @@ const handleVideoEnded = async () => {
   transition: background-color 150ms ease, color 150ms ease;
 }
 
-.watch-pill:hover:not(:disabled) {
+:deep(.watch-pill:hover:not(:disabled)) {
   background: rgb(var(--gt-white) / 0.12);
 }
 
-.watch-pill.is-active {
+:deep(.watch-pill.is-active) {
   color: rgb(var(--gt-primary-400));
 }
 
-.watch-pill--icon {
+:deep(.watch-pill--icon) {
   width: 2.25rem;
   justify-content: center;
   padding: 0;
 }
 
-.watch-pill--primary {
+:deep(.watch-pill--primary) {
   background: rgb(var(--gt-zinc-100));
   color: rgb(var(--gt-zinc-950));
   font-weight: 600;
 }
 
-.watch-pill--primary:hover:not(:disabled) {
+:deep(.watch-pill--primary:hover:not(:disabled)) {
   background: rgb(var(--gt-white));
 }
 
