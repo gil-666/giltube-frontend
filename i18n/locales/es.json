@@ -374,7 +374,8 @@
       "invalidTiming": "El final del intro debe ir después del inicio.",
       "saveError": "No se pudo enviar la sugerencia del intro"
     },
-    "like": "Me gusta"
+    "like": "Me gusta",
+    "seasonEpisodeShort": "T{season} · E{episode}"
   },
   "live": {
     "live": "EN VIVO",

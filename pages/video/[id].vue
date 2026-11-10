@@ -76,17 +76,30 @@
           <p class="text-sm mt-1">{{ t('video.processingMessage') }}</p>
         </div>
 
-        <h1 v-if="watchTitleLogo" class="watch-title-logo">
-          <TitleLogo :src="watchTitleLogo" :alt="watchLogoTitle">
-            <span class="text-xl font-semibold leading-snug text-zinc-50 sm:text-[1.375rem]">{{ watchLogoTitle }}</span>
-          </TitleLogo>
-          <span v-if="watchEpisodeLine" class="mt-2 block text-base font-medium leading-snug text-zinc-300 sm:text-lg">{{ watchEpisodeLine }}</span>
-        </h1>
-        <h1 v-else class="text-xl font-semibold leading-snug text-zinc-50 sm:text-[1.375rem]">{{ watchDisplayTitle }}</h1>
-
-        <p class="mt-1.5 text-sm text-zinc-400">
-          {{ formatViews(video.views) }} {{ t('video.views') }} · {{ getTimeAgo(video.created_at) }}
-        </p>
+        <!-- Movies and series: the title logo with the episode and details beside it. -->
+        <div v-if="watchTitleLogo" class="watch-lockup">
+          <h1 class="watch-lockup__logo">
+            <TitleLogo :src="watchTitleLogo" :alt="watchLogoTitle">
+              <span class="text-xl font-semibold leading-snug text-zinc-50 sm:text-[1.375rem]">{{ watchLogoTitle }}</span>
+            </TitleLogo>
+          </h1>
+          <span class="watch-lockup__divider bg-white/15" aria-hidden="true" />
+          <div class="watch-lockup__info">
+            <p v-if="watchEpisode" class="watch-lockup__episode">
+              <span class="watch-lockup__badge bg-white/10 text-zinc-200">{{ t('video.seasonEpisodeShort', { season: watchEpisode.season_number || 1, episode: watchEpisode.episode_number || 1 }) }}</span>
+              <span class="watch-lockup__episode-title text-zinc-50">{{ watchEpisode.title }}</span>
+            </p>
+            <p class="text-sm text-zinc-400">
+              {{ formatViews(video.views) }} {{ t('video.views') }} · {{ getTimeAgo(video.created_at) }}
+            </p>
+          </div>
+        </div>
+        <template v-else>
+          <h1 class="text-xl font-semibold leading-snug text-zinc-50 sm:text-[1.375rem]">{{ watchDisplayTitle }}</h1>
+          <p class="mt-1.5 text-sm text-zinc-400">
+            {{ formatViews(video.views) }} {{ t('video.views') }} · {{ getTimeAgo(video.created_at) }}
+          </p>
+        </template>
         <!-- Badges Container - Horizontally Scrollable -->
         <div v-if="video.explicit || is4K || is8K || isPlayingHDR || (video.categories && video.categories.length > 0)" class="mt-3 flex gap-1.5 overflow-x-auto pb-1">
           <!-- Explicit Content Warning Badge -->
@@ -1800,12 +1813,7 @@ const watchTitleLogo = computed(() => {
   return ''
 })
 const watchLogoTitle = computed(() => (isPlayingFromSeries.value && currentSeries.value?.title) || currentMovie.value?.title || watchDisplayTitle.value)
-const watchEpisodeLine = computed(() => {
-  if (!isPlayingFromSeries.value) return ''
-  const episode = playlistVideos.value[currentVideoIndex.value]
-  if (!episode) return ''
-  return t('home.seriesEpisodeMeta', { season: episode.season_number || 1, episode: episode.episode_number || 1, title: episode.title || '' })
-})
+const watchEpisode = computed(() => (isPlayingFromSeries.value ? playlistVideos.value[currentVideoIndex.value] || null : null))
 
 if (video.value) {
   const siteUrl = import.meta.server
@@ -2732,10 +2740,81 @@ const handleVideoEnded = async () => {
 </script>
 
 <style scoped>
-.watch-title-logo {
-  --title-logo-max-width: min(100%, 26rem);
-  --title-logo-max-height: clamp(3.25rem, 9vw, 5rem);
-  padding-top: 0.25rem;
+.watch-lockup {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  padding-top: 0.4rem;
+}
+
+.watch-lockup__logo {
+  /* A fixed width: flex layout sizes items from their content, and a
+     percentage limit would leave a gap after wide logos. */
+  --title-logo-max-width: 17rem;
+  --title-logo-max-height: 3.6rem;
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+.watch-lockup__divider {
+  width: 1px;
+  align-self: stretch;
+  margin-block: 0.2rem;
+  flex: none;
+}
+
+.watch-lockup__info {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.watch-lockup__episode {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.watch-lockup__badge {
+  flex: none;
+  border-radius: 0.375rem;
+  padding: 0.15rem 0.45rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+.watch-lockup__episode-title {
+  overflow: hidden;
+  font-size: 1.05rem;
+  font-weight: 600;
+  line-height: 1.3;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Phones: the logo on top, then the episode and details. */
+@media (max-width: 639px) {
+  .watch-lockup {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.55rem;
+  }
+
+  .watch-lockup__logo {
+    --title-logo-max-width: 13rem;
+    --title-logo-max-height: 2.75rem;
+  }
+
+  .watch-lockup__divider {
+    display: none;
+  }
+
+  .watch-lockup__info {
+    width: 100%;
+  }
 }
 
 .music-attribution {

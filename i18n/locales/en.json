@@ -374,7 +374,8 @@
       "invalidTiming": "Intro end must be after intro start.",
       "saveError": "Failed to submit intro suggestion"
     },
-    "like": "Like"
+    "like": "Like",
+    "seasonEpisodeShort": "S{season} · E{episode}"
   },
   "live": {
     "live": "LIVE",
