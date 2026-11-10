@@ -35,7 +35,9 @@
 
         <Transition name="streaming-hero-copy" mode="out-in">
           <div :key="featuredItem.id" class="streaming-hero-copy">
-            <h1 class="streaming-hero-title">{{ featuredItem.title }}</h1>
+            <h1 class="streaming-hero-title">
+              <TitleLogo :src="titleLogoUrl(featuredItem.logos, locale)" :alt="featuredItem.title" class="streaming-hero-logo" />
+            </h1>
             <button
               v-if="featuredItem.synopsis"
               type="button"
@@ -169,7 +171,9 @@
               </button>
               <div class="streaming-modal-copy">
                 <p class="streaming-modal-eyebrow">{{ selectedItem.genre }}</p>
-                <h2 class="streaming-modal-title">{{ selectedItem.title }}</h2>
+                <h2 class="streaming-modal-title">
+                  <TitleLogo :src="titleLogoUrl(selectedItem.logos, locale)" :alt="selectedItem.title" class="streaming-modal-logo" />
+                </h2>
                 <div
                   v-if="selectedItem.explicit || selectedItem.rating || selectedItem.maxQuality || selectedItem.hdr || selectedItem.surround"
                   class="streaming-media-badges"
@@ -257,6 +261,8 @@
 
 <script setup>
 import { responsiveImage } from '~/app/utils/media'
+import TitleLogo from '~/app/components/TitleLogo.vue'
+import { titleLogoUrl } from '~/app/utils/titleLogo'
 import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 
@@ -277,7 +283,7 @@ const props = defineProps({
 
 defineEmits(['open', 'close', 'feature'])
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 
 const progressPercent = (item) => {
   const value = Number(item?.progressPercent || 0)
@@ -797,6 +803,17 @@ onBeforeUnmount(() => {
   color: #c8c8cf;
   font-size: 0.8125rem;
   font-weight: 500;
+}
+
+.streaming-hero-logo {
+  --title-logo-max-width: min(100%, 30rem);
+  --title-logo-max-height: clamp(5rem, 14vw, 9rem);
+}
+
+.streaming-modal-logo {
+  --title-logo-max-width: min(100%, 22rem);
+  --title-logo-max-height: clamp(3.5rem, 12vw, 6rem);
+  margin-block: 0.35rem 0.15rem;
 }
 
 .streaming-modal-title {

@@ -76,7 +76,13 @@
           <p class="text-sm mt-1">{{ t('video.processingMessage') }}</p>
         </div>
 
-        <h1 class="text-xl font-semibold leading-snug text-zinc-50 sm:text-[1.375rem]">{{ watchDisplayTitle }}</h1>
+        <h1 v-if="watchTitleLogo" class="watch-title-logo">
+          <TitleLogo :src="watchTitleLogo" :alt="watchLogoTitle">
+            <span class="text-xl font-semibold leading-snug text-zinc-50 sm:text-[1.375rem]">{{ watchLogoTitle }}</span>
+          </TitleLogo>
+          <span v-if="watchEpisodeLine" class="mt-2 block text-base font-medium leading-snug text-zinc-300 sm:text-lg">{{ watchEpisodeLine }}</span>
+        </h1>
+        <h1 v-else class="text-xl font-semibold leading-snug text-zinc-50 sm:text-[1.375rem]">{{ watchDisplayTitle }}</h1>
 
         <p class="mt-1.5 text-sm text-zinc-400">
           {{ formatViews(video.views) }} {{ t('video.views') }} · {{ getTimeAgo(video.created_at) }}
@@ -1222,6 +1228,8 @@
 import GilAdsVideoPlayer from '~/app/components/ads/GilAdsVideoPlayer.vue'
 import VideoPlayer from '~/app/components/videoplayer/VideoPlayer.vue'
 import ClipEditor from '~/app/components/videoplayer/ClipEditor.vue'
+import TitleLogo from '~/app/components/TitleLogo.vue'
+import { titleLogoUrl } from '~/app/utils/titleLogo'
 import SpecularButton from '~/app/components/SpecularButton.vue'
 import { activeSubscriptionChannelID, getChannelSubscription, subscribeToChannel, unsubscribeFromChannel } from '~/app/service/subscriptions'
 import GilAdsBanner from '~/app/components/ads/GilAdsBanner.vue'
@@ -1253,7 +1261,7 @@ const route = useRoute()
 const router = useRouter()
 const id = route.params.id as string
 const localePath = useLocalePath()
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const { pause: pauseMusicPlayback } = useMusicPlayer()
 const hasCountedView = ref(false)
 const requestHeaders = import.meta.server ? useRequestHeaders(['user-agent']) : {}
@@ -1783,6 +1791,21 @@ const mediaRegistryTitle = computed(() => {
   return ''
 })
 const watchDisplayTitle = computed(() => mediaRegistryTitle.value || video.value?.title || '')
+
+// Movies and series show their title logo instead of the text title; an
+// episode adds its season, number and title underneath.
+const watchTitleLogo = computed(() => {
+  if (isPlayingFromSeries.value && currentSeries.value) return titleLogoUrl(currentSeries.value.logos, locale.value)
+  if (currentMovie.value && currentMovie.value.video_id === id) return titleLogoUrl(currentMovie.value.logos, locale.value)
+  return ''
+})
+const watchLogoTitle = computed(() => (isPlayingFromSeries.value && currentSeries.value?.title) || currentMovie.value?.title || watchDisplayTitle.value)
+const watchEpisodeLine = computed(() => {
+  if (!isPlayingFromSeries.value) return ''
+  const episode = playlistVideos.value[currentVideoIndex.value]
+  if (!episode) return ''
+  return t('home.seriesEpisodeMeta', { season: episode.season_number || 1, episode: episode.episode_number || 1, title: episode.title || '' })
+})
 
 if (video.value) {
   const siteUrl = import.meta.server
@@ -2709,6 +2732,12 @@ const handleVideoEnded = async () => {
 </script>
 
 <style scoped>
+.watch-title-logo {
+  --title-logo-max-width: min(100%, 26rem);
+  --title-logo-max-height: clamp(3.25rem, 9vw, 5rem);
+  padding-top: 0.25rem;
+}
+
 .music-attribution {
   overflow: hidden;
   border: 1px solid rgb(var(--gt-zinc-800));
