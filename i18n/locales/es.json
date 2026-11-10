@@ -2720,5 +2720,18 @@
   },
   "promo": {
     "play": "Jugar ahora"
+  },
+  "desktop": {
+    "downloads": "Descargas",
+    "saveOffline": "Guardar sin conexión",
+    "savedOffline": "Guardado sin conexión",
+    "saving": "Guardando {percent}%",
+    "preparing": "Preparando…",
+    "retrySave": "Reintentar",
+    "chooseQuality": "Guardar en calidad",
+    "bestQuality": "La mejor disponible",
+    "loading": "Cargando…",
+    "updateReady": "GilTube para Windows {version} está listo",
+    "restartToUpdate": "Reiniciar para actualizar"
   }
 }

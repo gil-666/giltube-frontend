@@ -60,6 +60,19 @@
       </div>
     </div>
 
+    <!-- GilTube for Windows: an app update is downloaded and ready -->
+    <div ref="desktopUpdateRef" v-if="desktopUpdateReady && !desktopUpdateDismissed && !showUpdatePrompt" class="shell-banner fixed" :style="{ zIndex: 70 }">
+      <span class="flex items-center gap-2.5"><span class="shell-banner__dot is-info" aria-hidden="true" />{{ t('desktop.updateReady', { version: desktopUpdate?.version || '' }) }}</span>
+      <div class="flex gap-2">
+        <button @click="desktopUpdateDismissed = true" class="shell-banner__button shell-banner__button--quiet">
+          {{ t('app.later') }}
+        </button>
+        <button @click="installDesktopUpdate()" class="shell-banner__button">
+          {{ t('desktop.restartToUpdate') }}
+        </button>
+      </div>
+    </div>
+
     <!-- Passkey Prompt Banner -->
     <div
       ref="passkeyRef"
@@ -546,6 +559,19 @@
                 </svg>
                 <span class="truncate">{{ item.label }}</span>
               </NuxtLink>
+              <!-- GilTube for Windows: saved videos live in the app -->
+              <button
+                v-if="hasDesktopDownloads"
+                type="button"
+                class="shell-nav-link w-full"
+                @click="openDesktopDownloads()"
+              >
+                <svg class="shell-nav-icon" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 3.75v11.25m0 0 4.5-4.5M12 15l-4.5-4.5M4.5 19.5h15" />
+                </svg>
+                <span class="truncate">{{ t('desktop.downloads') }}</span>
+                <span v-if="activeDownloads.length" class="ml-auto rounded-full bg-primary-600 px-1.5 text-[11px] text-on-primary">{{ activeDownloads.length }}</span>
+              </button>
             </div>
 
             <div v-if="isLoggedIn" class="mt-4 shrink-0 border-t border-white/[0.06] pt-4">
@@ -1260,6 +1286,7 @@ import { useSiteTheme, useSiteThemeHead } from '~/app/composables/useSiteTheme'
 import ThemeEffects from '~/app/components/themes/ThemeEffects.vue'
 import ThemeAnimatedBackground from '~/app/components/themes/ThemeAnimatedBackground.vue'
 import NewsStartupPanel from '~/app/components/news/NewsStartupPanel.vue'
+import { useDesktopApp } from '~/app/composables/useDesktopApp'
 import musicLogoFull from '~/assets/giltube-music-logo-full.png'
 import musicLogoSymbol from '~/assets/giltube-music-logo-symbol.png'
 import musicLogoFullDark from '~/assets/giltube-music-logo-full-dark.png'
@@ -1534,6 +1561,16 @@ const statusRefreshInterval = ref(null)
 const offlineRef = ref(null)
 const statusRef = ref(null)
 const updateRef = ref(null)
+const desktopUpdateRef = ref(null)
+const desktopUpdateDismissed = ref(false)
+const {
+  hasDesktopDownloads,
+  activeDownloads,
+  desktopUpdate,
+  desktopUpdateReady,
+  openDownloads: openDesktopDownloads,
+  installDesktopUpdate,
+} = useDesktopApp()
 const passkeyRef = ref(null)
 const categories = ref([])
 const showPasskeyPrompt = ref(false)
@@ -1598,6 +1635,7 @@ const notificationBarHeight = computed(() => {
   if (offlineRef.value) height += offlineRef.value.offsetHeight
   if (statusRef.value) height += statusRef.value.offsetHeight
   if (updateRef.value) height += updateRef.value.offsetHeight
+  if (desktopUpdateRef.value) height += desktopUpdateRef.value.offsetHeight
   if (passkeyRef.value) height += passkeyRef.value.offsetHeight
   return height
 })

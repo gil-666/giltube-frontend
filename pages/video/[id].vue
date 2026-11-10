@@ -248,6 +248,12 @@
               <span>{{ isDownloadingVideo ? 'Preparing...' : 'Download' }}</span>
             </button>
 
+            <SaveOfflineButton
+              v-if="video.status === 'ready' || video.status === 'published'"
+              :video-id="video.id"
+              :title="watchDisplayTitle"
+            />
+
             <button
               v-if="isLoggedIn && !isClipVideo"
               @click="showWatchPartyDialog = true"
@@ -1252,6 +1258,7 @@ import CommentNode from '~/app/components/comments/CommentNode.vue'
 import GiphyPicker from '~/app/components/GiphyPicker.vue'
 import AddToPlaylistModal from '~/app/components/AddToPlaylistModal.vue'
 import { GILADS_PLACEMENTS } from '~/app/service/gilads'
+import SaveOfflineButton from '~/app/components/desktop/SaveOfflineButton.vue'
 import { getVideo, getRelatedVideos, getRelatedMedia, incrementViews, likeVideo, unlikeVideo, checkIfLiked, getWatchProgress, getWatchProgressMap, saveWatchProgress, createVideoClip, getVideoClips, downloadVideo as downloadVideoService } from '~/app/service/videos'
 import { getSeries, getSeriesEpisodeContext, getSeriesTrailerContext, suggestSeriesEpisodeIntro } from '~/app/service/series'
 import { getMovieVideoContext, getMovieTrailerContext } from '~/app/service/movies'
