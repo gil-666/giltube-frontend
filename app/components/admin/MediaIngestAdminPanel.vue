@@ -10,6 +10,9 @@
           <button type="button" class="rounded-lg bg-primary-600 px-4 py-2 text-sm font-bold text-on-primary transition hover:bg-primary-500" @click="openUploadPanel">
             {{ t('admin.mediaIngests.upload.action') }}
           </button>
+          <button type="button" class="rounded-lg bg-sky-700 px-4 py-2 text-sm font-bold text-white transition hover:bg-sky-600" @click="versionWizardOpen = true">
+            {{ t('admin.movieVersions.action') }}
+          </button>
           <button type="button" class="rounded-lg bg-zinc-800 px-4 py-2 text-sm font-bold text-white transition hover:bg-zinc-700" @click="loadIngests">
             {{ t('common.refresh') }}
           </button>
@@ -660,6 +663,7 @@
         </section>
       </div>
     </Teleport>
+    <MovieVersionWizard :open="versionWizardOpen" :channels="channels" @close="closeVersionWizard" />
   </div>
 </template>
 
@@ -668,6 +672,7 @@ import { computed, onMounted, onBeforeUnmount, reactive, ref, watch } from 'vue'
 import AudioSyncEditor from '~/app/components/admin/AudioSyncEditor.vue'
 import { attachMediaIngest, bulkAttachSeriesMediaIngest, createMediaIngest, createUploadedMediaIngest, deleteMediaIngest, deleteMediaIngestFiles, importMediaIngestAudioTrack, importMediaIngestSubtitleTrack, listMediaIngestAudioSources, listMediaIngestSubtitleSources, listMediaIngests, pauseMediaIngest, previewSeriesMediaIngest, retryMediaIngest, type MediaIngest, type MediaIngestAudioSource, type MediaIngestAudioStream, type MediaIngestSeriesPreviewFile, type MediaIngestSubtitleSource, type MediaIngestSubtitleStream } from '~/app/service/mediaIngests'
 import { uploadFileInChunks } from '~/app/service/upload'
+import MovieVersionWizard from '~/app/components/admin/MovieVersionWizard.vue'
 import { useLocalUploadBaseURL } from '~/app/composables/useLocalUploadBaseURL'
 import { listMovies, syncMovieAudioTrack, uploadMovieAudioTrack } from '~/app/service/movies'
 import { getSeries, syncSeriesEpisodeAudioTrack, uploadSeriesEpisodeAudioTrack } from '~/app/service/series'
@@ -699,6 +704,11 @@ const uploadForm = reactive({
 })
 // Kept across uploads while the page is open, like the other admin upload toggles.
 const useLocalUpload = ref(false)
+const versionWizardOpen = ref(false)
+const closeVersionWizard = () => {
+  versionWizardOpen.value = false
+  void loadIngests()
+}
 const localUploadBaseURL = useLocalUploadBaseURL()
 const uploadAccept = '.mp4,.mkv,.webm,.mov,.avi,.m4v,.mpg,.mpeg,.wmv,.mka,.aac,.mp3,.wav,.flac,.m4a,.ogg,.opus,.ac3,.eac3,.dts,.ts,.m2ts,.srt,.ass,.vtt'
 const uploadExtensions = new Set(uploadAccept.split(','))

@@ -264,6 +264,7 @@ const toDisplayMovie = (movie) => {
     durationLabel: durationLabel(movie.video),
     maxQuality: movie.media_capabilities?.max_quality || '',
     hdr: !!movie.media_capabilities?.hdr,
+    versionLabels: Array.isArray(movie.versions) ? movie.versions.map((version) => String(version?.label || '')).filter(Boolean) : [],
     explicit: !!movie.explicit,
     rating: movie.content_rating?.rating || '',
     ratingDescriptors: movie.content_rating?.descriptors || [],

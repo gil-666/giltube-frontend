@@ -351,7 +351,10 @@
         "latency": "Latencia en vivo",
         "stream": "Transmisión",
         "nativeHls": "HLS nativo"
-      }
+      },
+      "version": "Versión",
+      "versionStandard": "16:9",
+      "versionPlaying": "Reproduciendo la versión {version}"
     },
     "introSuggestion": {
       "menu": "Sugerir tiempo del intro",
@@ -899,7 +902,8 @@
       "surround": "Sonido envolvente 5.1",
       "audioLanguages": "Idiomas de audio",
       "captions": "Subtítulos",
-      "notAvailable": "Ninguno"
+      "notAvailable": "Ninguno",
+      "version": "Versión {version} disponible"
     }
   },
   "music": {
@@ -1982,6 +1986,103 @@
       "spanish": {
         "title": "Español (Latinoamérica)",
         "body": "Se muestra a quienes navegan en español. Deja un campo vacío para usar el texto en inglés."
+      }
+    },
+    "movieVersions": {
+      "action": "Versiones de película (IMAX)",
+      "kicker": "Versiones de película",
+      "title": "Importar una película con versión IMAX",
+      "subtitle": "La versión IMAX solo aporta su imagen. Se reproduce con las pistas de audio y los subtítulos de la versión principal, y en el reproductor se puede cambiar entre 16:9 e IMAX.",
+      "loadFailed": "No se pudieron cargar las películas y las descargas.",
+      "source": {
+        "upload": "Subir desde esta computadora",
+        "ingest": "Usar una descarga existente",
+        "chooseFile": "Elegir archivo",
+        "changeFile": "Cambiar archivo",
+        "pickIngest": "Elige una descarga",
+        "noIngests": "No hay descargas completas disponibles.",
+        "progress": "{done} de {total} ({percent}%)",
+        "eta": "faltan unos {time}",
+        "resumed": "reanudada",
+        "pause": "Pausar subida",
+        "paused": "Subida en pausa. Iníciala de nuevo para continuar donde se quedó.",
+        "discard": "Descartar subida parcial",
+        "failed": "La subida falló. Iníciala de nuevo para continuar donde se quedó.",
+        "resumeHint": "Los archivos grandes se suben por partes. Si la subida se detiene o la página se recarga, elige el mismo archivo y continuará donde se quedó."
+      },
+      "main": {
+        "title": "Versión principal (16:9)",
+        "help": "Todas las versiones usan sus pistas de audio y subtítulos.",
+        "existing": "Película existente",
+        "new": "Película nueva",
+        "pickMovie": "Elige una película",
+        "movieTitle": "Título de la película",
+        "channel": "Canal",
+        "import": "Subir e importar versión principal",
+        "importing": "Importando…",
+        "imported": "Versión principal importada. Se está transcodificando; los pasos de IMAX se habilitan cuando se publique su audio.",
+        "failed": "No se pudo importar la versión principal.",
+        "ready": "El audio de la versión principal está listo: {tracks}",
+        "waiting": "Esperando a que se publique el audio de la versión principal (su transcodificación lo procesa primero)…"
+      },
+      "existing": {
+        "title": "Versiones",
+        "trimmed": "se recortaron los primeros {seconds} s",
+        "watch": "Ver",
+        "remove": "Quitar",
+        "confirmRemove": "¿Quitar la versión {version}? Se elimina su video transcodificado; la versión principal no cambia.",
+        "removeFailed": "No se pudo quitar la versión."
+      },
+      "imax": {
+        "title": "Versión IMAX",
+        "help": "Sube o elige la versión IMAX. Solo se usa su imagen.",
+        "use": "Usar esta fuente",
+        "loading": "Preparando…",
+        "file": "Archivo de video",
+        "syncStream": "Audio para sincronizar",
+        "noVideo": "Esta fuente no tiene un archivo de video.",
+        "failed": "No se pudo leer la fuente IMAX."
+      },
+      "sync": {
+        "title": "Sincronizar las versiones",
+        "help": "Compara las bandas sonoras al principio y más adelante en la película para saber dónde empieza la imagen IMAX respecto a la versión principal.",
+        "measure": "Medir desfase",
+        "measuring": "Midiendo… {percent}%",
+        "failed": "No se pudo medir el desfase.",
+        "aligned": "Las versiones ya están sincronizadas.",
+        "trim": "La versión IMAX tiene {seconds} s de imagen extra al principio. Se recorta antes de transcodificar, sin recodificar la imagen.",
+        "late": "La versión IMAX empieza después que la principal. No se puede sincronizar sin recodificar, así que no se puede importar.",
+        "drift": "El desfase cambia {drift} s a lo largo de la película: probablemente son montajes distintos o van a otra velocidad. Se desincronizaría.",
+        "weak": "No se encontró una coincidencia confiable. Prueba otra pista de audio (funciona mejor el mismo idioma que la versión principal).",
+        "details": "Desfase de {offset} s al principio y {late} s más adelante · coincidencia {confidence}% · comparado con \"{track}\"",
+        "offset": "Desfase (ms)",
+        "offsetHelp": "Positivo: milisegundos que se recortan del inicio de la fuente IMAX."
+      },
+      "extras": {
+        "title": "Pistas adicionales (opcional)",
+        "help": "Agrega pistas de audio o subtítulos de la fuente IMAX que no tenga la versión principal. Se sincronizan con el mismo desfase.",
+        "audio": "Audio",
+        "subtitles": "Subtítulos",
+        "alreadyHave": "la versión principal ya tiene este idioma",
+        "none": "No hay en este archivo."
+      },
+      "import": {
+        "title": "Importar",
+        "help": "Recorta la fuente IMAX si hace falta y pone en cola su transcodificación. El cambio a IMAX aparece en el reproductor cuando estén listas sus primeras calidades.",
+        "action": "Importar versión IMAX",
+        "starting": "Preparando la fuente IMAX…",
+        "audio": "Importando audio {track}…",
+        "subtitle": "Importando subtítulos {track}…",
+        "started": "Se está preparando la versión IMAX. Puedes cerrar esta ventana; el progreso aparece en Versiones.",
+        "trackFailures": "La versión IMAX se está importando, pero algunas pistas fallaron: {errors}",
+        "failed": "No se pudo importar la versión IMAX."
+      },
+      "status": {
+        "staging": "Preparando la fuente… {percent}%",
+        "transcoding": "Transcodificando… {percent}%",
+        "playable": "Ya se puede ver; terminando otras calidades… {percent}%",
+        "ready": "Lista",
+        "failed": "Falló"
       }
     }
   },

@@ -47,12 +47,14 @@
           :clip-end-seconds="clipPlaybackEnd"
           :content-rating="playingContentRating"
           :content-warning="playingContentWarning"
+          :versions="movieVersions"
           @play="onVideoPlay"
           @progress="handleWatchProgress"
           @seeked="handleWatchSeeked"
           @ended="handleVideoEnded"
           @next-episode="skipToNextVideo(true)"
           @hdrchange="isPlayingHDR = $event"
+          @versionchange="playingVersion = $event"
         />
 
       </div>
@@ -101,7 +103,7 @@
           </p>
         </template>
         <!-- Badges Container - Horizontally Scrollable -->
-        <div v-if="video.explicit || is4K || is8K || isPlayingHDR || (video.categories && video.categories.length > 0)" class="mt-3 flex gap-1.5 overflow-x-auto pb-1">
+        <div v-if="video.explicit || is4K || is8K || isPlayingHDR || playingVersionLabel || (video.categories && video.categories.length > 0)" class="mt-3 flex gap-1.5 overflow-x-auto pb-1">
           <!-- Explicit Content Warning Badge -->
           <div v-if="video.explicit" class="watch-chip watch-chip--warn">
             <svg class="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 20 20">
@@ -115,6 +117,8 @@
           <span v-if="is4K" class="watch-chip watch-chip--strong">{{ t('video.fourKBadge') }}</span>
           <!-- HDR Badge: only while the HDR ladder is actually playing -->
           <span v-if="isPlayingHDR" class="watch-chip watch-chip--hdr">{{ t('video.hdrBadge') }}</span>
+          <!-- IMAX (alternate version) badge: only while that version is playing -->
+          <span v-if="playingVersionLabel" class="watch-chip watch-chip--imax">{{ playingVersionLabel }}</span>
 
           <!-- Category Badges -->
           <NuxtLink
@@ -1954,6 +1958,16 @@ const videoSrc = computed(() => {
 
 const is4K = computed(() => isVideo4K(video.value?.width))
 const isPlayingHDR = ref(false)
+// Alternate versions (IMAX) of the movie this video belongs to.
+const movieVersions = computed(() => {
+  const movie = currentMovie.value
+  if (!movie || movie.video_id !== id || !Array.isArray(movie.versions)) return []
+  return movie.versions
+    .filter((version: any) => version?.kind && version?.hls_path)
+    .map((version: any) => ({ kind: String(version.kind), label: String(version.label || version.kind), src: resolveMediaUrl(version.hls_path) }))
+})
+const playingVersion = ref('')
+const playingVersionLabel = computed(() => movieVersions.value.find((version: { kind: string }) => version.kind === playingVersion.value)?.label || '')
 const is8K = computed(() => isVideo8K(video.value?.width))
 
 const pauseWatchPlayerForExplicitWarning = () => {
@@ -3031,6 +3045,13 @@ const handleVideoEnded = async () => {
   background: rgba(250, 204, 21, 0.14);
   color: #fde68a;
   font-weight: 600;
+}
+
+.watch-chip--imax {
+  background: rgba(79, 195, 247, 0.14);
+  color: #b3e5fc;
+  font-weight: 700;
+  letter-spacing: 0.08em;
 }
 
 .watch-chip--warn {

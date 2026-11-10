@@ -152,12 +152,14 @@
       :clip-end-seconds="clipEndSeconds"
       :content-rating="contentRating"
       :content-warning="contentWarning"
+      :versions="versions"
       @play="$emit('play')"
       @ended="$emit('ended')"
       @next-episode="$emit('nextEpisode')"
       @progress="$emit('progress', $event)"
       @seeked="$emit('seeked', $event)"
       @hdrchange="$emit('hdrchange', $event)"
+      @versionchange="$emit('versionchange', $event)"
     />
   </div>
 </template>
@@ -243,6 +245,7 @@ interface Props {
   introSuppressed?: boolean
   contentRating?: { rating?: string, descriptors?: string[] } | null
   contentWarning?: '' | 'movie' | 'episode'
+  versions?: Array<{ kind: string, label: string, src: string }>
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -265,6 +268,7 @@ const props = withDefaults(defineProps<Props>(), {
   introSuppressed: false,
   contentRating: null,
   contentWarning: '',
+  versions: () => [],
 })
 
 defineEmits<{
@@ -274,6 +278,7 @@ defineEmits<{
   progress: [payload: { currentTime: number, duration: number }]
   seeked: [payload: { currentTime: number }]
   hdrchange: [playing: boolean]
+  versionchange: [kind: string]
 }>()
 
 const PREROLL_COOLDOWN_VIDEOS = 3

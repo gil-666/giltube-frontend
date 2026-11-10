@@ -175,7 +175,7 @@
                   <TitleLogo :src="titleLogoUrl(selectedItem.logos, locale)" :alt="selectedItem.title" class="streaming-modal-logo" />
                 </h2>
                 <div
-                  v-if="selectedItem.explicit || selectedItem.rating || selectedItem.maxQuality || selectedItem.hdr || selectedItem.surround"
+                  v-if="selectedItem.explicit || selectedItem.rating || selectedItem.maxQuality || selectedItem.hdr || selectedItem.surround || selectedItem.versionLabels?.length"
                   class="streaming-media-badges"
                 >
                   <span
@@ -206,6 +206,15 @@
                     :aria-label="t('streaming.media.hdr')"
                   >
                     HDR
+                  </span>
+                  <span
+                    v-for="label in selectedItem.versionLabels || []"
+                    :key="label"
+                    class="streaming-quality-badge is-imax"
+                    :title="t('streaming.media.version', { version: label })"
+                    :aria-label="t('streaming.media.version', { version: label })"
+                  >
+                    {{ label }}
                   </span>
                   <span
                     v-if="selectedItem.surround"
@@ -892,6 +901,13 @@ onBeforeUnmount(() => {
   border-color: rgba(250, 204, 21, 0.7);
   background: rgba(113, 63, 18, 0.8);
   color: rgb(254 249 195);
+}
+
+.streaming-quality-badge.is-imax {
+  border-color: rgba(79, 195, 247, 0.7);
+  background: rgba(1, 50, 77, 0.82);
+  color: rgb(225 245 254);
+  letter-spacing: 0.08em;
 }
 
 .streaming-quality-badge.is-surround {

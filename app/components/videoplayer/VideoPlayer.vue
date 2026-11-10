@@ -72,6 +72,16 @@
         Clip · {{ formatDisplayTime(displayDuration) }}
       </div>
 
+      <Transition name="version-badge">
+        <div
+          v-if="showVersionBadge"
+          class="version-badge pointer-events-none absolute left-3 top-3 z-20"
+          :title="t('video.player.versionPlaying', { version: activeVersionLabel })"
+        >
+          {{ activeVersionLabel }}
+        </div>
+      </Transition>
+
       <div
         v-if="hasClipRange"
         class="clip-relative-time-display pointer-events-none absolute bottom-3 left-16 z-40 font-mono text-xs font-semibold text-white"
@@ -206,6 +216,7 @@ const { t } = useI18n()
 const AUDIO_LANGUAGE_STORAGE_KEY = 'giltube_audio_language'
 const CAPTION_LANGUAGE_STORAGE_KEY = 'giltube_caption_language'
 const HDR_PREFERENCE_STORAGE_KEY = 'giltube_hdr_enabled'
+const VERSION_PREFERENCE_STORAGE_KEY = 'giltube_movie_version'
 
 interface Props {
   src?: string
@@ -233,6 +244,9 @@ interface Props {
   contentRating?: { rating?: string, descriptors?: string[] } | null
   // Disturbing-content notice shown before the rating card: 'movie' | 'episode'
   contentWarning?: '' | 'movie' | 'episode'
+  // Alternate pictures of the same title (IMAX) that share its audio and
+  // subtitles: { kind: 'imax', label: 'IMAX', src: '/videos/<id>/versions/imax/master.m3u8' }
+  versions?: Array<{ kind: string, label: string, src: string }>
 }
 
 const emit = defineEmits<{
@@ -243,6 +257,7 @@ const emit = defineEmits<{
   nextEpisode: []
   progress: [payload: { currentTime: number, duration: number }]
   hdrchange: [playing: boolean]
+  versionchange: [kind: string]
 }>()
 
 const props = withDefaults(defineProps<Props>(), {
@@ -266,6 +281,7 @@ const props = withDefaults(defineProps<Props>(), {
   lockAdaptiveQuality: false,
   contentRating: null,
   contentWarning: '',
+  versions: () => [],
 })
 
 type PresenceViewer = {
@@ -312,6 +328,48 @@ const probeHDRSource = async (src: string) => {
   } catch {
     return ''
   }
+}
+// Alternate versions (IMAX) are other masters of the same title; the main
+// version is props.src. A version only counts when its master lives inside
+// the main video's directory, so a previous title's versions never apply to
+// the next one while the page catches up.
+const readVersionPreference = () => {
+  try {
+    return localStorage.getItem(VERSION_PREFERENCE_STORAGE_KEY) || ''
+  } catch {
+    return ''
+  }
+}
+const preferredVersion = ref(readVersionPreference())
+const activeVersion = ref('')
+// The main source the player last loaded; version lists for any other source
+// belong to a title that is still being swapped in.
+let loadedMainSrc = 
+const versionBadgeFlash = ref(false)
+let versionBadgeTimer: ReturnType<typeof setTimeout> | null = null
+const mainSourceDir = computed(() => {
+  const path = String(props.src || '').split('?')[0] || ''
+  const slash = path.lastIndexOf('/')
+  return slash > 0 ? path.slice(0, slash + 1) : ''
+})
+const versionChoices = computed(() => {
+  const dir = mainSourceDir.value
+  if (!dir) return []
+  return (props.versions || []).filter(version =>
+    version?.kind && version?.src && String(version.src).split('?')[0]!.includes(`${dir}versions/`))
+})
+const hasVersionChoices = computed(() => versionChoices.value.length > 0)
+const activeVersionLabel = computed(() => versionChoices.value.find(version => version.kind === activeVersion.value)?.label || '')
+const showVersionBadge = computed(() => Boolean(activeVersionLabel.value) && (controlBarShowing.value || versionBadgeFlash.value))
+const pickInitialVersion = () =>
+  versionChoices.value.some(version => version.kind === preferredVersion.value) ? preferredVersion.value : ''
+// The master to play for the active version (SDR; HDR is probed next to it).
+const baseSource = () =>
+  versionChoices.value.find(version => version.kind === activeVersion.value)?.src || props.src || ''
+const flashVersionBadge = () => {
+  if (versionBadgeTimer) clearTimeout(versionBadgeTimer)
+  versionBadgeFlash.value = Boolean(activeVersion.value)
+  versionBadgeTimer = versionBadgeFlash.value ? setTimeout(() => { versionBadgeFlash.value = false }, 4000) : null
 }
 const viewers = ref<PresenceViewer[]>([])
 const anonymousCount = ref(0)
@@ -789,7 +847,7 @@ const updateQualityButtonVisibility = () => {
   const levels = player.qualityLevels()
   const levelCount = countUniqueQualityLevels(levels)
 
-  if (levelCount > 1 || hdrAvailable.value) {
+  if (levelCount > 1 || hdrAvailable.value || hasVersionChoices.value) {
     qualityButton.show()
   } else {
     qualityButton.hide()
@@ -868,6 +926,7 @@ const updateMobileSettingsButtonVisibility = () => {
   const hasSettings =
     countUniqueQualityLevels(levels) > 1 ||
     hdrAvailable.value ||
+    hasVersionChoices.value ||
     countSelectableAudioTracks(tracks) > 1 ||
     countCaptionTracks() > 0
 
@@ -1503,7 +1562,7 @@ const createMobileSettingsButton = () => {
 
     hasQualityItems() {
       const levels = this.player_?.qualityLevels?.()
-      return hdrAvailable.value || Boolean(levels && countUniqueQualityLevels(levels) > 1)
+      return hdrAvailable.value || hasVersionChoices.value || Boolean(levels && countUniqueQualityLevels(levels) > 1)
     }
 
     hasAudioItems() {
@@ -1553,10 +1612,21 @@ const createMobileSettingsButton = () => {
 
     buildQualityItems(showBack = true) {
       const levels = this.player_?.qualityLevels?.()
-      if (!levels || (countUniqueQualityLevels(levels) <= 1 && !hdrAvailable.value)) return false
+      if (!levels || (countUniqueQualityLevels(levels) <= 1 && !hdrAvailable.value && !hasVersionChoices.value)) return false
 
       if (showBack) {
         this.addBackItem()
+      }
+      if (hasVersionChoices.value) {
+        this.addHeading(t('video.player.version'))
+        this.addItem(t('video.player.versionStandard'), !activeVersion.value, () => {
+          setVersion('')
+        })
+        for (const version of versionChoices.value) {
+          this.addItem(version.label, activeVersion.value === version.kind, () => {
+            setVersion(version.kind)
+          })
+        }
       }
       this.addHeading(t('video.player.quality'))
       if (hdrAvailable.value) {
@@ -2697,6 +2767,25 @@ const createQualityButton = (player: any) => {
         this.menu.appendChild(hdrItem)
       }
 
+      if (hasVersionChoices.value) {
+        this.menu.appendChild(videojs.dom.createEl('div', { className: 'vjs-quality-menu-separator' }))
+        const choices = [{ kind: '', label: t('video.player.versionStandard') }, ...versionChoices.value]
+        for (const version of choices) {
+          const active = activeVersion.value === version.kind
+          const versionItem = videojs.dom.createEl('button', {
+            className: `vjs-quality-menu-item vjs-quality-version-item${active ? ' vjs-version-on' : ''}`,
+            type: 'button'
+          }) as HTMLButtonElement
+          versionItem.textContent = version.label
+          versionItem.setAttribute('aria-pressed', active ? 'true' : 'false')
+          this.bindPress(versionItem, () => {
+            this.toggleMenu()
+            setVersion(version.kind)
+          })
+          this.menu.appendChild(versionItem)
+        }
+      }
+
       this.updateMenuSelection()
     }
 
@@ -3029,17 +3118,33 @@ onMounted(async () => {
       // A failing HDR ladder (decoder refused HEVC, missing segments) must
       // never strand playback: fall back to the SDR master at the same time.
       player.on('error', () => {
-        if (!player || !isPlayingHDR.value || !props.src) return
-        console.warn('HDR playback failed, falling back to SDR')
-        const resumeAt = Number(player.currentTime?.() || 0)
-        hdrAvailable.value = false
-        player.error(null)
-        resetPlayerSourceState()
-        void loadPlayerSource(props.src, { resumeAt, resume: true, skipHDR: true })
+        if (!player || !props.src) return
+        if (isPlayingHDR.value) {
+          console.warn('HDR playback failed, falling back to SDR')
+          const resumeAt = Number(player.currentTime?.() || 0)
+          hdrAvailable.value = false
+          player.error(null)
+          resetPlayerSourceState()
+          void loadPlayerSource(baseSource(), { resumeAt, resume: true, skipHDR: true })
+          return
+        }
+        if (activeVersion.value) {
+          // An alternate version that cannot play falls back to the main one.
+          console.warn(`${activeVersion.value} version failed, falling back to the main version`)
+          const resumeAt = Number(player.currentTime?.() || 0)
+          player.error(null)
+          activeVersion.value = ''
+          emit('versionchange', '')
+          resetPlayerSourceState()
+          void loadPlayerSource(props.src, { resumeAt, resume: true })
+        }
       })
 
       if (props.src && props.status === 'ready') {
-        void loadPlayerSource(props.src)
+        loadedMainSrc = props.src
+        activeVersion.value = pickInitialVersion()
+        if (activeVersion.value) emit('versionchange', activeVersion.value)
+        void loadPlayerSource(baseSource())
       }
     })
 
@@ -3047,6 +3152,7 @@ onMounted(async () => {
 })
 
 onBeforeUnmount(() => {
+  if (versionBadgeTimer) clearTimeout(versionBadgeTimer)
   sourceLoadToken++
   if (isPlayingHDR.value) emit('hdrchange', false)
   if (skipIntroTimer) clearTimeout(skipIntroTimer)
@@ -3170,8 +3276,51 @@ const setHDREnabled = (enabled: boolean) => {
   resetPlayerSourceState()
   // Keep the viewer's position; the initial start time was already applied.
   hasAppliedInitialStartTime = true
-  void loadPlayerSource(props.src, { resumeAt, resume })
+  void loadPlayerSource(baseSource(), { resumeAt, resume })
 }
+
+// Switches between the main version ('') and an alternate one ('imax') at
+// the current position. persist remembers the choice for later titles.
+const setVersion = (kind: string, persist = true) => {
+  const next = versionChoices.value.some(version => version.kind === kind) ? kind : ''
+  if (persist) {
+    preferredVersion.value = next
+    try {
+      localStorage.setItem(VERSION_PREFERENCE_STORAGE_KEY, next)
+    } catch {
+      // The choice still applies to this session.
+    }
+  }
+  if (next === activeVersion.value) return
+  activeVersion.value = next
+  emit('versionchange', next)
+  flashVersionBadge()
+  if (!player || !props.src || props.status !== 'ready') return
+  const resumeAt = Number(player.currentTime?.() || 0)
+  const resume = !player.paused?.()
+  resetPlayerSourceState()
+  if (hasAppliedInitialStartTime && resumeAt > 0) {
+    void loadPlayerSource(baseSource(), { resumeAt, resume })
+  } else {
+    // Not started yet: the initial start time still applies to the new source.
+    void loadPlayerSource(baseSource())
+  }
+}
+
+watch(
+  () => versionChoices.value.map(version => `${version.kind}:${version.src}`).join('|'),
+  () => {
+    // A new title: its src watcher picks the version and loads it.
+    if (!player || props.src !== loadedMainSrc) return
+    if (activeVersion.value && !versionChoices.value.some(version => version.kind === activeVersion.value)) {
+      setVersion('', false)
+    } else if (!activeVersion.value && pickInitialVersion()) {
+      setVersion(pickInitialVersion(), false)
+    }
+    updateQualityButtonVisibility()
+    updateMobileSettingsButtonVisibility()
+  }
+)
 
 watch(
   () => props.src,
@@ -3184,7 +3333,13 @@ watch(
       resetPlayerSourceState()
       hasAppliedInitialStartTime = false
       lastProgressEmitAt = 0
-      void loadPlayerSource(newSrc)
+      loadedMainSrc = newSrc
+      const nextVersion = pickInitialVersion()
+      if (nextVersion !== activeVersion.value) {
+        activeVersion.value = nextVersion
+        emit('versionchange', nextVersion)
+      }
+      void loadPlayerSource(baseSource())
     }
   }
 )
@@ -4108,6 +4263,34 @@ watch(
 
 :deep(.vjs-quality-hdr-toggle.vjs-hdr-on) {
   color: #f5c518;
+}
+
+:deep(.vjs-quality-version-item.vjs-version-on) {
+  color: #4fc3f7;
+  font-weight: 700;
+}
+
+.version-badge {
+  border: 1px solid rgba(79, 195, 247, 0.55);
+  border-radius: 0.375rem;
+  background: rgba(2, 12, 20, 0.72);
+  color: #e1f5fe;
+  padding: 0.2rem 0.6rem;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(6px);
+}
+
+.version-badge-enter-active,
+.version-badge-leave-active {
+  transition: opacity 0.25s ease;
+}
+
+.version-badge-enter-from,
+.version-badge-leave-to {
+  opacity: 0;
 }
 
 :deep(.vjs-quality-button:hover .vjs-control-text) {

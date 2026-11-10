@@ -351,7 +351,10 @@
         "latency": "Live latency",
         "stream": "Stream",
         "nativeHls": "Native HLS"
-      }
+      },
+      "version": "Version",
+      "versionStandard": "16:9",
+      "versionPlaying": "Playing the {version} version"
     },
     "introSuggestion": {
       "menu": "Suggest intro timing",
@@ -899,7 +902,8 @@
       "surround": "5.1 surround sound",
       "audioLanguages": "Audio languages",
       "captions": "Captions",
-      "notAvailable": "None"
+      "notAvailable": "None",
+      "version": "{version} version available"
     }
   },
   "music": {
@@ -1982,6 +1986,103 @@
       "spanish": {
         "title": "Spanish (Latin America)",
         "body": "Shown to visitors browsing in Spanish. Leave a field empty to use the English text."
+      }
+    },
+    "movieVersions": {
+      "action": "Movie versions (IMAX)",
+      "kicker": "Movie versions",
+      "title": "Import a movie with an IMAX version",
+      "subtitle": "The IMAX version only adds its picture. It plays with the main version's audio tracks and subtitles, and viewers switch between 16:9 and IMAX in the player.",
+      "loadFailed": "Failed to load movies and ingests.",
+      "source": {
+        "upload": "Upload from this computer",
+        "ingest": "Use a downloaded ingest",
+        "chooseFile": "Choose file",
+        "changeFile": "Change file",
+        "pickIngest": "Choose an ingest",
+        "noIngests": "No downloaded ingests are available.",
+        "progress": "{done} of {total} ({percent}%)",
+        "eta": "about {time} left",
+        "resumed": "resumed",
+        "pause": "Pause upload",
+        "paused": "Upload paused. Start it again to resume where it stopped.",
+        "discard": "Discard partial upload",
+        "failed": "The upload failed. Start it again to resume where it stopped.",
+        "resumeHint": "Large files upload in pieces. If the upload stops or the page reloads, choose the same file again and it resumes where it stopped."
+      },
+      "main": {
+        "title": "Main version (16:9)",
+        "help": "Its audio tracks and subtitles are used by every version.",
+        "existing": "Existing movie",
+        "new": "New movie",
+        "pickMovie": "Choose a movie",
+        "movieTitle": "Movie title",
+        "channel": "Channel",
+        "import": "Upload and import main version",
+        "importing": "Importing…",
+        "imported": "Main version imported. It is transcoding now; the IMAX steps unlock once its audio is published.",
+        "failed": "Failed to import the main version.",
+        "ready": "Main version audio is ready: {tracks}",
+        "waiting": "Waiting for the main version's audio to be published (its transcode runs this first)…"
+      },
+      "existing": {
+        "title": "Versions",
+        "trimmed": "first {seconds} s cut",
+        "watch": "Watch",
+        "remove": "Remove",
+        "confirmRemove": "Remove the {version} version? Its transcoded video is deleted; the main version is not affected.",
+        "removeFailed": "Failed to remove the version."
+      },
+      "imax": {
+        "title": "IMAX version",
+        "help": "Upload or choose the IMAX release. Only its picture is used.",
+        "use": "Use this source",
+        "loading": "Preparing…",
+        "file": "Video file",
+        "syncStream": "Audio to line up with",
+        "noVideo": "This source has no video file.",
+        "failed": "Failed to read the IMAX source."
+      },
+      "sync": {
+        "title": "Line up the versions",
+        "help": "Compares the soundtracks early and late in the film to find where the IMAX version's footage starts relative to the main version.",
+        "measure": "Measure offset",
+        "measuring": "Measuring… {percent}%",
+        "failed": "Failed to measure the offset.",
+        "aligned": "The versions already line up.",
+        "trim": "The IMAX version has {seconds} s of extra footage at the start. It is cut before transcoding, without re-encoding the picture.",
+        "late": "The IMAX version starts after the main version. This cannot be lined up without re-encoding, so it cannot be imported.",
+        "drift": "The offset changes by {drift} s during the film, so the versions are probably different cuts or play at different speeds. Importing it would drift out of sync.",
+        "weak": "No reliable match was found. Try another audio stream (the same language as the main version works best).",
+        "details": "Offset {offset} s at the start, {late} s later in the film · match {confidence}% · compared with \"{track}\"",
+        "offset": "Offset (ms)",
+        "offsetHelp": "Positive: milliseconds cut from the start of the IMAX source."
+      },
+      "extras": {
+        "title": "Extra tracks (optional)",
+        "help": "Add audio tracks or subtitles from the IMAX source that the main version lacks. They are lined up with the same offset.",
+        "audio": "Audio",
+        "subtitles": "Subtitles",
+        "alreadyHave": "the main version has this language",
+        "none": "None in this file."
+      },
+      "import": {
+        "title": "Import",
+        "help": "Cuts the IMAX source if needed and queues its transcode. The IMAX switch appears in the player once its first qualities are ready.",
+        "action": "Import IMAX version",
+        "starting": "Preparing the IMAX source…",
+        "audio": "Importing audio {track}…",
+        "subtitle": "Importing subtitles {track}…",
+        "started": "The IMAX version is being prepared. You can close this window; progress is shown under Versions.",
+        "trackFailures": "The IMAX version is importing, but some tracks failed: {errors}",
+        "failed": "Failed to import the IMAX version."
+      },
+      "status": {
+        "staging": "Preparing the source… {percent}%",
+        "transcoding": "Transcoding… {percent}%",
+        "playable": "Playable; finishing other qualities… {percent}%",
+        "ready": "Ready",
+        "failed": "Failed"
       }
     }
   },
