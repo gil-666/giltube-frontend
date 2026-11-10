@@ -453,7 +453,6 @@ let audioButton: any = null
 let mobileSettingsButton: any = null
 let nextEpisodeButton: any = null
 const DEFAULT_INACTIVITY_TIMEOUT = 3000
-let ultrawideControlsGuardInterval: ReturnType<typeof setInterval> | null = null
 let mobileControlsQuery: MediaQueryList | null = null
 let hasAppliedInitialStartTime = false
 let lastProgressEmitAt = 0
@@ -1015,112 +1014,21 @@ const dumpPlayerDebugState = () => {
   })
 }
 
-const ULTRAWIDE_RATIO_THRESHOLD = 2
+// In full screen, pointer, wheel and key activity anywhere in the document
+// counts as user activity. video.js only listens for moves over the player
+// element; wherever full-screen events land, they now show the controls,
+// which then hide after the normal inactivity timeout.
+const FULLSCREEN_ACTIVITY_EVENTS = ['pointermove', 'pointerdown', 'wheel', 'keydown'] as const
 
-const isChromeBrowser = () => {
-  if (typeof navigator === 'undefined') return false
-  const ua = navigator.userAgent
-  return ua.includes('Chrome/') && !ua.includes('Edg/') && !ua.includes('OPR/')
+const reportFullscreenActivity = () => {
+  if (player?.isFullscreen?.()) player.reportUserActivity?.()
 }
 
-const isUltrawideVideo = () => {
-  if (!player) return false
-  const width = Number(player.videoWidth?.() || 0)
-  const height = Number(player.videoHeight?.() || 0)
-  if (width <= 0 || height <= 0) return false
-  return width / height >= ULTRAWIDE_RATIO_THRESHOLD
-}
-
-const setControlBarPinnedStyles = (enabled: boolean) => {
-  if (!player) return
-  const controlBar = player.controlBar?.el?.() as HTMLElement | undefined
-  if (!controlBar) return
-
-  if (enabled) {
-    controlBar.style.setProperty('display', 'flex', 'important')
-    controlBar.style.setProperty('visibility', 'visible', 'important')
-    controlBar.style.setProperty('opacity', '1', 'important')
-    controlBar.style.setProperty('transform', 'translateY(0)', 'important')
-    controlBar.style.setProperty('pointer-events', 'auto', 'important')
-  } else {
-    controlBar.style.removeProperty('display')
-    controlBar.style.removeProperty('visibility')
-    controlBar.style.removeProperty('opacity')
-    controlBar.style.removeProperty('transform')
-    controlBar.style.removeProperty('pointer-events')
-  }
-}
-
-const stopUltrawideControlsGuard = () => {
-  if (ultrawideControlsGuardInterval) {
-    clearInterval(ultrawideControlsGuardInterval)
-    ultrawideControlsGuardInterval = null
-  }
-  setControlBarPinnedStyles(false)
-}
-
-const startUltrawideControlsGuard = () => {
-  if (ultrawideControlsGuardInterval) return
-
-  ultrawideControlsGuardInterval = setInterval(() => {
-    if (!player) return
-
-    const shouldPinControlsVisible =
-      isChromeBrowser() &&
-      Boolean(player.isFullscreen?.()) &&
-      isUltrawideVideo()
-
-    if (!shouldPinControlsVisible) {
-      stopUltrawideControlsGuard()
-      return
-    }
-
-    if (typeof player.reportUserActivity === 'function') {
-      player.reportUserActivity()
-    }
-    if (typeof player.userActive === 'function') {
-      player.userActive(true)
-    }
-
-    setControlBarPinnedStyles(true)
-  }, 250)
-}
-
-const syncUltrawideFullscreenClass = () => {
-  if (!player) return
-  const playerEl = player.el?.() as HTMLElement | undefined
-  if (!playerEl) return
-
-  const shouldPinControlsVisible =
-    isChromeBrowser() &&
-    Boolean(player.isFullscreen?.()) &&
-    isUltrawideVideo() &&
-    !player.paused?.()
-  playerEl.classList.toggle('giltube-ultrawide-fullscreen', shouldPinControlsVisible)
-
-  if (typeof player.inactivityTimeout === 'function') {
-    player.inactivityTimeout(shouldPinControlsVisible ? 0 : DEFAULT_INACTIVITY_TIMEOUT)
-  }
-
-  if (shouldPinControlsVisible && typeof player.userActive === 'function') {
-    player.userActive(true)
-    startUltrawideControlsGuard()
-    setControlBarPinnedStyles(true)
-  } else {
-    stopUltrawideControlsGuard()
-  }
-}
-
-const handleUserInactive = () => {
-  if (!player) return
-  if (
-    isChromeBrowser() &&
-    Boolean(player.isFullscreen?.()) &&
-    isUltrawideVideo() &&
-    !player.paused?.() &&
-    typeof player.userActive === 'function'
-  ) {
-    player.userActive(true)
+const syncFullscreenActivityListeners = () => {
+  const fullscreen = Boolean(player?.isFullscreen?.())
+  for (const name of FULLSCREEN_ACTIVITY_EVENTS) {
+    document.removeEventListener(name, reportFullscreenActivity, true)
+    if (fullscreen) document.addEventListener(name, reportFullscreenActivity, { capture: true, passive: true })
   }
 }
 
@@ -3092,22 +3000,17 @@ onMounted(async () => {
       player.on('fullscreenchange', updateQualityButtonVisibility)
       player.on('fullscreenchange', updateAudioButtonVisibility)
       player.on('fullscreenchange', updateMobileSettingsButtonVisibility)
-      player.on('loadedmetadata', syncUltrawideFullscreenClass)
-      player.on('fullscreenchange', syncUltrawideFullscreenClass)
+      player.on('fullscreenchange', syncFullscreenActivityListeners)
       player.on('fullscreenchange', attachProgressBarOverlay)
       player.on('fullscreenchange', attachPlayerMenusOverlay)
       player.on('fullscreenchange', closeContextMenu)
       player.on('fullscreenchange', attachSeriesActionsOverlay)
       player.on('fullscreenchange', attachContentRatingOverlay)
       player.on('fullscreenchange', attachMobilePiPOverlay)
-      player.on('play', syncUltrawideFullscreenClass)
-      player.on('pause', syncUltrawideFullscreenClass)
-      player.on('ended', syncUltrawideFullscreenClass)
       player.on('ended', () => {
         emitWatchProgress(true)
         emit('ended')
       })
-      player.on('userinactive', handleUserInactive)
       for (const event of ['useractive', 'userinactive', 'play', 'pause']) {
         player.on(event, syncControlBarShowing)
       }
@@ -3149,7 +3052,7 @@ onBeforeUnmount(() => {
   if (skipIntroTimer) clearTimeout(skipIntroTimer)
   clearAdaptiveQualityLockTimer()
   stopMobileControlsWatcher()
-  stopUltrawideControlsGuard()
+  FULLSCREEN_ACTIVITY_EVENTS.forEach((name) => document.removeEventListener(name, reportFullscreenActivity, true))
   document.removeEventListener('keydown', handleKeyboardShortcuts)
   FULLSCREEN_EVENTS.forEach((name) => document.removeEventListener(name, markFullscreenTransition, true))
   closeContextMenu()
@@ -3167,7 +3070,6 @@ onBeforeUnmount(() => {
     detachPlayerGestureListeners()
     const playerEl = player.el?.() as HTMLElement | undefined
     if (playerEl) {
-      playerEl.classList.remove('giltube-ultrawide-fullscreen')
       playerEl.classList.remove('giltube-controls-locked')
     }
     if (progressBarOverlay.value?.parentElement) {
@@ -3761,8 +3663,7 @@ watch(
 }
 
 :deep(.video-js.vjs-user-active .progress-bar-overlay),
-:deep(.video-js.vjs-fullscreen.vjs-user-active .progress-bar-overlay),
-:deep(.video-js.vjs-fullscreen.giltube-ultrawide-fullscreen .progress-bar-overlay) {
+:deep(.video-js.vjs-fullscreen.vjs-user-active .progress-bar-overlay) {
   opacity: 1;
   visibility: visible;
   transform: translateY(0);
@@ -3829,8 +3730,7 @@ watch(
 }
 
 :deep(.video-js.vjs-user-active .mobile-pip-overlay),
-:deep(.video-js.vjs-fullscreen.vjs-user-active .mobile-pip-overlay),
-:deep(.video-js.vjs-fullscreen.giltube-ultrawide-fullscreen .mobile-pip-overlay) {
+:deep(.video-js.vjs-fullscreen.vjs-user-active .mobile-pip-overlay) {
   opacity: 1;
   visibility: visible;
   transform: translateY(0);
@@ -4444,16 +4344,6 @@ watch(
   opacity: 0 !important;
   transform: translateY(100%) !important;
   pointer-events: none !important;
-}
-
-.video-js.vjs-fullscreen.giltube-ultrawide-fullscreen .vjs-control-bar,
-.video-js.vjs-fullscreen.giltube-ultrawide-fullscreen.vjs-user-inactive .vjs-control-bar,
-.video-js.vjs-fullscreen.giltube-ultrawide-fullscreen.vjs-user-active .vjs-control-bar {
-  display: flex !important;
-  visibility: visible !important;
-  opacity: 1 !important;
-  transform: translateY(0) !important;
-  pointer-events: auto !important;
 }
 
 .video-js.vjs-fullscreen .vjs-control-bar .vjs-control,
