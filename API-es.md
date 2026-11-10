@@ -477,6 +477,11 @@ Estas rutas requieren ser propietario del video o admin.
 Los metadatos son `label`, `language`, `default` y `delay_ms`. El archivo de
 subtítulos usa la parte `subtitle`; el audio usa `audio`.
 
+Los subtítulos (`.srt`, `.ass`, `.vtt`) se convierten a WebVTT y se marcan con
+un `X-TIMESTAMP-MAP` para el inicio real del video, así que los tiempos del
+archivo son relativos al inicio del video. `delay_ms` solo hace falta cuando el
+archivo mismo está desfasado; un archivo bien sincronizado usa `0`.
+
 Los subtítulos automáticos se publican como la pista `auto-captions`. Los generan workers con GPU y whisper.cpp, solo en inglés o español. El estado del trabajo es `queued`, `running`, `completed`, `skipped` (sin voz, un idioma no admitido o el video ya tiene subtítulos), `failed` o `cancelled`.
 
 ## Canales y usuarios
@@ -900,9 +905,12 @@ La superficie administrativa actual se agrupa así:
 | Revisión de intros | `GET /admin/intro-suggestions` y acciones de aprobar/rechazar por ID. Las sugerencias incluyen `source` (usuario o detección automática) y `confidence` |
 | Espejos de YouTube | `/admin/youtube-mirrors/channels` y `/admin/youtube-mirrors/import` |
 | Ingestión | `/admin/media-ingests` y acciones de carga, reintento, pausa, vista previa, importación, adjuntos y limpieza |
-| Transcodificación | `/admin/transcode-jobs` y acciones de inicio, reinicio, pausa y cancelación |
+| Transcodificación | `/admin/transcode-jobs` y acciones de inicio, reinicio, pausa y cancelación. Los trabajos distribuidos (`mode: "split"`) incluyen `tasks`: una por paso de preparación y por calidad, con estado, worker, intentos y progreso |
 | Subtítulos automáticos | `/admin/caption-jobs` y acciones `backfill`, reintento y cancelación |
-| Workers | `/admin/workers`, versiones, códigos de registro, habilitación/revocación, planificación, asignación de roles (`PUT /admin/workers/{id}/roles`) y eliminación |
+| Workers | `/admin/workers` (con los codificadores detectados, las velocidades medidas y los límites de cada worker), versiones, códigos de registro, habilitación/revocación, planificación, asignación de roles (`PUT /admin/workers/{id}/roles`), límites de calidad y eliminación |
+| Límites de workers | `PUT /admin/workers/{id}/limits` con JSON `sdr_max_height` y `hdr_max_height`: una altura de la escalera como `1080`, `0` sin límite o (solo HDR) `-1` sin HDR. Las tareas en curso por encima de los nuevos límites vuelven a la cola |
+| Subtítulos en línea | `GET /admin/subtitle-providers` (proveedores configurados e idiomas automáticos); `GET /admin/videos/{id}/subtitle-search` (consulta opcional `tmdb_id` o `title` para corregir la coincidencia) devuelve `media`, `results` ordenados, `errors` por proveedor y `present_languages`; `POST /admin/videos/{id}/subtitle-search/fetch` con JSON `provider`, `id`, `language`, `file_name`, `hearing_impaired`, `label` y `sync` opcionales (`true` por defecto) agrega un resultado como pista e informa el resultado de `sync` (`429` cuando se agotaron las descargas diarias del proveedor); `GET /admin/videos/{id}/subtitle-fetches` lista los intentos automáticos |
+| Sincronización de subtítulos | `POST /admin/videos/{id}/subtitles/{trackId}/sync` alinea una pista con el audio del video y devuelve `sync` (`offset` en segundos, `rate` para una corrección de cuadros por segundo, `confident`, `reason`, `sections` por tramo) y los `subtitles` actualizados. Solo un resultado seguro cambia la pista, ajustando su retraso. La primera sincronización de un video analiza su pista de sonido (uno o dos minutos en una película) |
 
 Desarrolla clientes administrativos junto con la versión del backend objetivo.
 

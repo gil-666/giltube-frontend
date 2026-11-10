@@ -99,6 +99,9 @@ The project is designed around the entire media lifecycle:
 - Existing user uploads can be linked into the catalog without transferring video ownership.
 - Catalog-linked videos are protected from accidental deletion until the registry relationship is removed.
 - Alternate audio and subtitle tracks can be attached, labeled, made default, downloaded, replaced, delayed, trimmed, and synchronized.
+- Online subtitles: each movie or episode is matched through TMDB and searched on OpenSubtitles and SubDL, with English and Latin American Spanish listed first. Results are ranked by release match, frame rate, trusted uploaders, and downloads; machine translations come last. New titles get the best English and Latin American Spanish subtitles automatically.
+- Automatic subtitle sync: a subtitle is lined up with the speech in the video's soundtrack, correcting a constant offset (such as extra studio logos) and 24/23.976/25 fps mismatches. It changes nothing unless the match is unambiguous and every part of the film agrees, so a release with a different cut is refused rather than half-fixed.
+- Every subtitle carries an `X-TIMESTAMP-MAP` for its video's real start time, so cues are timed correctly in every player without manual delays.
 - Saved audio and caption language preferences fall back gracefully when a requested language is unavailable.
 
 ### Live streaming and watch parties
@@ -134,13 +137,15 @@ The project is designed around the entire media lifecycle:
 
 - User and channel moderation, admin promotion, suspension, bans, and catalog management.
 - Video, movie, series, artist, release, and track editors.
-- Redis-backed transcode jobs with progress, pause/cancel controls, retries, recovery after restart, and completed-rendition detection.
-- Worker management: enrollment codes, downloadable worker releases for Linux, Windows, and macOS, per-worker roles (video transcoding, adaptive live encoding), scheduling toggles, and revocation.
+- Durable transcode jobs split into tasks (preparation, each SDR quality, each HDR quality) that run on different workers at once, with progress per task, pause/cancel controls, retries, recovery after restart, and completed-rendition detection. Videos become playable as soon as the 1080p rendition is published.
+- A scheduler that gives each task to the worker that would finish it soonest, from each worker's measured encode, decode, and tone-mapping speed, its current load, and the time to download the source.
+- Worker management: enrollment codes, downloadable worker releases for Linux, Windows, and macOS with automatic updates, per-worker roles (video transcoding, adaptive live encoding), detected encoders and measured speeds, per-worker SDR/HDR quality limits, scheduling toggles, and revocation.
 - Featured-content curation with ordering, custom copy, and optional notifications.
 - Playback-intro upload and settings, plus intro-detection runs and intro-suggestion review for series.
 - Authorized torrent ingest through qBittorrent plus direct single-file and multi-file local ingest.
 - Automatic episode inference from filenames, manual mapping, exclusions, bulk attachment, and post-ingest episode reordering.
 - Audio and subtitle extraction from ingested files, bulk episode linking, timing adjustment, and cross-source synchronization.
+- Online subtitle search, automatic fetching, and Sync to audio for every movie and episode subtitle track.
 - Completed source files can be deleted to reclaim storage while retaining ingest history.
 - YouTube mirror administration through yt-dlp.
 - GilAds banner/video placements and event reporting.
@@ -177,8 +182,12 @@ flowchart LR
     API --> GilID[GilID OAuth]
     API --> GilAds[GilAds]
 
-    Redis --> Worker1[Primary FFmpeg worker]
-    Redis --> Worker2[Secondary FFmpeg worker]
+    Postgres -->|transcode tasks| Worker1[Primary FFmpeg worker]
+    Postgres -->|transcode tasks| Worker2[Secondary FFmpeg worker]
+    Redis --> Worker1
+    Redis --> Worker2
+    API -->|HTTPS worker API| Worker3[Enrolled PC workers<br/>Windows / macOS / Linux]
+    API --> Subs[OpenSubtitles / SubDL]
     Worker1 --> Media
     Worker2 -->|NFS| Media
 ```
@@ -209,7 +218,7 @@ The production layout separates small service state from large media:
   channel-backgrounds/      Channel backdrop image sets
 ```
 
-Secondary workers mount the media root over NFS and consume jobs from the same Redis queue. This keeps one authoritative media copy while allowing encoding capacity to scale horizontally.
+Secondary workers mount the media root over NFS and take tasks from the same PostgreSQL queue. Enrolled PC workers need no shared storage: they download each source once over the authenticated worker API and upload their renditions back. This keeps one authoritative media copy while allowing encoding capacity to scale horizontally.
 
 ## Media pipelines
 
@@ -220,11 +229,12 @@ Browser chunks
   -> upload session
   -> finalized source file
   -> PostgreSQL video record
-  -> Redis transcode job
-  -> FFprobe stream inspection
+  -> transcode job
+  -> FFprobe stream inspection and a task plan (prep + one task per quality)
+  -> tasks encoded in parallel on the workers the scheduler picks
   -> FFmpeg HLS renditions + audio/subtitle metadata + thumbnails
-  -> master playlist
-  -> published playback
+  -> master playlists rebuilt as each task publishes
+  -> playable at 1080p, complete when every task has finished
 ```
 
 The worker does not upscale merely to fill a standard ladder. It determines available outputs from both source dimensions, which lets non-standard 4K media retain the correct quality classification. HDR sources can be tone-mapped to BT.709 for the standard `master.m3u8`. HDR titles also publish a `master-hdr.m3u8` (HEVC Main10, fMP4), which the player only requests on HDR displays whose browser can decode HEVC. Interrupted work is resumable: completed variants with valid playlists and segments are skipped on retry.
@@ -241,6 +251,20 @@ Chunked audio upload
 ```
 
 The player selects a stream from the user's saved preference and network conditions. Lossless delivery goes through an API endpoint that supports range requests rather than exposing the master directory directly.
+
+### Online subtitles
+
+```text
+Movie or episode
+  -> TMDB match (movie by title and year; episode by series, season, and number)
+  -> OpenSubtitles + SubDL search, ranked by language, release, frame rate, and downloads
+  -> download, season-pack unzip, UTF-8 conversion, WebVTT
+  -> speech profile of the soundtrack (cached per video) and offset / frame-rate fit
+  -> X-TIMESTAMP-MAP for the video's start time
+  -> HLS subtitle rendition in master.m3u8
+```
+
+Spanish uploads are told apart as Latin American or Spain from each provider's language codes and, for the many that only say "Spanish", from release names and uploader notes. The automatic fetch records each attempt, so a subtitle an administrator deletes is not added back.
 
 ### Alternate language ingest
 
@@ -377,6 +401,7 @@ The backend requires environment values for these groups. Secrets belong in untr
 | OAuth | `GILID_CLIENT_ID`, `GILID_CLIENT_SECRET`, redirect and provider URLs |
 | Push | `PUSH_ENABLED`, `PUSH_SEND_ENABLED`, VAPID public/private keys and subject |
 | Media Ingest | qBittorrent URL, username, password/API key, and save path |
+| Metadata and subtitles | `TMDB_API_KEY`, `OPENSUBTITLES_API_KEY` (plus optional `OPENSUBTITLES_USERNAME`/`OPENSUBTITLES_PASSWORD`), `SUBDL_API_KEY`, `SUBTITLE_AUTO_LANGUAGES` |
 | Advertising | GilAds base URL, serving path, and events path |
 
 Never use development credentials in a public deployment. Passkeys and browser push require a secure origin, except for browser-supported localhost development cases.
@@ -388,7 +413,8 @@ The production frontend uses a two-stage Node 22 Docker image: the first stage r
 - **PostgreSQL** and **Redis** persist on the primary machine's SSD.
 - **API**, **worker**, **frontend**, and **Nginx gateway** run as separate containers.
 - Large media lives on an HDD pool and is mounted read/write by workers.
-- Secondary workers mount the same media over NFS and share the database and Redis queue.
+- Secondary workers mount the same media over NFS and share the database and Redis.
+- Enrolled Windows, macOS, and Linux PCs encode over the HTTPS worker API and update themselves when a new release is deployed.
 - `/dev/dri` can be passed to Linux workers for VA-API acceleration.
 - Nginx serves generated video files directly and proxies API, music-master, SSR, and live traffic to the responsible service.
 - Cloudflare fronts [giltube.gilservers.com](https://giltube.gilservers.com); uploads remain chunked so large files do not depend on one proxy request.
@@ -408,6 +434,8 @@ Media Ingest is intended only for content the operator is authorized to process 
 - **Same-origin media delivery:** public paths stay stable while SSR uses a private service URL.
 - **Durable work instead of request-bound encoding:** uploads finish before heavy FFmpeg jobs run.
 - **Idempotent recovery:** completed HLS variants are detected and reused after worker interruption.
+- **Measured, not guessed, placement:** workers benchmark their own encoders, and each task goes to the worker that would finish it first, so a 4K HDR encode lands on the strong GPU while a smaller machine takes the lower qualities.
+- **Timing fixed at the source:** subtitles carry the video's real start time, and fetched subtitles are aligned to the audio, instead of relying on per-track manual delays.
 - **One source of ownership truth:** catalogs link to videos instead of silently reassigning them.
 - **One master, several delivery formats:** music preserves archival quality while adapting to bandwidth.
 - **Shared storage, independent compute:** workers scale without maintaining divergent media copies.
