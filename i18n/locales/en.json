@@ -2364,12 +2364,23 @@
       "trusted": "Trusted",
       "machine": "Machine translated",
       "add": "Add",
-      "adding": "Adding…",
+      "adding": "Adding and syncing…",
       "added": "Added",
       "showAll": "Show all {count}",
       "unknownLanguage": "Unknown language",
       "searchFailed": "Subtitle search failed.",
       "addFailed": "Could not add this subtitle."
+    },
+    "subtitleSync": {
+      "button": "Sync to audio",
+      "syncing": "Syncing…",
+      "working": "Syncing to the audio. The first sync of a video analyses its soundtrack and can take a minute or two.",
+      "help": "Lines the subtitle up with the speech in the soundtrack and sets the delay.",
+      "synced": "Synced to the audio ({offset} s).",
+      "syncedRate": "Synced to the audio ({offset} s, {rate}).",
+      "notChanged": "Timing not changed: {reason}.",
+      "failed": "Sync failed.",
+      "failedWith": "Added, but syncing failed: {error}"
     }
   },
   "common": {

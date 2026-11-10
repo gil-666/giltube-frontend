@@ -334,6 +334,9 @@
             <button type="button" :disabled="subtitleSaving" class="rounded bg-blue-700 px-3 py-1.5 text-xs font-semibold text-on-accent transition hover:bg-blue-600 disabled:cursor-not-allowed disabled:opacity-50" @click="saveSubtitleDelay(track)">
               {{ t('movieAdmin.subtitles.saveDelay') }}
             </button>
+            <button v-if="movieVideoId" type="button" :disabled="subtitleSaving" :title="t('videoEditor.subtitleSync.help')" class="rounded bg-violet-700 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-violet-600 disabled:cursor-not-allowed disabled:opacity-50" @click="syncSubtitleToAudio(track)">
+              {{ syncingTrackId === track.id ? t('videoEditor.subtitleSync.syncing') : t('videoEditor.subtitleSync.button') }}
+            </button>
             <a
               :href="subtitleDownloadUrl(track)"
               :download="subtitleDownloadName(track)"
@@ -448,6 +451,7 @@ import { useLocalUploadBaseURL } from '~/app/composables/useLocalUploadBaseURL'
 import { searchMediaMetadata, type MediaMetadataResult } from '~/app/service/mediaMetadata'
 import { uploadVideo } from '~/app/service/upload'
 import SubtitleFinder from '~/app/components/admin/SubtitleFinder.vue'
+import { syncVideoSubtitle } from '~/app/service/subtitleFetch'
 import { createMovie, deleteMovie, deleteMovieAudioTrack, deleteMovieSubtitle, downloadMovieAudioTrackWAV, getMovie, GILTUBE_MOVIES_CHANNEL_ID, listMovieAudioTracks, listMovieSubtitles, listMovies, setMovieTrailer, setMovieVideo, updateMovie, uploadMovieAudioTrack, uploadMovieSubtitle } from '~/app/service/movies'
 import { getAdminVideos } from '~/app/service/videos'
 import { resolveMediaUrl } from '~/app/utils/media'
@@ -1161,6 +1165,34 @@ const saveSubtitleDelay = async (track: SubtitleTrack) => {
     movieError.value = err?.response?.data?.error || err?.message || t('movieAdmin.subtitles.errors.saveDelay')
   } finally {
     subtitleSaving.value = false
+  }
+}
+
+const syncingTrackId = ref('')
+
+const syncSubtitleToAudio = async (track: SubtitleTrack) => {
+  if (!movieVideoId.value) return
+  subtitleSaving.value = true
+  syncingTrackId.value = track.id
+  movieError.value = ''
+  movieProgressMessage.value = t('videoEditor.subtitleSync.working')
+  try {
+    const data = await syncVideoSubtitle(movieVideoId.value, track.id)
+    movieSubtitles.value = data.subtitles || []
+    const sync = data.sync
+    const offset = `${sync.offset >= 0 ? '+' : ''}${sync.offset.toFixed(1)}`
+    if (sync.confident) {
+      movieProgressMessage.value = sync.rate ? t('videoEditor.subtitleSync.syncedRate', { offset, rate: sync.rate }) : t('videoEditor.subtitleSync.synced', { offset })
+    } else {
+      movieProgressMessage.value = ''
+      movieError.value = t('videoEditor.subtitleSync.notChanged', { reason: sync.reason || '' })
+    }
+  } catch (err: any) {
+    movieProgressMessage.value = ''
+    movieError.value = err?.response?.data?.error || err?.message || t('videoEditor.subtitleSync.failed')
+  } finally {
+    subtitleSaving.value = false
+    syncingTrackId.value = ''
   }
 }
 

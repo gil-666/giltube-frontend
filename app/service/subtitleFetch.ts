@@ -63,6 +63,23 @@ export const searchVideoSubtitlesOnline = async (videoId: string, options: { tmd
   return response.data
 }
 
+// The first sync of a video analyses its whole soundtrack (a minute or two
+// for a film), so these requests get a long timeout.
+const syncTimeout = 6 * 60 * 1000
+
+export interface SubtitleSyncResult {
+  offset: number
+  rate?: string
+  confident: boolean
+  reason?: string
+  sections: number[]
+}
+
+export const syncVideoSubtitle = async (videoId: string, trackId: string): Promise<{ sync: SubtitleSyncResult, subtitles: any[] }> => {
+  const response = await api.post(`/admin/videos/${encodeURIComponent(videoId)}/subtitles/${encodeURIComponent(trackId)}/sync`, {}, { timeout: syncTimeout })
+  return response.data
+}
+
 export const fetchVideoSubtitleOnline = async (videoId: string, result: SubtitleResult) => {
   const response = await api.post(`/admin/videos/${encodeURIComponent(videoId)}/subtitle-search/fetch`, {
     provider: result.provider,
@@ -70,6 +87,6 @@ export const fetchVideoSubtitleOnline = async (videoId: string, result: Subtitle
     language: result.language,
     file_name: result.file_name,
     hearing_impaired: result.hearing_impaired,
-  }, { timeout: 90000 })
+  }, { timeout: syncTimeout })
   return response.data
 }

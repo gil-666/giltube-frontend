@@ -60,6 +60,7 @@
               <span v-if="result.machine_translated" class="rounded bg-red-900/60 px-1.5 text-red-200">{{ t('videoEditor.subtitleFinder.machine') }}</span>
             </p>
           </div>
+          <p v-if="notes[key(result)]" class="text-xs sm:max-w-[16rem] sm:text-right" :class="notes[key(result)].ok ? 'text-emerald-300' : 'text-amber-300/90'">{{ notes[key(result)].text }}</p>
           <button
             type="button"
             :disabled="!!adding || added.has(key(result))"
@@ -87,7 +88,7 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { fetchVideoSubtitleOnline, listSubtitleProviders, searchVideoSubtitlesOnline, type SubtitleResult, type SubtitleSearchResponse } from '~/app/service/subtitleFetch'
+import { fetchVideoSubtitleOnline, listSubtitleProviders, searchVideoSubtitlesOnline, type SubtitleResult, type SubtitleSearchResponse, type SubtitleSyncResult } from '~/app/service/subtitleFetch'
 
 const props = defineProps<{ videoId: string }>()
 const emit = defineEmits<{ added: [subtitles: unknown[]] }>()
@@ -104,6 +105,15 @@ const response = ref<SubtitleSearchResponse | null>(null)
 const tmdbOverride = ref<number | null>(null)
 const added = reactive(new Set<string>())
 const expanded = reactive(new Set<string>())
+const notes = reactive<Record<string, { ok: boolean, text: string }>>({})
+
+const syncNote = (sync?: SubtitleSyncResult, failure?: string) => {
+  if (failure) return { ok: false, text: t('videoEditor.subtitleSync.failedWith', { error: failure }) }
+  if (!sync) return null
+  if (!sync.confident) return { ok: false, text: t('videoEditor.subtitleSync.notChanged', { reason: sync.reason || '' }) }
+  const offset = `${sync.offset >= 0 ? '+' : ''}${sync.offset.toFixed(1)}`
+  return { ok: true, text: sync.rate ? t('videoEditor.subtitleSync.syncedRate', { offset, rate: sync.rate }) : t('videoEditor.subtitleSync.synced', { offset }) }
+}
 const collapsedCount = 5
 
 const providerNames: Record<string, string> = { opensubtitles: 'OpenSubtitles', subdl: 'SubDL' }
@@ -179,6 +189,8 @@ const add = async (result: SubtitleResult) => {
   try {
     const data = await fetchVideoSubtitleOnline(props.videoId, result)
     added.add(key(result))
+    const note = syncNote(data.sync, data.sync_error)
+    if (note) notes[key(result)] = note
     if (response.value && !response.value.present_languages.includes(result.language)) {
       response.value.present_languages.push(result.language)
     }

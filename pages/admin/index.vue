@@ -933,6 +933,9 @@
                     <button type="button" :disabled="episode.subtitleUploading" class="rounded bg-blue-700 px-3 py-1.5 text-xs font-semibold text-on-accent transition hover:bg-blue-600 disabled:cursor-not-allowed disabled:opacity-50" @click="saveSubtitleDelay(index, track)">
                       {{ t('movieAdmin.subtitles.saveDelay') }}
                     </button>
+                    <button v-if="episode.videoId" type="button" :disabled="episode.subtitleUploading" :title="t('videoEditor.subtitleSync.help')" class="rounded bg-violet-700 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-violet-600 disabled:cursor-not-allowed disabled:opacity-50" @click="syncEpisodeSubtitle(index, track)">
+                      {{ syncingSubtitleId === track.id ? t('videoEditor.subtitleSync.syncing') : t('videoEditor.subtitleSync.button') }}
+                    </button>
                     <a
                       :href="subtitleDownloadUrl(episode, track)"
                       :download="subtitleDownloadName(episode, track)"
@@ -1184,6 +1187,7 @@ import { useLocalePath } from '#i18n'
 import { useI18n } from 'vue-i18n'
 import { useLocalUploadBaseURL } from '~/app/composables/useLocalUploadBaseURL'
 import SubtitleFinder from '~/app/components/admin/SubtitleFinder.vue'
+import { syncVideoSubtitle } from '~/app/service/subtitleFetch'
 import MovieAdminPanel from '~/app/components/admin/MovieAdminPanel.vue'
 import ContentRatingFields from '~/app/components/admin/ContentRatingFields.vue'
 import { contentRatingInputFrom, emptyContentRatingInput } from '~/app/utils/contentRating'
@@ -2912,6 +2916,35 @@ const saveSubtitleDelay = async (index: number, track: SubtitleTrack) => {
     seriesError.value = err?.response?.data?.error || err?.message || 'Failed to update subtitle delay'
   } finally {
     row.subtitleUploading = false
+  }
+}
+
+const syncingSubtitleId = ref('')
+
+const syncEpisodeSubtitle = async (index: number, track: SubtitleTrack) => {
+  const row = episodeRows.value[index]
+  if (!row?.videoId) return
+  row.subtitleUploading = true
+  syncingSubtitleId.value = track.id
+  seriesError.value = ''
+  seriesProgressMessage.value = t('videoEditor.subtitleSync.working')
+  try {
+    const data = await syncVideoSubtitle(row.videoId, track.id)
+    row.subtitles = data.subtitles || []
+    const sync = data.sync
+    const offset = `${sync.offset >= 0 ? '+' : ''}${sync.offset.toFixed(1)}`
+    if (sync.confident) {
+      seriesProgressMessage.value = sync.rate ? t('videoEditor.subtitleSync.syncedRate', { offset, rate: sync.rate }) : t('videoEditor.subtitleSync.synced', { offset })
+    } else {
+      seriesProgressMessage.value = ''
+      seriesError.value = t('videoEditor.subtitleSync.notChanged', { reason: sync.reason || '' })
+    }
+  } catch (err: any) {
+    seriesProgressMessage.value = ''
+    seriesError.value = err?.response?.data?.error || err?.message || t('videoEditor.subtitleSync.failed')
+  } finally {
+    row.subtitleUploading = false
+    syncingSubtitleId.value = ''
   }
 }
 

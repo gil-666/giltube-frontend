@@ -2364,12 +2364,23 @@
       "trusted": "Confiable",
       "machine": "Traducción automática",
       "add": "Agregar",
-      "adding": "Agregando…",
+      "adding": "Agregando y sincronizando…",
       "added": "Agregado",
       "showAll": "Mostrar los {count}",
       "unknownLanguage": "Idioma desconocido",
       "searchFailed": "La búsqueda de subtítulos falló.",
       "addFailed": "No se pudo agregar este subtítulo."
+    },
+    "subtitleSync": {
+      "button": "Sincronizar con el audio",
+      "syncing": "Sincronizando…",
+      "working": "Sincronizando con el audio. La primera sincronización de un video analiza su pista de sonido y puede tardar uno o dos minutos.",
+      "help": "Alinea el subtítulo con las voces de la pista de sonido y ajusta el retraso.",
+      "synced": "Sincronizado con el audio ({offset} s).",
+      "syncedRate": "Sincronizado con el audio ({offset} s, {rate}).",
+      "notChanged": "No se cambió la sincronía: {reason}.",
+      "failed": "Falló la sincronización.",
+      "failedWith": "Agregado, pero falló la sincronización: {error}"
     }
   },
   "common": {
