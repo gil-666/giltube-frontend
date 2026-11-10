@@ -196,7 +196,7 @@ import { computed, defineComponent, h, nextTick, onMounted, onUnmounted, ref, wa
 import AvatarFallback from '~/app/components/AvatarFallback.vue'
 import GilAdsBanner from '~/app/components/ads/GilAdsBanner.vue'
 import PromoBanner from '~/app/components/promo/PromoBanner.vue'
-import { listPromotions } from '~/app/service/promotions'
+import { listPromotions, localizePromotion } from '~/app/service/promotions'
 import { getVideos, getHomeRecommendations, getRecentWatchProgress, getWatchProgressMap } from '~/app/service/videos'
 import { getChannelVideos } from '~/app/service/channels'
 import { listMoviesCached, prefetchMovie } from '~/app/service/movies'
@@ -212,7 +212,7 @@ import { useMetaTags } from '~/app/composables/useMetaTags'
 import { useEasterEggs } from '~/app/composables/useEasterEggs'
 import VerifiedBadge from '~/app/components/VerifiedBadge.vue'
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const localePath = useLocalePath()
 const { activeEasterEgg } = useEasterEggs()
 const isSabrinaTube = computed(() => activeEasterEgg.value?.id === 'sabrina-tube')
@@ -342,6 +342,7 @@ const HomePromoSlot = defineComponent({
       ? null
       : homePromotions.value
         .filter((promo) => promo.placement === `home:${props.placement}`)
+        .map((promo) => localizePromotion(promo, locale.value))
         .map((promo) => h('section', { key: promo.id, class: 'home-promo', 'aria-label': promo.label || promo.title }, [
           promo.label ? h(ShelfHeader, { title: promo.label }) : null,
           h(PromoBanner, { promo }),

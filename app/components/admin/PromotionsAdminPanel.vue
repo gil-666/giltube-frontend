@@ -18,8 +18,15 @@
       <h3 class="text-lg font-semibold text-white">{{ editing.id ? t('admin.promotions.edit') : t('admin.promotions.new') }}</h3>
 
       <div>
-        <p class="mb-2 text-xs font-medium uppercase tracking-wide text-gray-500">{{ t('admin.promotions.preview') }}</p>
-        <PromoBanner :promo="previewPromo" preview />
+        <div class="mb-2 flex items-center justify-between gap-3">
+          <p class="text-xs font-medium uppercase tracking-wide text-gray-500">{{ t('admin.promotions.preview') }}</p>
+          <div class="flex rounded-full border border-white/10 p-0.5 text-xs font-semibold" role="group" :aria-label="t('admin.promotions.previewLanguage')">
+            <button v-for="lang in ['en', 'es']" :key="lang" type="button" :class="['rounded-full px-3 py-1 transition', previewLang === lang ? 'bg-zinc-700 text-white' : 'text-gray-400 hover:text-white']" @click="previewLang = lang">
+              {{ lang.toUpperCase() }}
+            </button>
+          </div>
+        </div>
+        <PromoBanner :key="previewLang" :promo="previewPromo" preview />
       </div>
 
       <div class="grid gap-4 md:grid-cols-2">
@@ -89,6 +96,17 @@
           <span>{{ t('admin.promotions.fields.sortOrder') }}</span>
           <input v-model.number="form.sort_order" type="number">
         </label>
+      </div>
+
+      <div class="rounded-xl border border-white/10 bg-zinc-950 p-4">
+        <p class="text-sm font-medium text-gray-300">{{ t('admin.promotions.spanish.title') }}</p>
+        <p class="mt-1 text-xs text-gray-500">{{ t('admin.promotions.spanish.body') }}</p>
+        <div class="mt-3 grid gap-4 md:grid-cols-2">
+          <label v-for="field in spanishFields" :key="field.key" class="field" :class="{ 'md:col-span-2': field.key === 'tagline' }">
+            <span>{{ t(`admin.promotions.fields.${field.label}`) }}</span>
+            <input v-model="form.translations.es[field.key]" :maxlength="field.max" :placeholder="form[field.key] || ''">
+          </label>
+        </div>
       </div>
 
       <div>
@@ -176,7 +194,7 @@
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import PromoBanner from '~/app/components/promo/PromoBanner.vue'
-import { deletePromotion, deletePromotionAsset, listAdminPromotions, savePromotion, uploadPromotionAsset, type Promotion, type PromotionAssetSlot, type PromotionInput } from '~/app/service/promotions'
+import { deletePromotion, deletePromotionAsset, listAdminPromotions, localizePromotion, savePromotion, uploadPromotionAsset, type Promotion, type PromotionAssetSlot, type PromotionInput } from '~/app/service/promotions'
 import { resolveMediaUrl } from '~/app/utils/media'
 
 const { t } = useI18n()
@@ -191,6 +209,15 @@ const message = ref('')
 const editing = ref<Promotion | { id: '' } | null>(null)
 
 const colorKeys = ['from', 'via', 'to', 'accent'] as const
+const previewLang = ref<'en' | 'es'>('en')
+const spanishFields = [
+  { key: 'label', label: 'label', max: 40 },
+  { key: 'title', label: 'title', max: 80 },
+  { key: 'tagline', label: 'tagline', max: 140 },
+  { key: 'cta_label', label: 'cta', max: 30 },
+  { key: 'badge', label: 'badge', max: 20 },
+  { key: 'partner_caption', label: 'partnerCaption', max: 60 },
+] as const
 const assetSlots: { key: PromotionAssetSlot, url: 'logo_url' | 'partner_url' | 'sprite_url' }[] = [
   { key: 'logo', url: 'logo_url' },
   { key: 'partner', url: 'partner_url' },
@@ -211,6 +238,7 @@ const blankForm = (): PromotionInput => ({
   effect: 'none',
   scene: 'none',
   theme: { from: '#0b1026', via: '#2a1b4d', to: '#c8643b', accent: '#7cc4ff' },
+  translations: { es: {} },
   sort_order: 0,
   enabled: false,
   starts_at: null,
@@ -232,9 +260,10 @@ watch(endsAtLocal, (value) => { form.ends_at = value ? new Date(value).toISOStri
 
 const previewPromo = computed<Promotion>(() => {
   const current = editing.value && 'logo_url' in editing.value ? editing.value : null
-  return {
+  const promo: Promotion = {
     ...form,
     theme: { ...form.theme },
+    translations: { es: { ...form.translations.es } },
     id: current?.id || 'preview',
     title: form.title || t('admin.promotions.placeholders.title'),
     url: form.url || 'https://example.com',
@@ -242,6 +271,7 @@ const previewPromo = computed<Promotion>(() => {
     partner_url: current?.partner_url || '',
     sprite_url: current?.sprite_url || '',
   }
+  return previewLang.value === 'es' ? localizePromotion(promo, 'es') : promo
 })
 
 const placementName = (placement: string) => t(`admin.promotions.placements.${placement.replace('home:', '')}`)
@@ -275,7 +305,10 @@ const load = async () => {
 }
 
 const fillForm = (source: PromotionInput) => {
-  Object.assign(form, blankForm(), source, { theme: { ...blankForm().theme, ...source.theme } })
+  Object.assign(form, blankForm(), source, {
+    theme: { ...blankForm().theme, ...source.theme },
+    translations: { es: { ...(source.translations?.es || {}) } },
+  })
   startsAtLocal.value = toLocal(source.starts_at)
   endsAtLocal.value = toLocal(source.ends_at)
 }
@@ -304,7 +337,7 @@ const save = async () => {
   error.value = ''
   message.value = ''
   try {
-    const saved = await savePromotion({ ...form, theme: { ...form.theme } }, editing.value.id || undefined)
+    const saved = await savePromotion({ ...form, theme: { ...form.theme }, translations: { es: { ...form.translations.es } } }, editing.value.id || undefined)
     replaceInList(saved)
     editing.value = { ...saved }
     message.value = t('admin.promotions.saved')

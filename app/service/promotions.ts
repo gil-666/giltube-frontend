@@ -7,6 +7,19 @@ export interface PromotionTheme {
   accent: string
 }
 
+// Translated text; empty fields fall back to the main (English) text.
+export interface PromotionText {
+  label?: string
+  title?: string
+  tagline?: string
+  badge?: string
+  cta_label?: string
+  partner_caption?: string
+}
+
+export const PROMOTION_TEXT_FIELDS = ['label', 'title', 'tagline', 'badge', 'cta_label', 'partner_caption'] as const
+export const PROMOTION_LOCALES = ['es'] as const
+
 export interface Promotion {
   id: string
   placement: string
@@ -25,6 +38,7 @@ export interface Promotion {
   effect: 'none' | 'flutter'
   scene: 'none' | 'lighthouse'
   theme: PromotionTheme
+  translations: Record<string, PromotionText>
   sort_order: number
   enabled: boolean
   starts_at: string | null
@@ -35,6 +49,19 @@ export interface Promotion {
 
 export type PromotionInput = Omit<Promotion, 'id' | 'logo_url' | 'partner_url' | 'sprite_url' | 'impressions' | 'clicks'>
 export type PromotionAssetSlot = 'logo' | 'partner' | 'sprite'
+
+// localizePromotion returns the promotion with its text in the given locale
+// ("es", "es-MX"), keeping the main text for fields without a translation.
+export const localizePromotion = (promo: Promotion, locale: string): Promotion => {
+  const text = promo.translations?.[locale.toLowerCase().split('-')[0]]
+  if (!text) return promo
+  const localized = { ...promo }
+  for (const field of PROMOTION_TEXT_FIELDS) {
+    const value = text[field]?.trim()
+    if (value) localized[field] = value
+  }
+  return localized
+}
 
 export const listPromotions = async (placement = 'home'): Promise<Promotion[]> => {
   const response = await api.get('/promotions', { params: { placement } })

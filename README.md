@@ -141,6 +141,7 @@ The project is designed around the entire media lifecycle:
 - A scheduler that gives each task to the worker that would finish it soonest, from each worker's measured encode, decode, and tone-mapping speed, its current load, and the time to download the source.
 - Worker management: enrollment codes, downloadable worker releases for Linux, Windows, and macOS with automatic updates, per-worker roles (video transcoding, adaptive live encoding), detected encoders and measured speeds, per-worker SDR/HDR quality limits, scheduling toggles, and revocation.
 - Featured-content curation with ordering, custom copy, and optional notifications.
+- Home-page promotions (house ads such as GilServers Games titles): a row as tall as a poster row with a logo, a partner logo on a Polaroid card, optional flying-sprite and coast-and-lighthouse effects, theme colors, Spanish text, placement between the catalog rows, scheduling, and view/click stats.
 - Playback-intro upload and settings, plus intro-detection runs and intro-suggestion review for series.
 - Authorized torrent ingest through qBittorrent plus direct single-file and multi-file local ingest.
 - Automatic episode inference from filenames, manual mapping, exclusions, bulk attachment, and post-ingest episode reordering.

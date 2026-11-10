@@ -1976,6 +1976,11 @@
         "save": "Could not save the promotion.",
         "upload": "Could not update the image.",
         "delete": "Could not delete the promotion."
+      },
+      "previewLanguage": "Preview language",
+      "spanish": {
+        "title": "Spanish (Latin America)",
+        "body": "Shown to visitors browsing in Spanish. Leave a field empty to use the English text."
       }
     }
   },

@@ -1976,6 +1976,11 @@
         "save": "No se pudo guardar la promoción.",
         "upload": "No se pudo actualizar la imagen.",
         "delete": "No se pudo eliminar la promoción."
+      },
+      "previewLanguage": "Idioma de la vista previa",
+      "spanish": {
+        "title": "Español (Latinoamérica)",
+        "body": "Se muestra a quienes navegan en español. Deja un campo vacío para usar el texto en inglés."
       }
     }
   },
