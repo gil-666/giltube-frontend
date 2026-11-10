@@ -1360,7 +1360,8 @@
       "transcodeJobs": "Trabajos de transcodificación",
       "workers": "Workers",
       "introSuggestions": "Sugerencias de intro",
-      "news": "Novedades"
+      "news": "Novedades",
+      "promotions": "Promociones"
     },
     "workers": {
       "title": "Grupo de workers",
@@ -1885,6 +1886,96 @@
       "actions": {
         "retry": "Reintentar",
         "cancel": "Cancelar"
+      }
+    },
+    "promotions": {
+      "title": "Promociones",
+      "body": "Promociones propias que aparecen como filas en la página de inicio, como los juegos de GilServers Games. Cada fila mide lo mismo que una fila de pósters y enlaza al sitio promocionado.",
+      "new": "Nueva promoción",
+      "edit": "Editar",
+      "preview": "Vista previa",
+      "empty": "Todavía no hay promociones.",
+      "saved": "Promoción guardada.",
+      "confirmDelete": "¿Eliminar la promoción \"{title}\" y sus imágenes?",
+      "stats": "{impressions} vistas · {clicks} clics · {rate}",
+      "fields": {
+        "title": "Título",
+        "url": "Enlace",
+        "label": "Título de la fila",
+        "placement": "Ubicación",
+        "tagline": "Lema",
+        "cta": "Texto del botón",
+        "badge": "Etiqueta",
+        "logoStyle": "Logo",
+        "partnerStyle": "Logo del socio",
+        "partnerCaption": "Texto de la tarjeta",
+        "effect": "Efecto",
+        "scene": "Escena",
+        "sortOrder": "Orden",
+        "colors": "Colores",
+        "startsAt": "Inicio",
+        "endsAt": "Fin",
+        "enabled": "Activa"
+      },
+      "placeholders": {
+        "label": "Juegos",
+        "badge": "Beta",
+        "title": "Título de la promoción"
+      },
+      "placements": {
+        "top": "Arriba de la página",
+        "after-continue": "Después de Seguir viendo",
+        "after-movies": "Después de Películas",
+        "after-series": "Después de Series",
+        "after-live": "Después de En vivo",
+        "before-videos": "Antes de Todos los videos"
+      },
+      "logoStyles": {
+        "white": "Blanco (logos de un color)",
+        "original": "Colores originales"
+      },
+      "partnerStyles": {
+        "card": "En una tarjeta Polaroid",
+        "original": "Tal cual"
+      },
+      "effects": {
+        "none": "Ninguno",
+        "flutter": "Figuras volando (usa la imagen de figura)"
+      },
+      "scenes": {
+        "none": "Ninguna",
+        "lighthouse": "Costa y faro"
+      },
+      "colors": {
+        "from": "Izquierda",
+        "via": "Centro",
+        "to": "Brillo derecho",
+        "accent": "Acento"
+      },
+      "status": {
+        "live": "Activa",
+        "disabled": "Desactivada",
+        "scheduled": "Programada",
+        "ended": "Terminada"
+      },
+      "assets": {
+        "title": "Imágenes",
+        "saveFirst": "Guarda primero la promoción y luego agrega sus imágenes.",
+        "none": "Ninguna",
+        "upload": "Subir",
+        "uploading": "Subiendo…",
+        "logo": "Logo",
+        "logoHelp": "SVG o PNG. Los logos de un solo color pueden mostrarse en blanco.",
+        "partner": "Logo del socio",
+        "partnerHelp": "Por ejemplo, el logo de GilServers Games.",
+        "sprite": "Figura",
+        "spriteHelp": "Una imagen pequeña y transparente para el efecto de vuelo, como una mariposa."
+      },
+      "errors": {
+        "load": "No se pudieron cargar las promociones.",
+        "save": "No se pudo guardar la promoción.",
+        "upload": "No se pudo actualizar la imagen.",
+        "delete": "No se pudo eliminar la promoción."
       }
     }
   },
@@ -2620,5 +2711,8 @@
       "notFoundBody": "Esta noticia no existe o todavía no está disponible.",
       "goHome": "Ir al inicio"
     }
+  },
+  "promo": {
+    "play": "Jugar ahora"
   }
 }

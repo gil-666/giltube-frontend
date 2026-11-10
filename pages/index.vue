@@ -61,6 +61,8 @@
           </div>
         </section>
 
+        <HomePromoSlot placement="top" />
+
         <section v-if="isSabrinaTube && (sabrinaVideosLoading || sabrinaVideos.length > 0)" class="sabrina-video-shelf">
           <div class="mb-4 flex items-end justify-between gap-4">
             <div>
@@ -95,6 +97,8 @@
           </div>
         </section>
 
+        <HomePromoSlot placement="after-continue" />
+
         <section v-if="moviesHomeLoading || homeMovies.length > 0">
           <ShelfHeader :title="t('home.movies')" :href="localePath('/category/movies')" carousel="movies" :disabled="moviesHomeLoading" />
           <div v-if="moviesHomeLoading" class="homepage-carousel overflow-hidden" aria-hidden="true">
@@ -109,6 +113,8 @@
           </div>
         </section>
 
+        <HomePromoSlot placement="after-movies" />
+
         <section v-if="seriesHomeLoading || homeSeries.length > 0">
           <ShelfHeader :title="t('home.series')" :href="localePath('/category/series')" carousel="series" :disabled="seriesHomeLoading" />
           <div v-if="seriesHomeLoading" class="homepage-carousel overflow-hidden" aria-hidden="true">
@@ -122,6 +128,8 @@
             </div>
           </div>
         </section>
+
+        <HomePromoSlot placement="after-series" />
 
         <section v-if="publicWatchParties.length > 0">
           <ShelfHeader :title="t('home.watchParties')" carousel="watch-parties" />
@@ -141,6 +149,8 @@
           </div>
         </section>
 
+        <HomePromoSlot placement="after-live" />
+
         <section v-for="shelf in videoShelves" :key="shelf.key">
           <ShelfHeader :title="shelf.title" :carousel="shelf.key" />
           <div :ref="setCarouselRef(shelf.key)" class="homepage-carousel">
@@ -149,6 +159,8 @@
             </div>
           </div>
         </section>
+
+        <HomePromoSlot placement="before-videos" />
 
         <section>
           <ShelfHeader :title="t('home.allVideos')" />
@@ -183,6 +195,8 @@
 import { computed, defineComponent, h, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import AvatarFallback from '~/app/components/AvatarFallback.vue'
 import GilAdsBanner from '~/app/components/ads/GilAdsBanner.vue'
+import PromoBanner from '~/app/components/promo/PromoBanner.vue'
+import { listPromotions } from '~/app/service/promotions'
 import { getVideos, getHomeRecommendations, getRecentWatchProgress, getWatchProgressMap } from '~/app/service/videos'
 import { getChannelVideos } from '~/app/service/channels'
 import { listMoviesCached, prefetchMovie } from '~/app/service/movies'
@@ -248,6 +262,18 @@ const featuredEyebrow = (item) => {
   return ''
 }
 const formatFeaturedDate = (value) => new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }).format(new Date(value))
+// Promotion rows (house ads such as GilServers Games titles), each placed
+// between the catalog rows an administrator picked.
+const homePromotions = ref([])
+const loadPromotions = async () => {
+  try {
+    homePromotions.value = await listPromotions('home')
+  } catch (err) {
+    console.warn('Promotions unavailable:', err)
+    homePromotions.value = []
+  }
+}
+
 const loadFeatured = async () => { try { featuredItems.value = await listFeaturedContent() } catch (err) { console.warn('Featured content unavailable:', err); featuredItems.value = [] } }
 
 const setCarouselRef = (key) => (element) => {
@@ -303,6 +329,23 @@ const ShelfHeader = defineComponent({
         : h('h2', { class: 'shelf-title' }, props.title),
       props.carousel ? h(ShelfArrows, { carousel: props.carousel, disabled: props.disabled }) : null,
     ])
+  },
+})
+
+// Renders the promotions for one home placement as rows the height of a
+// poster row.
+const HomePromoSlot = defineComponent({
+  name: 'HomePromoSlot',
+  props: { placement: { type: String, required: true } },
+  setup(props) {
+    return () => isSabrinaTube.value
+      ? null
+      : homePromotions.value
+        .filter((promo) => promo.placement === `home:${props.placement}`)
+        .map((promo) => h('section', { key: promo.id, class: 'home-promo', 'aria-label': promo.label || promo.title }, [
+          promo.label ? h(ShelfHeader, { title: promo.label }) : null,
+          h(PromoBanner, { promo }),
+        ]))
   },
 })
 
@@ -1071,7 +1114,7 @@ watch(isSabrinaTube, (isActive) => {
 }, { immediate: true })
 
 onMounted(async () => {
-  await Promise.all([loadFeatured(), loadHomeFeed()])
+  await Promise.all([loadFeatured(), loadPromotions(), loadHomeFeed()])
 	if (featuredItems.value.length > 1) featuredTimer = setInterval(() => { featuredIndex.value = (featuredIndex.value + 1) % featuredItems.value.length }, 7000)
   await nextTick()
   setupIntersectionObserver()

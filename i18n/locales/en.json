@@ -1360,7 +1360,8 @@
       "transcodeJobs": "Transcode Jobs",
       "workers": "Workers",
       "introSuggestions": "Intro Suggestions",
-      "news": "News"
+      "news": "News",
+      "promotions": "Promotions"
     },
     "workers": {
       "title": "Worker pool",
@@ -1885,6 +1886,96 @@
       "actions": {
         "retry": "Retry",
         "cancel": "Cancel"
+      }
+    },
+    "promotions": {
+      "title": "Promotions",
+      "body": "House promotions shown as rows on the home page, such as games from GilServers Games. A row is as tall as a poster row and links to the promoted site.",
+      "new": "New promotion",
+      "edit": "Edit",
+      "preview": "Preview",
+      "empty": "No promotions yet.",
+      "saved": "Promotion saved.",
+      "confirmDelete": "Delete the promotion \"{title}\" and its images?",
+      "stats": "{impressions} views · {clicks} clicks · {rate}",
+      "fields": {
+        "title": "Title",
+        "url": "Link",
+        "label": "Row title",
+        "placement": "Placement",
+        "tagline": "Tagline",
+        "cta": "Button text",
+        "badge": "Badge",
+        "logoStyle": "Logo",
+        "partnerStyle": "Partner logo",
+        "partnerCaption": "Card caption",
+        "effect": "Effect",
+        "scene": "Scene",
+        "sortOrder": "Order",
+        "colors": "Colors",
+        "startsAt": "Starts",
+        "endsAt": "Ends",
+        "enabled": "Enabled"
+      },
+      "placeholders": {
+        "label": "Games",
+        "badge": "Beta",
+        "title": "Promotion title"
+      },
+      "placements": {
+        "top": "Top of the page",
+        "after-continue": "After Continue watching",
+        "after-movies": "After Movies",
+        "after-series": "After Series",
+        "after-live": "After Live",
+        "before-videos": "Before All videos"
+      },
+      "logoStyles": {
+        "white": "White (single-color logos)",
+        "original": "Original colors"
+      },
+      "partnerStyles": {
+        "card": "On a Polaroid card",
+        "original": "As is"
+      },
+      "effects": {
+        "none": "None",
+        "flutter": "Flying sprites (uses the sprite image)"
+      },
+      "scenes": {
+        "none": "None",
+        "lighthouse": "Coast and lighthouse"
+      },
+      "colors": {
+        "from": "Left",
+        "via": "Middle",
+        "to": "Right glow",
+        "accent": "Accent"
+      },
+      "status": {
+        "live": "Live",
+        "disabled": "Disabled",
+        "scheduled": "Scheduled",
+        "ended": "Ended"
+      },
+      "assets": {
+        "title": "Images",
+        "saveFirst": "Save the promotion first, then add its images.",
+        "none": "None",
+        "upload": "Upload",
+        "uploading": "Uploading…",
+        "logo": "Logo",
+        "logoHelp": "SVG or PNG. Single-color logos can be shown in white.",
+        "partner": "Partner logo",
+        "partnerHelp": "For example the GilServers Games logo.",
+        "sprite": "Sprite",
+        "spriteHelp": "A small transparent image for the flying effect, such as a butterfly."
+      },
+      "errors": {
+        "load": "Could not load promotions.",
+        "save": "Could not save the promotion.",
+        "upload": "Could not update the image.",
+        "delete": "Could not delete the promotion."
       }
     }
   },
@@ -2620,5 +2711,8 @@
       "notFoundBody": "This news item doesn't exist or isn't available yet.",
       "goHome": "Go home"
     }
+  },
+  "promo": {
+    "play": "Play now"
   }
 }
