@@ -1515,7 +1515,8 @@
         "kinds": {
           "prep": "Audio, captions, thumbnail",
           "sdr": "SDR",
-          "hdr": "HDR"
+          "hdr": "HDR",
+          "sdrmaster": "SDR master (tonemap once)"
         },
         "statuses": {
           "queued": "Queued",

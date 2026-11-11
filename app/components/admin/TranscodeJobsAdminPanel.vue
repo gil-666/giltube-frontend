@@ -121,13 +121,13 @@
                 :title="task.error_message || undefined"
               >
                 <div class="flex items-center justify-between gap-2">
-                  <span class="truncate font-mono text-xs font-semibold text-white">{{ task.kind === 'prep' ? t('admin.transcodeJobs.tasks.kinds.prep') : task.name }}</span>
+                  <span class="truncate font-mono text-xs font-semibold text-white">{{ task.kind === 'prep' ? t('admin.transcodeJobs.tasks.kinds.prep') : task.kind === 'sdrmaster' ? t('admin.transcodeJobs.tasks.kinds.sdrmaster') : task.name }}</span>
                   <span :class="taskStatusClass(task.status)" class="shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-semibold">
                     {{ t(`admin.transcodeJobs.tasks.statuses.${task.status}`, task.status) }}
                   </span>
                 </div>
                 <div class="mt-2 h-1.5 overflow-hidden rounded-full bg-zinc-800">
-                  <div :class="task.kind === 'hdr' ? 'bg-violet-500' : 'bg-primary-500'" class="h-full rounded-full transition-all" :style="{ width: `${taskProgress(task)}%` }" />
+                  <div :class="task.kind === 'hdr' ? 'bg-violet-500' : task.kind === 'sdrmaster' ? 'bg-amber-500' : 'bg-primary-500'" class="h-full rounded-full transition-all" :style="{ width: `${taskProgress(task)}%` }" />
                 </div>
                 <p class="mt-1.5 truncate text-[11px] text-gray-500">
                   <template v-if="task.status === 'running'">{{ task.worker_name || task.worker_id }} · {{ safeProgress(task.progress) }}%</template>

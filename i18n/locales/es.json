@@ -1515,7 +1515,8 @@
         "kinds": {
           "prep": "Audio, subtítulos, miniatura",
           "sdr": "SDR",
-          "hdr": "HDR"
+          "hdr": "HDR",
+          "sdrmaster": "Máster SDR (tonemapping único)"
         },
         "statuses": {
           "queued": "En cola",
