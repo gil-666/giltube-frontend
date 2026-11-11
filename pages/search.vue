@@ -173,6 +173,7 @@
 import { formatVideoDuration } from '~/app/utils/time'
 import { responsiveImage } from '~/app/utils/media'
 import { ref, computed, onMounted, watch } from 'vue'
+import { getContentLanguage } from '~/app/service/client'
 import { useRoute, useRouter } from 'vue-router'
 import AvatarFallback from '~/app/components/AvatarFallback.vue'
 import VerifiedBadge from '~/app/components/VerifiedBadge.vue'
@@ -266,7 +267,7 @@ const performSearch = async () => {
 
     try {
         const response = await fetch(
-            `/api/v1/search?q=${encodeURIComponent(searchQuery.value)}&page=${currentPage.value}`
+            `/api/v1/search?q=${encodeURIComponent(searchQuery.value)}&page=${currentPage.value}${getContentLanguage() ? `&lang=${getContentLanguage()}` : ''}`
         )
 
         if (!response.ok) {

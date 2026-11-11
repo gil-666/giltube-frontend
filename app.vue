@@ -1279,6 +1279,7 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted, computed, watch, nextTick } from 'vue'
+import { getContentLanguage } from '~/app/service/client'
 import GlobalMusicPlayer from '~/app/components/music/GlobalMusicPlayer.vue'
 import { useEasterEggs } from '~/app/composables/useEasterEggs'
 import { useMusicPlayer } from '~/app/composables/useMusicPlayer'
@@ -1485,7 +1486,7 @@ const fetchSearchSuggestions = async () => {
   const requestID = ++searchSuggestRequestID
   searchSuggestionsLoading.value = true
   try {
-    const response = await fetch(`/api/v1/search/suggest?q=${encodeURIComponent(query)}&limit=8`)
+    const response = await fetch(`/api/v1/search/suggest?q=${encodeURIComponent(query)}&limit=8${getContentLanguage() ? `&lang=${getContentLanguage()}` : ''}`)
     if (!response.ok) throw new Error('suggest failed')
     const data = await response.json()
     if (requestID === searchSuggestRequestID) {

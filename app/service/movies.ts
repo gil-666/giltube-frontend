@@ -1,4 +1,4 @@
-import api from './client'
+import api, { contentLanguageParams } from './client'
 import { appendContentRating, type ContentRatingInput } from '~/app/utils/contentRating'
 import { downloadAPIFile } from './downloads'
 
@@ -6,13 +6,14 @@ const CHUNK_SIZE = 50 * 1024 * 1024
 
 export const GILTUBE_MOVIES_CHANNEL_ID = 'f765b137-9614-4b99-9f6d-6221abeb75cd'
 
-export const listMovies = async () => {
-  const res = await api.get('/movies')
+// localized: in the viewer's catalog language (public pages, not admin forms).
+export const listMovies = async (options: { localized?: boolean } = {}) => {
+  const res = await api.get('/movies', { params: options.localized ? contentLanguageParams() : {} })
   return res.data
 }
 
-export const getMovie = async (id: string) => {
-  const res = await api.get(`/movies/${id}`)
+export const getMovie = async (id: string, options: { localized?: boolean } = {}) => {
+  const res = await api.get(`/movies/${id}`, { params: options.localized ? contentLanguageParams() : {} })
   return res.data
 }
 
@@ -36,10 +37,10 @@ export const clearMovieCache = () => {
 export const peekCachedMovies = () => (import.meta.client && isFresh(moviesListCache) ? moviesListCache!.data : null)
 
 export const listMoviesCached = async () => {
-  if (!import.meta.client) return listMovies()
+  if (!import.meta.client) return listMovies({ localized: true })
   if (isFresh(moviesListCache)) return moviesListCache!.data
   if (!moviesListRequest) {
-    moviesListRequest = listMovies()
+    moviesListRequest = listMovies({ localized: true })
       .then((data) => {
         moviesListCache = { data, at: Date.now() }
         return data
@@ -52,12 +53,12 @@ export const listMoviesCached = async () => {
 }
 
 export const getMovieCached = async (id: string) => {
-  if (!import.meta.client) return getMovie(id)
+  if (!import.meta.client) return getMovie(id, { localized: true })
   const cached = moviesDetailCache.get(id)
   if (isFresh(cached)) return cached!.data
   let request = moviesDetailRequests.get(id)
   if (!request) {
-    request = getMovie(id)
+    request = getMovie(id, { localized: true })
       .then((data) => {
         moviesDetailCache.set(id, { data, at: Date.now() })
         return data
@@ -76,12 +77,12 @@ export const prefetchMovie = (id: string) => {
 }
 
 export const getMovieVideoContext = async (videoId: string) => {
-  const res = await api.get(`/movie-videos/${videoId}`)
+  const res = await api.get(`/movie-videos/${videoId}`, { params: contentLanguageParams() })
   return res.data
 }
 
 export const getMovieTrailerContext = async (videoId: string) => {
-  const res = await api.get(`/movie-trailers/${videoId}`)
+  const res = await api.get(`/movie-trailers/${videoId}`, { params: contentLanguageParams() })
   return res.data
 }
 

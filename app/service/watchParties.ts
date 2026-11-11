@@ -1,4 +1,4 @@
-import api from './client'
+import api, { contentLanguageParams } from './client'
 
 export const listPublicWatchParties = async () => {
   const res = await api.get('/watch-parties/public')
@@ -127,7 +127,7 @@ export const watchPartyEventURL = (partyId: string, userId: string) =>
   `/api/v1/watch-parties/${partyId}/events?user_id=${encodeURIComponent(userId)}`
 
 export const searchWatchPartyVideos = async (query: string, page = 1) => {
-  const res = await api.get('/search', { params: { q: query, page } })
+  const res = await api.get('/search', { params: { q: query, page, ...contentLanguageParams() } })
   return {
     ...res.data,
     results: (res.data?.results || []).filter((item: any) => item.type === 'video'),

@@ -36,6 +36,14 @@ apiClient.interceptors.response.use(
   }
 )
 
+// The catalog language ('es' or '' for English) the public movie, series
+// and search requests ask for, so titles and synopses come back translated.
+// Admin requests leave it out and keep editing the English originals.
+let contentLanguage = ''
+export const setContentLanguage = (language: string) => { contentLanguage = language }
+export const getContentLanguage = () => contentLanguage
+export const contentLanguageParams = () => (contentLanguage ? { lang: contentLanguage } : {})
+
 export default apiClient
 export { fullBaseURL as apiBaseURL }
 export { apiBaseURL }

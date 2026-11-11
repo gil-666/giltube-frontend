@@ -2654,7 +2654,7 @@ const normalizeSeriesEpisode = (episode: any) => ({
 
 const loadSeries = async (seriesId: string) => {
   try {
-    const data = await getSeries(seriesId)
+    const data = await getSeries(seriesId, { localized: true })
     currentSeries.value = data.series || null
     currentPlaylistName.value = data.series?.title || 'Series'
     playlistVideos.value = (data.episodes || []).map(normalizeSeriesEpisode)

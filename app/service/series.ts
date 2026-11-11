@@ -1,16 +1,17 @@
-import api from './client'
+import api, { contentLanguageParams } from './client'
 import { appendContentRating, type ContentRatingInput } from '~/app/utils/contentRating'
 import { downloadAPIFile } from './downloads'
 
 export const GILTUBE_SERIES_CHANNEL_ID = '17e36c9d-4235-4c9c-9c70-1858e538719a'
 
-export const listSeries = async () => {
-  const res = await api.get('/series')
+// localized: in the viewer's catalog language (public pages, not admin forms).
+export const listSeries = async (options: { localized?: boolean } = {}) => {
+  const res = await api.get('/series', { params: options.localized ? contentLanguageParams() : {} })
   return res.data
 }
 
-export const getSeries = async (id: string) => {
-  const res = await api.get(`/series/${id}`)
+export const getSeries = async (id: string, options: { localized?: boolean } = {}) => {
+  const res = await api.get(`/series/${id}`, { params: options.localized ? contentLanguageParams() : {} })
   return res.data
 }
 
@@ -41,10 +42,10 @@ export const clearSeriesCache = () => {
 export const peekCachedSeriesList = () => (import.meta.client && isFresh(seriesListCache) ? seriesListCache!.data : null)
 
 export const listSeriesCached = async () => {
-  if (!import.meta.client) return listSeries()
+  if (!import.meta.client) return listSeries({ localized: true })
   if (isFresh(seriesListCache)) return seriesListCache!.data
   if (!seriesListRequest) {
-    seriesListRequest = listSeries()
+    seriesListRequest = listSeries({ localized: true })
       .then((data) => {
         seriesListCache = { data, at: Date.now() }
         return data
@@ -57,12 +58,12 @@ export const listSeriesCached = async () => {
 }
 
 export const getSeriesCached = async (id: string) => {
-  if (!import.meta.client) return getSeries(id)
+  if (!import.meta.client) return getSeries(id, { localized: true })
   const cached = seriesDetailCache.get(id)
   if (isFresh(cached)) return cached!.data
   let request = seriesDetailRequests.get(id)
   if (!request) {
-    request = getSeries(id)
+    request = getSeries(id, { localized: true })
       .then((data) => {
         seriesDetailCache.set(id, { data, at: Date.now() })
         return data
@@ -81,12 +82,12 @@ export const prefetchSeries = (id: string) => {
 }
 
 export const getSeriesEpisodeContext = async (videoId: string) => {
-  const res = await api.get(`/series-episodes/${videoId}`)
+  const res = await api.get(`/series-episodes/${videoId}`, { params: contentLanguageParams() })
   return res.data
 }
 
 export const getSeriesTrailerContext = async (videoId: string) => {
-  const res = await api.get(`/series-trailers/${videoId}`)
+  const res = await api.get(`/series-trailers/${videoId}`, { params: contentLanguageParams() })
   return res.data
 }
 
