@@ -1,4 +1,4 @@
-import api, { apiBaseURL } from './client'
+import api, { apiBaseURL, contentLanguageParams } from './client'
 import { downloadAPIFile } from './downloads'
 
 export const getVideos = async (options: { channelId?: string; limit?: number; offset?: number } = {}) => {
@@ -329,7 +329,7 @@ export const getWatchProgressMap = async (videoIds: string[]) => {
 
 export const getRecentWatchProgress = async (limit = 12) => {
   const res = await api.get('/watch-progress/recent', {
-    params: { limit },
+    params: { limit, ...contentLanguageParams() },
   })
   return res.data
 }
