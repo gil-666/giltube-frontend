@@ -203,6 +203,7 @@
 </template>
 
 <script setup lang="ts">
+import { localizeTrackLabel } from '~/app/utils/trackLabels'
 import { computed, ref, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
 import AvatarFallback from '~/app/components/AvatarFallback.vue'
@@ -211,7 +212,7 @@ import 'video.js/dist/video-js.css'
 import 'videojs-contrib-quality-levels'
 import { getMyAccount, updateMyPlaybackLanguages } from '~/app/service/auth'
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 
 const AUDIO_LANGUAGE_STORAGE_KEY = 'giltube_audio_language'
 const CAPTION_LANGUAGE_STORAGE_KEY = 'giltube_caption_language'
@@ -1230,7 +1231,7 @@ const createNextEpisodeButton = () => {
 const getAudioTrackLabel = (track: any, index: number) => {
   const fallback = `${t('video.player.audio')} ${index + 1}`
   const label = track?.label || track?.language || fallback
-  return String(label).trim() || fallback
+  return localizeTrackLabel(String(label).trim(), locale.value) || fallback
 }
 
 const createAudioButton = () => {
@@ -1359,7 +1360,7 @@ const createAudioButton = () => {
 
 const getTextTrackLabel = (track: any, index: number) => {
   const label = track?.label || track?.language || `Caption ${index + 1}`
-  return String(label).trim() || `Caption ${index + 1}`
+  return localizeTrackLabel(String(label).trim(), locale.value) || `Caption ${index + 1}`
 }
 
 const isCaptionTrack = (track: any) => track?.kind === 'subtitles' || track?.kind === 'captions'

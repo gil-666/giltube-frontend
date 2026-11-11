@@ -123,6 +123,7 @@
 </template>
 
 <script setup>
+import { localizeLanguageName } from '~/app/utils/trackLabels'
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import StreamingCategory from './StreamingCategory.vue'
@@ -138,7 +139,7 @@ import { useMetaTags } from '~/app/composables/useMetaTags'
 const route = useRoute()
 const router = useRouter()
 const localePath = useLocalePath()
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const props = defineProps({
   initialMovie: { type: Object, default: null },
 })
@@ -227,7 +228,7 @@ const durationLabel = (video) => {
 }
 
 const mediaLanguages = (languages) => languages?.length
-  ? languages.join(', ')
+  ? languages.map((name) => localizeLanguageName(name, locale.value)).join(', ')
   : t('streaming.media.notAvailable')
 
 const primaryGenre = (movie) => movie?.genre || movie?.video?.genre || t('moviesCategory.fallbackGenre')
