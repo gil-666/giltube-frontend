@@ -98,6 +98,7 @@ export const createMovie = async (data: {
   isFeatured?: boolean
   explicit?: boolean
   contentWarning?: boolean
+  imax?: boolean
   poster?: File | null
   backdrop?: File | null
   posterUrl?: string
@@ -117,6 +118,7 @@ export const createMovie = async (data: {
   if (data.isFeatured) formData.append('is_featured', 'true')
   if (typeof data.explicit === 'boolean') formData.append('explicit', data.explicit ? 'true' : 'false')
   if (typeof data.contentWarning === 'boolean') formData.append('content_warning', data.contentWarning ? 'true' : 'false')
+  if (typeof data.imax === 'boolean') formData.append('imax', data.imax ? 'true' : 'false')
   if (data.posterUrl) formData.append('poster_url', data.posterUrl)
   if (data.backdropUrl) formData.append('backdrop_url', data.backdropUrl)
   if (data.poster) formData.append('poster', data.poster)
@@ -141,6 +143,7 @@ export const updateMovie = async (movieId: string, data: {
   isFeatured?: boolean
   explicit?: boolean
   contentWarning?: boolean
+  imax?: boolean
   poster?: File | null
   backdrop?: File | null
   posterUrl?: string
@@ -161,6 +164,7 @@ export const updateMovie = async (movieId: string, data: {
   if (data.isFeatured) formData.append('is_featured', 'true')
   if (typeof data.explicit === 'boolean') formData.append('explicit', data.explicit ? 'true' : 'false')
   if (typeof data.contentWarning === 'boolean') formData.append('content_warning', data.contentWarning ? 'true' : 'false')
+  if (typeof data.imax === 'boolean') formData.append('imax', data.imax ? 'true' : 'false')
   if (data.posterUrl) formData.append('poster_url', data.posterUrl)
   if (data.backdropUrl) formData.append('backdrop_url', data.backdropUrl)
   if (data.videoId) formData.append('video_id', data.videoId)

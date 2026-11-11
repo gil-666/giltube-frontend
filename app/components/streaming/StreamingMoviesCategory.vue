@@ -210,6 +210,13 @@ const mergeMovie = (detail) => {
   }
 }
 
+// Version chips; a main version that is itself IMAX gets the IMAX chip too.
+const movieVersionLabels = (movie) => {
+  const labels = Array.isArray(movie.versions) ? movie.versions.map((version) => String(version?.label || '')).filter(Boolean) : []
+  if (movie.imax && !labels.includes('IMAX')) labels.unshift('IMAX')
+  return labels
+}
+
 const durationLabel = (video) => {
   const seconds = Number(video?.duration_seconds ?? video?.duration ?? 0)
   if (!Number.isFinite(seconds) || seconds <= 0) return ''
@@ -264,7 +271,7 @@ const toDisplayMovie = (movie) => {
     durationLabel: durationLabel(movie.video),
     maxQuality: movie.media_capabilities?.max_quality || '',
     hdr: !!movie.media_capabilities?.hdr,
-    versionLabels: Array.isArray(movie.versions) ? movie.versions.map((version) => String(version?.label || '')).filter(Boolean) : [],
+    versionLabels: movieVersionLabels(movie),
     explicit: !!movie.explicit,
     rating: movie.content_rating?.rating || '',
     ratingDescriptors: movie.content_rating?.descriptors || [],

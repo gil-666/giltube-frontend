@@ -2389,7 +2389,9 @@
       "uploadMovieVideo": "Failed to upload movie video",
       "attachMovie": "Failed to attach movie video",
       "linkTrailer": "Failed to link existing trailer"
-    }
+    },
+    "imaxPicture": "Main version is IMAX",
+    "imaxPictureHelp": "The uploaded picture is already the IMAX version. Shows an IMAX badge on the title."
   },
   "commentNode": {
     "deleteReply": "Delete reply",

@@ -2389,7 +2389,9 @@
       "uploadMovieVideo": "No se pudo subir el video de la película",
       "attachMovie": "No se pudo enlazar el video de la película",
       "linkTrailer": "No se pudo enlazar el tráiler existente"
-    }
+    },
+    "imaxPicture": "La versión principal es IMAX",
+    "imaxPictureHelp": "La imagen subida ya es la versión IMAX. Muestra una insignia IMAX en el título."
   },
   "commentNode": {
     "deleteReply": "Eliminar respuesta",

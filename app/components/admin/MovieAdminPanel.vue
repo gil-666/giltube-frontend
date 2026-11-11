@@ -138,6 +138,14 @@
           </span>
         </label>
 
+        <label class="flex items-center gap-3 rounded border border-white/10 bg-zinc-800 p-3 text-sm text-gray-300">
+          <input v-model="movieForm.imax" type="checkbox" class="h-4 w-4 accent-primary-600" />
+          <span>
+            {{ t('movieAdmin.imaxPicture') }}
+            <span class="block text-xs text-gray-500">{{ t('movieAdmin.imaxPictureHelp') }}</span>
+          </span>
+        </label>
+
         <div v-if="movieVideoId || trailerVideoId" class="grid gap-3 rounded border border-white/[0.07] bg-black/30 p-3 text-xs md:grid-cols-2">
           <div v-if="movieVideoId" class="min-w-0">
             <span class="font-medium text-gray-500">{{ t('movieAdmin.ids.movieVideo') }}</span>
@@ -541,6 +549,7 @@ const movieForm = ref({
   isFeatured: false,
   explicit: false,
   contentWarning: false,
+  imax: false,
   poster: null as File | null,
   backdrop: null as File | null,
   posterUrl: '',
@@ -613,6 +622,8 @@ const resetMovieWorkspace = () => {
     isFeatured: false,
     explicit: false,
     contentWarning: false,
+    imax: false,
+  imax: false,
     poster: null,
     backdrop: null,
     posterUrl: '',
@@ -686,6 +697,7 @@ const hydrateMovieWorkspace = async (movieId: string) => {
       isFeatured: !!item.is_featured,
       explicit: !!item.explicit,
       contentWarning: !!item.content_warning,
+      imax: !!item.imax,
       poster: null,
       backdrop: null,
       posterUrl: item.poster_url || '',
@@ -744,6 +756,7 @@ const handleCreateMovie = async () => {
       isFeatured: movieForm.value.isFeatured,
       explicit: movieForm.value.explicit,
       contentWarning: movieForm.value.contentWarning,
+      imax: movieForm.value.imax,
       poster: movieForm.value.poster,
       backdrop: movieForm.value.backdrop,
       posterUrl: movieForm.value.posterUrl,
@@ -823,6 +836,7 @@ const saveMovieDetails = async () => {
       isFeatured: movieForm.value.isFeatured,
       explicit: movieForm.value.explicit,
       contentWarning: movieForm.value.contentWarning,
+      imax: movieForm.value.imax,
       poster: movieForm.value.poster,
       backdrop: movieForm.value.backdrop,
       posterUrl: movieForm.value.posterUrl,
@@ -963,6 +977,7 @@ const attachMovieVideo = async () => {
       isFeatured: movieForm.value.isFeatured,
       explicit: movieForm.value.explicit,
       contentWarning: movieForm.value.contentWarning,
+      imax: movieForm.value.imax,
       posterUrl: movieForm.value.posterUrl,
       backdropUrl: movieForm.value.backdropUrl,
       videoId: movieVideoId.value,
