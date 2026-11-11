@@ -2075,7 +2075,8 @@
         "subtitle": "Importando subtítulos {track}…",
         "started": "Se está preparando la versión IMAX. Puedes cerrar esta ventana; el progreso aparece en Versiones.",
         "trackFailures": "La versión IMAX se está importando, pero algunas pistas fallaron: {errors}",
-        "failed": "No se pudo importar la versión IMAX."
+        "failed": "No se pudo importar la versión IMAX.",
+        "override": "Importar de todos modos: comprobé que ambas versiones son el mismo montaje"
       },
       "status": {
         "staging": "Preparando la fuente… {percent}%",

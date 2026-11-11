@@ -344,7 +344,7 @@ const preferredVersion = ref(readVersionPreference())
 const activeVersion = ref('')
 // The main source the player last loaded; version lists for any other source
 // belong to a title that is still being swapped in.
-let loadedMainSrc = 
+let loadedMainSrc = ''
 const versionBadgeFlash = ref(false)
 let versionBadgeTimer: ReturnType<typeof setTimeout> | null = null
 const mainSourceDir = computed(() => {
@@ -3155,6 +3155,7 @@ onBeforeUnmount(() => {
   if (versionBadgeTimer) clearTimeout(versionBadgeTimer)
   sourceLoadToken++
   if (isPlayingHDR.value) emit('hdrchange', false)
+  if (activeVersion.value) emit('versionchange', '')
   if (skipIntroTimer) clearTimeout(skipIntroTimer)
   clearAdaptiveQualityLockTimer()
   stopMobileControlsWatcher()
@@ -3299,7 +3300,9 @@ const setVersion = (kind: string, persist = true) => {
   const resumeAt = Number(player.currentTime?.() || 0)
   const resume = !player.paused?.()
   resetPlayerSourceState()
-  if (hasAppliedInitialStartTime && resumeAt > 0) {
+  if (resumeAt > 0) {
+    // Keep the viewer's position; the initial start time no longer applies.
+    hasAppliedInitialStartTime = true
     void loadPlayerSource(baseSource(), { resumeAt, resume })
   } else {
     // Not started yet: the initial start time still applies to the new source.
@@ -3317,6 +3320,8 @@ watch(
     } else if (!activeVersion.value && pickInitialVersion()) {
       setVersion(pickInitialVersion(), false)
     }
+    // The desktop quality menu is built once per source; add the version items.
+    qualityButton?.buildMenu?.()
     updateQualityButtonVisibility()
     updateMobileSettingsButtonVisibility()
   }

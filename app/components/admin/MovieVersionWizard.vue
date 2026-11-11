@@ -173,7 +173,11 @@
             <section v-if="movieId && !hasImax && measurement" class="rounded-lg border border-white/[0.07] bg-zinc-900/60 p-4">
               <h3 class="font-bold">5 · {{ t('admin.movieVersions.import.title') }}</h3>
               <p class="mt-1 text-sm text-zinc-500">{{ t('admin.movieVersions.import.help') }}</p>
-              <button type="button" :disabled="importing || offsetMs < -21" class="mt-3 rounded-lg bg-primary-600 px-5 py-2.5 text-sm font-bold text-on-primary hover:bg-primary-500 disabled:cursor-not-allowed disabled:opacity-50" @click="importVersion">
+              <label v-if="measurement.verdict !== 'ok'" class="mt-3 flex items-start gap-2 text-sm text-amber-200">
+                <input v-model="overrideVerdict" type="checkbox" class="mt-1 h-4 w-4 accent-amber-500" />
+                <span>{{ t('admin.movieVersions.import.override') }}</span>
+              </label>
+              <button type="button" :disabled="importing || offsetMs < -21 || (measurement.verdict !== 'ok' && !overrideVerdict)" class="mt-3 rounded-lg bg-primary-600 px-5 py-2.5 text-sm font-bold text-on-primary hover:bg-primary-500 disabled:cursor-not-allowed disabled:opacity-50" @click="importVersion">
                 {{ importing ? importStep : t('admin.movieVersions.import.action') }}
               </button>
               <p v-if="offsetMs < -21" class="mt-2 text-xs text-red-300">{{ t('admin.movieVersions.sync.late') }}</p>
@@ -251,6 +255,7 @@ const offsetMs = ref(0)
 const extraAudio = ref<number[]>([])
 const extraSubtitles = ref<number[]>([])
 const importing = ref(false)
+const overrideVerdict = ref(false)
 const importStep = ref('')
 const removing = ref('')
 
@@ -410,6 +415,7 @@ const measure = async () => {
       stream_index: syncStreamIndex.value,
     }, percent => { measureProgress.value = percent })
     offsetMs.value = measurement.value.result.offset_ms
+    overrideVerdict.value = false
   } catch (err: any) {
     error.value = errorText(err, t('admin.movieVersions.sync.failed'))
   } finally {
@@ -430,15 +436,15 @@ const importVersion = async () => {
   error.value = ''
   notice.value = ''
   importing.value = true
-  const offset = Math.max(0, Math.round(offsetMs.value))
   try {
     importStep.value = t('admin.movieVersions.import.starting')
-    await createMovieVersion(movieId.value, {
+    // The server snaps the cut to a frame; extra tracks use what it cuts.
+    const { offset_ms: offset } = await createMovieVersion(movieId.value, {
       kind: 'imax',
       ingest_id: imaxIngestId.value,
       file_path: imaxFilePath.value,
       stream_index: syncStreamIndex.value,
-      offset_ms: offset,
+      offset_ms: Math.max(0, Math.round(offsetMs.value)),
     })
     const failures: string[] = []
     for (const index of extraAudio.value) {

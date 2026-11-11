@@ -2075,7 +2075,8 @@
         "subtitle": "Importing subtitles {track}…",
         "started": "The IMAX version is being prepared. You can close this window; progress is shown under Versions.",
         "trackFailures": "The IMAX version is importing, but some tracks failed: {errors}",
-        "failed": "Failed to import the IMAX version."
+        "failed": "Failed to import the IMAX version.",
+        "override": "Import anyway: I checked that both versions are the same cut"
       },
       "status": {
         "staging": "Preparing the source… {percent}%",
