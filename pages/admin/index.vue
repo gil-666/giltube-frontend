@@ -575,6 +575,7 @@
     </div>
 
     <MovieAdminPanel v-if="activeTab === 'movies'" />
+    <YouTubeImportAccessPanel v-if="activeTab === 'youtube-mirrors'" class="mb-6" />
     <YouTubeMirrorAdminPanel v-if="activeTab === 'youtube-mirrors'" :channels="channels" />
     <MediaIngestAdminPanel v-if="activeTab === 'media-ingests'" :channels="channels" :series-items="adminSeries" />
     <div v-if="activeTab === 'transcode-jobs'" class="space-y-10">
@@ -1208,6 +1209,7 @@ import NewsAdminPanel from '~/app/components/admin/NewsAdminPanel.vue'
 import PromotionsAdminPanel from '~/app/components/admin/PromotionsAdminPanel.vue'
 import VideoEditorPanel from '~/app/components/admin/VideoEditorPanel.vue'
 import YouTubeMirrorAdminPanel from '~/app/components/admin/YouTubeMirrorAdminPanel.vue'
+import YouTubeImportAccessPanel from '~/app/components/admin/YouTubeImportAccessPanel.vue'
 import AdminHelpButton from '~/app/components/admin/AdminHelpButton.vue'
 import VideoPlayer from '~/app/components/videoplayer/VideoPlayer.vue'
 import { getMediaMetadataDetails, searchMediaMetadata, type MediaMetadataResult } from '~/app/service/mediaMetadata'

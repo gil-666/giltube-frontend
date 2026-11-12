@@ -67,6 +67,17 @@
               <span class="mt-6 rounded-full border border-white/[0.07] px-4 py-2 text-xs font-medium text-zinc-500">MP4, WebM, MOV</span>
             </button>
             <input ref="fileInput" type="file" accept="video/*" class="hidden" @change="handleFileSelect" />
+            <NuxtLink
+              v-if="youtubeImportAvailable"
+              :to="localePath('/import-youtube')"
+              class="mt-4 flex items-center justify-center gap-2 rounded-xl border border-white/[0.07] px-4 py-3 text-sm font-semibold text-zinc-300 transition hover:bg-white/[0.03] hover:text-white"
+            >
+              <svg class="h-5 w-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <rect x="3" y="5" width="18" height="14" rx="4" stroke-width="2" />
+                <path fill="currentColor" stroke="none" d="M10 9v6l5-3-5-3Z" />
+              </svg>
+              {{ t('upload.importFromYouTube') }}
+            </NuxtLink>
           </div>
 
           <form v-if="stage === 'details'" class="grid gap-5 xl:grid-cols-[minmax(0,1fr)_22rem]" @submit.prevent="handleStartUpload">
@@ -241,6 +252,7 @@
 <script setup lang="ts">
 import { computed, ref, onMounted } from 'vue'
 import { uploadVideo, fetchUserChannels } from '~/app/service/upload'
+import { getYouTubeImportAccess } from '~/app/service/youtubeImport'
 import { useLocalUploadBaseURL } from '~/app/composables/useLocalUploadBaseURL'
 import { useMetaTags } from '~/app/composables/useMetaTags'
 import { useI18n } from 'vue-i18n'
@@ -298,9 +310,16 @@ const currentStageTitle = computed(() => {
   return t('upload.title')
 })
 
+const youtubeImportAvailable = ref(false)
+
 onMounted(async () => {
   await checkAuthStatus()
   await loadCategories()
+  try {
+    youtubeImportAvailable.value = !!(await getYouTubeImportAccess()).available
+  } catch {
+    youtubeImportAvailable.value = false
+  }
 })
 
 const loadCategories = async () => {

@@ -294,6 +294,21 @@
               </NuxtLink>
 
               <NuxtLink
+                v-if="youtubeImportAvailable"
+                :to="localePath('/import-youtube')"
+                class="flex items-center gap-3 border-t border-white/[0.07] px-4 py-3 text-sm text-gray-100 transition hover:bg-zinc-800"
+                @click="uploadDropdownOpen = false"
+              >
+                <span class="flex h-9 w-9 items-center justify-center rounded-lg bg-zinc-800 text-zinc-200">
+                  <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <rect x="3" y="5" width="18" height="14" rx="4" stroke-width="2" />
+                    <path fill="currentColor" stroke="none" d="M10 9v6l5-3-5-3Z" />
+                  </svg>
+                </span>
+                <span class="font-semibold">{{ t('app.importFromYouTube') }}</span>
+              </NuxtLink>
+
+              <NuxtLink
                 :to="localePath('/go-live')"
                 class="flex items-center gap-3 border-t border-white/[0.07] px-4 py-3 text-sm text-gray-100 transition hover:bg-zinc-800"
                 @click="uploadDropdownOpen = false"
@@ -774,6 +789,20 @@
             </svg>
           </span>
           {{ t('app.uploadVideo') }}
+        </NuxtLink>
+        <NuxtLink
+          v-if="youtubeImportAvailable"
+          :to="localePath('/import-youtube')"
+          class="flex items-center gap-3 border-t border-white/[0.07] px-4 py-3 text-sm font-semibold text-zinc-100 transition hover:bg-zinc-900"
+          @click="mobileCreateOpen = false"
+        >
+          <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-zinc-900 text-zinc-200">
+            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <rect x="3" y="5" width="18" height="14" rx="4" stroke-width="2" />
+              <path fill="currentColor" stroke="none" d="M10 9v6l5-3-5-3Z" />
+            </svg>
+          </span>
+          {{ t('app.importFromYouTube') }}
         </NuxtLink>
         <NuxtLink
           :to="localePath('/go-live')"
@@ -1572,6 +1601,25 @@ const handleSearchSuggestionClickOutside = (event) => {
   searchSuggestionsOpen.value = false
 }
 const uploadDropdownOpen = ref(false)
+
+// "Import from YouTube" is admin-controlled per user, so the create menus ask
+// the API once whenever one of them opens (cheap; keeps revocations current).
+const youtubeImportAvailable = ref(false)
+const refreshYouTubeImportAccess = async () => {
+  if (!isLoggedIn.value) {
+    youtubeImportAvailable.value = false
+    return
+  }
+  try {
+    const { getYouTubeImportAccess } = await import('~/app/service/youtubeImport')
+    youtubeImportAvailable.value = !!(await getYouTubeImportAccess()).available
+  } catch {
+    youtubeImportAvailable.value = false
+  }
+}
+watch([uploadDropdownOpen, mobileCreateOpen], ([desktopOpen, mobileOpen]) => {
+  if (desktopOpen || mobileOpen) refreshYouTubeImportAccess()
+})
 const uploadDropdownRef = ref(null)
 const dropdownOpen = ref(false)
 const channels = ref([])
@@ -1657,7 +1705,7 @@ const onLocaleChange = (event) => {
   setLocale(target.value)
 }
 
-const hideHeaderSidebarRoutes = ['/login', '/register', '/upload', '/create-channel']
+const hideHeaderSidebarRoutes = ['/login', '/register', '/upload', '/import-youtube', '/create-channel']
 
 const normalizedRoutePath = computed(() => {
   const path = route.path || '/'

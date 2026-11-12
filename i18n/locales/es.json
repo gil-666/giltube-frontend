@@ -61,7 +61,8 @@
     "series": "Series",
     "playlists": "Listas",
     "you": "Tú",
-    "music": "Música"
+    "music": "Música",
+    "importFromYouTube": "Importar de YouTube"
   },
   "home": {
     "title": "Inicio",
@@ -523,7 +524,8 @@
     "titleRequiredError": "Ingresa un título",
     "fileRequiredError": "No se seleccionó ningún archivo",
     "uploadError": "La subida falló. Inténtalo de nuevo.",
-    "publishError": "No se pudo ir al panel."
+    "publishError": "No se pudo ir al panel.",
+    "importFromYouTube": "¿Ya está en YouTube? Impórtalo"
   },
   "edit": {
     "title": "Editar video",
@@ -2915,5 +2917,97 @@
     "installedTitle": "Tienes GilTube para Android",
     "installedText": "Las actualizaciones llegan por Google Play.",
     "getItOn": "Disponible en"
+  },
+  "youtubeImport": {
+    "title": "Importar de YouTube",
+    "back": "Volver",
+    "uploadFileInstead": "Subir un archivo",
+    "pasteHeading": "Pega un enlace de YouTube",
+    "pasteBody": "Traeremos el video, su título, descripción y subtítulos a tu canal.",
+    "urlPlaceholder": "https://www.youtube.com/watch?v=…",
+    "next": "Siguiente",
+    "lookingUp": "Buscando…",
+    "dailyUsage": "{used} de {limit} importaciones usadas hoy",
+    "maxLengthHours": "Hasta {hours} hora de duración | Hasta {hours} horas de duración",
+    "maxLengthMinutes": "Hasta {minutes} minutos de duración",
+    "maxQuality": "Hasta {height}p",
+    "from": "De {channel}",
+    "alreadyImported": "Ya importaste este video.",
+    "viewIt": "Verlo",
+    "titleLabel": "Título",
+    "channelLabel": "Publicar en el canal",
+    "postingTo": "Se publicará en",
+    "explicit": "Este video es para público adulto (18+)",
+    "rights": "Soy dueño de este video o tengo permiso para subirlo. Se publicará en mi canal como un video propio.",
+    "import": "Importar video",
+    "starting": "Iniciando…",
+    "started": "Importación iniciada. Aparecerá en tu canal cuando esté listo. Puedes salir de esta página.",
+    "yourImports": "Tus importaciones",
+    "listHint": "Las importaciones siguen en segundo plano. Puedes cerrar esta página.",
+    "watch": "Ver",
+    "retry": "Reintentar",
+    "signIn": "Iniciar sesión",
+    "status": {
+      "downloading": "Descargando",
+      "processing": "Procesando",
+      "processingPercent": "Procesando {percent}%",
+      "ready": "Listo",
+      "failed": "Falló"
+    },
+    "unavailable": {
+      "title": "La importación de YouTube no está disponible",
+      "signedOutTitle": "Inicia sesión para importar",
+      "signedOut": "Inicia sesión para traer tus videos de YouTube a tu canal de GilTube.",
+      "off": "La importación de YouTube está desactivada por ahora. Aún puedes subir archivos de video.",
+      "revoked": "La importación de YouTube se desactivó para tu cuenta. Aún puedes subir archivos de video.",
+      "notAllowed": "Por ahora la importación de YouTube solo está abierta a creadores invitados. Aún puedes subir archivos de video.",
+      "banned": "Tu cuenta no puede subir videos."
+    },
+    "errors": {
+      "channels": "No se pudieron cargar tus canales.",
+      "lookup": "No se pudo encontrar ese video. Revisa el enlace e inténtalo de nuevo.",
+      "import": "No se pudo iniciar la importación. Inténtalo de nuevo.",
+      "retry": "No se pudo reintentar la importación."
+    }
+  },
+  "youtubeImportAdmin": {
+    "title": "Importación pública de YouTube",
+    "helpTitle": "Importación pública de YouTube",
+    "helpBody": "Los usuarios con sesión iniciada pueden importar un video de YouTube a uno de sus canales desde Crear → Importar de YouTube. Elige aquí quién puede usarlo. Revocar a un usuario bloquea nuevas importaciones al instante; los videos ya importados se quedan en su canal.",
+    "body": "Permite a los usuarios importar videos de YouTube a sus propios canales. Cambia quién puede usarlo en cualquier momento.",
+    "modes": {
+      "everyone": "Todos",
+      "everyoneBody": "Todos los usuarios con sesión, salvo los revocados abajo.",
+      "allowlist": "Solo usuarios permitidos",
+      "allowlistBody": "Solo los usuarios que permitas abajo.",
+      "off": "Desactivado",
+      "offBody": "Nadie puede iniciar nuevas importaciones."
+    },
+    "dailyLimit": "Importaciones por usuario al día",
+    "maxLength": "Duración máxima (minutos)",
+    "maxQuality": "Calidad máxima",
+    "zeroUnlimited": "0 significa sin límite.",
+    "users": {
+      "title": "Acceso por usuario",
+      "body": "Permite o revoca a un usuario. Escribe un nombre de usuario, correo o id.",
+      "placeholder": "usuario, correo o id",
+      "allow": "Permitir",
+      "revoke": "Revocar",
+      "restore": "Restaurar",
+      "clear": "Quitar",
+      "clearHint": "Quitar esta excepción y usar la configuración general",
+      "allowed": "Permitido",
+      "revoked": "Revocado",
+      "empty": "Aún no hay excepciones por usuario.",
+      "imports": "{count} importaciones"
+    },
+    "recent": {
+      "title": "Importaciones recientes",
+      "empty": "Nadie ha importado un video todavía."
+    },
+    "errors": {
+      "load": "No se pudo cargar la configuración.",
+      "save": "No se pudo guardar."
+    }
   }
 }

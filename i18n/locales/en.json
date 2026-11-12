@@ -61,7 +61,8 @@
     "series": "Series",
     "playlists": "Playlists",
     "you": "You",
-    "music": "Music"
+    "music": "Music",
+    "importFromYouTube": "Import from YouTube"
   },
   "home": {
     "title": "Home",
@@ -523,7 +524,8 @@
     "titleRequiredError": "Please enter a title",
     "fileRequiredError": "No file selected",
     "uploadError": "Upload failed. Please try again.",
-    "publishError": "Failed to navigate to dashboard."
+    "publishError": "Failed to navigate to dashboard.",
+    "importFromYouTube": "Already on YouTube? Import it instead"
   },
   "edit": {
     "title": "Edit Video",
@@ -2915,5 +2917,97 @@
     "installedTitle": "You have GilTube for Android",
     "installedText": "Updates come through Google Play.",
     "getItOn": "Get it on"
+  },
+  "youtubeImport": {
+    "title": "Import from YouTube",
+    "back": "Back",
+    "uploadFileInstead": "Upload a file instead",
+    "pasteHeading": "Paste a YouTube link",
+    "pasteBody": "We'll bring the video, its title, description and captions over to your channel.",
+    "urlPlaceholder": "https://www.youtube.com/watch?v=…",
+    "next": "Next",
+    "lookingUp": "Looking it up…",
+    "dailyUsage": "{used} of {limit} imports used today",
+    "maxLengthHours": "Up to {hours} hour long | Up to {hours} hours long",
+    "maxLengthMinutes": "Up to {minutes} minutes long",
+    "maxQuality": "Up to {height}p",
+    "from": "From {channel}",
+    "alreadyImported": "You've already imported this video.",
+    "viewIt": "View it",
+    "titleLabel": "Title",
+    "channelLabel": "Post to channel",
+    "postingTo": "Posting to",
+    "explicit": "This video is for mature audiences (18+)",
+    "rights": "I own this video or have permission to upload it. It will be posted to my channel as my own video.",
+    "import": "Import video",
+    "starting": "Starting…",
+    "started": "Import started. It'll show up on your channel when it's ready. You can leave this page.",
+    "yourImports": "Your imports",
+    "listHint": "Imports keep going in the background. You can close this page.",
+    "watch": "Watch",
+    "retry": "Try again",
+    "signIn": "Sign in",
+    "status": {
+      "downloading": "Downloading",
+      "processing": "Processing",
+      "processingPercent": "Processing {percent}%",
+      "ready": "Ready",
+      "failed": "Failed"
+    },
+    "unavailable": {
+      "title": "YouTube import isn't available",
+      "signedOutTitle": "Sign in to import",
+      "signedOut": "Sign in to bring your YouTube videos to your GilTube channel.",
+      "off": "Importing from YouTube is turned off right now. You can still upload video files.",
+      "revoked": "YouTube import has been turned off for your account. You can still upload video files.",
+      "notAllowed": "YouTube import is only open to invited creators right now. You can still upload video files.",
+      "banned": "Your account can't upload videos."
+    },
+    "errors": {
+      "channels": "Couldn't load your channels.",
+      "lookup": "Couldn't look up that video. Check the link and try again.",
+      "import": "Couldn't start the import. Try again.",
+      "retry": "Couldn't retry the import."
+    }
+  },
+  "youtubeImportAdmin": {
+    "title": "Public YouTube import",
+    "helpTitle": "Public YouTube import",
+    "helpBody": "Signed-in users can import a YouTube video to one of their own channels from Create → Import from YouTube. Choose who can use it here. Revoking a user blocks new imports right away; videos they already imported stay on their channel.",
+    "body": "Lets users import YouTube videos to their own channels. Change who can use it at any time.",
+    "modes": {
+      "everyone": "Everyone",
+      "everyoneBody": "All signed-in users, except anyone revoked below.",
+      "allowlist": "Only allowed users",
+      "allowlistBody": "Only users you allow below.",
+      "off": "Off",
+      "offBody": "Nobody can start new imports."
+    },
+    "dailyLimit": "Imports per user per day",
+    "maxLength": "Max video length (minutes)",
+    "maxQuality": "Max quality",
+    "zeroUnlimited": "0 means unlimited.",
+    "users": {
+      "title": "User access",
+      "body": "Allow or revoke one user. Enter a username, email or user id.",
+      "placeholder": "username, email or user id",
+      "allow": "Allow",
+      "revoke": "Revoke",
+      "restore": "Restore",
+      "clear": "Clear",
+      "clearHint": "Remove this override and use the general setting",
+      "allowed": "Allowed",
+      "revoked": "Revoked",
+      "empty": "No per-user overrides yet.",
+      "imports": "{count} imports"
+    },
+    "recent": {
+      "title": "Recent imports",
+      "empty": "No one has imported a video yet."
+    },
+    "errors": {
+      "load": "Couldn't load import settings.",
+      "save": "Couldn't save."
+    }
   }
 }
