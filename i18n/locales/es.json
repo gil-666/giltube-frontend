@@ -1721,7 +1721,9 @@
       "suspend": "Suspender",
       "unsuspend": "Quitar suspensión",
       "ban": "Banear",
-      "unban": "Quitar ban"
+      "unban": "Quitar ban",
+      "verify": "Verificar",
+      "unverify": "Quitar verificación"
     },
     "users": {
       "title": "Gestión de usuarios",
@@ -1753,7 +1755,10 @@
         "totalViews": "Vistas totales",
         "created": "Creado",
         "actions": "Acciones"
-      }
+      },
+      "verified": "Verificado",
+      "confirmUnverify": "¿Quitar la verificación de \"{name}\"?",
+      "verifyError": "No se pudo actualizar la verificación"
     },
     "videos": {
       "title": "Editor de videos",

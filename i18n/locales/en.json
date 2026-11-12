@@ -1721,7 +1721,9 @@
       "suspend": "Suspend",
       "unsuspend": "Unsuspend",
       "ban": "Ban",
-      "unban": "Unban"
+      "unban": "Unban",
+      "verify": "Verify",
+      "unverify": "Remove check"
     },
     "users": {
       "title": "User Management",
@@ -1753,7 +1755,10 @@
         "totalViews": "Total Views",
         "created": "Created",
         "actions": "Actions"
-      }
+      },
+      "verified": "Verified",
+      "confirmUnverify": "Remove the verified check from \"{name}\"?",
+      "verifyError": "Failed to update the verified check"
     },
     "videos": {
       "title": "Video Editor",

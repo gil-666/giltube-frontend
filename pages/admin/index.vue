@@ -417,7 +417,14 @@
           </thead>
           <tbody class="divide-y divide-white/10">
             <tr v-for="channel in channels" :key="channel.id" class="hover:bg-zinc-800 transition">
-              <td class="px-4 py-3 text-white font-semibold">{{ channel.name }}</td>
+              <td class="px-4 py-3 text-white font-semibold">
+                <span class="inline-flex items-center gap-1.5">
+                  {{ channel.name }}
+                  <svg v-if="channel.verified" class="h-4 w-4 shrink-0 text-blue-400" fill="currentColor" viewBox="0 0 20 20" :aria-label="t('admin.channels.verified')">
+                    <path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                  </svg>
+                </span>
+              </td>
               <td class="px-4 py-3 text-gray-400">{{ channel.username }}</td>
               <td class="px-4 py-3">
                 <span :class="['px-2 py-1 rounded text-xs font-semibold', channel.status === 'active' ? 'bg-green-900 text-green-200' : channel.status === 'suspended' ? 'bg-yellow-900 text-yellow-200' : 'bg-red-900 text-red-200']">
@@ -428,6 +435,13 @@
               <td class="px-4 py-3 text-white">{{ formatNumber(channel.total_views) }}</td>
               <td class="px-4 py-3 text-gray-400 text-xs">{{ new Date(channel.created_at).toLocaleDateString() }}</td>
               <td class="px-4 py-3 space-x-1 flex flex-wrap">
+                <button
+                  :disabled="verifyingChannelId === channel.id"
+                  @click="setChannelVerified(channel, !channel.verified)"
+                  :class="['px-2 py-1 rounded text-xs transition disabled:opacity-50', channel.verified ? 'bg-zinc-700 hover:bg-zinc-600 text-zinc-200' : 'bg-blue-900 hover:bg-blue-800 text-blue-200']"
+                >
+                  {{ channel.verified ? t('admin.actions.unverify') : t('admin.actions.verify') }}
+                </button>
                 <button
                   v-if="channel.status !== 'suspended' && !isProtectedAdminChannel(channel)"
                   @click="suspendChannel(channel.id, channel.name)"
@@ -1938,6 +1952,34 @@ const toggleUserAdmin = async (userIdToAffect: string, currentType: string) => {
   } catch (err) {
     console.error('Error toggling admin:', err)
     error.value = 'Failed to toggle admin status'
+  }
+}
+
+const verifyingChannelId = ref('')
+const setChannelVerified = async (channel: any, verified: boolean) => {
+  if (!verified && !confirm(t('admin.channels.confirmUnverify', { name: channel.name }))) return
+  verifyingChannelId.value = channel.id
+  try {
+    const sessionToken = localStorage.getItem('session_token')
+    const res = await fetch(`/api/v1/admin/channels/${channel.id}/verified?user_id=${userId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-User-ID': userId,
+        ...(sessionToken ? { Authorization: `Bearer ${sessionToken}` } : {}),
+      },
+      body: JSON.stringify({ verified }),
+    })
+    if (res.ok) {
+      channel.verified = verified
+    } else {
+      error.value = t('admin.channels.verifyError')
+    }
+  } catch (err) {
+    console.error('Error updating channel verification:', err)
+    error.value = t('admin.channels.verifyError')
+  } finally {
+    verifyingChannelId.value = ''
   }
 }
 
