@@ -87,7 +87,7 @@
       </article>
 
       <!-- Android -->
-      <article id="android" class="dl-card">
+      <article id="android" class="dl-card" :class="{ 'dl-card--first': isAndroid }">
         <div class="dl-card__head">
           <span class="dl-card__icon dl-card__icon--android"><AndroidIcon class="h-6 w-6" /></span>
           <div class="min-w-0 flex-1">
@@ -247,6 +247,9 @@ const desktop = ref<DesktopRelease | null>(null)
 const { hasDesktopDownloads } = useDesktopApp()
 const inDesktopApp = computed(() => hasDesktopDownloads.value)
 
+// On an Android phone, the Android card comes first.
+const isAndroid = ref(false)
+
 const formatSize = (bytes: number) => `${Math.round(bytes / 1024 / 1024)} MB`
 
 // Android
@@ -302,6 +305,7 @@ watch(state, poll)
 const scrollTo = (id: string) => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
 
 onMounted(async () => {
+  isAndroid.value = /Android/i.test(navigator.userAgent)
   document.addEventListener('visibilitychange', onVisible)
   void getDesktopRelease().then((release) => { desktop.value = release })
   await refresh()
@@ -502,6 +506,7 @@ onBeforeUnmount(() => {
 }
 
 .dl-card + .dl-card { animation-delay: 80ms; }
+.dl-card--first { order: -1; }
 
 .dl-card__head { display: flex; align-items: center; gap: 1rem; }
 
