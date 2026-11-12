@@ -2845,5 +2845,86 @@
     "savedDetail": "En este equipo · {quality} · {size}",
     "playOffline": "Reproducir sin conexión",
     "deleteDownload": "Eliminar descarga"
+  },
+  "getApp": {
+    "metaTitle": "Descarga la app",
+    "nav": "Descarga la app",
+    "eyebrow": "Apps de GilTube",
+    "title": "GilTube, en todas tus pantallas.",
+    "lead": "Mira en tu PC con Windows con descargas sin conexión, o lleva GilTube contigo en Android. La misma cuenta, la misma biblioteca, justo donde lo dejaste.",
+    "windows": "Windows",
+    "android": "Android",
+    "windowsTitle": "GilTube para Windows",
+    "version": "Versión {version}",
+    "windowsFeatures": {
+      "offline": {
+        "title": "Mira sin conexión",
+        "text": "Guarda videos y películas en tu PC, con subtítulos."
+      },
+      "updates": {
+        "title": "Siempre al día",
+        "text": "Las actualizaciones se descargan solas en segundo plano."
+      },
+      "native": {
+        "title": "Hecha para Windows",
+        "text": "Teclas multimedia, notificaciones, la bandeja y enlaces giltube://."
+      },
+      "theme": {
+        "title": "Tu tema",
+        "text": "La app usa tus colores de GilTube, incluso sin conexión."
+      }
+    },
+    "downloadWindows": "Descargar para Windows",
+    "smartScreen": "El instalador aún no está firmado: si Windows SmartScreen muestra un aviso, elige \"Más información\" y luego \"Ejecutar de todas formas\".",
+    "usingDesktop": "Ya estás usando GilTube para Windows. Se actualiza sola.",
+    "androidTitle": "GilTube para Android",
+    "earlyAccess": "Acceso anticipado",
+    "androidMeta": "Android 7 o posterior · Prueba cerrada de Google Play",
+    "stepsLabel": "Progreso del acceso anticipado",
+    "steps": {
+      "join": "Únete",
+      "added": "Aprobado",
+      "accept": "Acepta",
+      "install": "Instala"
+    },
+    "joinText": "La app de Android está en prueba cerrada. Escribe el correo de la cuenta de Google que usas en tu teléfono y te añadiremos a los testers.",
+    "emailLabel": "Correo de tu cuenta de Google",
+    "emailPlaceholder": "tu{'@'}gmail.com",
+    "join": "Unirme",
+    "joinFineprint": "Usa la cuenta de Google con la que entras a Play Store en tu teléfono. Solo la usamos para darte acceso a la app.",
+    "invalidEmail": "Escribe un correo válido.",
+    "tooMany": "Demasiados intentos. Vuelve a intentarlo más tarde.",
+    "genericError": "Algo salió mal. Inténtalo de nuevo.",
+    "failed": "No pudimos añadir esa cuenta a los testers. Revisa el correo e inténtalo de nuevo.",
+    "pendingTitle": "Estás en la lista",
+    "pendingText": "Estamos añadiendo {email} a los testers. Suele tardar un minuto; esta página se actualiza sola.",
+    "addedTitle": "¡Ya estás dentro! Acepta tu invitación",
+    "addedText": "{email} ya puede probar GilTube. Acepta la invitación en Google Play (con esa cuenta) para desbloquear la descarga.",
+    "acceptInvite": "Aceptar invitación en Google Play",
+    "acceptFineprint": "Google Play se abre en otra pestaña. Toca \"Convertirse en tester\" y vuelve aquí.",
+    "acceptedTitle": "Listo: instala GilTube",
+    "acceptedText": "Descarga GilTube desde Google Play en tu teléfono. Tras aceptar, la app puede tardar unos minutos en aparecer.",
+    "installedTitle": "Tienes GilTube para Android",
+    "installedText": "Las actualizaciones llegan por Google Play. ¡Gracias por probarla!",
+    "getItOn": "Disponible en",
+    "faqTitle": "Preguntas",
+    "faq": {
+      "why": {
+        "q": "¿Por qué necesito una invitación para Android?",
+        "a": "GilTube para Android está en prueba cerrada en Google Play, así que solo las cuentas de la lista de testers pueden descargarla. Al unirte aquí te añadimos automáticamente."
+      },
+      "email": {
+        "q": "¿Qué correo debo usar?",
+        "a": "El de la cuenta de Google con la que entras a Play Store en tu teléfono Android. No tiene que ser el de tu cuenta de GilTube."
+      },
+      "accept": {
+        "q": "Acepté pero Google Play no muestra la app",
+        "a": "Comprueba que Play Store use la misma cuenta de Google y espera unos minutos después de aceptar. Luego vuelve a abrir el enlace de Google Play."
+      },
+      "windows": {
+        "q": "¿Es seguro instalar la app de Windows?",
+        "a": "Sí. Se descarga directamente del servidor de GilTube y se actualiza sola. Aún no está firmada, por eso Windows puede mostrar un aviso de SmartScreen la primera vez."
+      }
+    }
   }
 }

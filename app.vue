@@ -572,6 +572,18 @@
                 <span class="truncate">{{ t('desktop.downloads') }}</span>
                 <span v-if="activeDownloads.length" class="ml-auto rounded-full bg-primary-600 px-1.5 text-[11px] text-on-primary">{{ activeDownloads.length }}</span>
               </button>
+              <!-- Apps: the Download app page, or Google Play for accepted Android testers -->
+              <component
+                :is="getAppLink.external ? 'a' : NuxtLinkComponent"
+                v-bind="getAppLink.external ? { href: getAppLink.href, target: '_blank', rel: 'noopener' } : { to: getAppLink.href }"
+                class="shell-nav-link"
+                :class="{ 'is-active': isNavActive('/download') }"
+              >
+                <svg class="shell-nav-icon" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 1.5H8.25A2.25 2.25 0 0 0 6 3.75v16.5a2.25 2.25 0 0 0 2.25 2.25h7.5A2.25 2.25 0 0 0 18 20.25V3.75a2.25 2.25 0 0 0-2.25-2.25H13.5m-3 0V3h3V1.5m-3 0h3m-3 18.75h3" />
+                </svg>
+                <span class="truncate">{{ t('getApp.nav') }}</span>
+              </component>
             </div>
 
             <div v-if="isLoggedIn" class="mt-4 shrink-0 border-t border-white/[0.06] pt-4">
@@ -889,6 +901,18 @@
             <span>{{ t('app.giltubeMusic') }}</span>
             <span class="rounded bg-rose-500 px-1.5 py-0.5 text-[9px] font-semibold leading-none text-white">NEW</span>
           </NuxtLink>
+          <component
+            :is="getAppLink.external ? 'a' : NuxtLinkComponent"
+            v-bind="getAppLink.external ? { href: getAppLink.href, target: '_blank', rel: 'noopener' } : { to: getAppLink.href }"
+            class="mobile-sheet-action mobile-sheet-action-wide mb-2"
+            :class="{ 'bg-zinc-800 text-white': isNavActive('/download') }"
+            @click="mobileMoreOpen = false"
+          >
+            <svg class="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.5 1.5H8.25A2.25 2.25 0 0 0 6 3.75v16.5a2.25 2.25 0 0 0 2.25 2.25h7.5A2.25 2.25 0 0 0 18 20.25V3.75a2.25 2.25 0 0 0-2.25-2.25H13.5m-3 0V3h3V1.5m-3 0h3m-3 18.75h3" />
+            </svg>
+            <span>{{ t('getApp.nav') }}</span>
+          </component>
 
           <div class="grid grid-cols-3 gap-2">
             <NuxtLink v-if="isLoggedIn" :to="localePath('/dashboard')" class="mobile-sheet-action" @click="mobileMoreOpen = false">
@@ -1278,7 +1302,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, computed, watch, nextTick } from 'vue'
+import { ref, onMounted, onUnmounted, computed, watch, nextTick, resolveComponent } from 'vue'
 import { getContentLanguage } from '~/app/service/client'
 import GlobalMusicPlayer from '~/app/components/music/GlobalMusicPlayer.vue'
 import { useEasterEggs } from '~/app/composables/useEasterEggs'
@@ -1288,6 +1312,7 @@ import ThemeEffects from '~/app/components/themes/ThemeEffects.vue'
 import ThemeAnimatedBackground from '~/app/components/themes/ThemeAnimatedBackground.vue'
 import NewsStartupPanel from '~/app/components/news/NewsStartupPanel.vue'
 import { useDesktopApp } from '~/app/composables/useDesktopApp'
+import { useAndroidAccess } from '~/app/composables/useAndroidAccess'
 import musicLogoFull from '~/assets/giltube-music-logo-full.png'
 import musicLogoSymbol from '~/assets/giltube-music-logo-symbol.png'
 import musicLogoFullDark from '~/assets/giltube-music-logo-full-dark.png'
@@ -1573,6 +1598,19 @@ const {
   openDownloads: openDesktopDownloads,
   installDesktopUpdate,
 } = useDesktopApp()
+
+// "Get the app": the Download app page, except on an Android phone whose
+// owner has accepted the closed-testing invite (or has the app): Google Play.
+const NuxtLinkComponent = resolveComponent('NuxtLink')
+const { canInstall: androidCanInstall, storeURL: androidStoreURL, refresh: refreshAndroidAccess } = useAndroidAccess()
+const isAndroidBrowser = ref(false)
+const getAppLink = computed(() => (isAndroidBrowser.value && androidCanInstall.value
+  ? { external: true, href: androidStoreURL.value }
+  : { external: false, href: localePath('/download') }))
+onMounted(() => {
+  isAndroidBrowser.value = /Android/i.test(navigator.userAgent)
+  if (isAndroidBrowser.value) void refreshAndroidAccess()
+})
 const passkeyRef = ref(null)
 const categories = ref([])
 const showPasskeyPrompt = ref(false)
