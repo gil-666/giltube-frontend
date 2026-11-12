@@ -2845,7 +2845,14 @@
     "savedDetail": "On this PC · {quality} · {size}",
     "playOffline": "Play offline",
     "deleteDownload": "Delete download",
-    "chooseAudio": "Audio languages"
+    "chooseAudio": "Audio languages",
+    "save": "Save",
+    "cancel": "Cancel",
+    "close": "Close",
+    "defaultAudio": "Default",
+    "allSubtitles": "all subtitles",
+    "subtitlesIncluded": "All subtitles are saved too.",
+    "noAudioChosen": "choose an audio language"
   },
   "getApp": {
     "metaTitle": "Get the app",

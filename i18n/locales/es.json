@@ -2845,7 +2845,14 @@
     "savedDetail": "En este equipo · {quality} · {size}",
     "playOffline": "Reproducir sin conexión",
     "deleteDownload": "Eliminar descarga",
-    "chooseAudio": "Idiomas de audio"
+    "chooseAudio": "Idiomas de audio",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "close": "Cerrar",
+    "defaultAudio": "Predeterminado",
+    "allSubtitles": "todos los subtítulos",
+    "subtitlesIncluded": "También se guardan todos los subtítulos.",
+    "noAudioChosen": "elige un idioma de audio"
   },
   "getApp": {
     "metaTitle": "Descarga la app",
