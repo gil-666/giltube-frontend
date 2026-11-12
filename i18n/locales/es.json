@@ -2844,7 +2844,8 @@
     "cancelDownload": "Cancelar descarga",
     "savedDetail": "En este equipo · {quality} · {size}",
     "playOffline": "Reproducir sin conexión",
-    "deleteDownload": "Eliminar descarga"
+    "deleteDownload": "Eliminar descarga",
+    "chooseAudio": "Idiomas de audio"
   },
   "getApp": {
     "metaTitle": "Descarga la app",

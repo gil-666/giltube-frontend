@@ -2844,7 +2844,8 @@
     "cancelDownload": "Cancel download",
     "savedDetail": "On this PC · {quality} · {size}",
     "playOffline": "Play offline",
-    "deleteDownload": "Delete download"
+    "deleteDownload": "Delete download",
+    "chooseAudio": "Audio languages"
   },
   "getApp": {
     "metaTitle": "Get the app",

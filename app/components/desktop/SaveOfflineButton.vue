@@ -40,6 +40,19 @@
       >
         <!-- Choose a quality -->
         <template v-if="menu === 'quality'">
+          <!-- Audio languages to save (all subtitles are always saved) -->
+          <template v-if="audioOptions.length > 1">
+            <p class="px-3 pb-1.5 pt-2 text-xs font-medium text-zinc-400">{{ t('desktop.chooseAudio') }}</p>
+            <label
+              v-for="option in audioOptions"
+              :key="option.id"
+              class="save-menu__item save-menu__check cursor-pointer"
+            >
+              <span class="truncate">{{ localizeTrackLabel(option.label, locale) }}</span>
+              <input v-model="selectedAudio" type="checkbox" :value="option.id" class="save-menu__checkbox">
+            </label>
+            <div class="mx-1.5 my-1 border-t border-white/[0.06]" />
+          </template>
           <p class="px-3 pb-1.5 pt-2 text-xs font-medium text-zinc-400">{{ t('desktop.chooseQuality') }}</p>
           <div v-if="loadingQualities" class="space-y-1 px-1.5 py-1" aria-hidden="true">
             <div v-for="row in 3" :key="row" class="h-9 animate-pulse rounded-lg bg-white/[0.04]" />
@@ -51,6 +64,7 @@
             type="button"
             role="menuitem"
             class="save-menu__item"
+            :disabled="audioOptions.length > 1 && !selectedAudio.length"
             @click="save(quality)"
           >
             <span class="flex min-w-0 flex-col">
@@ -110,15 +124,19 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useDesktopApp } from '~/app/composables/useDesktopApp'
+import { localizeTrackLabel } from '~/app/utils/trackLabels'
 
 const props = defineProps<{ videoId: string, title?: string }>()
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const { bridge, hasDesktopDownloads, activeDownloads, libraryVersion, openDownloads } = useDesktopApp()
 
 const rootRef = ref<HTMLElement | null>(null)
 const menu = ref<'quality' | 'active' | 'saved' | null>(null)
 const loadingQualities = ref(false)
 const qualityOptions = ref<string[]>([])
+// Audio languages the download can carry; the default one starts checked.
+const audioOptions = ref<{ id: string, label: string, language: string, default: boolean }[]>([])
+const selectedAudio = ref<string[]>([])
 const savedInfo = ref<{ quality: string, size: number } | null>(null)
 const saved = computed(() => Boolean(savedInfo.value))
 
@@ -176,19 +194,31 @@ const openQualityMenu = async () => {
   if (!bridge.value) return
   menu.value = 'quality'
   loadingQualities.value = true
+  const audio = bridge.value.features?.includes('audio') && bridge.value.downloads.audioOptions
+    ? bridge.value.downloads.audioOptions(props.videoId).catch(() => [])
+    : Promise.resolve([])
   try {
     const qualities = await bridge.value.downloads.qualities(props.videoId)
     qualityOptions.value = ['best', ...qualities.filter((quality) => quality !== 'best')]
   } catch {
     qualityOptions.value = ['best']
+  }
+  try {
+    audioOptions.value = await audio
+    selectedAudio.value = audioOptions.value.filter((option) => option.default).map((option) => option.id)
   } finally {
     loadingQualities.value = false
   }
 }
 
-const save = async (quality: string) => {
+// Chosen audio in the menu's order; with one option, the default audio.
+const chosenAudio = () => (audioOptions.value.length > 1
+  ? audioOptions.value.filter((option) => selectedAudio.value.includes(option.id)).map((option) => option.id)
+  : [])
+
+const save = async (quality: string, audio = chosenAudio()) => {
   menu.value = null
-  await bridge.value?.downloads.start(props.videoId, quality, props.title || '')
+  await bridge.value?.downloads.start(props.videoId, quality, props.title || '', audio)
 }
 
 const cancel = async () => {
@@ -213,7 +243,7 @@ const handleClick = () => {
   if (menu.value) {
     menu.value = null
   } else if (item?.status === 'error') {
-    void save(item.quality)
+    void save(item.quality, item.audio || [])
   } else if (item) {
     menu.value = 'active'
   } else if (saved.value) {
@@ -296,6 +326,18 @@ watch(active, (item) => {
 .save-menu__item:focus-visible {
   background: rgb(var(--gt-white) / 0.07);
   outline: none;
+}
+
+.save-menu__item:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+.save-menu__checkbox {
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+  accent-color: rgb(var(--gt-primary));
 }
 
 .save-menu__item--danger {

@@ -1313,7 +1313,7 @@ import { useSiteTheme, useSiteThemeHead } from '~/app/composables/useSiteTheme'
 import ThemeEffects from '~/app/components/themes/ThemeEffects.vue'
 import ThemeAnimatedBackground from '~/app/components/themes/ThemeAnimatedBackground.vue'
 import NewsStartupPanel from '~/app/components/news/NewsStartupPanel.vue'
-import { useDesktopApp } from '~/app/composables/useDesktopApp'
+import { useDesktopApp, setDesktopLocale } from '~/app/composables/useDesktopApp'
 import { useAndroidAccess } from '~/app/composables/useAndroidAccess'
 import musicLogoFull from '~/assets/giltube-music-logo-full.png'
 import musicLogoSymbol from '~/assets/giltube-music-logo-symbol.png'
@@ -1604,6 +1604,8 @@ const {
 // "Get the app": the Download app page, except on an Android phone whose
 // owner has accepted the closed-testing invite (or has the app): Google Play.
 const NuxtLinkComponent = resolveComponent('NuxtLink')
+// The desktop app shows its own text (tray, Downloads, title bar) in the site's language.
+watch(locale, (value) => setDesktopLocale(value), { immediate: true })
 const { canInstall: androidCanInstall, storeURL: androidStoreURL, refresh: refreshAndroidAccess } = useAndroidAccess()
 const isAndroidBrowser = ref(false)
 const getAppLink = computed(() => (isAndroidBrowser.value && androidCanInstall.value

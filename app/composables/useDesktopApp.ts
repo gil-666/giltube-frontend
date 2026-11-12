@@ -8,6 +8,7 @@ export interface DesktopDownload {
   title: string
   quality: string
   status: 'queued' | 'preparing' | 'downloading' | 'error'
+  audio?: string[]
   message: string
   received: number
   total: number
@@ -26,7 +27,8 @@ interface DesktopBridge {
   openDownloads: (videoId?: string) => Promise<void>
   downloads: {
     qualities: (videoId: string) => Promise<string[]>
-    start: (videoId: string, quality: string, title?: string) => Promise<void>
+    start: (videoId: string, quality: string, title?: string, audio?: string[]) => Promise<void>
+    audioOptions?: (videoId: string) => Promise<{ id: string, label: string, language: string, default: boolean }[]>
     cancel: (videoId: string) => Promise<void>
     remove: (videoId: string) => Promise<void>
     get: (videoId: string) => Promise<{ id: string, quality: string, size: number } | null>
@@ -41,6 +43,7 @@ interface DesktopBridge {
   theme?: {
     set: (vars: Record<string, string>) => Promise<boolean>
   }
+  setLocale?: (locale: string) => Promise<boolean>
 }
 
 // Shared by every component: one subscription for the whole page.
@@ -52,6 +55,17 @@ const libraryVersion = ref(0)
 // Newer apps show downloads and updates in their own title bar.
 const hasTitleBar = ref(false)
 let subscribed = false
+// The site's language, for the app's own text (tray, Downloads, title bar).
+let siteLocale = ''
+
+const sendLocale = () => {
+  if (siteLocale && bridge.value?.features?.includes('locale')) void bridge.value.setLocale?.(siteLocale).catch(() => {})
+}
+
+export const setDesktopLocale = (locale: string) => {
+  siteLocale = locale
+  sendLocale()
+}
 
 // The theme variables the app's own pages use (title bar, offline library),
 // sent whenever the site's theme changes so they match it, offline too.
@@ -98,6 +112,7 @@ const connect = () => {
   candidate.downloads.onChange(applyDownloads)
   void candidate.downloads.state().then(applyDownloads).catch(() => {})
   if (candidate.features.includes('theme')) watchTheme(candidate)
+  sendLocale()
   if (candidate.features.includes('titlebar')) hasTitleBar.value = true
   if (candidate.features.includes('updates')) {
     candidate.updates.onChange((state) => { desktopUpdate.value = state })
