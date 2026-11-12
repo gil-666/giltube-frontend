@@ -572,9 +572,10 @@
                 <span class="truncate">{{ t('desktop.downloads') }}</span>
                 <span v-if="activeDownloads.length" class="ml-auto rounded-full bg-primary-600 px-1.5 text-[11px] text-on-primary">{{ activeDownloads.length }}</span>
               </button>
-              <!-- Apps: the Download app page, or Google Play for accepted Android testers -->
+              <!-- Apps: the Download app page, or Google Play for accepted Android testers (not inside the desktop app) -->
               <component
                 :is="getAppLink.external ? 'a' : NuxtLinkComponent"
+                v-if="!hasDesktopDownloads"
                 v-bind="getAppLink.external ? { href: getAppLink.href, target: '_blank', rel: 'noopener' } : { to: getAppLink.href }"
                 class="shell-nav-link"
                 :class="{ 'is-active': isNavActive('/download') }"
@@ -903,6 +904,7 @@
           </NuxtLink>
           <component
             :is="getAppLink.external ? 'a' : NuxtLinkComponent"
+            v-if="!hasDesktopDownloads"
             v-bind="getAppLink.external ? { href: getAppLink.href, target: '_blank', rel: 'noopener' } : { to: getAppLink.href }"
             class="mobile-sheet-action mobile-sheet-action-wide mb-2"
             :class="{ 'bg-zinc-800 text-white': isNavActive('/download') }"
