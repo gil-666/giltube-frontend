@@ -2852,7 +2852,9 @@
     "defaultAudio": "Default",
     "allSubtitles": "all subtitles",
     "subtitlesIncluded": "All subtitles are saved too.",
-    "noAudioChosen": "choose an audio language"
+    "noAudioChosen": "choose an audio language",
+    "watchNow": "Watch now",
+    "readyToWatch": "Ready to watch · {percent}%"
   },
   "getApp": {
     "metaTitle": "Get the app",

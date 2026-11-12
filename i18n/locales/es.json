@@ -2852,7 +2852,9 @@
     "defaultAudio": "Predeterminado",
     "allSubtitles": "todos los subtítulos",
     "subtitlesIncluded": "También se guardan todos los subtítulos.",
-    "noAudioChosen": "elige un idioma de audio"
+    "noAudioChosen": "elige un idioma de audio",
+    "watchNow": "Ver ahora",
+    "readyToWatch": "Listo para ver · {percent}%"
   },
   "getApp": {
     "metaTitle": "Descarga la app",

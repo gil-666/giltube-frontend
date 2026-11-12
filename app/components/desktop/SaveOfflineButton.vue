@@ -51,6 +51,12 @@
               />
             </div>
           </div>
+          <button v-if="active.playable" type="button" role="menuitem" class="save-menu__item" @click="showDownloads(props.videoId)">
+            <span class="flex items-center gap-2.5">
+              <svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13l11-6.5z" /></svg>
+              {{ t('desktop.watchNow') }}
+            </span>
+          </button>
           <button type="button" role="menuitem" class="save-menu__item" @click="showDownloads()">
             <span>{{ t('desktop.openDownloads') }}</span>
           </button>
@@ -207,6 +213,7 @@ const formatSize = (bytes: number) => {
 const label = computed(() => {
   const item = active.value
   if (item?.status === 'error') return t('desktop.retrySave')
+  if (item?.status === 'downloading' && item.playable) return t('desktop.readyToWatch', { percent: percent.value })
   if (item?.status === 'downloading') return t('desktop.saving', { percent: percent.value })
   if (item) return t('desktop.preparing')
   return saved.value ? t('desktop.savedOffline') : t('desktop.saveOffline')

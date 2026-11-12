@@ -9,6 +9,8 @@ export interface DesktopDownload {
   quality: string
   status: 'queued' | 'preparing' | 'downloading' | 'error'
   audio?: string[]
+  // Enough has downloaded to start watching (the app plays it as it downloads).
+  playable?: boolean
   message: string
   received: number
   total: number
