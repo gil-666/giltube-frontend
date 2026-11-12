@@ -4,7 +4,6 @@
     <section class="dl-hero">
       <div class="dl-hero__glow" aria-hidden="true" />
       <div class="dl-hero__text">
-        <span class="dl-eyebrow">{{ t('getApp.eyebrow') }}</span>
         <h1 class="dl-title">{{ t('getApp.title') }}</h1>
         <p class="dl-lead">{{ t('getApp.lead') }}</p>
         <div class="dl-hero__ctas">
@@ -140,7 +139,6 @@
                 </button>
               </div>
               <p v-if="formError" class="dl-error">{{ formError }}</p>
-              <p class="dl-fineprint">{{ t('getApp.joinFineprint') }}</p>
             </form>
 
             <!-- 2. Being added -->
@@ -198,18 +196,6 @@
         </div>
       </article>
     </section>
-
-    <!-- Questions -->
-    <section class="dl-faq">
-      <h2 class="dl-faq__title">{{ t('getApp.faqTitle') }}</h2>
-      <details v-for="item in faq" :key="item" class="dl-faq__item">
-        <summary>
-          {{ t(`getApp.faq.${item}.q`) }}
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4 shrink-0"><path d="m6 9 6 6 6-6" /></svg>
-        </summary>
-        <p>{{ t(`getApp.faq.${item}.a`) }}</p>
-      </details>
-    </section>
   </div>
 </template>
 
@@ -240,7 +226,6 @@ const windowsFeatures = [
   { key: 'theme', icon: 'M12 3a9 9 0 1 0 0 18c1 0 1.5-.7 1.5-1.5 0-.4-.2-.8-.4-1.1-.3-.3-.4-.6-.4-1 0-.8.7-1.4 1.5-1.4H16a5 5 0 0 0 5-5c0-4.4-4-8-9-8zM7.5 12.5h.01M9.5 8.5h.01M14.5 8.5h.01' },
 ]
 const steps = ['join', 'added', 'accept', 'install'] as const
-const faq = ['why', 'email', 'accept', 'windows'] as const
 
 // Windows
 const desktop = ref<DesktopRelease | null>(null)
@@ -355,20 +340,6 @@ onBeforeUnmount(() => {
     radial-gradient(30% 40% at 20% 20%, rgb(var(--gt-accent) / 0.12), transparent 70%);
   filter: blur(10px);
   pointer-events: none;
-}
-
-.dl-eyebrow {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  border-radius: 999px;
-  background: rgb(var(--gt-primary) / 0.12);
-  padding: 0.25rem 0.75rem;
-  color: rgb(var(--gt-primary-300));
-  font-size: 0.75rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
 }
 
 .dl-title {
@@ -648,25 +619,6 @@ onBeforeUnmount(() => {
 .dl-swap-enter-active, .dl-swap-leave-active { transition: opacity 200ms ease, transform 200ms ease; }
 .dl-swap-enter-from { opacity: 0; transform: translateY(6px); }
 .dl-swap-leave-to { opacity: 0; transform: translateY(-6px); }
-
-/* FAQ */
-.dl-faq { max-width: 48rem; margin: 4rem auto 0; }
-.dl-faq__title { margin: 0 0 1rem; font-size: 1.5rem; font-weight: 700; letter-spacing: -0.02em; text-align: center; }
-.dl-faq__item { border-bottom: 1px solid rgb(var(--gt-white) / 0.07); }
-.dl-faq__item summary {
-  display: flex;
-  cursor: pointer;
-  list-style: none;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  padding: 1.1rem 0.25rem;
-  font-weight: 600;
-}
-.dl-faq__item summary::-webkit-details-marker { display: none; }
-.dl-faq__item summary svg { color: rgb(var(--gt-zinc-500)); transition: transform 200ms ease; }
-.dl-faq__item[open] summary svg { transform: rotate(180deg); }
-.dl-faq__item p { margin: 0; padding: 0 0.25rem 1.2rem; color: rgb(var(--gt-zinc-400)); line-height: 1.6; }
 
 @media (prefers-reduced-motion: reduce) {
   .dl-phone, .dl-devices, .dl-card, .dl-status__icon--brand { animation: none; }

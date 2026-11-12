@@ -2849,9 +2849,8 @@
   "getApp": {
     "metaTitle": "Get the app",
     "nav": "Get the app",
-    "eyebrow": "GilTube apps",
     "title": "GilTube, on every screen.",
-    "lead": "Watch on your Windows PC with offline downloads, or take GilTube with you on Android. Same account, same library, same place you left off.",
+    "lead": "Watch on your PC, even offline, or on your Android phone.",
     "windows": "Windows",
     "android": "Android",
     "windowsTitle": "GilTube for Windows",
@@ -2859,27 +2858,27 @@
     "windowsFeatures": {
       "offline": {
         "title": "Watch offline",
-        "text": "Save videos and movies to your PC, with subtitles."
+        "text": "Save videos with their subtitles."
       },
       "updates": {
         "title": "Always up to date",
-        "text": "Updates download quietly in the background."
+        "text": "Installs updates in the background."
       },
       "native": {
         "title": "Made for Windows",
-        "text": "Media keys, notifications, the tray and giltube:// links."
+        "text": "Media keys, notifications and the tray."
       },
       "theme": {
         "title": "Your theme",
-        "text": "The app follows your GilTube colors, even offline."
+        "text": "Uses your GilTube colors."
       }
     },
     "downloadWindows": "Download for Windows",
-    "smartScreen": "The installer isn't code-signed yet: if Windows SmartScreen warns you, choose \"More info\" and then \"Run anyway\".",
-    "usingDesktop": "You're already using GilTube for Windows. It updates itself.",
+    "smartScreen": "Not code-signed yet. If SmartScreen warns you, choose \"More info\" › \"Run anyway\".",
+    "usingDesktop": "You're using GilTube for Windows.",
     "androidTitle": "GilTube for Android",
     "earlyAccess": "Early access",
-    "androidMeta": "Android 7 or later · Google Play closed testing",
+    "androidMeta": "Android 7 or later",
     "stepsLabel": "Early access progress",
     "steps": {
       "join": "Join",
@@ -2887,44 +2886,24 @@
       "accept": "Accept",
       "install": "Install"
     },
-    "joinText": "The Android app is in closed testing. Enter the email of the Google account you use on your phone and we'll add you to the testers.",
+    "joinText": "Enter the Google account you use on your phone to join the closed test.",
     "emailLabel": "Google account email",
     "emailPlaceholder": "you{'@'}gmail.com",
     "join": "Join",
-    "joinFineprint": "Use the Google account signed in to the Play Store on your phone. We only use it to give you access to the app.",
     "invalidEmail": "Enter a valid email address.",
     "tooMany": "Too many attempts. Try again in a while.",
     "genericError": "Something went wrong. Try again.",
     "failed": "We couldn't add that account to the testers. Check the email and try again.",
     "pendingTitle": "You're on the list",
-    "pendingText": "We're adding {email} to the testers. This usually takes a minute; this page updates by itself.",
-    "addedTitle": "You're in! Accept your invitation",
-    "addedText": "{email} can now test GilTube. Accept the invitation on Google Play (signed in with that account) to unlock the download.",
+    "pendingText": "Adding {email} to the testers…",
+    "addedTitle": "Accept your invitation",
+    "addedText": "Accept on Google Play, signed in as {email}.",
     "acceptInvite": "Accept invitation on Google Play",
-    "acceptFineprint": "Google Play opens in a new tab. Tap \"Become a tester\", then come back here.",
-    "acceptedTitle": "All set: install GilTube",
-    "acceptedText": "Download GilTube from Google Play on your phone. It can take a few minutes after accepting for the app to appear.",
+    "acceptFineprint": "Tap \"Become a tester\", then come back here.",
+    "acceptedTitle": "Install GilTube",
+    "acceptedText": "It can take a few minutes after accepting to appear on Google Play.",
     "installedTitle": "You have GilTube for Android",
-    "installedText": "Updates come through Google Play. Thanks for testing!",
-    "getItOn": "Get it on",
-    "faqTitle": "Questions",
-    "faq": {
-      "why": {
-        "q": "Why do I need an invitation for Android?",
-        "a": "GilTube for Android is in closed testing on Google Play, so only accounts on the testers list can download it. Joining here adds you automatically."
-      },
-      "email": {
-        "q": "Which email should I use?",
-        "a": "The Google account signed in to the Play Store on your Android phone. It doesn't need to match your GilTube account."
-      },
-      "accept": {
-        "q": "I accepted but Google Play doesn't show the app",
-        "a": "Make sure the Play Store is using the same Google account, and give it a few minutes after accepting. Then open the Google Play link again."
-      },
-      "windows": {
-        "q": "Is the Windows app safe to install?",
-        "a": "Yes. It comes straight from GilTube's server and updates itself. It isn't code-signed yet, which is why Windows may show a SmartScreen warning the first time."
-      }
-    }
+    "installedText": "Updates come through Google Play.",
+    "getItOn": "Get it on"
   }
 }
