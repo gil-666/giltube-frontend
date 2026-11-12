@@ -28,6 +28,7 @@ interface DesktopBridge {
     qualities: (videoId: string) => Promise<string[]>
     start: (videoId: string, quality: string, title?: string) => Promise<void>
     cancel: (videoId: string) => Promise<void>
+    remove: (videoId: string) => Promise<void>
     get: (videoId: string) => Promise<{ id: string, quality: string, size: number } | null>
     state: () => Promise<{ active: DesktopDownload[] }>
     onChange: (callback: (state: { active: DesktopDownload[] }) => void) => () => void
@@ -37,6 +38,9 @@ interface DesktopBridge {
     install: () => Promise<boolean>
     onChange: (callback: (state: DesktopUpdate) => void) => () => void
   }
+  theme?: {
+    set: (vars: Record<string, string>) => Promise<boolean>
+  }
 }
 
 // Shared by every component: one subscription for the whole page.
@@ -45,7 +49,40 @@ const activeDownloads = ref<DesktopDownload[]>([])
 const desktopUpdate = ref<DesktopUpdate | null>(null)
 // Bumped when a download finishes or is removed, so "saved" states recheck.
 const libraryVersion = ref(0)
+// Newer apps show downloads and updates in their own title bar.
+const hasTitleBar = ref(false)
 let subscribed = false
+
+// The theme variables the app's own pages use (title bar, offline library),
+// sent whenever the site's theme changes so they match it, offline too.
+const THEME_STEPS = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950]
+const THEME_VARS = [
+  '--gt-font', '--gt-radius-scale', '--gt-white', '--gt-on-primary', '--gt-on-accent', '--gt-primary', '--gt-accent',
+  ...['zinc', 'primary', 'accent', 'red'].flatMap((scale) => THEME_STEPS.map((step) => `--gt-${scale}-${step}`)),
+]
+
+const sendTheme = (candidate: DesktopBridge) => {
+  const style = getComputedStyle(document.documentElement)
+  const vars: Record<string, string> = {}
+  for (const name of THEME_VARS) {
+    const value = style.getPropertyValue(name).trim()
+    if (value) vars[name] = value
+  }
+  void candidate.theme?.set(vars).catch(() => {})
+}
+
+const watchTheme = (candidate: DesktopBridge) => {
+  let timer: ReturnType<typeof setTimeout> | undefined
+  const schedule = () => {
+    clearTimeout(timer)
+    timer = setTimeout(() => sendTheme(candidate), 400)
+  }
+  // The theme is a <style> in <head> plus attributes on <html>.
+  const observer = new MutationObserver(schedule)
+  observer.observe(document.head, { childList: true, subtree: true, characterData: true })
+  observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme-scheme', 'style', 'class'] })
+  schedule()
+}
 
 const connect = () => {
   if (subscribed || !import.meta.client) return
@@ -60,6 +97,8 @@ const connect = () => {
   }
   candidate.downloads.onChange(applyDownloads)
   void candidate.downloads.state().then(applyDownloads).catch(() => {})
+  if (candidate.features.includes('theme')) watchTheme(candidate)
+  if (candidate.features.includes('titlebar')) hasTitleBar.value = true
   if (candidate.features.includes('updates')) {
     candidate.updates.onChange((state) => { desktopUpdate.value = state })
     void candidate.updates.state().then((state) => { desktopUpdate.value = state }).catch(() => {})
@@ -79,6 +118,7 @@ export const useDesktopApp = () => {
     libraryVersion,
     desktopUpdate,
     desktopUpdateReady,
+    hasDesktopTitleBar: hasTitleBar,
     openDownloads: (videoId?: string) => bridge.value?.openDownloads(videoId),
     installDesktopUpdate: () => bridge.value?.updates.install(),
   }

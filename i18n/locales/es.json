@@ -2837,6 +2837,13 @@
     "bestQuality": "La mejor disponible",
     "loading": "Cargando…",
     "updateReady": "GilTube para Windows {version} está listo",
-    "restartToUpdate": "Reiniciar para actualizar"
+    "restartToUpdate": "Reiniciar para actualizar",
+    "recommended": "Mejor",
+    "saveHint": "Los videos guardados se reproducen en la app incluso sin conexión. Búscalos en Descargas.",
+    "openDownloads": "Abrir Descargas",
+    "cancelDownload": "Cancelar descarga",
+    "savedDetail": "En este equipo · {quality} · {size}",
+    "playOffline": "Reproducir sin conexión",
+    "deleteDownload": "Eliminar descarga"
   }
 }

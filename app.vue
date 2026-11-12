@@ -61,7 +61,7 @@
     </div>
 
     <!-- GilTube for Windows: an app update is downloaded and ready -->
-    <div ref="desktopUpdateRef" v-if="desktopUpdateReady && !desktopUpdateDismissed && !showUpdatePrompt" class="shell-banner fixed" :style="{ zIndex: 70 }">
+    <div ref="desktopUpdateRef" v-if="desktopUpdateReady && !hasDesktopTitleBar && !desktopUpdateDismissed && !showUpdatePrompt" class="shell-banner fixed" :style="{ zIndex: 70 }">
       <span class="flex items-center gap-2.5"><span class="shell-banner__dot is-info" aria-hidden="true" />{{ t('desktop.updateReady', { version: desktopUpdate?.version || '' }) }}</span>
       <div class="flex gap-2">
         <button @click="desktopUpdateDismissed = true" class="shell-banner__button shell-banner__button--quiet">
@@ -1569,6 +1569,7 @@ const {
   activeDownloads,
   desktopUpdate,
   desktopUpdateReady,
+  hasDesktopTitleBar,
   openDownloads: openDesktopDownloads,
   installDesktopUpdate,
 } = useDesktopApp()

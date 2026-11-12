@@ -2837,6 +2837,13 @@
     "bestQuality": "Best available",
     "loading": "Loading…",
     "updateReady": "GilTube for Windows {version} is ready",
-    "restartToUpdate": "Restart to update"
+    "restartToUpdate": "Restart to update",
+    "recommended": "Best",
+    "saveHint": "Saved videos play in the app even without a connection. Find them in Downloads.",
+    "openDownloads": "Open Downloads",
+    "cancelDownload": "Cancel download",
+    "savedDetail": "On this PC · {quality} · {size}",
+    "playOffline": "Play offline",
+    "deleteDownload": "Delete download"
   }
 }
