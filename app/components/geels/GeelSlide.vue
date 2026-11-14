@@ -171,6 +171,8 @@ import { imageVariantUrl, resolveAvatarUrl, resolveMediaUrl } from '~/app/utils/
 const props = defineProps<{
   geel: Geel
   active: boolean
+  /** Comments open or tab hidden: pause without rewinding. */
+  suspended?: boolean
   preload: boolean
   muted: boolean
   loggedIn: boolean
@@ -210,6 +212,7 @@ let viewRecorded = false
 let tapTimer: ReturnType<typeof setTimeout> | null = null
 let lastTapAt = 0
 let burstSeq = 0
+let userPaused = false
 
 const posterUrl = computed(() => imageVariantUrl(props.geel.thumbnail_url, 'md') || resolveMediaUrl(props.geel.thumbnail_url))
 const avatarUrl = computed(() => resolveAvatarUrl(props.geel.channel.avatar_url))
@@ -271,7 +274,11 @@ const play = async () => {
   try {
     await video.play()
     autoplayBlocked.value = false
-  } catch {
+    // Paused (comments opened, scrolled away) while play() was pending.
+    if (!props.active || props.suspended || userPaused) video.pause()
+  } catch (error) {
+    // pause() during a pending play() rejects it: not an autoplay block.
+    if ((error as DOMException)?.name === 'AbortError' || !props.active || props.suspended) return
     // Browsers refuse unmuted autoplay before any interaction: retry muted.
     if (!video.muted) {
       video.muted = true
@@ -293,8 +300,13 @@ const startWithSound = () => {
   void nextTick(() => void play())
 }
 
-const syncPlayback = async (active: boolean, preload: boolean) => {
+const syncPlayback = async (active: boolean, preload: boolean, suspended = false) => {
+  if (active && suspended) {
+    videoRef.value?.pause()
+    return
+  }
   if (active) {
+    if (userPaused) return
     await play()
     void loadSubscription()
   } else {
@@ -310,8 +322,11 @@ const syncPlayback = async (active: boolean, preload: boolean) => {
 }
 
 // Not `immediate`: the <video> element only exists once mounted.
-watch(() => [props.active, props.preload] as const, ([active, preload]) => { void syncPlayback(active, preload) })
-onMounted(() => { void syncPlayback(props.active, props.preload) })
+watch(() => [props.active, props.preload, props.suspended] as const, ([active, preload, suspended], previous) => {
+  if (previous && previous[0] && !active) userPaused = false
+  void syncPlayback(active, preload, suspended)
+})
+onMounted(() => { void syncPlayback(props.active, props.preload, props.suspended) })
 
 watch(() => props.muted, (muted) => {
   if (videoRef.value) videoRef.value.muted = muted
@@ -336,8 +351,13 @@ const onTimeUpdate = () => {
 const togglePlay = () => {
   const video = videoRef.value
   if (!video) return
-  if (video.paused) void play()
-  else video.pause()
+  if (video.paused) {
+    userPaused = false
+    void play()
+  } else {
+    userPaused = true
+    video.pause()
+  }
 }
 
 // Single tap pauses; a second tap within 280 ms likes instead.
