@@ -59,6 +59,16 @@
 
         <!-- Top controls -->
         <div class="geel-top">
+          <button
+            v-if="hasCaptions"
+            type="button"
+            class="geel-icon-button geel-cc"
+            :class="{ 'geel-cc--on': captionsOn }"
+            :aria-label="captionsOn ? t('geels.captionsOff') : t('geels.captionsOn')"
+            :aria-pressed="captionsOn"
+            @click.stop="toggleCaptions"
+            @pointerup.stop
+          >CC</button>
           <button type="button" class="geel-icon-button" :aria-label="muted ? t('geels.unmute') : t('geels.mute')" @click.stop="emit('toggle-mute')">
             <svg v-if="muted" viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5 6 9H3v6h3l5 4V5Zm5 4.5 5 5m0-5-5 5" /></svg>
             <svg v-else viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5 6 9H3v6h3l5 4V5Zm4.5 3.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" /></svg>
@@ -67,6 +77,7 @@
 
         <!-- Caption, creator, sound -->
         <div class="geel-info" @pointerup.stop>
+          <p v-if="captionsOn && captionText" class="geel-subtitle" aria-live="polite"><span>{{ captionText }}</span></p>
           <div class="flex min-w-0 items-center gap-2.5">
             <NuxtLink :to="localePath(`/channel/${geel.channel_id}`)" class="flex min-w-0 items-center gap-2.5">
               <img v-if="avatarUrl" :src="avatarUrl" alt="" class="h-9 w-9 shrink-0 rounded-full object-cover ring-1 ring-white/20">
@@ -209,6 +220,13 @@ let subscriptionLoaded = false
 let hls: { destroy: () => void } | null = null
 let viewTimer: ReturnType<typeof setTimeout> | null = null
 let viewRecorded = false
+let watchedRatio = 0
+let loops = 0
+const captionText = ref('')
+const hasCaptions = ref(false)
+const captionsOn = ref(true)
+const CAPTIONS_KEY = 'giltube_geels_captions'
+let captionTrack: TextTrack | null = null
 let tapTimer: ReturnType<typeof setTimeout> | null = null
 let lastTapAt = 0
 let burstSeq = 0
@@ -249,12 +267,25 @@ const attach = async () => {
   // (1920x1080 for a 608x1080 portrait rendition), so it would pick a rung
   // far below the screen. Bandwidth alone decides.
   const instance = new Hls({ maxBufferLength: 20, startLevel: -1, abrEwmaDefaultEstimate: 2_500_000 })
+  instance.subtitleDisplay = false
+  instance.on(Hls.Events.MANIFEST_PARSED, () => {
+    const tracks = instance.subtitleTracks || []
+    if (!tracks.length) return
+    const language = (navigator.language || '').slice(0, 2).toLowerCase()
+    let index = tracks.findIndex((track) => (track.lang || '').toLowerCase().startsWith(language))
+    if (index < 0) index = Math.max(0, tracks.findIndex((track) => track.default))
+    instance.subtitleTrack = index
+    instance.subtitleDisplay = false
+  })
   instance.loadSource(src)
   instance.attachMedia(videoRef.value)
   hls = instance
 }
 
 const detach = () => {
+  captionTrack?.removeEventListener('cuechange', onCueChange)
+  captionTrack = null
+  captionText.value = ''
   hls?.destroy()
   hls = null
   const video = videoRef.value
@@ -312,6 +343,11 @@ const syncPlayback = async (active: boolean, preload: boolean, suspended = false
   } else {
     videoRef.value?.pause()
     if (viewTimer) clearTimeout(viewTimer)
+    viewTimer = null
+    if (viewRecorded) void recordGeelView(props.geel.id, watchedRatio)
+    viewRecorded = false
+    watchedRatio = 0
+    loops = 0
     if (preload) {
       await attach()
       if (videoRef.value) videoRef.value.currentTime = 0
@@ -326,7 +362,13 @@ watch(() => [props.active, props.preload, props.suspended] as const, ([active, p
   if (previous && previous[0] && !active) userPaused = false
   void syncPlayback(active, preload, suspended)
 })
-onMounted(() => { void syncPlayback(props.active, props.preload, props.suspended) })
+onMounted(() => {
+  try { captionsOn.value = localStorage.getItem(CAPTIONS_KEY) !== '0' } catch { /* private mode */ }
+  const tracks = videoRef.value?.textTracks
+  tracks?.addEventListener('addtrack', syncCaptionTracks)
+  tracks?.addEventListener('change', syncCaptionTracks)
+  void syncPlayback(props.active, props.preload, props.suspended)
+})
 
 watch(() => props.muted, (muted) => {
   if (videoRef.value) videoRef.value.muted = muted
@@ -337,15 +379,65 @@ const onPlaying = () => {
   buffering.value = false
   if (!viewRecorded && !viewTimer) {
     viewTimer = setTimeout(() => {
+      viewTimer = null
       viewRecorded = true
-      void recordGeelView(props.geel.id)
+      void recordGeelView(props.geel.id, watchedRatio)
     }, 2000)
   }
 }
 
 const onTimeUpdate = () => {
   const video = videoRef.value
-  if (video && video.duration > 0) progress.value = Math.min(video.currentTime / video.duration, 1)
+  if (!video || !(video.duration > 0)) return
+  const ratio = Math.min(video.currentTime / video.duration, 1)
+  // A wrap-around means the Geel looped: it was watched through.
+  if (ratio + 0.5 < progress.value) loops += 1
+  progress.value = ratio
+  watchedRatio = loops > 0 ? 1 : Math.max(watchedRatio, ratio)
+}
+
+// ---- captions ----------------------------------------------------------
+// The browser would draw them at the very bottom, under the caption and
+// creator. Keep the track hidden (cues still load) and draw them ourselves
+// just above the info block.
+
+const pickCaptionTrack = (tracks: TextTrack[]) => {
+  const language = (navigator.language || '').slice(0, 2).toLowerCase()
+  return tracks.find((track) => (track.language || '').toLowerCase().startsWith(language))
+    || tracks.find((track) => track.mode === 'showing')
+    || tracks[0]
+}
+
+const cueText = (cues: TextTrackCueList | null) => Array.from(cues || [])
+  .map((cue) => ((cue as VTTCue).text || '').replace(/<[^>]+>/g, '').replace(/\{[^}]*\}/g, '').trim())
+  .filter(Boolean)
+  .join('\n')
+
+const onCueChange = () => { captionText.value = cueText(captionTrack?.activeCues || null) }
+
+const syncCaptionTracks = () => {
+  const video = videoRef.value
+  if (!video) return
+  const tracks = Array.from(video.textTracks).filter((track) => track.kind === 'subtitles' || track.kind === 'captions')
+  hasCaptions.value = tracks.length > 0
+  const chosen = tracks.length ? pickCaptionTrack(tracks) : null
+  if (chosen !== captionTrack) {
+    captionTrack?.removeEventListener('cuechange', onCueChange)
+    captionTrack = chosen
+    captionTrack?.addEventListener('cuechange', onCueChange)
+  }
+  for (const track of tracks) {
+    const mode = track === captionTrack && captionsOn.value ? 'hidden' : 'disabled'
+    if (track.mode !== mode) track.mode = mode
+  }
+  if (!captionsOn.value) captionText.value = ''
+}
+
+const toggleCaptions = () => {
+  captionsOn.value = !captionsOn.value
+  try { localStorage.setItem(CAPTIONS_KEY, captionsOn.value ? '1' : '0') } catch { /* private mode */ }
+  syncCaptionTracks()
+  onCueChange()
 }
 
 const togglePlay = () => {
@@ -522,6 +614,9 @@ defineExpose({ togglePlay, toggleLike, seekBy: (seconds: number) => {
 } })
 
 onBeforeUnmount(() => {
+  if (viewRecorded) void recordGeelView(props.geel.id, watchedRatio)
+  videoRef.value?.textTracks?.removeEventListener('addtrack', syncCaptionTracks)
+  videoRef.value?.textTracks?.removeEventListener('change', syncCaptionTracks)
   if (viewTimer) clearTimeout(viewTimer)
   if (tapTimer) clearTimeout(tapTimer)
   detach()
@@ -664,6 +759,29 @@ onBeforeUnmount(() => {
   cursor: default;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
 }
+
+.geel-subtitle {
+  align-self: center;
+  max-width: 100%;
+  margin-bottom: 6px;
+  text-align: center;
+  white-space: pre-line;
+  text-shadow: none;
+}
+.geel-subtitle span {
+  display: inline;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.62);
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.55;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+.geel-cc { font-size: 12px; font-weight: 900; letter-spacing: 0.02em; opacity: 0.75; }
+.geel-cc--on { opacity: 1; background: rgba(255, 255, 255, 0.92); color: #0a0a0a; }
+.geel-cc--on:hover { background: #fff; }
 
 .geel-subscribe {
   flex-shrink: 0;

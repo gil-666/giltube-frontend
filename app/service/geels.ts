@@ -51,6 +51,21 @@ export const geelReactionChannelID = () => {
   return active === 'personal' || active === userID ? userID : active
 }
 
+/** An anonymous id for this browser, so the feed can skip what it already showed. */
+export const geelViewerID = () => {
+  if (typeof window === 'undefined') return ''
+  try {
+    let id = localStorage.getItem('giltube_viewer_id') || ''
+    if (!/^[A-Za-z0-9-]{8,64}$/.test(id)) {
+      id = typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 12)}`
+      localStorage.setItem('giltube_viewer_id', id)
+    }
+    return id
+  } catch {
+    return ''
+  }
+}
+
 export const getGeelsFeed = async (options: {
   limit?: number
   exclude?: string[]
@@ -66,6 +81,8 @@ export const getGeelsFeed = async (options: {
   if (options.sound) params.sound = options.sound
   const reactor = geelReactionChannelID()
   if (reactor) params.channel_id = reactor
+  const viewer = geelViewerID()
+  if (viewer) params.viewer = viewer
   const response = await api.get<GeelFeedPage>('/geels', { params })
   return response.data
 }
@@ -87,9 +104,10 @@ export const setGeelReaction = async (id: string, reaction: 'like' | 'dislike', 
   return response.data
 }
 
-export const recordGeelView = async (id: string) => {
+/** Reports how much of a Geel was watched (0–1). */
+export const recordGeelView = async (id: string, ratio: number) => {
   try {
-    await api.post(`/videos/${id}/view`)
+    await api.post(`/geels/${id}/view`, null, { params: { viewer: geelViewerID(), ratio: Math.min(Math.max(ratio, 0), 1).toFixed(3) } })
   } catch {
     // Views are best effort.
   }

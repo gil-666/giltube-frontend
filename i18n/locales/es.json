@@ -3056,6 +3056,8 @@
     "shelfTitle": "Geels",
     "shelfSubtitle": "Videos verticales cortos",
     "seeAll": "Ver Geels",
-    "views": "{count} vistas"
+    "views": "{count} vistas",
+    "captionsOn": "Activar subtítulos",
+    "captionsOff": "Desactivar subtítulos"
   }
 }
