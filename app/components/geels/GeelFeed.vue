@@ -66,6 +66,8 @@ const props = defineProps<{
   emptyTitle?: string
   /** Keep the address bar on the Geel being watched (/geels/<id>). */
   syncUrl?: boolean
+  /** Open the start Geel's comments (comment notification links). */
+  openComments?: boolean
 }>()
 
 const { t } = useI18n()
@@ -188,6 +190,7 @@ onMounted(async () => {
   document.addEventListener('keydown', onKey)
   document.addEventListener('visibilitychange', onVisibility)
   await loadMore()
+  if (props.openComments && props.startId && items.value[0]?.id === props.startId) commentsGeel.value = items.value[0]
   scrollerRef.value?.focus({ preventScroll: true })
 })
 

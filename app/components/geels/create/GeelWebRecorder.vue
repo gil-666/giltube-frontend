@@ -53,6 +53,10 @@
           <svg viewBox="0 0 24 24" class="h-7 w-7" :fill="torch ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="1.8"><path stroke-linejoin="round" d="M13 2.25 4.5 13.5H12l-1 8.25 8.5-11.25H12l1-8.25Z" /></svg>
           <span>{{ t('geels.flash') }}</span>
         </button>
+        <button v-if="clips.length" type="button" class="recorder-tool" @click="speedOpen = false; playbackOpen = true">
+          <svg viewBox="0 0 24 24" class="h-7 w-7" fill="none" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /><path stroke-linejoin="round" d="M15.9 11.37a.75.75 0 0 1 0 1.26l-5.25 3.22a.75.75 0 0 1-1.15-.63V8.78a.75.75 0 0 1 1.15-.63l5.25 3.22Z" /></svg>
+          <span>{{ t('geels.playBack') }}</span>
+        </button>
       </template>
     </div>
 
@@ -94,6 +98,8 @@
       </div>
     </div>
 
+    <GeelClipPlayback v-if="playbackOpen && clips.length" :clips="clips" :sound="sound" :soundStartMS="soundStartMS" @close="playbackOpen = false" />
+
     <input ref="fileInput" type="file" accept="video/*" class="hidden" @change="importFile">
   </div>
 </template>
@@ -103,6 +109,7 @@ import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { resolveAvatarUrl } from '~/app/utils/media'
 import type { GeelSound, GeelWebClip } from '~/app/service/geels'
+import GeelClipPlayback from './GeelClipPlayback.vue'
 
 const props = defineProps<{ clips: GeelWebClip[]; maxSeconds: number; sound: GeelSound | null; soundStartMS: number }>()
 const emit = defineEmits<{
@@ -142,6 +149,7 @@ let pressedAt = 0
 let holdCandidate = false
 let flipPending = false
 let soundAudio: HTMLAudioElement | null = null
+const playbackOpen = ref(false)
 
 const recordedOutput = computed(() => props.clips.reduce((sum, clip) => sum + clip.duration / clip.speed, 0))
 const liveOutput = computed(() => (recording.value ? liveSeconds.value / speed.value : 0))

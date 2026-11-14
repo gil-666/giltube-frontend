@@ -1,6 +1,6 @@
 <template>
   <div class="geels-page">
-    <GeelFeed :key="id" :start-id="id" :channel="channel" :sound="sound" sync-url />
+    <GeelFeed :key="id" :start-id="id" :channel="channel" :sound="sound" :open-comments="openComments" sync-url />
   </div>
 </template>
 
@@ -16,6 +16,7 @@ const id = route.params.id as string
 // Opened from a channel or sound page: keep scrolling within it.
 const channel = typeof route.query.channel === 'string' ? route.query.channel : undefined
 const sound = typeof route.query.sound === 'string' ? route.query.sound : undefined
+const openComments = route.query.comments === '1'
 
 const { data: geel } = await useAsyncData(`geel-${id}`, () => getGeel(id).catch(() => null))
 useMetaTags({

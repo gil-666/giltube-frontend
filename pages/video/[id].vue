@@ -1281,6 +1281,8 @@ import { useRequestHeaders, navigateTo, setResponseStatus } from '#app'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 
+definePageMeta({ middleware: ['geel-redirect'] })
+
 const route = useRoute()
 const router = useRouter()
 const id = route.params.id as string
@@ -1779,9 +1781,13 @@ watch([() => activeAccount.value, () => personalAccountSelectedChannel.value], (
 })
 
 console.log('Loading video ID:', id)
-const { data: video, error: videoLoadError } = await useAsyncData(`video-${id}`, () =>
-  getVideo(id)
-)
+// The geel-redirect middleware already fetched this video.
+const prefetchedVideo = useState<any>(`video-prefetch-${id}`)
+const { data: video, error: videoLoadError } = await useAsyncData(`video-${id}`, () => {
+  const prefetched = prefetchedVideo.value
+  prefetchedVideo.value = null
+  return prefetched ? Promise.resolve(prefetched) : getVideo(id)
+})
 const videoNotFound = computed(() => {
   const loadError = videoLoadError.value as any
   const status = Number(loadError?.statusCode || loadError?.response?.status || 0)
