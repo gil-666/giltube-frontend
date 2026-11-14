@@ -42,7 +42,7 @@
         :to="localePath(`/geels/${geel.id}?sound=${id}`)"
         class="group relative aspect-[9/16] overflow-hidden rounded-lg bg-zinc-900"
       >
-        <img :src="imageVariantUrl(geel.thumbnail_url, 'md') || resolveMediaUrl(geel.thumbnail_url)" alt="" loading="lazy" class="h-full w-full object-cover transition duration-300 group-hover:scale-105">
+        <img :src="geelPoster(geel)" alt="" loading="lazy" class="h-full w-full object-cover transition duration-300 group-hover:scale-105">
         <span class="absolute bottom-1.5 left-2 flex items-center gap-1 text-xs font-bold text-white drop-shadow">
           <svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="currentColor"><path d="M8 5.14v13.72a1 1 0 0 0 1.52.85l11-6.86a1 1 0 0 0 0-1.7l-11-6.86A1 1 0 0 0 8 5.14Z" /></svg>
           {{ formatGeelCount(geel.views, locale) }}
@@ -56,8 +56,8 @@
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useMetaTags } from '~/app/composables/useMetaTags'
-import { formatGeelCount, getGeelSound, getGeelsFeed, type Geel } from '~/app/service/geels'
-import { imageVariantUrl, resolveAvatarUrl, resolveMediaUrl } from '~/app/utils/media'
+import { formatGeelCount, geelPoster, getGeelSound, getGeelsFeed, type Geel } from '~/app/service/geels'
+import { resolveAvatarUrl } from '~/app/utils/media'
 
 const route = useRoute()
 const { t, locale } = useI18n()

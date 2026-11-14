@@ -1,4 +1,5 @@
 import api from './client'
+import { imageVariantUrl, resolveMediaUrl } from '~/app/utils/media'
 
 export type GeelSound = {
   track_id: string
@@ -25,6 +26,8 @@ export type Geel = {
   disliked: boolean
   hls_path: string
   thumbnail_url: string
+  /** 9:16 poster (thumbnails are 16:9 crops); empty until generated. */
+  poster_url?: string
   explicit: boolean
   duration_seconds: number
   display_width: number
@@ -122,6 +125,10 @@ export const getGeelSound = async (trackID: string) => {
   const response = await api.get<{ sound: GeelSound; usable: boolean }>(`/geels/sounds/${trackID}`)
   return response.data
 }
+
+/** The best portrait image for a Geel card or poster. */
+export const geelPoster = (geel: Pick<Geel, 'poster_url' | 'thumbnail_url'>) =>
+  geel.poster_url ? resolveMediaUrl(geel.poster_url) : (imageVariantUrl(geel.thumbnail_url, 'lg') || resolveMediaUrl(geel.thumbnail_url))
 
 export const formatGeelCount = (value: number, locale = 'en') => {
   if (!Number.isFinite(value) || value <= 0) return '0'

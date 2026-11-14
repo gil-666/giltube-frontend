@@ -108,7 +108,7 @@
             >
               <div class="relative aspect-[9/16] w-full overflow-hidden rounded-xl bg-zinc-900">
                 <img
-                  :src="imageVariantUrl(geel.thumbnail_url, 'md') || resolveMediaUrl(geel.thumbnail_url, '/videos/placeholder-thumbnail.jpg')"
+                  :src="geelPoster(geel) || resolveMediaUrl('', '/videos/placeholder-thumbnail.jpg')"
                   alt=""
                   :loading="index < 4 ? 'eager' : 'lazy'"
                   class="h-full w-full object-cover transition duration-300 group-hover:scale-[1.04]"
@@ -232,7 +232,7 @@ import { listActiveLiveStreams } from '~/app/service/live'
 import { listFeaturedContent } from '~/app/service/featured'
 import { formatVideoDuration, getTimeAgo } from '~/app/utils/time'
 import { formatViews } from '~/app/utils/format'
-import { getGeelsFeed } from '~/app/service/geels'
+import { geelPoster, getGeelsFeed } from '~/app/service/geels'
 import { capDensity, imageVariantSrcset, imageVariantUrl, isVideo4K, isVideo8K, resolveMediaUrl } from '~/app/utils/media'
 import { useMetaTags } from '~/app/composables/useMetaTags'
 import { useEasterEggs } from '~/app/composables/useEasterEggs'

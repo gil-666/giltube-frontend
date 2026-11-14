@@ -26,7 +26,8 @@
                   <span class="font-semibold text-zinc-200">{{ comment.channel?.name }}</span>
                   · {{ getTimeAgo(comment.created_at, locale) }}
                 </p>
-                <p class="mt-0.5 whitespace-pre-line break-words text-sm text-zinc-100">{{ comment.text }}</p>
+                <p v-if="commentParts(comment.text).text" class="mt-0.5 whitespace-pre-line break-words text-sm text-zinc-100">{{ commentParts(comment.text).text }}</p>
+                <img v-for="gif in commentParts(comment.text).gifs" :key="gif" :src="gif" alt="GIF" loading="lazy" class="geel-comment-gif">
                 <div class="mt-1 flex items-center gap-4 text-xs text-zinc-400">
                   <button type="button" class="hover:text-white" @click="replyTo = replyTo?.id === comment.id ? null : comment">{{ t('geels.reply') }}</button>
                 </div>
@@ -36,7 +37,8 @@
                     <span v-else class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-zinc-700 text-[10px] font-bold">{{ (reply.channel?.name || '?').slice(0, 1) }}</span>
                     <div class="min-w-0">
                       <p class="text-xs text-zinc-400"><span class="font-semibold text-zinc-200">{{ reply.channel?.name }}</span> · {{ getTimeAgo(reply.created_at, locale) }}</p>
-                      <p class="whitespace-pre-line break-words text-sm text-zinc-100">{{ reply.text }}</p>
+                      <p v-if="commentParts(reply.text).text" class="whitespace-pre-line break-words text-sm text-zinc-100">{{ commentParts(reply.text).text }}</p>
+                      <img v-for="gif in commentParts(reply.text).gifs" :key="gif" :src="gif" alt="GIF" loading="lazy" class="geel-comment-gif">
                     </div>
                   </div>
                 </div>
@@ -75,6 +77,7 @@
               class="min-w-0 flex-1 rounded-full border border-white/10 bg-white/[0.06] px-4 py-2.5 text-sm text-white placeholder-zinc-500 outline-none focus:border-white/25"
               :placeholder="t('geels.addComment')"
             >
+            <button type="button" class="shrink-0 rounded-full border border-white/10 px-3 py-2 text-xs font-black text-zinc-300 hover:bg-white/10 hover:text-white" :aria-label="t('geels.addGif')" @click="gifOpen = true">GIF</button>
             <button type="submit" class="rounded-full bg-accent-600 px-4 py-2.5 text-sm font-bold text-white disabled:opacity-40" :disabled="!text.trim() || posting">
               {{ t('geels.post') }}
             </button>
@@ -82,16 +85,22 @@
         </form>
       </aside>
     </Transition>
+    <!-- Above the comments panel (z-91). -->
+    <div v-if="gifOpen" class="relative z-[95]">
+      <GiphyPicker :is-open="gifOpen" @close="gifOpen = false" @select="addGif" />
+    </div>
   </Teleport>
 </template>
 
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
+import GiphyPicker from '~/app/components/GiphyPicker.vue'
 import { getVideoComments, likeComment, postComment, unlikeComment } from '~/app/service/comments'
 import { formatGeelCount, type Geel } from '~/app/service/geels'
 import { activeSubscriptionChannelID } from '~/app/service/subscriptions'
 import { resolveAvatarUrl } from '~/app/utils/media'
+import { insertGiphyIntoComment, type GiphyGif } from '~/app/utils/giphy'
 import { getTimeAgo } from '~/app/utils/time'
 
 const props = defineProps<{ geel: Geel | null; loggedIn: boolean }>()
@@ -108,6 +117,22 @@ const commentChannelID = ref('')
 const inputRef = ref<HTMLInputElement | null>(null)
 
 const avatar = (comment: any) => resolveAvatarUrl(comment.channel?.avatar_url)
+const gifOpen = ref(false)
+
+// GIF links (Giphy or any .gif) show as images, like on the watch page.
+const isGifUrl = (word: string) => /^https?:\/\//i.test(word) && (/(?:^|\.)giphy\.com\//i.test(word) || /\.gif(?:\?|$)/i.test(word))
+const commentParts = (value: string) => {
+  const words = String(value || '').split(/(\s+)/)
+  const gifs = words.filter((word) => isGifUrl(word.trim())).map((word) => word.trim())
+  const text = words.filter((word) => !isGifUrl(word.trim())).join('').replace(/\n{3,}/g, '\n\n').trim()
+  return { text, gifs }
+}
+
+const addGif = (gif: GiphyGif) => {
+  text.value = insertGiphyIntoComment(text.value, gif.images.downsized.url, gif.title)
+  gifOpen.value = false
+  inputRef.value?.focus()
+}
 
 const load = async () => {
   if (!props.geel) return
@@ -189,6 +214,14 @@ const toggleCommentLike = async (comment: any) => {
     width: min(420px, 100vw);
     border-left: 1px solid rgba(255, 255, 255, 0.07);
   }
+}
+
+.geel-comment-gif {
+  display: block;
+  margin-top: 6px;
+  max-width: min(100%, 240px);
+  max-height: 220px;
+  border-radius: 8px;
 }
 
 .geel-sheet-enter-active, .geel-sheet-leave-active { transition: transform 0.28s cubic-bezier(0.2, 0.9, 0.3, 1); }

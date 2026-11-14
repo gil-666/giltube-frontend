@@ -175,9 +175,9 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { formatGeelCount, recordGeelView, setGeelReaction, type Geel } from '~/app/service/geels'
+import { formatGeelCount, geelPoster, recordGeelView, setGeelReaction, type Geel } from '~/app/service/geels'
 import { activeSubscriptionChannelID, getChannelSubscription, subscribeToChannel, unsubscribeFromChannel } from '~/app/service/subscriptions'
-import { imageVariantUrl, resolveAvatarUrl, resolveMediaUrl } from '~/app/utils/media'
+import { resolveAvatarUrl, resolveMediaUrl } from '~/app/utils/media'
 
 const props = defineProps<{
   geel: Geel
@@ -232,7 +232,7 @@ let lastTapAt = 0
 let burstSeq = 0
 let userPaused = false
 
-const posterUrl = computed(() => imageVariantUrl(props.geel.thumbnail_url, 'md') || resolveMediaUrl(props.geel.thumbnail_url))
+const posterUrl = computed(() => geelPoster(props.geel))
 const avatarUrl = computed(() => resolveAvatarUrl(props.geel.channel.avatar_url))
 const initial = computed(() => (props.geel.channel.name || '?').slice(0, 1).toUpperCase())
 const soundCover = computed(() => props.geel.sound?.cover_url ? resolveAvatarUrl(props.geel.sound.cover_url) : '')
