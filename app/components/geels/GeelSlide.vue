@@ -34,11 +34,11 @@
 
         <!-- Paused / buffering indicators -->
         <Transition name="geel-fade">
-          <div v-if="active && paused && !autoplayBlocked" class="geel-center-icon" aria-hidden="true">
+          <div v-if="active && paused && userPaused && !autoplayBlocked" class="geel-center-icon" aria-hidden="true">
             <svg viewBox="0 0 24 24" class="h-10 w-10" fill="currentColor"><path d="M8 5.14v13.72a1 1 0 0 0 1.52.85l11-6.86a1 1 0 0 0 0-1.7l-11-6.86A1 1 0 0 0 8 5.14Z" /></svg>
           </div>
         </Transition>
-        <div v-if="active && buffering && !paused" class="geel-spinner" aria-hidden="true" />
+        <div v-if="active && !suspended && !userPaused && !autoplayBlocked && (paused || buffering)" class="geel-spinner" aria-hidden="true" />
 
         <button v-if="active && autoplayBlocked" type="button" class="geel-unmute-pill" @click.stop="startWithSound">
           <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5 6 9H3v6h3l5 4V5Zm4.5 3.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" /></svg>
@@ -230,7 +230,8 @@ let captionTrack: TextTrack | null = null
 let tapTimer: ReturnType<typeof setTimeout> | null = null
 let lastTapAt = 0
 let burstSeq = 0
-let userPaused = false
+// Paused by the viewer (tap / Space), as opposed to loading or buffering.
+const userPaused = ref(false)
 
 const posterUrl = computed(() => geelPoster(props.geel))
 const avatarUrl = computed(() => resolveAvatarUrl(props.geel.channel.avatar_url))
@@ -306,7 +307,7 @@ const play = async () => {
     await video.play()
     autoplayBlocked.value = false
     // Paused (comments opened, scrolled away) while play() was pending.
-    if (!props.active || props.suspended || userPaused) video.pause()
+    if (!props.active || props.suspended || userPaused.value) video.pause()
   } catch (error) {
     // pause() during a pending play() rejects it: not an autoplay block.
     if ((error as DOMException)?.name === 'AbortError' || !props.active || props.suspended) return
@@ -337,7 +338,7 @@ const syncPlayback = async (active: boolean, preload: boolean, suspended = false
     return
   }
   if (active) {
-    if (userPaused) return
+    if (userPaused.value) return
     await play()
     void loadSubscription()
   } else {
@@ -359,7 +360,7 @@ const syncPlayback = async (active: boolean, preload: boolean, suspended = false
 
 // Not `immediate`: the <video> element only exists once mounted.
 watch(() => [props.active, props.preload, props.suspended] as const, ([active, preload, suspended], previous) => {
-  if (previous && previous[0] && !active) userPaused = false
+  if (previous && previous[0] && !active) userPaused.value = false
   void syncPlayback(active, preload, suspended)
 })
 onMounted(() => {
@@ -444,10 +445,10 @@ const togglePlay = () => {
   const video = videoRef.value
   if (!video) return
   if (video.paused) {
-    userPaused = false
+    userPaused.value = false
     void play()
   } else {
-    userPaused = true
+    userPaused.value = true
     video.pause()
   }
 }
@@ -705,8 +706,10 @@ onBeforeUnmount(() => {
   border-radius: 999px;
   border: 3px solid rgba(255, 255, 255, 0.25);
   border-top-color: #fff;
-  animation: geel-spin 0.8s linear infinite;
+  /* Appears after a moment, so quick loads don't flash it. */
+  animation: geel-spin 0.8s linear infinite, geel-spinner-in 0.15s ease-out 0.25s both;
 }
+@keyframes geel-spinner-in { from { opacity: 0; } to { opacity: 1; } }
 
 .geel-unmute-pill {
   position: absolute;
