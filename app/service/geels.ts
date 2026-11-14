@@ -134,3 +134,48 @@ export const formatGeelCount = (value: number, locale = 'en') => {
   if (!Number.isFinite(value) || value <= 0) return '0'
   return new Intl.NumberFormat(locale, { notation: 'compact', maximumFractionDigits: 1 }).format(value)
 }
+
+export type GeelWebClip = { file: File; url: string; duration: number; speed: number; mirror: boolean; fill: boolean }
+
+export type GeelWebPost = {
+  clips: GeelWebClip[]
+  channelID: string
+  caption: string
+  hidden: boolean
+  explicit: boolean
+  soundTrackID?: string
+  soundStartMS: number
+  soundVolume: number
+  originalVolume: number
+  coverMS: number
+}
+
+/** Uploads each clip, then asks the server to put the Geel together. */
+export const postGeel = async (post: GeelWebPost, onProgress: (fraction: number) => void) => {
+  const { uploadFileInChunks } = await import('./upload')
+  const totalBytes = post.clips.reduce((sum, clip) => sum + clip.file.size, 0) || 1
+  let doneBytes = 0
+  const segments: { upload_id: string; speed: number; mirror: boolean; fill: boolean }[] = []
+  for (const clip of post.clips) {
+    const uploadID = await uploadFileInChunks(clip.file, (percent) => onProgress(0.95 * (doneBytes + clip.file.size * percent / 100) / totalBytes))
+    doneBytes += clip.file.size
+    segments.push({ upload_id: uploadID, speed: clip.speed, mirror: clip.mirror, fill: clip.fill })
+  }
+  const form = new FormData()
+  form.append('channel_id', post.channelID)
+  form.append('description', post.caption.trim())
+  form.append('title', post.caption.trim().split('\n')[0]!.slice(0, 100))
+  form.append('segments', JSON.stringify(segments))
+  form.append('original_volume', post.originalVolume.toFixed(2))
+  form.append('cover_ms', String(Math.max(0, Math.round(post.coverMS))))
+  if (post.soundTrackID) {
+    form.append('sound_track_id', post.soundTrackID)
+    form.append('sound_start_ms', String(Math.max(0, Math.round(post.soundStartMS))))
+    form.append('sound_volume', post.soundVolume.toFixed(2))
+  }
+  if (post.hidden) form.append('hidden', 'true')
+  if (post.explicit) form.append('explicit', 'true')
+  const response = await api.post<{ video_id: string }>('/geels/compose', form, { timeout: 0 })
+  onProgress(1)
+  return response.data
+}

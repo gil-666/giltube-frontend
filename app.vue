@@ -76,7 +76,7 @@
     <!-- Passkey Prompt Banner -->
     <div
       ref="passkeyRef"
-      v-if="showPasskeyPrompt && isLoggedIn && route.path !== '/account-settings'"
+      v-if="showPasskeyPrompt && isLoggedIn && route.path !== '/account-settings' && !normalizedRoutePath.startsWith('/geels/create')"
       class="shell-banner fixed"
       :style="{ zIndex: 70 }"
     >
@@ -279,6 +279,16 @@
               class="absolute right-0 top-11 w-56 origin-top-right overflow-hidden rounded-xl border border-white/10 bg-zinc-950 shadow-2xl shadow-black/50"
               :style="{ zIndex: 9999 }"
             >
+              <NuxtLink
+                :to="localePath('/geels/create')"
+                class="flex items-center gap-3 border-b border-white/[0.07] px-4 py-3 text-sm text-gray-100 transition hover:bg-zinc-800"
+                @click="uploadDropdownOpen = false"
+              >
+                <span class="flex h-9 w-9 items-center justify-center rounded-lg bg-zinc-800 text-zinc-200">
+                  <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="navIcons.geels" /></svg>
+                </span>
+                <span class="font-semibold">{{ t('app.createGeel') }}</span>
+              </NuxtLink>
               <NuxtLink
                 :to="localePath('/upload')"
                 class="flex items-center gap-3 px-4 py-3 text-sm text-gray-100 transition hover:bg-zinc-800"
@@ -778,6 +788,16 @@
         class="mobile-create-menu fixed inset-x-3 z-[72] overflow-hidden rounded-2xl border border-white/[0.07] bg-zinc-950 shadow-2xl shadow-black/60"
         style="bottom: calc(5.1rem + env(safe-area-inset-bottom, 0px));"
       >
+        <NuxtLink
+          :to="localePath('/geels/create')"
+          class="flex items-center gap-3 border-b border-white/[0.07] px-4 py-3 text-sm font-semibold text-zinc-100 transition hover:bg-zinc-900"
+          @click="mobileCreateOpen = false"
+        >
+          <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-zinc-900 text-zinc-200">
+            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="navIcons.geels" /></svg>
+          </span>
+          {{ t('app.createGeel') }}
+        </NuxtLink>
         <NuxtLink
           :to="localePath('/upload')"
           class="flex items-center gap-3 px-4 py-3 text-sm font-semibold text-zinc-100 transition hover:bg-zinc-900"
@@ -1706,7 +1726,7 @@ const onLocaleChange = (event) => {
   setLocale(target.value)
 }
 
-const hideHeaderSidebarRoutes = ['/login', '/register', '/upload', '/import-youtube', '/create-channel']
+const hideHeaderSidebarRoutes = ['/login', '/register', '/upload', '/import-youtube', '/create-channel', '/geels/create']
 
 const normalizedRoutePath = computed(() => {
   const path = route.path || '/'

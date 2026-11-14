@@ -71,8 +71,7 @@ const notFound = computed(() => !data.value)
 const cover = computed(() => sound.value?.cover_url ? resolveAvatarUrl(sound.value.cover_url) : '')
 const geels = ref<Geel[]>([])
 const previewing = ref(false)
-// The web creator ships in a later phase.
-const creatorReady = false
+const creatorReady = true
 let audio: HTMLAudioElement | null = null
 
 useMetaTags({ title: sound.value ? `${sound.value.title} · ${t('geels.title')}` : t('geels.title'), url: `/geels/sound/${id}` })
