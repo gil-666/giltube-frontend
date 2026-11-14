@@ -62,7 +62,8 @@
     "playlists": "Playlists",
     "you": "You",
     "music": "Music",
-    "importFromYouTube": "Import from YouTube"
+    "importFromYouTube": "Import from YouTube",
+    "geels": "Geels"
   },
   "home": {
     "title": "Home",
@@ -3014,5 +3015,47 @@
       "load": "Couldn't load import settings.",
       "save": "Couldn't save."
     }
+  },
+  "geels": {
+    "title": "Geels",
+    "metaDescription": "Short vertical videos on GilTube.",
+    "tapToPlay": "Tap to play",
+    "mute": "Mute",
+    "unmute": "Unmute",
+    "seek": "Seek",
+    "verified": "Verified",
+    "subscribe": "Subscribe",
+    "subscribed": "Subscribed",
+    "dislike": "Dislike",
+    "share": "Share",
+    "copied": "Copied",
+    "useSound": "Use this sound",
+    "comments": "Comments",
+    "commentsCount": "Comments ({count})",
+    "close": "Close",
+    "loading": "Loading…",
+    "noComments": "No comments yet. Start the conversation.",
+    "reply": "Reply",
+    "replyingTo": "Replying to {name}",
+    "cancel": "Cancel",
+    "signInToComment": "Sign in to comment",
+    "createChannelToComment": "Create a channel to comment",
+    "addComment": "Add a comment…",
+    "post": "Post",
+    "emptyTitle": "No Geels yet",
+    "emptyBody": "Short vertical videos show up here. Be the first to post one.",
+    "caughtUp": "You're all caught up",
+    "previous": "Previous Geel",
+    "next": "Next Geel",
+    "sound": "Sound",
+    "soundUsage": "{count} Geels | {count} Geel | {count} Geels",
+    "openInMusic": "Open in GilTube Music",
+    "soundNotFound": "This sound isn't available.",
+    "preview": "Preview",
+    "stopPreview": "Stop preview",
+    "shelfTitle": "Geels",
+    "shelfSubtitle": "Short vertical videos",
+    "seeAll": "Watch Geels",
+    "views": "{count} views"
   }
 }

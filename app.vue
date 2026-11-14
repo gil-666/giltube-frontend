@@ -668,6 +668,7 @@
 
     <nav
       v-if="isMobileDevice && !shouldHideHeader"
+      ref="mobileNavRef"
       class="mobile-bottom-nav fixed inset-x-0 bottom-0 z-[70] border-t border-white/[0.07] bg-zinc-950/95 px-2 pt-1.5 shadow-[0_-10px_30px_rgba(0,0,0,0.45)] backdrop-blur-xl"
       style="padding-bottom: max(env(safe-area-inset-bottom), 0.4rem);"
       aria-label="Mobile navigation"
@@ -719,14 +720,14 @@
         </NuxtLink>
 
         <NuxtLink
-          :to="localePath(isLoggedIn ? '/dashboard' : '/login')"
+          :to="localePath('/geels')"
           class="mobile-bottom-nav-item"
-          :class="{ 'text-white': normalizedRoutePath.startsWith('/dashboard') }"
+          :class="{ 'text-white': isGeelsRoute }"
         >
           <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 0 1 1-1h5a1 1 0 0 1 1 1v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5Zm9 0a1 1 0 0 1 1-1h5a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-5a1 1 0 0 1-1-1V5ZM4 15a1 1 0 0 1 1-1h5a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-4Zm9-3a1 1 0 0 1 1-1h5a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1h-5a1 1 0 0 1-1-1v-7Z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="navIcons.geels" />
           </svg>
-          <span>{{ t('app.dashboard') }}</span>
+          <span>{{ t('app.geels') }}</span>
         </NuxtLink>
 
         <button
@@ -1718,6 +1719,21 @@ const isMusicRoute = computed(() =>
   normalizedRoutePath.value === '/music' || normalizedRoutePath.value.startsWith('/music/')
 )
 
+const isGeelsRoute = computed(() =>
+  normalizedRoutePath.value === '/geels' || (normalizedRoutePath.value.startsWith('/geels/') && !normalizedRoutePath.value.startsWith('/geels/sound/'))
+)
+
+// The bottom nav's real height, so full-screen pages (Geels) end exactly above it.
+const mobileNavRef = ref(null)
+const mobileNavHeight = ref(60)
+let mobileNavObserver = null
+watch(mobileNavRef, (element) => {
+  mobileNavObserver?.disconnect()
+  if (!element || typeof ResizeObserver === 'undefined') return
+  mobileNavObserver = new ResizeObserver(() => { mobileNavHeight.value = element.offsetHeight || 60 })
+  mobileNavObserver.observe(element)
+})
+
 const canApplyEasterEggTheme = computed(() => !isAdminRoute.value && !isMusicRoute.value)
 
 const activeShellThemeClass = computed(() => canApplyEasterEggTheme.value ? activeThemeClass.value : '')
@@ -1738,7 +1754,7 @@ const shouldHideHeader = computed(() => {
 
 const isCompactMobileWatchTopBar = computed(() => isMobileDevice.value && isVideoWatchRoute.value)
 
-const shouldHideTopBar = computed(() => shouldHideHeader.value)
+const shouldHideTopBar = computed(() => shouldHideHeader.value || (isMobileDevice.value && isGeelsRoute.value))
 
 const shouldHideSidebar = computed(() => {
   return shouldHideHeader.value || isMobileDevice.value || isMusicRoute.value
@@ -1771,11 +1787,21 @@ const accountDropdownStyle = computed(() => {
 
 const mainScrollStyle = computed(() => {
   if (shouldHideHeader.value) return {}
+  if (isMobileDevice.value && isGeelsRoute.value) {
+    return {
+      paddingTop: `${notificationBarHeight.value}px`,
+      paddingBottom: `${mobileNavHeight.value}px`,
+      '--gt-shell-top': `${notificationBarHeight.value}px`,
+      '--gt-shell-bottom': `${mobileNavHeight.value}px`,
+    }
+  }
   const headerOffset = notificationBarHeight.value + (isCompactMobileWatchTopBar.value ? 40 : 64)
   const mobileBottomOffset = isMobileDevice.value ? 76 : 0
   return {
     paddingTop: `${headerOffset}px`,
-    paddingBottom: mobileBottomOffset ? `calc(${mobileBottomOffset}px + env(safe-area-inset-bottom, 0px))` : '0px'
+    paddingBottom: mobileBottomOffset ? `calc(${mobileBottomOffset}px + env(safe-area-inset-bottom, 0px))` : '0px',
+    '--gt-shell-top': `${headerOffset}px`,
+    '--gt-shell-bottom': mobileBottomOffset ? `calc(${mobileBottomOffset}px + env(safe-area-inset-bottom, 0px))` : '0px',
   }
 })
 
@@ -1838,6 +1864,7 @@ const applyDefaultChannelSelection = (channelList = [], defaultChannelID = '') =
 // Sidebar navigation. Icons are 24px outline paths so every entry matches.
 const navIcons = {
   home: 'M3.75 10.5 12 3.75l8.25 6.75V19.5a.75.75 0 0 1-.75.75h-4.5v-6h-6v6h-4.5a.75.75 0 0 1-.75-.75V10.5Z',
+  geels: 'M8.25 2.75h7.5a2.25 2.25 0 0 1 2.25 2.25v14a2.25 2.25 0 0 1-2.25 2.25h-7.5A2.25 2.25 0 0 1 6 19V5a2.25 2.25 0 0 1 2.25-2.25ZM10.5 9.25v5.5L15 12l-4.5-2.75Z',
   movies: 'M4.5 5.25h15a.75.75 0 0 1 .75.75v12a.75.75 0 0 1-.75.75h-15a.75.75 0 0 1-.75-.75V6a.75.75 0 0 1 .75-.75ZM8.25 5.25v13.5M15.75 5.25v13.5M3.75 9.75h4.5M3.75 14.25h4.5M15.75 9.75h4.5M15.75 14.25h4.5',
   series: 'M3.75 7.5h16.5v11.25H3.75V7.5ZM8.25 3.75 12 7.5l3.75-3.75',
   music: 'M9 18V5.25l10.5-1.5V16.5M9 18a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Zm10.5-1.5a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Z',
@@ -1854,6 +1881,7 @@ const isNavActive = (path) => path === '/'
 
 const primaryNavItems = computed(() => [
   { to: '/', label: t('app.home'), icon: navIcons.home, active: isNavActive('/') },
+  { to: '/geels', label: t('app.geels'), icon: navIcons.geels, active: isNavActive('/geels') },
   { to: '/category/movies', label: t('app.movies'), icon: navIcons.movies, active: isNavActive('/category/movies') },
   { to: '/category/series', label: t('app.series'), icon: navIcons.series, active: isNavActive('/category/series') },
   { to: '/music', label: t('app.music'), icon: navIcons.music, active: isNavActive('/music') },
@@ -2410,6 +2438,7 @@ onMounted(async () => {
 }})
 
 onUnmounted(() => {
+  mobileNavObserver?.disconnect()
   if (watchPartyStatusInterval) {
     clearInterval(watchPartyStatusInterval)
     watchPartyStatusInterval = null

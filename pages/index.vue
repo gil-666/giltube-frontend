@@ -97,6 +97,31 @@
           </div>
         </section>
 
+        <section v-if="homeGeels.length > 0">
+          <ShelfHeader :title="t('geels.shelfTitle')" :href="localePath('/geels')" carousel="geels" />
+          <div :ref="setCarouselRef('geels')" class="homepage-carousel">
+            <NuxtLink
+              v-for="(geel, index) in homeGeels"
+              :key="geel.id"
+              :to="localePath(`/geels/${geel.id}`)"
+              class="homepage-carousel-item homepage-carousel-item--geel group"
+            >
+              <div class="relative aspect-[9/16] w-full overflow-hidden rounded-xl bg-zinc-900">
+                <img
+                  :src="imageVariantUrl(geel.thumbnail_url, 'md') || resolveMediaUrl(geel.thumbnail_url, '/videos/placeholder-thumbnail.jpg')"
+                  alt=""
+                  :loading="index < 4 ? 'eager' : 'lazy'"
+                  class="h-full w-full object-cover transition duration-300 group-hover:scale-[1.04]"
+                >
+                <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent p-2.5 pt-10">
+                  <p class="line-clamp-2 text-[13px] font-semibold leading-snug text-white">{{ geel.title }}</p>
+                  <p class="mt-1 text-[11px] font-medium text-zinc-300">{{ t('geels.views', { count: formatViews(geel.views) }) }}</p>
+                </div>
+              </div>
+            </NuxtLink>
+          </div>
+        </section>
+
         <HomePromoSlot placement="after-continue" />
 
         <section v-if="moviesHomeLoading || homeMovies.length > 0">
@@ -207,6 +232,7 @@ import { listActiveLiveStreams } from '~/app/service/live'
 import { listFeaturedContent } from '~/app/service/featured'
 import { formatVideoDuration, getTimeAgo } from '~/app/utils/time'
 import { formatViews } from '~/app/utils/format'
+import { getGeelsFeed } from '~/app/service/geels'
 import { capDensity, imageVariantSrcset, imageVariantUrl, isVideo4K, isVideo8K, resolveMediaUrl } from '~/app/utils/media'
 import { useMetaTags } from '~/app/composables/useMetaTags'
 import { useEasterEggs } from '~/app/composables/useEasterEggs'
@@ -1114,8 +1140,17 @@ watch(isSabrinaTube, (isActive) => {
   if (isActive) loadSabrinaVideos()
 }, { immediate: true })
 
+const homeGeels = ref([])
+const loadHomeGeels = async () => {
+  try {
+    homeGeels.value = (await getGeelsFeed({ limit: 16 })).items
+  } catch {
+    homeGeels.value = []
+  }
+}
+
 onMounted(async () => {
-  await Promise.all([loadFeatured(), loadPromotions(), loadHomeFeed()])
+  await Promise.all([loadFeatured(), loadPromotions(), loadHomeFeed(), loadHomeGeels()])
 	if (featuredItems.value.length > 1) featuredTimer = setInterval(() => { featuredIndex.value = (featuredIndex.value + 1) % featuredItems.value.length }, 7000)
   await nextTick()
   setupIntersectionObserver()
@@ -1196,6 +1231,10 @@ onUnmounted(() => {
   width: clamp(8.5rem, 10.5vw, 11rem);
 }
 
+.homepage-carousel-item--geel {
+  width: clamp(9rem, 11vw, 12rem);
+}
+
 .sabrina-video-shelf {
   margin-inline: -1.5rem;
   border-block: 1px solid rgba(219, 39, 119, 0.2);
@@ -1236,6 +1275,10 @@ onUnmounted(() => {
 
   .homepage-carousel-item--poster {
     width: min(40vw, 10rem);
+  }
+
+  .homepage-carousel-item--geel {
+    width: min(38vw, 9.5rem);
   }
 
   .sabrina-video-grid {
