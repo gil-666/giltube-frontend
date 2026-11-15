@@ -199,6 +199,24 @@
             </button>
 
             <button
+              @click="toggleDislike"
+              :disabled="!isLoggedIn || isToggglingLike"
+              :class="{
+                'is-active': isDisliked,
+                'cursor-not-allowed opacity-50': !isLoggedIn || isToggglingLike
+              }"
+              class="watch-action-button watch-pill"
+              :aria-pressed="isDisliked"
+              :aria-label="t('video.dislike')"
+              :title="t('video.dislike')"
+            >
+              <svg class="h-[18px] w-[18px]" viewBox="0 0 24 24" :fill="isDisliked ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 15h-3a1.5 1.5 0 0 1-1.5-1.5V5.25a1.5 1.5 0 0 1 1.5-1.5h3M7.5 15V3.75m0 11.25 3.27 5.73a1.6 1.6 0 0 0 2.98-.8V16.5h4.6a2.1 2.1 0 0 0 2.06-2.52l-1.35-6.75A2.1 2.1 0 0 0 17 5.5h-1.75L12 3.75H7.5" />
+              </svg>
+              <span v-if="dislikes > 0">{{ dislikes }}</span>
+            </button>
+
+            <button
               v-if="isLoggedIn && canCreateClip"
               @click="startClipMode"
               class="watch-action-button watch-pill"
@@ -1263,7 +1281,7 @@ import GiphyPicker from '~/app/components/GiphyPicker.vue'
 import AddToPlaylistModal from '~/app/components/AddToPlaylistModal.vue'
 import { GILADS_PLACEMENTS } from '~/app/service/gilads'
 import SaveOfflineButton from '~/app/components/desktop/SaveOfflineButton.vue'
-import { getVideo, getRelatedVideos, getRelatedMedia, incrementViews, likeVideo, unlikeVideo, checkIfLiked, getWatchProgress, getWatchProgressMap, saveWatchProgress, createVideoClip, getVideoClips, downloadVideo as downloadVideoService } from '~/app/service/videos'
+import { getVideo, getRelatedVideos, getRelatedMedia, incrementViews, likeVideo, unlikeVideo, dislikeVideo, undislikeVideo, checkIfLiked, getWatchProgress, getWatchProgressMap, saveWatchProgress, createVideoClip, getVideoClips, downloadVideo as downloadVideoService } from '~/app/service/videos'
 import { getSeries, getSeriesEpisodeContext, getSeriesTrailerContext, suggestSeriesEpisodeIntro } from '~/app/service/series'
 import { getMovieVideoContext, getMovieTrailerContext } from '~/app/service/movies'
 import { consumePlaybackIntroSkip, skipPlaybackIntroFor } from '~/app/service/playbackIntro'
@@ -1368,6 +1386,9 @@ const showErrorDialog = ref(false)
 const errorMessage = ref('')
 
 const likes = ref(0)
+// Dislikes are public, like on Geels; liking and disliking are exclusive.
+const dislikes = ref(0)
+const isDisliked = ref(false)
 const isLiked = ref(false)
 const isToggglingLike = ref(false)
 const isDownloadingVideo = ref(false)
@@ -1760,6 +1781,7 @@ const syncActiveAccountFromStorage = async () => {
         if (likeChannelId) {
           const likeData = await checkIfLiked(id, likeChannelId)
           isLiked.value = likeData.liked
+          isDisliked.value = Boolean(likeData.disliked)
           console.log('Re-checked like status after account sync:', { isPersonalAccount, likeChannelId, isLiked: isLiked.value })
         }
       } catch (err) {
@@ -1853,6 +1875,9 @@ watch(() => video.value, (newVideo) => {
   if (newVideo && newVideo.likes !== undefined) {
     likes.value = newVideo.likes
   }
+  if (newVideo && newVideo.dislikes !== undefined) {
+    dislikes.value = newVideo.dislikes
+  }
 }, { deep: true, immediate: true })
 
 watch([() => activeAccount.value], async () => {
@@ -1867,6 +1892,7 @@ watch([() => activeAccount.value], async () => {
     if (likeChannelId) {
       const likeData = await checkIfLiked(id, likeChannelId)
       isLiked.value = likeData.liked
+          isDisliked.value = Boolean(likeData.disliked)
       console.log('Like status updated:', isLiked.value)
     }
 
@@ -2070,6 +2096,7 @@ onMounted(async () => {
       if (likeChannelId) {
         const likeData = await checkIfLiked(id, likeChannelId)
         isLiked.value = likeData.liked
+          isDisliked.value = Boolean(likeData.disliked)
       }
     } catch (err) {
       console.error('Failed to check like status:', err)
@@ -2145,6 +2172,7 @@ watch(() => isLoggedIn.value, (loggedIn) => {
     personalAccountSelectedChannel.value = ''
     selectedChannelName.value = ''
     isLiked.value = false
+    isDisliked.value = false
   }
 })
 
@@ -2172,14 +2200,35 @@ const toggleLike = async () => {
       likes.value = Math.max(0, likes.value - 1)
       console.log('Video unliked')
     } else {
-      // Like
-      await likeVideo(id, likeChannelId)
+      // Like (removes a dislike)
+      const state = await likeVideo(id, likeChannelId)
       isLiked.value = true
-      likes.value += 1
+      likes.value = typeof state?.likes === 'number' ? state.likes : likes.value + 1
+      if (typeof state?.dislikes === 'number') dislikes.value = state.dislikes
+      isDisliked.value = false
       console.log('Video liked')
     }
   } catch (err) {
     console.error('Failed to toggle like:', err)
+  } finally {
+    isToggglingLike.value = false
+  }
+}
+
+const toggleDislike = async () => {
+  if (!isLoggedIn.value) return
+  const isPersonalAccount = activeAccount.value === 'personal' || activeAccount.value === userId.value
+  const reactionChannelId = isPersonalAccount ? userId.value : activeAccount.value
+  if (!reactionChannelId) return
+  isToggglingLike.value = true
+  try {
+    const state = isDisliked.value ? await undislikeVideo(id, reactionChannelId) : await dislikeVideo(id, reactionChannelId)
+    likes.value = state.likes
+    dislikes.value = state.dislikes
+    isLiked.value = state.liked
+    isDisliked.value = state.disliked
+  } catch (err) {
+    console.error('Failed to toggle dislike:', err)
   } finally {
     isToggglingLike.value = false
   }

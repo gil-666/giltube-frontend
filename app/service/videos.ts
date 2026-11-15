@@ -358,6 +358,18 @@ export const unlikeVideo = async (videoId: string, channelId: string) => {
   return res.data
 }
 
+export type VideoReactionState = { likes: number; dislikes: number; liked: boolean; disliked: boolean }
+
+export const dislikeVideo = async (videoId: string, channelId: string) => {
+  const res = await api.post<VideoReactionState>(`/videos/${videoId}/dislike`, null, { params: { channel_id: channelId } })
+  return res.data
+}
+
+export const undislikeVideo = async (videoId: string, channelId: string) => {
+  const res = await api.delete<VideoReactionState>(`/videos/${videoId}/dislike`, { params: { channel_id: channelId } })
+  return res.data
+}
+
 export const checkIfLiked = async (videoId: string, channelId: string) => {
   const res = await api.get(`/videos/${videoId}/liked?channel_id=${channelId}`)
   return res.data

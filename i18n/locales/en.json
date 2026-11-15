@@ -381,6 +381,7 @@
       "saveError": "Failed to submit intro suggestion"
     },
     "like": "Like",
+    "dislike": "Dislike",
     "seasonEpisodeShort": "S{season} · E{episode}"
   },
   "live": {
