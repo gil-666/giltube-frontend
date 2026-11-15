@@ -2824,6 +2824,12 @@
     "groups": {
       "giltube": "Temas de GilTube",
       "library": "Tus temas"
+    },
+    "menus": {
+      "label": "Menús",
+      "default": "Estándar",
+      "persona": "Persona",
+      "help": "Persona da a la barra lateral, los menús y los cambios de página el estilo de Persona 3 Reload."
     }
   },
   "news": {

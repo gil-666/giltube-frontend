@@ -234,6 +234,25 @@
         </div>
       </fieldset>
 
+      <!-- Menus -->
+      <fieldset class="space-y-3">
+        <legend class="theme-section-title">{{ t('themes.menus.label') }}</legend>
+        <div class="theme-segmented" role="radiogroup" :aria-label="t('themes.menus.label')">
+          <button
+            v-for="menus in THEME_MENU_STYLES"
+            :key="menus"
+            type="button"
+            role="radio"
+            :aria-checked="editor.look.style.menus === menus"
+            :class="{ 'is-selected': editor.look.style.menus === menus }"
+            @click="setStyle('menus', menus)"
+          >
+            {{ t(`themes.menus.${menus}`) }}
+          </button>
+        </div>
+        <p class="text-xs text-gray-500">{{ t('themes.menus.help') }}</p>
+      </fieldset>
+
       <!-- Effects -->
       <fieldset class="space-y-3">
         <legend class="theme-section-title">{{ t('themes.sections.effects') }}</legend>
@@ -376,6 +395,7 @@ import {
   THEME_CORNERS,
   THEME_ANIMATED_BACKGROUNDS,
   THEME_FONTS,
+  THEME_MENU_STYLES,
   THEME_PARTICLE_EFFECTS,
   THEME_NAME_MAX_LENGTH,
   blobToDataUrl,

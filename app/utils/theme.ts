@@ -35,6 +35,9 @@ export const THEME_ANIMATED_BACKGROUNDS = [
 ] as const
 export const THEME_EFFECTS = ['none', ...THEME_PARTICLE_EFFECTS, ...THEME_ANIMATED_BACKGROUNDS] as const
 export const THEME_BACKGROUND_FITS = ['cover', 'tile'] as const
+// 'persona': sidebar, dropdowns and page changes styled after Persona 3
+// Reload's menus (assets/css/theme.css, PersonaSectionTitle.vue).
+export const THEME_MENU_STYLES = ['default', 'persona'] as const
 export const THEME_BACKGROUND_MAX_BLUR = 24
 // Images sit behind the UI at a fixed strength so they tint the page without
 // taking over the color scheme.
@@ -48,6 +51,7 @@ export type ThemeAnimatedBackground = (typeof THEME_ANIMATED_BACKGROUNDS)[number
 export const isAnimatedBackground = (effect: ThemeEffect): effect is ThemeAnimatedBackground =>
   (THEME_ANIMATED_BACKGROUNDS as readonly string[]).includes(effect)
 export type ThemeBackgroundFit = (typeof THEME_BACKGROUND_FITS)[number]
+export type ThemeMenuStyle = (typeof THEME_MENU_STYLES)[number]
 
 export interface ThemeStyle {
   gradient_color: string
@@ -59,6 +63,7 @@ export interface ThemeStyle {
   effect: ThemeEffect
   // How strongly the effect shows over the background, in percent.
   effect_strength: number
+  menus: ThemeMenuStyle
 }
 
 export const DEFAULT_THEME_STYLE: ThemeStyle = {
@@ -70,6 +75,7 @@ export const DEFAULT_THEME_STYLE: ThemeStyle = {
   font: 'inter',
   effect: 'none',
   effect_strength: 70,
+  menus: 'default',
 }
 
 // Everything that decides how the site looks.
@@ -143,6 +149,7 @@ export const normalizeThemeStyle = (raw: unknown): ThemeStyle => {
     font: oneOf(value.font, Object.keys(THEME_FONTS) as ThemeFont[], DEFAULT_THEME_STYLE.font),
     effect: oneOf(value.effect, THEME_EFFECTS, DEFAULT_THEME_STYLE.effect),
     effect_strength: clampInt(value.effect_strength, 10, 100, DEFAULT_THEME_STYLE.effect_strength),
+    menus: oneOf(value.menus, THEME_MENU_STYLES, DEFAULT_THEME_STYLE.menus),
   }
 }
 

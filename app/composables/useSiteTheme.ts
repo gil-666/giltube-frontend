@@ -252,6 +252,7 @@ export const useSiteThemeHead = () => {
     htmlAttrs: {
       'data-theme-scheme': computed(() => themeScheme(appearance.value.background)),
       'data-theme-backdrop': computed(() => (themeHasBackdrop(appearance.value) ? 'on' : null)),
+      'data-theme-menus': computed(() => (appearance.value.style.menus === 'persona' ? 'persona' : null)),
     },
     link: computed(() => (fontStylesheet.value
       ? [{ key: 'gt-theme-font', rel: 'stylesheet', href: fontStylesheet.value }]

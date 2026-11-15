@@ -2824,6 +2824,12 @@
     "groups": {
       "giltube": "GilTube themes",
       "library": "Your themes"
+    },
+    "menus": {
+      "label": "Menus",
+      "default": "Standard",
+      "persona": "Persona",
+      "help": "Persona styles the sidebar, menus and page changes after Persona 3 Reload."
     }
   },
   "news": {

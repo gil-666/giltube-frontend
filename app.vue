@@ -7,6 +7,12 @@
       <Teleport to="body">
         <ThemeEffects :effect="themeEffect" :strength="siteTheme.appearance.value.style.effect_strength" />
         <ThemeAnimatedBackground :look="siteTheme.appearance.value" />
+        <PersonaSectionTitle
+          v-if="siteTheme.appearance.value.style.menus === 'persona' && !shouldHideHeader"
+          :label="personaSectionLabel"
+          :top="notificationBarHeight + 64"
+          :with-sidebar="!shouldHideSidebar && !useCollapsibleDesktopSidebar"
+        />
       </Teleport>
     </ClientOnly>
     <div
@@ -276,7 +282,7 @@
           <Transition name="menu-pop">
             <div
               v-if="uploadDropdownOpen"
-              class="absolute right-0 top-11 w-56 origin-top-right overflow-hidden rounded-xl border border-white/10 bg-zinc-950 shadow-2xl shadow-black/50"
+              class="gt-menu absolute right-0 top-11 w-56 origin-top-right overflow-hidden rounded-xl border border-white/10 bg-zinc-950 shadow-2xl shadow-black/50"
               :style="{ zIndex: 9999 }"
             >
               <NuxtLink
@@ -785,7 +791,7 @@
     <Transition name="menu-pop">
       <div
         v-if="isMobileDevice && mobileCreateOpen && !shouldHideHeader"
-        class="mobile-create-menu fixed inset-x-3 z-[72] overflow-hidden rounded-2xl border border-white/[0.07] bg-zinc-950 shadow-2xl shadow-black/60"
+        class="gt-menu mobile-create-menu fixed inset-x-3 z-[72] overflow-hidden rounded-2xl border border-white/[0.07] bg-zinc-950 shadow-2xl shadow-black/60"
         style="bottom: calc(5.1rem + env(safe-area-inset-bottom, 0px));"
       >
         <NuxtLink
@@ -1362,6 +1368,7 @@ import { useMusicPlayer } from '~/app/composables/useMusicPlayer'
 import { useSiteTheme, useSiteThemeHead } from '~/app/composables/useSiteTheme'
 import ThemeEffects from '~/app/components/themes/ThemeEffects.vue'
 import ThemeAnimatedBackground from '~/app/components/themes/ThemeAnimatedBackground.vue'
+import PersonaSectionTitle from '~/app/components/themes/PersonaSectionTitle.vue'
 import NewsStartupPanel from '~/app/components/news/NewsStartupPanel.vue'
 import { useDesktopApp, setDesktopLocale } from '~/app/composables/useDesktopApp'
 import { useAndroidAccess } from '~/app/composables/useAndroidAccess'
@@ -1918,6 +1925,14 @@ const personalNavItems = computed(() => {
     items.push({ to: `/channel/${activeAccount.value}`, label: t('app.myChannel'), icon: navIcons.channel })
   }
   return items.map((item) => ({ ...item, active: isNavActive(item.to) }))
+})
+
+// Persona menus: the active sidebar entry's name, shown huge behind the page.
+const personaSectionLabel = computed(() => {
+  const item = [...primaryNavItems.value, ...personalNavItems.value].find((entry) => entry.active)
+  if (item) return item.label
+  if (route.path.includes('/category/')) return exploreCategories.value.find((category) => category.slug === route.params.slug)?.name || ''
+  return ''
 })
 
 // Movies, series and music have their own entries above.
