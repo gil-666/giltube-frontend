@@ -3018,6 +3018,9 @@
     }
   },
   "geels": {
+    "clippedBy": "Clipped by {name}",
+    "fullFrame": "Show full frame",
+    "cropToFill": "Crop to fill",
     "title": "Geels",
     "metaDescription": "Short vertical videos on GilTube.",
     "tapToPlay": "Tap to play",

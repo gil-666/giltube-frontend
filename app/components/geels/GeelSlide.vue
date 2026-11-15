@@ -11,12 +11,13 @@
           :src="posterUrl"
           alt=""
           class="geel-poster"
-          :class="{ 'geel-poster--hidden': hasFrame }"
+          :class="{ 'geel-poster--hidden': hasFrame, 'geel-fit': fullFrame }"
           draggable="false"
         >
         <video
           ref="videoRef"
           class="geel-video"
+          :class="{ 'geel-fit': fullFrame }"
           playsinline
           loop
           preload="auto"
@@ -25,7 +26,9 @@
           @playing="onPlaying"
           @pause="paused = true"
           @timeupdate="onTimeUpdate"
-          @loadeddata="hasFrame = true"
+          @loadedmetadata="onLoadedMetadata"
+          @loadeddata="onFrame"
+          @seeked="onFrame"
           @waiting="buffering = true"
           @canplay="buffering = false"
         />
@@ -69,6 +72,19 @@
             @click.stop="toggleCaptions"
             @pointerup.stop
           >CC</button>
+          <button
+            v-if="canFullFrame"
+            type="button"
+            class="geel-icon-button"
+            :aria-label="fullFrame ? t('geels.cropToFill') : t('geels.fullFrame')"
+            :aria-pressed="fullFrame"
+            :title="fullFrame ? t('geels.cropToFill') : t('geels.fullFrame')"
+            @click.stop="fullFrame = !fullFrame"
+            @pointerup.stop
+          >
+            <svg v-if="fullFrame" viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 3.75V9H3.75M15 3.75V9h5.25M9 20.25V15H3.75M15 20.25V15h5.25" /></svg>
+            <svg v-else viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 9V3.75H9M20.25 9V3.75H15M3.75 15v5.25H9M20.25 15v5.25H15" /></svg>
+          </button>
           <button type="button" class="geel-icon-button" :aria-label="muted ? t('geels.unmute') : t('geels.mute')" @click.stop="emit('toggle-mute')">
             <svg v-if="muted" viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5 6 9H3v6h3l5 4V5Zm5 4.5 5 5m0-5-5 5" /></svg>
             <svg v-else viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5 6 9H3v6h3l5 4V5Zm4.5 3.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" /></svg>
@@ -96,6 +112,12 @@
               {{ subscribed ? t('geels.subscribed') : t('geels.subscribe') }}
             </button>
           </div>
+          <i18n-t v-if="geel.clip" keypath="geels.clippedBy" tag="p" class="geel-clipped" scope="global">
+            <template #name>
+              <NuxtLink v-if="geel.clip.clipped_by_channel_id" :to="localePath(`/channel/${geel.clip.clipped_by_channel_id}`)" class="geel-clipped-name">{{ geel.clip.clipped_by_name }}</NuxtLink>
+              <span v-else class="geel-clipped-name">{{ geel.clip.clipped_by_name }}</span>
+            </template>
+          </i18n-t>
 
           <p class="geel-caption" :class="{ 'geel-caption--open': captionOpen }" @click="captionOpen = !captionOpen">
             <span class="font-semibold">{{ geel.title }}</span>
@@ -234,6 +256,28 @@ let burstSeq = 0
 const userPaused = ref(false)
 
 const posterUrl = computed(() => geelPoster(props.geel))
+
+// Clips are a range of another video, in any aspect ratio: cropped to fill
+// by default, with a toggle to see the whole frame (black bars).
+const fullFrame = ref(false)
+const canFullFrame = computed(() => !!props.geel.clip || props.geel.display_width > props.geel.display_height)
+const rangeStart = () => props.geel.clip?.start_seconds || 0
+const rangeEnd = (video: HTMLVideoElement) => {
+  const end = props.geel.clip?.end_seconds
+  return end && video.duration > 0 ? Math.min(end, video.duration) : video.duration
+}
+const rangeLength = (video: HTMLVideoElement) => Math.max(rangeEnd(video) - rangeStart(), 0.001)
+// Inside the clip's range (or anywhere, for a normal Geel)?
+const inRange = (video: HTMLVideoElement) => !props.geel.clip || (video.currentTime >= rangeStart() - 0.5 && video.currentTime < rangeEnd(video))
+const onLoadedMetadata = () => {
+  const video = videoRef.value
+  if (video && props.geel.clip && !inRange(video)) video.currentTime = rangeStart()
+}
+// Show video only once it is on a frame of the clip (not the original's start).
+const onFrame = () => {
+  const video = videoRef.value
+  if (video && video.readyState >= 2 && inRange(video)) hasFrame.value = true
+}
 const avatarUrl = computed(() => resolveAvatarUrl(props.geel.channel.avatar_url))
 const initial = computed(() => (props.geel.channel.name || '?').slice(0, 1).toUpperCase())
 const soundCover = computed(() => props.geel.sound?.cover_url ? resolveAvatarUrl(props.geel.sound.cover_url) : '')
@@ -267,7 +311,7 @@ const attach = async () => {
   // No capLevelToPlayerSize: master playlists list nominal landscape sizes
   // (1920x1080 for a 608x1080 portrait rendition), so it would pick a rung
   // far below the screen. Bandwidth alone decides.
-  const instance = new Hls({ maxBufferLength: 20, startLevel: -1, abrEwmaDefaultEstimate: 2_500_000 })
+  const instance = new Hls({ maxBufferLength: 20, startLevel: -1, abrEwmaDefaultEstimate: 2_500_000, startPosition: props.geel.clip ? rangeStart() : -1 })
   instance.subtitleDisplay = false
   instance.on(Hls.Events.MANIFEST_PARSED, () => {
     const tracks = instance.subtitleTracks || []
@@ -351,7 +395,7 @@ const syncPlayback = async (active: boolean, preload: boolean, suspended = false
     loops = 0
     if (preload) {
       await attach()
-      if (videoRef.value) videoRef.value.currentTime = 0
+      if (videoRef.value) videoRef.value.currentTime = rangeStart()
     } else {
       detach()
     }
@@ -390,7 +434,14 @@ const onPlaying = () => {
 const onTimeUpdate = () => {
   const video = videoRef.value
   if (!video || !(video.duration > 0)) return
-  const ratio = Math.min(video.currentTime / video.duration, 1)
+  if (props.geel.clip && !inRange(video)) {
+    // Past the clip's end: loop back to its start (counts as watched through).
+    if (video.currentTime >= rangeEnd(video)) loops += 1
+    video.currentTime = rangeStart()
+    progress.value = 0
+    return
+  }
+  const ratio = Math.min(Math.max((video.currentTime - rangeStart()) / rangeLength(video), 0), 1)
   // A wrap-around means the Geel looped: it was watched through.
   if (ratio + 0.5 < progress.value) loops += 1
   progress.value = ratio
@@ -486,7 +537,7 @@ const scrubTo = (event: PointerEvent, target: HTMLElement) => {
   if (!video || !(video.duration > 0)) return
   const rect = target.getBoundingClientRect()
   const ratio = Math.min(Math.max((event.clientX - rect.left) / rect.width, 0), 1)
-  video.currentTime = ratio * video.duration
+  video.currentTime = rangeStart() + ratio * rangeLength(video)
   progress.value = ratio
 }
 const startScrub = (event: PointerEvent) => {
@@ -611,7 +662,7 @@ const share = async () => {
 
 defineExpose({ togglePlay, toggleLike, seekBy: (seconds: number) => {
   const video = videoRef.value
-  if (video && video.duration > 0) video.currentTime = Math.min(Math.max(video.currentTime + seconds, 0), video.duration)
+  if (video && video.duration > 0) video.currentTime = Math.min(Math.max(video.currentTime + seconds, rangeStart()), rangeEnd(video) - 0.1)
 } })
 
 onBeforeUnmount(() => {
@@ -667,6 +718,11 @@ onBeforeUnmount(() => {
 }
 
 .geel-poster { filter: blur(0); transition: opacity 0.25s ease; }
+.geel-poster.geel-fit,
+.geel-video.geel-fit { object-fit: contain; }
+.geel-clipped { margin: -2px 0 0 46px; font-size: 12px; color: rgba(255, 255, 255, 0.75); text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6); }
+.geel-clipped-name { font-weight: 700; color: #fff; }
+a.geel-clipped-name:hover { text-decoration: underline; }
 .geel-poster--hidden { opacity: 0; }
 
 .geel-shade {

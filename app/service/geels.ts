@@ -42,6 +42,18 @@ export type Geel = {
     verified: boolean
   }
   sound?: GeelSound
+  /** A clip of another video (any aspect ratio): play and loop this range of the shared stream. */
+  clip?: GeelClip
+}
+
+export type GeelClip = {
+  start_seconds: number
+  end_seconds: number
+  original_video_id: string
+  original_video_title: string
+  /** The clipper's channel; absent when they clipped as their personal account. */
+  clipped_by_channel_id?: string
+  clipped_by_name: string
 }
 
 export type GeelFeedPage = { items: Geel[]; has_more: boolean }
