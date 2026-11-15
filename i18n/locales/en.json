@@ -1123,7 +1123,9 @@
       "phonogram": "Phonogram line",
       "territories": "Territories",
       "territoriesPlaceholder": "Worldwide or a country list",
-      "rightsConfirm": "I confirm GilTube has the rights to publish this release."
+      "rightsConfirm": "I confirm GilTube has the rights to publish this release.",
+      "allowGeels": "Allow in Geels",
+      "allowGeelsHelp": "Its published tracks can be used as Geel sounds."
     },
     "track": {
       "help": "Audio is required. Copyright and territories come from the release.",

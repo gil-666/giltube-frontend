@@ -250,6 +250,7 @@
           <label class="wide"><span>{{ t('musicAdmin.release.phonogram') }}</span><input v-model="releaseForm.phonogram_text" placeholder="℗ 2026 Rights holder"></label>
           <label class="wide"><span>{{ t('musicAdmin.release.territories') }}</span><input v-model="releaseForm.territories" :placeholder="t('musicAdmin.release.territoriesPlaceholder')"></label>
           <label class="check wide"><input v-model="releaseForm.rights_confirmed" type="checkbox"><span>{{ t('musicAdmin.release.rightsConfirm') }}</span></label>
+          <label class="check wide"><input v-model="releaseForm.allow_in_geels" type="checkbox"><span>{{ t('musicAdmin.release.allowGeels') }}<small>{{ t('musicAdmin.release.allowGeelsHelp') }}</small></span></label>
         </div>
 
         <div v-if="editor.kind === 'track'" class="editor-fields">
@@ -272,6 +273,7 @@
             <small>{{ t('musicAdmin.track.masterHelp') }}</small>
             <small v-if="editingTrack?.audio_original_name">{{ t('musicAdmin.track.current', { name: editingTrack.audio_original_name }) }}</small>
           </label>
+          <label class="check wide local-upload-toggle"><input v-model="musicLocalUpload" type="checkbox" :disabled="saving"><span>{{ t('upload.localUpload') }}<small>{{ t('upload.localUploadHelper') }}</small></span></label>
           <div v-if="editor.id" class="lyrics-sync-box wide">
             <div>
               <strong>{{ t('musicAdmin.track.lyrics') }}</strong>
@@ -338,6 +340,7 @@
             <span>{{ t('musicAdmin.quick.dropHelp') }}</span>
           </label>
 
+          <div class="editor-fields"><label class="check wide local-upload-toggle"><input v-model="musicLocalUpload" type="checkbox" :disabled="quickImporting"><span>{{ t('upload.localUpload') }}<small>{{ t('upload.localUploadHelper') }}</small></span></label></div>
           <ol v-if="quickTracks.length" class="quick-file-list">
             <li v-for="track in quickTracks" :key="track.key">
               <span>{{ track.trackNumber }}</span>
@@ -379,6 +382,7 @@
             <div><strong>{{ t('musicAdmin.quick.embeddedCover') }}</strong><small>{{ t('musicAdmin.quick.embeddedCoverHelp') }}</small></div>
           </div>
           <label class="check wide"><input v-model="quickForm.rights_confirmed" type="checkbox"><span>{{ t('musicAdmin.release.rightsConfirm') }}</span></label>
+          <label class="check wide"><input v-model="quickForm.allow_in_geels" type="checkbox"><span>{{ t('musicAdmin.release.allowGeels') }}<small>{{ t('musicAdmin.release.allowGeelsHelp') }}</small></span></label>
         </div>
 
         <div v-else class="quick-step">
@@ -442,6 +446,7 @@
           <label><span>{{ t('musicAdmin.track.language') }} <small>{{ t('musicAdmin.editor.optional') }}</small></span><input v-model="bulkLanguage" :placeholder="t('videoEditor.languagePlaceholder')"></label>
           <label class="check"><input v-model="bulkExplicit" type="checkbox"><span>{{ t('musicAdmin.bulk.markExplicit') }}</span></label>
           <label class="wide"><span>{{ t('musicAdmin.bulk.audioFiles') }}</span><input type="file" multiple accept="audio/*,.mp3,.m4a,.aac,.flac,.wav,.ogg,.opus" @change="pickBulkAudio"></label>
+          <label class="check wide local-upload-toggle"><input v-model="musicLocalUpload" type="checkbox" :disabled="bulkImporting"><span>{{ t('upload.localUpload') }}<small>{{ t('upload.localUploadHelper') }}</small></span></label>
         </div>
 
         <ol v-if="bulkTracks.length" class="bulk-track-list">
@@ -478,7 +483,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useLocalePath } from '#i18n'
 import {
   createMusicArtist,
@@ -513,6 +518,7 @@ import {
   type MusicTrackInput,
 } from '~/app/service/music'
 import { getVideos } from '~/app/service/videos'
+import { useLocalUploadBaseURL } from '~/app/composables/useLocalUploadBaseURL'
 import { searchWatchPartyVideos } from '~/app/service/watchParties'
 import { imageVariantUrl, resolveMediaUrl } from '~/app/utils/media'
 
@@ -601,11 +607,20 @@ const quickCoverPreview = ref('')
 const quickUploadError = ref('')
 const quickImporting = ref(false)
 const quickImportProgress = ref(0)
+// Admin "Local upload": send track masters to the local upload service
+// instead of through the public site. Remembered per browser.
+const localUploadBaseURL = useLocalUploadBaseURL()
+const LOCAL_UPLOAD_KEY = 'giltube.musicAdmin.localUpload'
+const musicLocalUpload = ref(false)
+watch(musicLocalUpload, (value) => {
+  try { localStorage.setItem(LOCAL_UPLOAD_KEY, value ? '1' : '0') } catch { /* storage unavailable */ }
+})
+const musicUploadBaseURL = () => musicLocalUpload.value ? localUploadBaseURL : undefined
 
 const artistForm = reactive<MusicArtistInput>({ name: '', bio: '', primary_channel_id: '', verified: false })
 const releaseForm = reactive<MusicReleaseInput>({
   artist_id: '', title: '', release_type: 'single', release_date: '', label: '',
-  copyright_text: '', phonogram_text: '', territories: 'Worldwide', rights_confirmed: false,
+  copyright_text: '', phonogram_text: '', territories: 'Worldwide', rights_confirmed: false, allow_in_geels: true,
 })
 const trackForm = reactive<MusicTrackInput>({
   release_id: '', title: '', disc_number: 1, track_number: 1, duration_seconds: 0,
@@ -613,7 +628,7 @@ const trackForm = reactive<MusicTrackInput>({
 })
 const quickForm = reactive<MusicReleaseInput & { artist: string }>({
   artist: '', artist_id: '', title: '', release_type: 'album', release_date: '', label: '',
-  copyright_text: '', phonogram_text: '', territories: 'Worldwide', rights_confirmed: false,
+  copyright_text: '', phonogram_text: '', territories: 'Worldwide', rights_confirmed: false, allow_in_geels: true,
 })
 
 const tabs = computed(() => [
@@ -686,6 +701,7 @@ const refresh = async () => {
 }
 
 onMounted(async () => {
+  try { musicLocalUpload.value = localStorage.getItem(LOCAL_UPLOAD_KEY) === '1' } catch { /* storage unavailable */ }
   if (!localStorage.getItem('user_id')) {
     router.push(localePath('/login'))
     return
@@ -728,11 +744,12 @@ const openRelease = (release?: MusicRelease) => {
         release_date: release.release_date?.slice(0, 10) || '', label: release.label,
         copyright_text: release.copyright_text, phonogram_text: release.phonogram_text,
         territories: release.territories || 'Worldwide', rights_confirmed: release.rights_confirmed,
+        allow_in_geels: release.allow_in_geels ?? true,
       }
     : {
         artist_id: artists.value[0]?.id || '', title: '', release_type: 'single',
         release_date: '', label: '', copyright_text: '', phonogram_text: '',
-        territories: 'Worldwide', rights_confirmed: false,
+        territories: 'Worldwide', rights_confirmed: false, allow_in_geels: true,
       })
   editor.value = { kind: 'release', id: release?.id || '' }
 }
@@ -1003,7 +1020,7 @@ const openQuickUpload = () => {
   quickCoverPreview.value = ''
   Object.assign(quickForm, {
     artist: '', artist_id: '', title: '', release_type: 'album', release_date: '',
-    label: '', copyright_text: '', phonogram_text: '', territories: 'Worldwide', rights_confirmed: false,
+    label: '', copyright_text: '', phonogram_text: '', territories: 'Worldwide', rights_confirmed: false, allow_in_geels: true,
   })
   quickUploadOpen.value = true
 }
@@ -1154,7 +1171,7 @@ const importTracks = async () => {
         }
         await uploadMusicTrackAudio(item.trackID, item.file, value => {
           bulkImportProgress.value = Math.round(((index + (value / 100)) / bulkTracks.value.length) * 100)
-        })
+        }, musicUploadBaseURL())
         item.status = 'done'
         bulkImportProgress.value = Math.round(((index + 1) / bulkTracks.value.length) * 100)
       } catch (error: any) {
@@ -1204,6 +1221,7 @@ const runQuickImport = async () => {
       phonogram_text: quickForm.phonogram_text,
       territories: quickForm.territories || 'Worldwide',
       rights_confirmed: quickForm.rights_confirmed,
+      allow_in_geels: quickForm.allow_in_geels,
     })
     if (quickCover.value) {
       await uploadMusicReleaseCover(release.id, quickCover.value)
@@ -1229,7 +1247,7 @@ const runQuickImport = async () => {
         item.trackID = track.id
         await uploadMusicTrackAudio(track.id, item.file, value => {
           quickImportProgress.value = Math.round(((index + (value / 100)) / quickTracks.value.length) * 100)
-        })
+        }, musicUploadBaseURL())
         if (!coverApplied) {
           try {
             await useMusicTrackArtwork(release.id, track.id)
@@ -1333,7 +1351,7 @@ const saveEditor = async () => {
       const saved = editor.value.id
         ? await updateMusicTrack(editor.value.id, { ...trackForm })
         : await createMusicTrack({ ...trackForm })
-      if (selectedAudio.value) await uploadMusicTrackAudio(saved.id, selectedAudio.value, value => { uploadProgress.value = value })
+      if (selectedAudio.value) await uploadMusicTrackAudio(saved.id, selectedAudio.value, value => { uploadProgress.value = value }, musicUploadBaseURL())
       if (selectedOfficialVideo.value?.id) {
         await setMusicTrackVideo(saved.id, selectedOfficialVideo.value.id)
       } else if (previousVideoID) {
@@ -1927,6 +1945,11 @@ td small,
 
 .editor-fields .check span {
   margin: 0;
+}
+
+.editor-fields .check span small {
+  display: block;
+  margin-top: 2px;
 }
 
 .editor-fields label small {

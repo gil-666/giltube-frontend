@@ -30,6 +30,7 @@ export interface MusicRelease {
   phonogram_text: string
   territories: string
   rights_confirmed: boolean
+  allow_in_geels: boolean
   has_lossless_audio: boolean
   max_audio_bit_depth: number
   max_audio_sample_rate: number
@@ -122,6 +123,7 @@ export interface MusicReleaseInput {
   phonogram_text: string
   territories: string
   rights_confirmed: boolean
+  allow_in_geels: boolean
 }
 
 export interface MusicTrackInput {
@@ -226,14 +228,16 @@ export const updateMusicTrack = async (id: string, input: MusicTrackInput): Prom
 export const syncMusicTrackLyrics = async (id: string): Promise<MusicTrack> =>
   (await api.post(`/admin/music/tracks/${id}/lyrics/sync`)).data
 
-export const uploadMusicTrackAudio = async (id: string, audio: File, onProgress?: (value: number) => void) => {
+// `uploadBaseURL` sends the chunks and the finalize call to the local
+// upload service (admin "Local upload"), which shares the upload sessions.
+export const uploadMusicTrackAudio = async (id: string, audio: File, onProgress?: (value: number) => void, uploadBaseURL?: string) => {
   const uploadSessionId = await uploadFileInChunks(audio, value => {
     onProgress?.(Math.min(95, Math.round(value * 0.95)))
-  })
+  }, uploadBaseURL)
   const form = new FormData()
   form.append('uploadSessionId', uploadSessionId)
   form.append('fileName', audio.name)
-  const response = await api.post(`/admin/music/tracks/${id}/audio/finalize`, form, { timeout: 0 })
+  const response = await api.post(`/admin/music/tracks/${id}/audio/finalize`, form, { timeout: 0, ...(uploadBaseURL ? { baseURL: uploadBaseURL } : {}) })
   onProgress?.(100)
   return response.data
 }
