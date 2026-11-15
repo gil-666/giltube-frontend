@@ -1,8 +1,8 @@
 import api, { contentLanguageParams } from './client'
 import { appendContentRating, type ContentRatingInput } from '~/app/utils/contentRating'
 import { downloadAPIFile } from './downloads'
+import { uploadFileInChunks } from './upload'
 
-const CHUNK_SIZE = 50 * 1024 * 1024
 
 export const GILTUBE_MOVIES_CHANNEL_ID = 'f765b137-9614-4b99-9f6d-6221abeb75cd'
 
@@ -217,30 +217,9 @@ export const uploadMovieAudioTrack = async (movieId: string, data: {
 
   if (data.file) {
     const file = data.file
-    const totalChunks = Math.ceil(file.size / CHUNK_SIZE)
-    const uploadSessionId = `movie-audio-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`
-    let uploadedBytes = 0
-
-    for (let chunkIndex = 0; chunkIndex < totalChunks; chunkIndex++) {
-      const start = chunkIndex * CHUNK_SIZE
-      const end = Math.min(start + CHUNK_SIZE, file.size)
-      const chunk = file.slice(start, end)
-      const chunkFormData = new FormData()
-      chunkFormData.append('chunk', chunk)
-      chunkFormData.append('chunkIndex', String(chunkIndex))
-      chunkFormData.append('totalChunks', String(totalChunks))
-      chunkFormData.append('uploadSessionId', uploadSessionId)
-      chunkFormData.append('fileName', file.name)
-
-      await api.post('/videos/upload-chunk', chunkFormData, {
-        ...requestConfig,
-        timeout: 0,
-        onUploadProgress: event => {
-          uploadedBytes = start + event.loaded
-          data.onUploadProgress?.(Math.min(99, Math.round((uploadedBytes / file.size) * 100)))
-        },
-      })
-    }
+    const uploadSessionId = await uploadFileInChunks(file, progress => {
+      data.onUploadProgress?.(Math.min(99, progress))
+    }, data.uploadBaseURL)
 
     const finalizeFormData = new FormData()
     finalizeFormData.append('uploadSessionId', uploadSessionId)

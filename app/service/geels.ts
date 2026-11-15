@@ -169,7 +169,7 @@ export const postGeel = async (post: GeelWebPost, onProgress: (fraction: number)
   let doneBytes = 0
   const segments: { upload_id: string; speed: number; mirror: boolean; fill: boolean }[] = []
   for (const clip of post.clips) {
-    const uploadID = await uploadFileInChunks(clip.file, (percent) => onProgress(0.95 * (doneBytes + clip.file.size * percent / 100) / totalBytes))
+    const uploadID = await uploadFileInChunks(clip.file, (percent) => onProgress(0.95 * (doneBytes + clip.file.size * percent / 100) / totalBytes), undefined, segments.map(segment => segment.upload_id))
     doneBytes += clip.file.size
     segments.push({ upload_id: uploadID, speed: clip.speed, mirror: clip.mirror, fill: clip.fill })
   }

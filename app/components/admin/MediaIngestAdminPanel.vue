@@ -958,7 +958,7 @@ const submitUploadedIngest = async () => {
       row.status = t('admin.mediaIngests.upload.uploadingFile')
       const uploadId = await uploadFileInChunks(row.file, progress => {
         row.progress = progress
-      }, uploadBaseURL)
+      }, uploadBaseURL, files.map(item => item.upload_id))
       row.progress = 100
       row.status = t('admin.mediaIngests.upload.ready')
       files.push({ upload_id: uploadId, file_name: row.file.name })
