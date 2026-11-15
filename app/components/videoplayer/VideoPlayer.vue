@@ -859,6 +859,36 @@ const updateQualityButtonVisibility = () => {
   }
 }
 
+// Video.js empties the quality list without any event when a source is
+// replaced, and the levels of the next one can arrive before or after our
+// listeners see it. Re-check for a while after every load so the selector
+// (and its menu) always match the levels that are actually there.
+let qualityRecheckTimers: ReturnType<typeof setTimeout>[] = []
+
+const syncQualityControls = () => {
+  if (!player) return
+  const levels = player.qualityLevels?.()
+  if (qualityButton?.menu && levels) {
+    const built = qualityButton.menu.querySelectorAll('[data-level-index]').length
+    if (built !== levels.length) {
+      if (levels.length) qualityButton.buildMenu?.()
+      else qualityButton.menu.innerHTML = ''
+    }
+  }
+  updateQualityButtonVisibility()
+  updateMobileSettingsButtonVisibility()
+}
+
+const clearQualityRechecks = () => {
+  qualityRecheckTimers.forEach(clearTimeout)
+  qualityRecheckTimers = []
+}
+
+const scheduleQualityRechecks = () => {
+  clearQualityRechecks()
+  qualityRecheckTimers = [300, 1000, 2500, 5000, 10000, 20000].map(ms => setTimeout(syncQualityControls, ms))
+}
+
 const countSelectableAudioTracks = (tracks: any) => {
   if (!tracks || typeof tracks.length !== 'number') return 0
   let count = 0
@@ -2645,6 +2675,9 @@ const createQualityButton = (player: any) => {
           this.buildMenu()
           scheduleAdaptiveQualityLock()
         })
+        this.qualityLevels.on('removequalitylevel', () => {
+          this.buildMenu()
+        })
         this.qualityLevels.on('change', () => {
           this.updateMenuSelection()
           scheduleAdaptiveQualityLock()
@@ -3047,10 +3080,8 @@ onMounted(async () => {
       }
       // Re-check once playback is underway so a quality list populated before
       // (or without) the events above can't leave the selector hidden.
-      player.on(['loadeddata', 'canplay', 'playing'], () => {
-        updateQualityButtonVisibility()
-        updateMobileSettingsButtonVisibility()
-      })
+      player.on(['loadeddata', 'canplay', 'playing'], syncQualityControls)
+      player.on('loadstart', scheduleQualityRechecks)
 
       const audioTracks = player.audioTracks?.()
       if (audioTracks) {
@@ -3153,6 +3184,7 @@ onMounted(async () => {
 })
 
 onBeforeUnmount(() => {
+  clearQualityRechecks()
   if (versionBadgeTimer) clearTimeout(versionBadgeTimer)
   sourceLoadToken++
   if (isPlayingHDR.value) emit('hdrchange', false)
@@ -3253,6 +3285,7 @@ const loadPlayerSource = async (src: string, options: { resumeAt?: number, resum
   const target = useHDR ? hdrUrl : src
   setPlayingHDR(useHDR)
   player.src({ src: target, type: inferSourceType(target) })
+  scheduleQualityRechecks()
   if (options.resumeAt && options.resumeAt > 0) {
     const resumeAt = options.resumeAt
     player.one('loadedmetadata', () => {
