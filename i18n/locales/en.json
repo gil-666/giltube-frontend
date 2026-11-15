@@ -1970,7 +1970,8 @@
       },
       "scenes": {
         "none": "None",
-        "lighthouse": "Coast and lighthouse"
+        "lighthouse": "Coast and lighthouse",
+        "persona3": "Persona 3 Reload album (custom, with theme button)"
       },
       "colors": {
         "from": "Left",
@@ -2850,7 +2851,15 @@
     }
   },
   "promo": {
-    "play": "Play now"
+    "play": "Play now",
+    "persona": {
+      "listen": "Listen now",
+      "applyTheme": "Apply theme",
+      "themeApplied": "Theme on",
+      "applying": "Applying…",
+      "signInForTheme": "Sign in to apply the theme",
+      "themeFailed": "Couldn't apply the theme"
+    }
   },
   "desktop": {
     "downloads": "Downloads",

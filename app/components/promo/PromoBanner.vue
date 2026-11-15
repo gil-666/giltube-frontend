@@ -1,6 +1,8 @@
 <template>
+  <PersonaPromo v-if="promo.scene === 'persona3'" :promo="promo" :preview="preview" />
   <component
     :is="preview ? 'div' : 'a'"
+    v-else
     ref="root"
     class="promo"
     :class="{ 'is-offscreen': offscreen, 'promo--flutter': flutter, 'promo--scene': promo.scene === 'lighthouse' }"
@@ -95,6 +97,7 @@
 import { computed, onBeforeUnmount, onMounted, ref, useId } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { recordPromotionEvent, type Promotion } from '~/app/service/promotions'
+import PersonaPromo from '~/app/components/promo/PersonaPromo.vue'
 import { resolveMediaUrl } from '~/app/utils/media'
 
 const props = withDefaults(defineProps<{

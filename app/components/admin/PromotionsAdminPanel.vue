@@ -90,6 +90,7 @@
           <select v-model="form.scene">
             <option value="none">{{ t('admin.promotions.scenes.none') }}</option>
             <option value="lighthouse">{{ t('admin.promotions.scenes.lighthouse') }}</option>
+            <option value="persona3">{{ t('admin.promotions.scenes.persona3') }}</option>
           </select>
         </label>
         <label class="field">

@@ -1970,7 +1970,8 @@
       },
       "scenes": {
         "none": "Ninguna",
-        "lighthouse": "Costa y faro"
+        "lighthouse": "Costa y faro",
+        "persona3": "Álbum de Persona 3 Reload (personalizado, con botón de tema)"
       },
       "colors": {
         "from": "Izquierda",
@@ -2850,7 +2851,15 @@
     }
   },
   "promo": {
-    "play": "Jugar ahora"
+    "play": "Jugar ahora",
+    "persona": {
+      "listen": "Escuchar ahora",
+      "applyTheme": "Aplicar tema",
+      "themeApplied": "Tema activo",
+      "applying": "Aplicando…",
+      "signInForTheme": "Inicia sesión para aplicar el tema",
+      "themeFailed": "No se pudo aplicar el tema"
+    }
   },
   "desktop": {
     "downloads": "Descargas",

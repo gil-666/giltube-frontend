@@ -36,7 +36,7 @@ export interface Promotion {
   partner_style: 'card' | 'original'
   sprite_url: string
   effect: 'none' | 'flutter'
-  scene: 'none' | 'lighthouse'
+  scene: 'none' | 'lighthouse' | 'persona3'
   theme: PromotionTheme
   translations: Record<string, PromotionText>
   sort_order: number
