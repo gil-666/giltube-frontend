@@ -874,7 +874,11 @@
     "subscriberCountOne": "{count} suscriptor",
     "subscriberCount": "{count} suscriptores",
     "subscriptionError": "No se pudo actualizar la suscripción.",
-    "noClips": "Aún no hay clips"
+    "noClips": "Aún no hay clips",
+    "geels": "Geels",
+    "noGeels": "Aún no hay Geels",
+    "clip": "Clip",
+    "loadMore": "Cargar más"
   },
   "categoryPage": {
     "noMoreVideos": "No hay más videos para cargar",

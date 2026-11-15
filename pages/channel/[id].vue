@@ -298,7 +298,7 @@
       <div class="relative mx-auto max-w-[100rem] px-4 py-6 sm:px-6 lg:px-8">
         <div class="channel-tabs mb-6 flex gap-2 border-b border-white/[0.07]">
           <button type="button" class="channel-tab-button px-3 py-2 text-sm font-bold transition" :class="activeTab === 'videos' ? 'is-active text-white' : 'text-zinc-400 hover:text-white'" @click="activeTab = 'videos'">{{ t('channelPage.videos') }}</button>
-          <button type="button" class="channel-tab-button px-3 py-2 text-sm font-bold transition" :class="activeTab === 'clips' ? 'is-active text-white' : 'text-zinc-400 hover:text-white'" @click="activeTab = 'clips'">{{ t('channelPage.clips') }}</button>
+          <button type="button" class="channel-tab-button px-3 py-2 text-sm font-bold transition" :class="activeTab === 'geels' ? 'is-active text-white' : 'text-zinc-400 hover:text-white'" @click="activeTab = 'geels'">{{ t('channelPage.geels') }}</button>
           <button v-if="musicArtist" type="button" class="channel-tab-button px-3 py-2 text-sm font-bold transition" :class="activeTab === 'music' ? 'is-active text-white' : 'text-zinc-400 hover:text-white'" @click="activeTab = 'music'">{{ t('channelPage.music') }}</button>
         </div>
 
@@ -324,9 +324,33 @@
           <div v-else class="music-empty">{{ t('channelPage.noReleases') }}</div>
         </section>
 
+        <!-- Geels: the channel's vertical videos and clips of its videos, newest first. -->
+        <section v-else-if="activeTab === 'geels'">
+          <div v-if="geelsLoading && !geels.length" class="channel-geel-grid">
+            <div v-for="n in 6" :key="n" class="aspect-[9/16] animate-pulse rounded-xl bg-zinc-900" />
+          </div>
+          <div v-else-if="!geels.length" class="py-10 text-sm text-zinc-500">{{ t('channelPage.noGeels') }}</div>
+          <div v-else class="channel-geel-grid">
+            <NuxtLink v-for="geel in geels" :key="geel.id" :to="localePath(`/geels/${geel.id}?channel=${channelId}`)" class="group min-w-0">
+              <div class="relative mb-2 aspect-[9/16] overflow-hidden rounded-xl bg-zinc-900">
+                <img v-if="geelPoster(geel)" :src="geelPoster(geel)" :alt="geel.title" loading="lazy" class="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]">
+                <span v-if="geel.clip" class="gt-media absolute left-2 top-2 rounded-md bg-black/70 px-1.5 py-0.5 text-[11px] font-semibold text-zinc-100">{{ t('channelPage.clip') }}</span>
+                <span class="gt-media absolute bottom-2 left-2 flex items-center gap-1 text-[13px] font-bold text-white drop-shadow">
+                  <svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="currentColor"><path d="M8 5.14v13.72a1 1 0 0 0 1.52.85l11-6.86a1 1 0 0 0 0-1.7l-11-6.86A1 1 0 0 0 8 5.14Z" /></svg>
+                  {{ formatGeelCount(geel.views, locale) }}
+                </span>
+              </div>
+              <h3 class="line-clamp-2 break-words text-sm font-medium leading-5 text-zinc-100">{{ geel.title }}</h3>
+            </NuxtLink>
+          </div>
+          <div v-if="geelsHasMore && geels.length" class="mt-6 flex justify-center">
+            <button type="button" class="rounded-full bg-white/10 px-5 py-2 text-sm font-semibold text-white hover:bg-white/20 disabled:opacity-50" :disabled="geelsLoading" @click="loadGeels">{{ t('channelPage.loadMore') }}</button>
+          </div>
+        </section>
+
         <template v-else>
           <div v-if="displayedItems.length === 0" class="py-10 text-sm text-zinc-500">
-            {{ activeTab === 'clips' ? t('channelPage.noClips') : t('channelPage.noVideos') }}
+            {{ t('channelPage.noVideos') }}
           </div>
 
           <div v-else class="motion-grid grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
@@ -357,7 +381,8 @@
 
 <script setup lang="ts">
 import { ref, onMounted, computed, watch } from 'vue'
-import { getChannelInfo, getChannelVideos, getChannelClips } from '~/app/service/channels'
+import { getChannelInfo, getChannelVideos } from '~/app/service/channels'
+import { formatGeelCount, geelPoster, getGeelsFeed, type Geel } from '~/app/service/geels'
 import { updateChannel } from '~/app/service/upload'
 import { getChannelMusic, type MusicArtist, type MusicRelease } from '~/app/service/music'
 import { getChannelLiveStatus } from '~/app/service/live'
@@ -370,17 +395,34 @@ import ChannelMetricsCompact from '~/app/components/ChannelMetricsCompact.vue'
 import VerifiedBadge from '~/app/components/VerifiedBadge.vue'
 import { useI18n } from 'vue-i18n'
 import { useLocalePath } from '#i18n'
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const localePath = useLocalePath()
 const route = useRoute()
 const channelId = route.params.id as string
 
 const channel = ref<any | null>(null)
 const videos = ref([])
-const clips = ref([])
+const geels = ref<Geel[]>([])
+const geelsLoading = ref(false)
+const geelsHasMore = ref(true)
+const loadGeels = async () => {
+  if (geelsLoading.value || !geelsHasMore.value) return
+  geelsLoading.value = true
+  try {
+    const page = await getGeelsFeed({ channel: channelId, limit: 30, exclude: geels.value.map((geel) => geel.id) })
+    const known = new Set(geels.value.map((geel) => geel.id))
+    geels.value.push(...page.items.filter((geel) => !known.has(geel.id)))
+    geelsHasMore.value = page.has_more && page.items.length > 0
+  } catch (geelsErr) {
+    console.error('Channel Geels failed:', geelsErr)
+    geelsHasMore.value = false
+  } finally {
+    geelsLoading.value = false
+  }
+}
 const musicArtist = ref<MusicArtist | null>(null)
 const musicReleases = ref<MusicRelease[]>([])
-const activeTab = ref<'videos' | 'clips' | 'music'>('videos')
+const activeTab = ref<'videos' | 'geels' | 'music'>('videos')
 const ownerUsername = ref('')
 const isLoading = ref(true)
 const error = ref('')
@@ -414,7 +456,7 @@ const editForm = ref({
   customContentCss: '',
 })
 
-const displayedItems = computed(() => activeTab.value === 'clips' ? clips.value : videos.value)
+const displayedItems = computed(() => videos.value)
 const channelBackgroundUrl = computed(() => channel.value?.background_url ? imageVariantUrl(channel.value.background_url, 'md') || resolveMediaUrl(channel.value.background_url) : '')
 const channelBackgroundSrcset = computed(() => imageVariantSrcset(channel.value?.background_url))
 const channelAvatarUrl = computed(() => channel.value?.avatar_url ? imageVariantUrl(channel.value.avatar_url, 'sm') || resolveMediaUrl(channel.value.avatar_url) : '')
@@ -480,16 +522,7 @@ onMounted(async () => {
       ...video,
       thumbnail_url: video.thumbnail_url ? resolveMediaUrl(video.thumbnail_url) : null
     }))
-    try {
-      const clipsData = await getChannelClips(channelId)
-      clips.value = clipsData.map((clip: any) => ({
-        ...clip,
-        thumbnail_url: clip.thumbnail_url ? resolveMediaUrl(clip.thumbnail_url) : null
-      }))
-    } catch (clipErr) {
-      console.error('Channel clips failed:', clipErr)
-      clips.value = []
-    }
+    void loadGeels()
     try {
       const musicData = await getChannelMusic(channelId)
       musicArtist.value = musicData.artist
@@ -956,4 +989,8 @@ const formatDate = (date) => {
     animation: none;
   }
 }
+.channel-geel-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.25rem 0.75rem; }
+@media (min-width: 640px) { .channel-geel-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (min-width: 1024px) { .channel-geel-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
+@media (min-width: 1536px) { .channel-geel-grid { grid-template-columns: repeat(7, minmax(0, 1fr)); } }
 </style>
