@@ -1003,7 +1003,8 @@
       "metaDescription": "Listen to {title} by {artist} on GilTube Music.",
       "imageAlt": "{title} by {artist} album cover",
       "minutes": "{count} min",
-      "seconds": "{count} sec"
+      "seconds": "{count} sec",
+      "disc": "Disc {number}"
     },
     "player": {
       "nowPlaying": "Now playing",
@@ -1165,7 +1166,10 @@
       "chooseVideo": "Choose a video",
       "chooseDifferentVideo": "Choose a different video",
       "searchVideos": "Search uploaded videos",
-      "loadingVideos": "Loading videos..."
+      "loadingVideos": "Loading videos...",
+      "featured": "Featured artists",
+      "featuredPlaceholder": "Azumi Takahashi, Lotus Juice",
+      "featuredHelp": "Credited besides the release artist, separated by commas. Read from the audio file's tags when left empty. Lyrics sync also searches under these names."
     },
     "editor": {
       "artist": "artist",

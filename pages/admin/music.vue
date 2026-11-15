@@ -141,9 +141,13 @@
               <table>
                 <thead><tr><th>{{ t('musicAdmin.track.position') }}</th><th>{{ t('musicAdmin.track.track') }}</th><th>{{ t('musicAdmin.track.audio') }}</th><th>{{ t('musicAdmin.track.lyrics') }}</th><th>{{ t('musicAdmin.track.video') }}</th><th>{{ t('musicAdmin.state') }}</th><th><span class="sr-only">{{ t('musicAdmin.actions') }}</span></th></tr></thead>
                 <tbody>
-                  <tr v-for="track in group.tracks" :key="track.id">
+                  <template v-for="(track, index) in group.tracks" :key="track.id">
+                  <tr v-if="group.discCount > 1 && track.disc_number !== group.tracks[index - 1]?.disc_number" class="disc-row">
+                    <td colspan="7">{{ t('music.release.disc', { number: track.disc_number }) }}</td>
+                  </tr>
+                  <tr>
                     <td class="track-position">{{ track.disc_number }}.{{ track.track_number }}</td>
-                    <td><strong>{{ track.title }}</strong><small>{{ track.artist_name }}</small></td>
+                    <td><strong>{{ track.title }}</strong><small>{{ trackArtistCredit(track) }}</small></td>
                     <td>
                       <span :class="track.audio_url ? 'text-emerald-400' : 'text-amber-400'">{{ track.audio_url ? track.audio_original_name : t('musicAdmin.track.missingAudio') }}</span>
                       <small v-if="track.audio_url">{{ audioFormatLabel(track) }}</small>
@@ -167,6 +171,7 @@
                       <button type="button" class="danger" @click="removeTrack(track)">{{ t('musicAdmin.delete') }}</button>
                     </td>
                   </tr>
+                  </template>
                 </tbody>
               </table>
             </div>
@@ -266,6 +271,11 @@
           <label><span>{{ t('musicAdmin.track.number') }}</span><input v-model.number="trackForm.track_number" type="number" min="1" required></label>
           <label><span>ISRC</span><input v-model="trackForm.isrc"></label>
           <label><span>{{ t('musicAdmin.track.language') }}</span><input v-model="trackForm.language" :placeholder="t('videoEditor.languagePlaceholder')"></label>
+          <label class="wide">
+            <span>{{ t('musicAdmin.track.featured') }} <small>{{ t('musicAdmin.editor.optional') }}</small></span>
+            <input v-model="trackFeaturedText" :placeholder="t('musicAdmin.track.featuredPlaceholder')">
+            <small>{{ t('musicAdmin.track.featuredHelp') }}</small>
+          </label>
           <label class="check"><input v-model="trackForm.explicit" type="checkbox"><span>{{ t('musicAdmin.track.explicit') }}</span></label>
           <label class="wide">
             <span>{{ t('musicAdmin.track.master') }}</span>
@@ -516,6 +526,7 @@ import {
   type MusicReleaseInput,
   type MusicTrack,
   type MusicTrackInput,
+  trackArtistCredit,
 } from '~/app/service/music'
 import { getVideos } from '~/app/service/videos'
 import { useLocalUploadBaseURL } from '~/app/composables/useLocalUploadBaseURL'
@@ -626,6 +637,8 @@ const trackForm = reactive<MusicTrackInput>({
   release_id: '', title: '', disc_number: 1, track_number: 1, duration_seconds: 0,
   isrc: '', explicit: false, language: '',
 })
+// Featured artists as typed ("A, B"); split into a list on save.
+const trackFeaturedText = ref('')
 const quickForm = reactive<MusicReleaseInput & { artist: string }>({
   artist: '', artist_id: '', title: '', release_type: 'album', release_date: '', label: '',
   copyright_text: '', phonogram_text: '', territories: 'Worldwide', rights_confirmed: false, allow_in_geels: true,
@@ -649,6 +662,7 @@ const trackGroups = computed(() => releases.value
       release,
       tracks: releaseTracks,
       readyCount: releaseTracks.filter(track => trackPublishProblems(track).length === 0).length,
+      discCount: new Set(releaseTracks.map(track => track.disc_number)).size,
     }
   })
   .filter(group => group.tracks.length > 0))
@@ -777,6 +791,7 @@ const openTrack = (track?: MusicTrack) => {
         track_number: nextTrackNumber(releases.value[0]?.id || ''), duration_seconds: 0,
         isrc: '', explicit: false, language: '',
       })
+  trackFeaturedText.value = (track?.featured_artists || []).join(', ')
   editor.value = { kind: 'track', id: track?.id || '' }
   loadVideoPicker()
 }
@@ -1348,9 +1363,12 @@ const saveEditor = async () => {
     }
     if (editor.value.kind === 'track') {
       const previousVideoID = editingTrack.value?.official_video_id || ''
+      const featured = trackFeaturedText.value.split(/[,;]/).map(name => name.trim()).filter(Boolean)
+      // A new track without typed credits gets them from its master's tags.
+      const trackInput: MusicTrackInput = { ...trackForm, featured_artists: editor.value.id || featured.length ? featured : undefined }
       const saved = editor.value.id
-        ? await updateMusicTrack(editor.value.id, { ...trackForm })
-        : await createMusicTrack({ ...trackForm })
+        ? await updateMusicTrack(editor.value.id, trackInput)
+        : await createMusicTrack(trackInput)
       if (selectedAudio.value) await uploadMusicTrackAudio(saved.id, selectedAudio.value, value => { uploadProgress.value = value }, musicUploadBaseURL())
       if (selectedOfficialVideo.value?.id) {
         await setMusicTrackVideo(saved.id, selectedOfficialVideo.value.id)
@@ -1945,6 +1963,15 @@ td small,
 
 .editor-fields .check span {
   margin: 0;
+}
+
+.grouped-track-table tr.disc-row td {
+  padding-top: 0.9rem;
+  color: rgb(var(--gt-zinc-400));
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
 
 .editor-fields .check span small {

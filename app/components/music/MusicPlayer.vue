@@ -15,7 +15,7 @@
 
       <div class="track-copy">
         <strong>{{ currentTrack?.title || t('music.player.selectTrack') }}</strong>
-        <span>{{ currentTrack?.artist_name || '' }}</span>
+        <span>{{ currentTrack ? trackArtistCredit(currentTrack) : '' }}</span>
       </div>
 
       <div class="transport">
@@ -95,7 +95,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useMusicPlayer } from '~/app/composables/useMusicPlayer'
-import type { MusicTrack } from '~/app/service/music'
+import { trackArtistCredit, type MusicTrack } from '~/app/service/music'
 import { imageVariantSrcset, imageVariantUrl } from '~/app/utils/media'
 
 const { t } = useI18n()

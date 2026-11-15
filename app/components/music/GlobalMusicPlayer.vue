@@ -31,7 +31,7 @@
           <div v-else class="mini-cover-empty" />
           <span class="track-copy">
             <strong>{{ currentTrack.title }}</strong>
-            <small>{{ currentTrack.artist_name }}</small>
+            <small>{{ trackArtistCredit(currentTrack) }}</small>
           </span>
         </button>
         <div class="mini-controls">
@@ -104,7 +104,7 @@
                 <div class="panel-track-row">
                   <div class="panel-track-copy">
                     <NuxtLink :to="localePath(`/music/tracks/${currentTrack.slug}`)" @click="closePanel">{{ currentTrack.title }}</NuxtLink>
-                    <NuxtLink class="panel-artist-link" :to="localePath(`/music/artists/${currentTrack.artist_slug}`)" @click="closePanel">{{ currentTrack.artist_name }}</NuxtLink>
+                    <NuxtLink class="panel-artist-link" :to="localePath(`/music/artists/${currentTrack.artist_slug}`)" @click="closePanel">{{ trackArtistCredit(currentTrack) }}</NuxtLink>
                     <NuxtLink
                       v-if="currentTrack.official_video_id"
                       class="watch-video-link"
@@ -170,7 +170,7 @@
                   <div v-else class="lyrics-current-cover-empty" />
                   <div>
                     <NuxtLink :to="localePath(`/music/tracks/${currentTrack.slug}`)" @click="closePanel">{{ currentTrack.title }}</NuxtLink>
-                    <NuxtLink :to="localePath(`/music/artists/${currentTrack.artist_slug}`)" @click="closePanel">{{ currentTrack.artist_name }}</NuxtLink>
+                    <NuxtLink :to="localePath(`/music/artists/${currentTrack.artist_slug}`)" @click="closePanel">{{ trackArtistCredit(currentTrack) }}</NuxtLink>
                   </div>
                 </div>
                 <div ref="lyricsScrollElement" class="lyrics-scroll">
@@ -213,7 +213,7 @@
                       <img v-if="track.cover_url" :src="imageVariantUrl(track.cover_url, 'sm')" alt="">
                       <span>
                         <strong>{{ track.title }}</strong>
-                        <small>{{ track.artist_name }}</small>
+                        <small>{{ trackArtistCredit(track) }}</small>
                       </span>
                     </button>
                     <div class="queue-actions">
@@ -251,7 +251,7 @@ import { useMusicPlayer } from '~/app/composables/useMusicPlayer'
 import type { MusicPanelView } from '~/app/composables/useMusicPlayer'
 import { getMyAccount } from '~/app/service/auth'
 import type { MusicQuality } from '~/app/service/auth'
-import type { MusicTrack } from '~/app/service/music'
+import { trackArtistCredit, type MusicTrack } from '~/app/service/music'
 import { imageVariantSrcset, imageVariantUrl, resolveMediaUrl } from '~/app/utils/media'
 import hiResAudioLogo from '~/assets/hi-res-audio.png'
 
@@ -758,7 +758,7 @@ const updateMediaMetadata = () => {
     : []
   navigator.mediaSession.metadata = new MediaMetadata({
     title: currentTrack.value.title,
-    artist: currentTrack.value.artist_name,
+    artist: trackArtistCredit(currentTrack.value),
     album: currentTrack.value.release_title,
     artwork,
   })

@@ -80,11 +80,12 @@
       </div>
 
       <ol class="track-list">
-        <li
-          v-for="(track, index) in data.tracks"
-          :key="track.id"
-          :class="{ current: currentTrack?.id === track.id }"
-        >
+        <template v-for="(track, index) in data.tracks" :key="track.id">
+        <li v-if="multiDisc && track.disc_number !== data.tracks[index - 1]?.disc_number" class="disc-separator">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="2.5" /></svg>
+          <span>{{ t('music.release.disc', { number: track.disc_number }) }}</span>
+        </li>
+        <li :class="{ current: currentTrack?.id === track.id }">
           <button type="button" class="track-main" @click="playTrack(index)">
             <span class="track-index">
               <svg v-if="currentTrack?.id === track.id && state.playing" viewBox="0 0 24 24"><path d="M5 9h2v6H5V9Zm4-4h2v14H9V5Zm4 3h2v8h-2V8Zm4-5h2v18h-2V3Z" /></svg>
@@ -94,7 +95,7 @@
               <strong>{{ track.title }}</strong>
               <small>
                 <span v-if="track.explicit" class="explicit-badge">E</span>
-                {{ track.artist_name }}
+                {{ trackArtistCredit(track) }}
               </small>
             </span>
           </button>
@@ -111,6 +112,7 @@
           </span>
           <span class="track-duration">{{ formatDuration(track.duration_seconds) }}</span>
         </li>
+        </template>
       </ol>
 
       <footer class="release-rights">
@@ -133,7 +135,7 @@ import { useLocalePath } from '#i18n'
 import AvatarFallback from '~/app/components/AvatarFallback.vue'
 import { useMetaTags } from '~/app/composables/useMetaTags'
 import { useMusicPlayer } from '~/app/composables/useMusicPlayer'
-import { getMusicRelease } from '~/app/service/music'
+import { getMusicRelease, trackArtistCredit } from '~/app/service/music'
 import { imageVariantSrcset, imageVariantUrl, resolveAvatarUrl } from '~/app/utils/media'
 import hiResAudioLogo from '~/assets/hi-res-audio.png'
 
@@ -163,6 +165,8 @@ if (data.value) {
   useHead({ title: () => `${t('music.common.releases')} - GilTube Music` })
 }
 
+// Disc headers only when the release spans more than one disc.
+const multiDisc = computed(() => new Set((data.value?.tracks || []).map(track => track.disc_number || 1)).size > 1)
 const totalDuration = computed(() =>
   (data.value?.tracks || []).reduce((total, track) => total + Number(track.duration_seconds || 0), 0),
 )
@@ -466,6 +470,34 @@ const playTrack = (index: number) => {
   min-height: 4.25rem;
   padding-inline: 0.75rem;
   border-radius: 6px;
+}
+
+.track-list li.disc-separator {
+  display: flex;
+  gap: 0.6rem;
+  min-height: 0;
+  padding: 1.1rem 0.75rem 0.45rem;
+  color: rgb(var(--gt-zinc-400));
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.track-list li.disc-separator:first-child {
+  padding-top: 0.35rem;
+}
+
+.track-list li.disc-separator svg {
+  width: 1rem;
+  height: 1rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+}
+
+.track-list li.disc-separator:hover {
+  background: none;
 }
 
 .track-list li:hover,

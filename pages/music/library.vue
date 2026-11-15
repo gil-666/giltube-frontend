@@ -34,7 +34,7 @@
           <span v-else class="cover-fallback" aria-hidden="true">♪</span>
           <span class="track-copy">
             <strong>{{ track.title }}</strong>
-            <small>{{ track.artist_name }} · {{ track.release_title }}</small>
+            <small>{{ trackArtistCredit(track) }} · {{ track.release_title }}</small>
           </span>
           <span v-if="track.explicit" class="explicit">E</span>
           <span class="duration">{{ formatDuration(track.duration_seconds) }}</span>
@@ -62,7 +62,7 @@ import { computed, ref } from 'vue'
 import { useLocalePath } from '#i18n'
 import MusicReleaseTile from '~/app/components/music/MusicReleaseTile.vue'
 import { useMusicPlayer } from '~/app/composables/useMusicPlayer'
-import { getMusicHome, getMusicRelease, type MusicRelease } from '~/app/service/music'
+import { getMusicHome, getMusicRelease, trackArtistCredit, type MusicRelease } from '~/app/service/music'
 import { imageVariantUrl } from '~/app/utils/media'
 
 const localePath = useLocalePath()

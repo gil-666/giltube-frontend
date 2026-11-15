@@ -53,6 +53,8 @@ export interface MusicTrack {
   primary_artist_id: string
   artist_name: string
   artist_slug: string
+  // Credited besides the release artist (singers, features).
+  featured_artists?: string[]
   title: string
   slug: string
   disc_number: number
@@ -135,7 +137,13 @@ export interface MusicTrackInput {
   isrc: string
   explicit: boolean
   language: string
+  // Omit to keep the stored credits (or, on create, read them from the master's tags).
+  featured_artists?: string[]
 }
+
+/** "Release artist, Featured A, Featured B" for a track. */
+export const trackArtistCredit = (track: { artist_name?: string; featured_artists?: string[] | null }) =>
+  [track.artist_name || '', ...(track.featured_artists || [])].filter(Boolean).join(', ')
 
 export const getMusicHome = async (): Promise<{ artists: MusicArtist[]; releases: MusicRelease[] }> =>
   (await api.get('/music')).data

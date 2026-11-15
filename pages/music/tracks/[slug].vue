@@ -9,6 +9,7 @@
         <p class="text-xs font-bold uppercase text-primary-400">{{ t('music.track.label') }}</p>
         <h1 class="overflow-wrap-anywhere text-3xl font-semibold tracking-tight text-white sm:text-5xl">{{ data.track.title }}</h1>
         <NuxtLink :to="localePath(`/music/artists/${data.track.artist_slug}`)" class="mt-2 inline-block font-semibold text-zinc-200">{{ data.track.artist_name }}</NuxtLink>
+        <span v-if="data.track.featured_artists?.length" class="font-semibold text-zinc-400">, {{ data.track.featured_artists.join(', ') }}</span>
       </div>
     </header>
     <MusicPlayer :tracks="[data.track]" :initial-track-id="data.track.id" />
