@@ -19,11 +19,13 @@
           <p v-else-if="!comments.length" class="py-10 text-center text-sm text-zinc-500">{{ t('geels.noComments') }}</p>
           <template v-for="comment in comments" :key="comment.id">
             <div class="flex gap-3">
-              <img v-if="avatar(comment)" :src="avatar(comment)" alt="" class="h-8 w-8 shrink-0 rounded-full object-cover">
-              <span v-else class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-zinc-700 text-xs font-bold">{{ (comment.channel?.name || '?').slice(0, 1) }}</span>
+              <NuxtLink :to="channelPath(comment)" class="shrink-0" :aria-label="comment.channel?.name" @click="emit('close')">
+                <img v-if="avatar(comment)" :src="avatar(comment)" alt="" class="h-8 w-8 rounded-full object-cover">
+                <span v-else class="flex h-8 w-8 items-center justify-center rounded-full bg-zinc-700 text-xs font-bold">{{ (comment.channel?.name || '?').slice(0, 1) }}</span>
+              </NuxtLink>
               <div class="min-w-0 flex-1">
                 <p class="text-xs text-zinc-400">
-                  <span class="font-semibold text-zinc-200">{{ comment.channel?.name }}</span>
+                  <NuxtLink :to="channelPath(comment)" class="font-semibold text-zinc-200 hover:underline" @click="emit('close')">{{ comment.channel?.name }}</NuxtLink>
                   · {{ getTimeAgo(comment.created_at, locale) }}
                 </p>
                 <p v-if="commentParts(comment.text).text" class="mt-0.5 whitespace-pre-line break-words text-sm text-zinc-100">{{ commentParts(comment.text).text }}</p>
@@ -33,10 +35,12 @@
                 </div>
                 <div v-if="comment.replies?.length" class="mt-3 space-y-3">
                   <div v-for="reply in comment.replies" :key="reply.id" class="flex gap-2.5">
-                    <img v-if="avatar(reply)" :src="avatar(reply)" alt="" class="h-6 w-6 shrink-0 rounded-full object-cover">
-                    <span v-else class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-zinc-700 text-[10px] font-bold">{{ (reply.channel?.name || '?').slice(0, 1) }}</span>
+                    <NuxtLink :to="channelPath(reply)" class="shrink-0" :aria-label="reply.channel?.name" @click="emit('close')">
+                      <img v-if="avatar(reply)" :src="avatar(reply)" alt="" class="h-6 w-6 rounded-full object-cover">
+                      <span v-else class="flex h-6 w-6 items-center justify-center rounded-full bg-zinc-700 text-[10px] font-bold">{{ (reply.channel?.name || '?').slice(0, 1) }}</span>
+                    </NuxtLink>
                     <div class="min-w-0">
-                      <p class="text-xs text-zinc-400"><span class="font-semibold text-zinc-200">{{ reply.channel?.name }}</span> · {{ getTimeAgo(reply.created_at, locale) }}</p>
+                      <p class="text-xs text-zinc-400"><NuxtLink :to="channelPath(reply)" class="font-semibold text-zinc-200 hover:underline" @click="emit('close')">{{ reply.channel?.name }}</NuxtLink> · {{ getTimeAgo(reply.created_at, locale) }}</p>
                       <p v-if="commentParts(reply.text).text" class="whitespace-pre-line break-words text-sm text-zinc-100">{{ commentParts(reply.text).text }}</p>
                       <img v-for="gif in commentParts(reply.text).gifs" :key="gif" :src="gif" alt="GIF" loading="lazy" class="geel-comment-gif">
                     </div>
@@ -117,6 +121,7 @@ const commentChannelID = ref('')
 const inputRef = ref<HTMLInputElement | null>(null)
 
 const avatar = (comment: any) => resolveAvatarUrl(comment.channel?.avatar_url)
+const channelPath = (comment: any) => localePath(`/channel/${comment.channel?.id}`)
 const gifOpen = ref(false)
 
 // GIF links (Giphy or any .gif) show as images, like on the watch page.
