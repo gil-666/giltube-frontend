@@ -41,7 +41,9 @@ defineProps<{
   left: -0.06em;
   display: block;
   white-space: nowrap;
-  color: rgb(var(--gt-white) / 0.13);
+  /* Outlined so headings drawn over it stay readable. */
+  color: rgb(var(--gt-white) / 0.035);
+  -webkit-text-stroke: 2px rgb(var(--gt-white) / 0.16);
   font-size: clamp(5rem, 14vw, 11rem);
   font-style: italic;
   font-weight: 900;

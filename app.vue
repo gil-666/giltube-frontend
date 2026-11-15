@@ -1099,7 +1099,7 @@
           </div>
         </div>
 
-        <div class="min-h-0 flex-1 overflow-y-auto px-4 py-3" style="padding-bottom: max(env(safe-area-inset-bottom), 1rem);">
+        <div class="gt-menu-list min-h-0 flex-1 overflow-y-auto px-4 py-3" style="padding-bottom: max(env(safe-area-inset-bottom), 1rem);">
           <NuxtLink
             :to="localePath('/')"
             class="mb-1 block rounded-xl px-4 py-3 text-base font-semibold text-zinc-200 transition hover:bg-zinc-900"

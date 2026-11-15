@@ -508,11 +508,34 @@ html[data-theme-menus="persona"] .shell-nav-link::before {
 html[data-theme-menus="persona"] .shell-nav-link:hover {
   background: none;
   color: rgb(var(--gt-white));
-  transform: translateX(0.35rem);
+  text-shadow: 2px 2px 0 rgb(0 0 0 / 0.85);
+  transform: translateX(0.5rem) rotate(-2deg);
 }
 
+/* One cursor, like the game: it follows the pointer and returns to the
+   current page when the pointer leaves the sidebar. */
 html[data-theme-menus="persona"] .shell-nav-link:hover::before {
-  transform: scaleX(0.18);
+  transform: scaleX(1);
+}
+
+html[data-theme-menus="persona"] .shell-nav:has(.shell-nav-link:is(:hover, :focus-visible)) .shell-nav-link.is-active:not(:hover, :focus-visible)::before {
+  transform: scaleX(0);
+  animation: none;
+}
+
+html[data-theme-menus="persona"] .shell-nav:has(.shell-nav-link:is(:hover, :focus-visible)) .shell-nav-link.is-active:not(:hover, :focus-visible) {
+  color: rgb(var(--gt-primary-200));
+  text-shadow: none;
+  transform: none;
+}
+
+html[data-theme-menus="persona"] .shell-nav:has(.shell-nav-link:is(:hover, :focus-visible)) .shell-nav-link.is-active:not(:hover, :focus-visible) .shell-nav-icon {
+  color: inherit;
+  filter: none;
+}
+
+html[data-theme-menus="persona"] .shell-nav-link:hover .shell-nav-icon {
+  filter: drop-shadow(2px 2px 0 rgb(0 0 0 / 0.85));
 }
 
 html[data-theme-menus="persona"] .shell-nav-link.is-active {
@@ -572,11 +595,13 @@ html[data-theme-menus="persona"] .account-panel-row:nth-child(4) { animation-del
 html[data-theme-menus="persona"] .gt-menu > :nth-child(n + 5),
 html[data-theme-menus="persona"] .account-panel-row:nth-child(n + 5) { animation-delay: 120ms; }
 
-html[data-theme-menus="persona"] .gt-menu > a:hover,
-html[data-theme-menus="persona"] .gt-menu > button:hover,
-html[data-theme-menus="persona"] .account-panel-row:hover,
+html[data-theme-menus="persona"] .gt-menu > :is(a, button):is(:hover, :active, :focus-visible),
+html[data-theme-menus="persona"] .account-panel-row:is(:hover, :active, :focus-visible),
 html[data-theme-menus="persona"] .account-panel-row-active,
-html[data-theme-menus="persona"] .account-panel-action:hover {
+html[data-theme-menus="persona"] .account-panel-action:is(:hover, :active, :focus-visible),
+html[data-theme-menus="persona"] .mobile-sheet-action:is(:hover, :active, :focus-visible),
+html[data-theme-menus="persona"] .gt-menu-list > a:is(:hover, :active, :focus-visible, [class~="bg-zinc-100"]) {
+  outline: none;
   background: rgb(var(--gt-white)) !important;
   border-color: transparent !important;
   color: rgb(var(--p3r-ink)) !important;
@@ -584,9 +609,61 @@ html[data-theme-menus="persona"] .account-panel-action:hover {
   transform: translateX(0.4rem);
 }
 
-html[data-theme-menus="persona"] .gt-menu > a:hover *,
-html[data-theme-menus="persona"] .account-panel-row:hover *,
-html[data-theme-menus="persona"] .account-panel-row-active * {
+/* Grid tiles (account panel actions, phone menu sheet) highlight in place. */
+html[data-theme-menus="persona"] .account-panel-action:is(:hover, :active, :focus-visible),
+html[data-theme-menus="persona"] .mobile-sheet-action:is(:hover, :active, :focus-visible) {
+  transform: none;
+}
+
+/* Sidebar keyboard focus moves the cursor too. */
+html[data-theme-menus="persona"] .shell-nav-link:focus-visible {
+  outline: none;
+  color: rgb(var(--gt-white));
+}
+
+html[data-theme-menus="persona"] .shell-nav-link:focus-visible::before {
+  transform: scaleX(1);
+}
+
+/* Phone menu sheet and category sheet. */
+html[data-theme-menus="persona"] .mobile-sheet-action,
+html[data-theme-menus="persona"] .gt-menu-list > a {
+  position: relative;
+  border-radius: 0;
+  font-style: italic;
+  animation: p3r-row-in 260ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  transition: background-color 90ms ease, color 90ms ease, transform 140ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Phone bottom bar: the current tab gets a red slanted cursor under it. */
+html[data-theme-menus="persona"] .mobile-bottom-nav-item {
+  position: relative;
+  font-style: italic;
+}
+
+/* Italic glyphs lean past their box; keep truncated labels from clipping
+   the last letter. */
+html[data-theme-menus="persona"] :is(.shell-nav-link, .mobile-sheet-action, .mobile-bottom-nav-item, .gt-menu > a) :is(span, .truncate) {
+  padding-right: 0.2em;
+}
+
+html[data-theme-menus="persona"] .mobile-bottom-nav-item.text-white::after {
+  content: "";
+  position: absolute;
+  bottom: 0.15rem;
+  left: 22%;
+  right: 22%;
+  height: 0.22rem;
+  background: rgb(var(--p3r-red));
+  transform: skewX(-24deg);
+  animation: p3r-cursor-in 260ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+html[data-theme-menus="persona"] .gt-menu > :is(a, button):is(:hover, :active, :focus-visible) *,
+html[data-theme-menus="persona"] .account-panel-row:is(:hover, :active, :focus-visible) *,
+html[data-theme-menus="persona"] .account-panel-row-active *,
+html[data-theme-menus="persona"] .mobile-sheet-action:is(:hover, :active, :focus-visible) *,
+html[data-theme-menus="persona"] .gt-menu-list > a:is(:hover, :active, :focus-visible, [class~="bg-zinc-100"]) * {
   color: rgb(var(--p3r-ink)) !important;
 }
 
@@ -630,4 +707,22 @@ html[data-theme-menus="persona"] .page-shift-leave-to {
   html[data-theme-menus="persona"] .page-shift-leave-to {
     transform: none;
   }
+}
+
+/*
+ * Persona menus readability: page content sits on bright artwork, so muted
+ * text is lifted one step and all text gets the game's dark drop shadow.
+ * Light surfaces (buttons, inputs, white chips) drop the shadow again.
+ */
+html[data-theme-menus="persona"] .route-page-shell,
+html[data-theme-menus="persona"] .gt-menu,
+html[data-theme-menus="persona"] .shell-nav {
+  --gt-zinc-500: var(--gt-zinc-400);
+  text-shadow: 0 1px 2px rgb(0 0 0 / 0.7), 0 0 10px rgb(0 0 0 / 0.35);
+}
+
+html[data-theme-menus="persona"] .route-page-shell :is(button, input, textarea, select, video, [class*="bg-white"], [class*="bg-zinc-100"], [class*="bg-gray-100"], [class*="text-zinc-950"], [class*="text-black"]),
+html[data-theme-menus="persona"] .gt-menu > a:hover,
+html[data-theme-menus="persona"] .gt-menu > a:hover * {
+  text-shadow: none;
 }
