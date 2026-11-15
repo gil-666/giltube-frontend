@@ -465,44 +465,67 @@ const applyTheme = async () => {
   transform: rotate(-6deg);
 }
 
-/* Narrow banners: smaller art in the corner, text takes the width. */
+/* Narrow banners: the cover moves to the top-right corner, the text runs
+   beside it and the two buttons share the bottom row. */
 @container (max-width: 560px) {
   .p3__body {
-    padding: 1.1rem 1rem;
+    align-items: stretch;
+    padding: 1rem;
   }
 
   .p3__lead {
-    max-width: 72%;
+    max-width: none;
+    width: 100%;
+    gap: 0.5rem;
+  }
+
+  .p3__kicker,
+  .p3__title,
+  .p3__tagline {
+    max-width: 64%;
+  }
+
+  .p3__title {
+    font-size: clamp(1.15rem, 6.2cqw, 1.6rem);
+    -webkit-line-clamp: 3;
   }
 
   .p3__tagline {
+    font-size: 0.78rem;
     -webkit-line-clamp: 3;
+  }
+
+  .p3__actions {
+    flex-wrap: nowrap;
+    gap: 0.7rem;
+    margin-top: auto;
   }
 
   .p3__art {
     position: absolute;
+    top: 1.4rem;
     right: 1.6rem;
-    bottom: 0.9rem;
-    width: 26%;
+    width: 27%;
     margin: 0;
   }
 
   .p3__slash {
-    width: 58%;
-    right: -6%;
+    width: 52%;
+    right: -8%;
   }
 
   .p3__btn {
-    min-height: 2.35rem;
-    padding: 0 0.9rem;
+    min-height: 2.3rem;
+    padding: 0 0.8rem;
   }
 
   .p3__btn > span {
-    font-size: 0.74rem;
+    gap: 0.35rem;
+    font-size: 0.72rem;
   }
 
-  .p3__actions {
-    gap: 0.6rem;
+  .p3__watermark {
+    font-size: 4.5rem;
   }
 }
 
