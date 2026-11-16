@@ -2509,6 +2509,11 @@
     "upNext": "A continuación"
   },
   "videoEditor": {
+    "trackList": {
+      "count": "{count} pista | {count} pistas",
+      "show": "Mostrar",
+      "hide": "Ocultar"
+    },
     "title": "Editor de videos",
     "languagePlaceholder": "es",
     "languageNamePlaceholder": "Español",

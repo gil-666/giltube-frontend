@@ -943,7 +943,7 @@
 
               <SubtitleFinder v-if="episode.videoId" class="mt-3" :video-id="episode.videoId" @added="onEpisodeSubtitlesFetched(episode, $event)" />
 
-              <div v-if="episode.subtitles.length" class="mt-3 space-y-2">
+              <CollapsibleTrackList v-if="episode.subtitles.length" :count="episode.subtitles.length" class="mt-3">
                 <div v-for="track in episode.subtitles" :key="track.id" class="flex flex-col gap-3 rounded bg-zinc-900 px-3 py-2 sm:flex-row sm:items-center sm:justify-between">
                   <div class="grid min-w-0 flex-1 gap-2 sm:grid-cols-[8rem_minmax(0,1fr)]">
                     <input v-model="track.language" :placeholder="t('videoEditor.languagePlaceholder')" class="rounded border border-white/10 bg-zinc-800 px-3 py-1.5 text-xs text-white placeholder-gray-500" />
@@ -979,7 +979,7 @@
                     </button>
                   </div>
                 </div>
-              </div>
+              </CollapsibleTrackList>
               <p v-else class="mt-3 text-sm text-gray-500">{{ t('movieAdmin.subtitles.empty') }}</p>
 
               <div class="mt-4 grid gap-3 md:grid-cols-[minmax(0,1fr)_8rem_10rem_8rem_8rem]">
@@ -1013,7 +1013,7 @@
                 </button>
               </div>
 
-              <div v-if="episode.audioTracks.length" class="mt-3 space-y-2">
+              <CollapsibleTrackList v-if="episode.audioTracks.length" :count="episode.audioTracks.length" class="mt-3">
                 <div v-for="track in episode.audioTracks" :key="track.id" class="flex flex-wrap items-center justify-between gap-3 rounded bg-zinc-900 px-3 py-2">
                   <div class="grid min-w-0 flex-1 gap-2 sm:grid-cols-[8rem_minmax(0,1fr)]">
                     <input v-model="track.language" :placeholder="t('videoEditor.languagePlaceholder')" class="rounded border border-white/10 bg-zinc-800 px-3 py-1.5 text-xs text-white placeholder-gray-500" />
@@ -1038,7 +1038,7 @@
                     </button>
                   </div>
                 </div>
-              </div>
+              </CollapsibleTrackList>
               <p v-else class="mt-3 text-sm text-gray-500">{{ t('videoEditor.audio.empty') }}</p>
 
               <div class="mt-4 grid gap-3 md:grid-cols-[minmax(0,1fr)_8rem_10rem_8rem_8rem]">
@@ -1231,6 +1231,7 @@ import VideoEditorPanel from '~/app/components/admin/VideoEditorPanel.vue'
 import YouTubeMirrorAdminPanel from '~/app/components/admin/YouTubeMirrorAdminPanel.vue'
 import YouTubeImportAccessPanel from '~/app/components/admin/YouTubeImportAccessPanel.vue'
 import AdminHelpButton from '~/app/components/admin/AdminHelpButton.vue'
+import CollapsibleTrackList from '~/app/components/admin/CollapsibleTrackList.vue'
 import VideoPlayer from '~/app/components/videoplayer/VideoPlayer.vue'
 import { getMediaMetadataDetails, searchMediaMetadata, type MediaMetadataResult } from '~/app/service/mediaMetadata'
 import { uploadVideo } from '~/app/service/upload'

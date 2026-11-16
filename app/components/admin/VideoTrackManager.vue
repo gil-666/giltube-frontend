@@ -11,7 +11,7 @@
         </button>
       </div>
 
-      <div v-if="audioTracks.length" class="space-y-2">
+      <CollapsibleTrackList v-if="audioTracks.length" :count="audioTracks.length">
         <div v-for="track in audioTracks" :key="track.id" class="flex flex-wrap items-center justify-between gap-3 rounded bg-zinc-950 px-3 py-2">
           <div class="grid min-w-0 flex-1 gap-2 sm:grid-cols-[8rem_minmax(0,1fr)]">
             <input v-model="track.language" :placeholder="t('videoEditor.languagePlaceholder')" class="rounded border border-white/10 bg-zinc-800 px-3 py-1.5 text-xs text-white placeholder-gray-500" />
@@ -36,7 +36,7 @@
             </button>
           </div>
         </div>
-      </div>
+      </CollapsibleTrackList>
       <p v-else class="rounded border border-white/[0.07] bg-black/30 px-4 py-6 text-sm text-gray-500">{{ t('videoEditor.audio.empty') }}</p>
 
       <div class="grid gap-3 sm:grid-cols-2 2xl:grid-cols-[minmax(0,1fr)_7rem_9rem_7rem_7rem]">
@@ -100,7 +100,7 @@
         <p v-if="hasAutoCaptionTrack" class="text-xs text-gray-500">{{ t('videoEditor.autoCaptions.replaceNote') }}</p>
       </div>
 
-      <div v-if="subtitles.length" class="mt-3 space-y-2">
+      <CollapsibleTrackList v-if="subtitles.length" :count="subtitles.length" class="mt-3">
         <div v-for="track in subtitles" :key="track.id" class="flex flex-col gap-3 rounded bg-zinc-950 px-3 py-2 sm:flex-row sm:items-center sm:justify-between">
           <div class="grid min-w-0 flex-1 gap-2 sm:grid-cols-[8rem_minmax(0,1fr)]">
             <input v-model="track.language" :placeholder="t('videoEditor.languagePlaceholder')" class="rounded border border-white/10 bg-zinc-800 px-3 py-1.5 text-xs text-white placeholder-gray-500" />
@@ -129,7 +129,7 @@
             </button>
           </div>
         </div>
-      </div>
+      </CollapsibleTrackList>
       <p v-else class="mt-3 rounded border border-white/[0.07] bg-black/30 px-4 py-6 text-sm text-gray-500">{{ t('movieAdmin.subtitles.empty') }}</p>
 
       <div class="mt-4 grid gap-3 sm:grid-cols-2 2xl:grid-cols-[minmax(0,1fr)_7rem_9rem_7rem_7rem]">
@@ -163,6 +163,7 @@ import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { deleteVideoAudioTrack, deleteVideoSubtitle, downloadAudioTrackWAV, getVideoAutoCaptions, listVideoAudioTracks, listVideoSubtitles, requestVideoAutoCaptions, uploadVideoAudioTrack, uploadVideoSubtitle, type AutoCaptionJob } from '~/app/service/videos'
 import { resolveMediaUrl } from '~/app/utils/media'
+import CollapsibleTrackList from './CollapsibleTrackList.vue'
 
 type Track = {
   id: string
