@@ -2140,7 +2140,9 @@
       "useAsTrailer": "Use as trailer",
       "attached": "Attached",
       "attach": "Attach",
-      "deleteSeries": "Delete series"
+      "deleteSeries": "Delete series",
+      "useAsEpisode": "Use as episode",
+      "changeExistingVideo": "Change video"
     },
     "channelCard": {
       "title": "Series Channel",
@@ -2161,7 +2163,10 @@
     "episodes": {
       "title": "Episodes",
       "body": "Episode videos are hidden from the main feeds after upload.",
-      "processing": "Still processing — details you save now will show when it goes live"
+      "processing": "Still processing — details you save now will show when it goes live",
+      "pickerTitle": "Pick episode video",
+      "pickerBody": "Choose an already uploaded video (yours or any user's) to use as this episode. Attaching it hides it from regular feeds.",
+      "pickedVideo": "Existing video: {title}"
     },
     "reorder": {
       "title": "Episode order",

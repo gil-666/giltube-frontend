@@ -2140,7 +2140,9 @@
       "useAsTrailer": "Usar como tráiler",
       "attached": "Adjunto",
       "attach": "Adjuntar",
-      "deleteSeries": "Eliminar serie"
+      "deleteSeries": "Eliminar serie",
+      "useAsEpisode": "Usar como episodio",
+      "changeExistingVideo": "Cambiar video"
     },
     "channelCard": {
       "title": "Canal de series",
@@ -2161,7 +2163,10 @@
     "episodes": {
       "title": "Episodios",
       "body": "Los videos de episodios quedan ocultos de los feeds principales después de subirse.",
-      "processing": "Aún procesando: los detalles que guardes ahora se mostrarán cuando se publique"
+      "processing": "Aún procesando: los detalles que guardes ahora se mostrarán cuando se publique",
+      "pickerTitle": "Elegir video del episodio",
+      "pickerBody": "Elige un video ya subido (tuyo o de cualquier usuario) para usarlo como este episodio. Al adjuntarlo se oculta de los feeds normales.",
+      "pickedVideo": "Video existente: {title}"
     },
     "reorder": {
       "title": "Orden de episodios",

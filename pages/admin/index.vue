@@ -894,7 +894,13 @@
             </div>
             <textarea v-model="episode.synopsis" rows="2" @input="episode.metadataDirty = true" :placeholder="t('seriesAdmin.placeholders.episodeSynopsis')" class="mt-3 w-full rounded border border-white/10 bg-zinc-800 px-3 py-2 text-white placeholder-gray-500" />
             <div class="mt-3 grid gap-3 md:grid-cols-[minmax(0,1fr)_7.5rem_7.5rem_8.5rem_26rem]">
-              <input type="file" accept="video/*" class="block w-full text-sm text-gray-300 file:mr-3 file:rounded file:border-0 file:bg-zinc-700 file:px-3 file:py-2 file:text-white" @change="onEpisodeFileSelected($event, index)" />
+              <div class="flex min-w-0 flex-col gap-2">
+                <input type="file" accept="video/*" :disabled="episode.attached" class="block w-full text-sm text-gray-300 file:mr-3 file:rounded file:border-0 file:bg-zinc-700 file:px-3 file:py-2 file:text-white" @change="onEpisodeFileSelected($event, index)" />
+                <button v-if="!episode.attached" type="button" :disabled="episode.uploading" class="self-start rounded bg-zinc-700 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-zinc-600 disabled:cursor-not-allowed disabled:opacity-50" @click="openEpisodeVideoPicker(index)">
+                  {{ episode.videoId ? t('seriesAdmin.actions.changeExistingVideo') : t('seriesAdmin.actions.pickTrailer') }}
+                </button>
+                <p v-if="!episode.attached && episode.videoId" class="truncate text-xs text-gray-400">{{ t('seriesAdmin.episodes.pickedVideo', { title: episode.videoTitle || episode.videoId }) }}</p>
+              </div>
               <input v-model.number="episode.introStartSeconds" min="0" type="number" :placeholder="t('seriesAdmin.placeholders.introStart')" class="rounded border border-white/10 bg-zinc-800 px-3 py-2 text-white placeholder-gray-500" />
               <input v-model.number="episode.introEndSeconds" min="0" type="number" :placeholder="t('seriesAdmin.placeholders.introEnd')" class="rounded border border-white/10 bg-zinc-800 px-3 py-2 text-white placeholder-gray-500" />
               <button type="button" :disabled="!canPickIntro(episode)" class="rounded bg-zinc-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-zinc-600 disabled:cursor-not-allowed disabled:opacity-50" @click="openIntroPicker(index)">
@@ -1144,8 +1150,8 @@
           <div class="border-b border-white/10 p-4 sm:p-5">
             <div class="flex items-center justify-between gap-3">
               <div>
-                <h2 class="text-xl font-bold">{{ t('seriesAdmin.trailer.pickerTitle') }}</h2>
-                <p class="mt-1 text-sm text-zinc-500">{{ t('seriesAdmin.trailer.pickerBody') }}</p>
+                <h2 class="text-xl font-bold">{{ trailerPickerEpisodeIndex === null ? t('seriesAdmin.trailer.pickerTitle') : t('seriesAdmin.episodes.pickerTitle') }}</h2>
+                <p class="mt-1 text-sm text-zinc-500">{{ trailerPickerEpisodeIndex === null ? t('seriesAdmin.trailer.pickerBody') : t('seriesAdmin.episodes.pickerBody') }}</p>
               </div>
               <button type="button" class="rounded-full bg-white/10 px-3 py-1.5 text-sm font-bold hover:bg-white/15" @click="closeTrailerPicker">
                 X
@@ -1169,14 +1175,14 @@
                 type="button"
                 :disabled="trailerAttaching"
                 class="group overflow-hidden rounded-xl border border-white/10 bg-white/5 text-left transition hover:border-amber-500/50 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
-                @click="linkExistingSeriesTrailer(video)"
+                @click="pickExistingVideo(video)"
               >
                 <div class="gt-media relative aspect-video bg-black">
                   <img v-if="video.thumbnail_url || video.thumbnail" :src="thumbnailUrl(video.thumbnail_url || video.thumbnail)" :alt="video.title" class="h-full w-full object-cover transition group-hover:scale-[1.02]" />
                   <div v-else class="flex h-full items-center justify-center text-sm text-zinc-500">{{ t('playlists.noThumbnail') }}</div>
                   <div class="absolute inset-0 bg-black/0 transition group-hover:bg-black/25" />
                   <span class="absolute inset-x-3 bottom-3 rounded bg-amber-600 px-3 py-2 text-center text-xs font-bold opacity-0 transition group-hover:opacity-100">
-                    {{ t('seriesAdmin.actions.useAsTrailer') }}
+                    {{ trailerPickerEpisodeIndex === null ? t('seriesAdmin.actions.useAsTrailer') : t('seriesAdmin.actions.useAsEpisode') }}
                   </span>
                 </div>
                 <div class="p-3">
@@ -1354,6 +1360,8 @@ const trailerPickerOpen = ref(false)
 const trailerPickerSearch = ref('')
 const trailerPickerVideos = ref<any[]>([])
 const trailerPickerLoading = ref(false)
+// null = picking the series trailer; a number = picking the source video for that episode row.
+const trailerPickerEpisodeIndex = ref<number | null>(null)
 let trailerPickerSearchTimer: ReturnType<typeof setTimeout> | null = null
 
 type EpisodeRow = {
@@ -2466,6 +2474,7 @@ const handleTrailerPickerSearchInput = () => {
 
 const openTrailerPicker = async () => {
   if (!createdSeriesId.value) return
+  trailerPickerEpisodeIndex.value = null
   trailerPickerOpen.value = true
   trailerPickerSearch.value = ''
   await loadRecommendedTrailerVideos()
@@ -2473,6 +2482,34 @@ const openTrailerPicker = async () => {
 
 const closeTrailerPicker = () => {
   trailerPickerOpen.value = false
+  trailerPickerEpisodeIndex.value = null
+}
+
+// Episodes can come from any already uploaded video (e.g. a user's upload),
+// not just files uploaded from this form; "Attach" then links it.
+const openEpisodeVideoPicker = async (index: number) => {
+  if (!createdSeriesId.value || !episodeRows.value[index]) return
+  trailerPickerEpisodeIndex.value = index
+  trailerPickerOpen.value = true
+  trailerPickerSearch.value = ''
+  await loadRecommendedTrailerVideos()
+}
+
+const pickExistingVideo = (video: any) => {
+  const index = trailerPickerEpisodeIndex.value
+  if (index === null) {
+    linkExistingSeriesTrailer(video)
+    return
+  }
+  const row = episodeRows.value[index]
+  const videoId = video?.video_id || video?.id
+  if (!row || !videoId) return
+  row.videoId = videoId
+  row.file = null
+  row.videoTitle = video.title || videoId
+  row.thumbnailUrl = video.thumbnail_url || video.thumbnail || ''
+  if (!row.title) row.title = video.title || ''
+  closeTrailerPicker()
 }
 
 const linkExistingSeriesTrailer = async (video: any) => {
@@ -2505,6 +2542,11 @@ const onEpisodeFileSelected = (event: Event, index: number) => {
   const row = episodeRows.value[index]
   if (!row) return
   row.file = input.files?.[0] || null
+  // A new file replaces a previously picked existing video.
+  if (row.file && !row.attached) {
+    row.videoId = ''
+    row.videoTitle = ''
+  }
   if (row.file && !row.title) {
     row.title = row.file.name.replace(/\.[^.]+$/, '')
   }
