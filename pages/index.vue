@@ -1010,6 +1010,9 @@ const ContinueTile = defineComponent({
   },
 })
 
+// The Geels mark (same glyph as the Geels nav item).
+const GEELS_ICON_PATH = 'M8.25 2.75h7.5a2.25 2.25 0 0 1 2.25 2.25v14a2.25 2.25 0 0 1-2.25 2.25h-7.5A2.25 2.25 0 0 1 6 19V5a2.25 2.25 0 0 1 2.25-2.25ZM10.5 9.25v5.5L15 12l-4.5-2.75Z'
+
 const VideoTile = defineComponent({
   name: 'VideoTile',
   props: {
@@ -1036,7 +1039,8 @@ const VideoTile = defineComponent({
       return isChannelLive(channelId) ? localePath(`/live/${channelId}`) : localePath(`/channel/${channelId}`)
     }
 
-    const getVideoLink = () => props.liveHref || localePath(`/video/${props.video.id}`)
+    const isGeel = () => !props.liveHref && !!props.video.geel
+    const getVideoLink = () => props.liveHref || localePath(isGeel() ? `/geels/${props.video.id}` : `/video/${props.video.id}`)
 
     const is4K = () => isVideo4K(props.video.width)
     const is8K = () => isVideo8K(props.video.width)
@@ -1060,6 +1064,13 @@ const VideoTile = defineComponent({
           }),
           isLiveCard()
             ? h('span', { class: 'tile-badge tile-badge--live' }, [h('span', { class: 'home-live-dot' }), t('home.live')])
+            : isGeel()
+              ? h('span', { class: 'tile-badge tile-badge--geel' }, [
+                  h('svg', { viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', 'stroke-width': '2', 'aria-hidden': 'true' }, [
+                    h('path', { 'stroke-linecap': 'round', 'stroke-linejoin': 'round', d: GEELS_ICON_PATH }),
+                  ]),
+                  t('geels.shelfTitle'),
+                ])
             : qualityBadge()
               ? h('span', { class: 'tile-badge tile-badge--quality' }, qualityBadge())
               : null,
@@ -1447,6 +1458,21 @@ onUnmounted(() => {
 .tile-badge--quality {
   top: 0.5rem;
   bottom: auto;
+}
+
+.tile-badge--geel {
+  left: 0.5rem;
+  right: auto;
+  top: 0.5rem;
+  bottom: auto;
+  gap: 0.25rem;
+  background: rgb(var(--gt-accent, 239 68 68) / 0.9);
+  color: #fff;
+}
+
+.tile-badge--geel svg {
+  width: 0.85rem;
+  height: 0.85rem;
 }
 
 .tile-badge--live {

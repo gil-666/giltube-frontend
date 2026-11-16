@@ -852,6 +852,7 @@
                   :alt="relatedVideo.title"
                 />
                 <span v-if="relatedVideo.kind" class="watch-thumb-badge watch-thumb-badge--kind">{{ relatedVideo.kindLabel }}</span>
+                <span v-else-if="relatedVideo.geel" class="watch-thumb-badge watch-thumb-badge--kind watch-thumb-badge--geel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 2.75h7.5a2.25 2.25 0 0 1 2.25 2.25v14a2.25 2.25 0 0 1-2.25 2.25h-7.5A2.25 2.25 0 0 1 6 19V5a2.25 2.25 0 0 1 2.25-2.25ZM10.5 9.25v5.5L15 12l-4.5-2.75Z" /></svg>{{ t('geels.shelfTitle') }}</span>
                 <div v-if="isVideo8K(relatedVideo.width)" class="watch-thumb-badge watch-thumb-badge--quality">{{ t('video.eightKBadge') }}</div>
                 <div v-if="isVideo4K(relatedVideo.width)" class="watch-thumb-badge watch-thumb-badge--quality">{{ t('video.fourKBadge') }}</div>
                 <span v-if="formatVideoDuration(relatedVideo.duration_seconds)" class="watch-thumb-badge tabular-nums">{{ formatVideoDuration(relatedVideo.duration_seconds) }}</span>
@@ -998,6 +999,7 @@
                       :alt="relatedVideo.title"
                     />
                     <span v-if="relatedVideo.kind" class="watch-thumb-badge watch-thumb-badge--kind">{{ relatedVideo.kindLabel }}</span>
+                    <span v-else-if="relatedVideo.geel" class="watch-thumb-badge watch-thumb-badge--kind watch-thumb-badge--geel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 2.75h7.5a2.25 2.25 0 0 1 2.25 2.25v14a2.25 2.25 0 0 1-2.25 2.25h-7.5A2.25 2.25 0 0 1 6 19V5a2.25 2.25 0 0 1 2.25-2.25ZM10.5 9.25v5.5L15 12l-4.5-2.75Z" /></svg>{{ t('geels.shelfTitle') }}</span>
                     <div v-if="isVideo8K(relatedVideo.width)" class="watch-thumb-badge watch-thumb-badge--quality">{{ t('video.eightKBadge') }}</div>
                     <div v-if="isVideo4K(relatedVideo.width)" class="watch-thumb-badge watch-thumb-badge--quality">{{ t('video.fourKBadge') }}</div>
                     <span v-if="formatVideoDuration(relatedVideo.duration_seconds)" class="watch-thumb-badge tabular-nums">{{ formatVideoDuration(relatedVideo.duration_seconds) }}</span>
@@ -1041,6 +1043,7 @@
                   :alt="relatedVideo.title"
                 />
                 <span v-if="relatedVideo.kind" class="watch-thumb-badge watch-thumb-badge--kind">{{ relatedVideo.kindLabel }}</span>
+                <span v-else-if="relatedVideo.geel" class="watch-thumb-badge watch-thumb-badge--kind watch-thumb-badge--geel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 2.75h7.5a2.25 2.25 0 0 1 2.25 2.25v14a2.25 2.25 0 0 1-2.25 2.25h-7.5A2.25 2.25 0 0 1 6 19V5a2.25 2.25 0 0 1 2.25-2.25ZM10.5 9.25v5.5L15 12l-4.5-2.75Z" /></svg>{{ t('geels.shelfTitle') }}</span>
                 <div v-if="isVideo8K(relatedVideo.width)" class="watch-thumb-badge watch-thumb-badge--quality">{{ t('video.eightKBadge') }}</div>
                 <div v-if="isVideo4K(relatedVideo.width)" class="watch-thumb-badge watch-thumb-badge--quality">{{ t('video.fourKBadge') }}</div>
                 <span v-if="formatVideoDuration(relatedVideo.duration_seconds)" class="watch-thumb-badge tabular-nums">{{ formatVideoDuration(relatedVideo.duration_seconds) }}</span>
@@ -1073,6 +1076,7 @@
                   alt=""
                 />
                 <span v-if="relatedVideo.kind" class="watch-thumb-badge watch-thumb-badge--kind">{{ relatedVideo.kindLabel }}</span>
+                <span v-else-if="relatedVideo.geel" class="watch-thumb-badge watch-thumb-badge--kind watch-thumb-badge--geel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 2.75h7.5a2.25 2.25 0 0 1 2.25 2.25v14a2.25 2.25 0 0 1-2.25 2.25h-7.5A2.25 2.25 0 0 1 6 19V5a2.25 2.25 0 0 1 2.25-2.25ZM10.5 9.25v5.5L15 12l-4.5-2.75Z" /></svg>{{ t('geels.shelfTitle') }}</span>
                 <span v-if="isVideo8K(relatedVideo.width) || isVideo4K(relatedVideo.width)" class="watch-thumb-badge watch-thumb-badge--quality">{{ isVideo8K(relatedVideo.width) ? t('video.eightKBadge') : t('video.fourKBadge') }}</span>
                 <span v-if="formatVideoDuration(relatedVideo.duration_seconds)" class="watch-thumb-badge tabular-nums">{{ formatVideoDuration(relatedVideo.duration_seconds) }}</span>
                 <div v-if="videoProgressPercent(relatedVideo.id) > 0" class="absolute inset-x-0 bottom-0 h-[3px] bg-white/20">
@@ -1465,7 +1469,7 @@ const relatedItems = computed(() => {
   return items
 })
 
-const relatedItemLink = (item: any) => localePath(item.kind ? item.href : `/video/${item.id}`)
+const relatedItemLink = (item: any) => localePath(item.kind ? item.href : item.geel ? `/geels/${item.id}` : `/video/${item.id}`)
 const watchProgressByVideoId = ref<Record<string, any>>({})
 const carouselContainer = ref<HTMLElement | null>(null)
 
@@ -3202,6 +3206,21 @@ const handleVideoEnded = async () => {
 .watch-thumb-badge--kind {
   right: auto;
   left: 0.375rem;
+}
+
+.watch-thumb-badge--geel {
+  top: 0.375rem;
+  bottom: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  background: rgb(var(--gt-accent, 239 68 68) / 0.9);
+  color: #fff;
+}
+
+.watch-thumb-badge--geel svg {
+  width: 0.75rem;
+  height: 0.75rem;
 }
 
 .watch-thumb-badge--quality {
