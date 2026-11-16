@@ -1466,7 +1466,8 @@ onUnmounted(() => {
   top: 0.5rem;
   bottom: auto;
   gap: 0.25rem;
-  background: rgb(var(--gt-accent, 239 68 68) / 0.9);
+  /* Fixed colours: a theme accent can be light enough to hide white text. */
+  background: rgba(12, 12, 14, 0.86);
   color: #fff;
 }
 
