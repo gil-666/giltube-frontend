@@ -259,8 +259,11 @@ const posterUrl = computed(() => geelPoster(props.geel))
 
 // Clips are a range of another video, in any aspect ratio: cropped to fill
 // by default, with a toggle to see the whole frame (black bars).
-const fullFrame = ref(false)
-const canFullFrame = computed(() => !!props.geel.clip || props.geel.display_width > props.geel.display_height)
+// Square Geels would lose almost half the picture cropped to the frame, so
+// they start whole; landscape clips start cropped. Both can toggle.
+const squareish = computed(() => !props.geel.clip && props.geel.display_width * 5 > props.geel.display_height * 4)
+const fullFrame = ref(squareish.value)
+const canFullFrame = computed(() => !!props.geel.clip || squareish.value)
 const rangeStart = () => props.geel.clip?.start_seconds || 0
 const rangeEnd = (video: HTMLVideoElement) => {
   const end = props.geel.clip?.end_seconds
