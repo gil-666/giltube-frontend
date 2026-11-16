@@ -330,6 +330,41 @@ const probeHDRSource = async (src: string) => {
     return ''
   }
 }
+// SDR titles above 1080p publish master-hevc.m3u8 next to master.m3u8: the
+// same ladder with the qualities above 1080p in HEVC (fMP4), which needs
+// about a third less bitrate than their H.264 counterparts. Browsers that
+// decode HEVC through MSE play it; everyone else keeps master.m3u8. Setting
+// localStorage giltube_hevc_enabled to "0" keeps a browser on H.264.
+const HEVC_PREFERENCE_STORAGE_KEY = 'giltube_hevc_enabled'
+let isPlayingHEVC = false
+// Set when the HEVC ladder failed to play, so later titles stay on H.264.
+let hevcPlaybackFailed = false
+
+const supportsHEVCPlayback = () => {
+  if (typeof window === 'undefined' || hevcPlaybackFailed) return false
+  try {
+    if (localStorage.getItem(HEVC_PREFERENCE_STORAGE_KEY) === '0') return false
+  } catch {
+    // No storage: decide on decoder support alone.
+  }
+  const mediaSource = (window as any).ManagedMediaSource || window.MediaSource
+  // The ladder is HEVC Main10 up to 2160p60 (level 5.1), next to H.264.
+  return Boolean(mediaSource?.isTypeSupported?.('video/mp4; codecs="hvc1.2.4.L153.B0"'))
+    && Boolean(mediaSource?.isTypeSupported?.('video/mp4; codecs="avc1.640028"'))
+}
+
+const probeHEVCSource = async (src: string) => {
+  const [path = '', query] = src.split('?')
+  if (!/\/master\.m3u8$/i.test(path) || !supportsHEVCPlayback()) return ''
+  const url = path.replace(/master\.m3u8$/i, 'master-hevc.m3u8') + (query ? `?${query}` : '')
+  try {
+    const response = await fetch(url, { method: 'HEAD', cache: 'no-store' })
+    return response.ok ? url : ''
+  } catch {
+    return ''
+  }
+}
+
 // Alternate versions (IMAX) are other masters of the same title; the main
 // version is props.src. A version only counts when its master lives inside
 // the main video's directory, so a previous title's versions never apply to
@@ -3160,6 +3195,16 @@ onMounted(async () => {
           void loadPlayerSource(baseSource(), { resumeAt, resume: true, skipHDR: true })
           return
         }
+        if (isPlayingHEVC) {
+          // Same for the HEVC ladder: back to H.264, for this session.
+          console.warn('HEVC playback failed, falling back to H.264')
+          hevcPlaybackFailed = true
+          const resumeAt = Number(player.currentTime?.() || 0)
+          player.error(null)
+          resetPlayerSourceState()
+          void loadPlayerSource(baseSource(), { resumeAt, resume: true })
+          return
+        }
         if (activeVersion.value) {
           // An alternate version that cannot play falls back to the main one.
           console.warn(`${activeVersion.value} version failed, falling back to the main version`)
@@ -3274,7 +3319,8 @@ const resetPlayerSourceState = () => {
 }
 
 // Loads the SDR master, or its HDR sibling when the title has one, the device
-// can present it and the viewer has not switched HDR off.
+// can present it and the viewer has not switched HDR off. SDR playback uses
+// the HEVC sibling when the title has one and the browser decodes HEVC.
 const loadPlayerSource = async (src: string, options: { resumeAt?: number, resume?: boolean, skipHDR?: boolean } = {}) => {
   if (!player) return
   const token = ++sourceLoadToken
@@ -3282,7 +3328,11 @@ const loadPlayerSource = async (src: string, options: { resumeAt?: number, resum
   if (!player || token !== sourceLoadToken) return
   if (!options.skipHDR) hdrAvailable.value = Boolean(hdrUrl)
   const useHDR = Boolean(hdrUrl) && hdrEnabled.value
-  const target = useHDR ? hdrUrl : src
+  // HDR titles have no SDR HEVC ladder; only probe for one when playing SDR.
+  const hevcUrl = useHDR || hdrUrl ? '' : await probeHEVCSource(src)
+  if (!player || token !== sourceLoadToken) return
+  isPlayingHEVC = Boolean(hevcUrl)
+  const target = useHDR ? hdrUrl : (hevcUrl || src)
   setPlayingHDR(useHDR)
   player.src({ src: target, type: inferSourceType(target) })
   scheduleQualityRechecks()
